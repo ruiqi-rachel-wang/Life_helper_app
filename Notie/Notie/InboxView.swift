@@ -23,6 +23,9 @@ struct InboxView: View {
                             .padding(.horizontal, 24)
                             .padding(.bottom, 18)
 
+                        // TEMP (Week 2): sections, counts, and items are
+                        // hardcoded. Real version reads saved items from
+                        // storage and buckets them by due date at render.
                         InboxSection(title: "Needs attention", count: 1, tone: .bad) {
                             RowLink(item: .parkingTicket)
                         }
@@ -68,7 +71,7 @@ struct InboxView: View {
                     .foregroundStyle(Color.ink)
             }
             Spacer()
-            Text("5 active")
+            Text("5 active")   // TEMP (Week 2): hardcoded; derive from count
                 .font(.eyebrow)
                 .tracking(0.6)
                 .foregroundStyle(Color.faded)

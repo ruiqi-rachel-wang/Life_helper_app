@@ -41,7 +41,9 @@ struct CreateView: View {
         }
     }
 
-    // Big primary action: Scan a document → Review (mock for now).
+    // Big primary action: Scan a document → Review.
+    // TEMP (Week 4/6): jumps straight to a mock Review. Real version
+    // opens the camera, runs OCR + extraction, then shows Review.
     private var heroTile: some View {
         NavigationLink {
             ReviewView()

@@ -59,7 +59,10 @@ enum WorkStatus: CaseIterable {
     }
 }
 
-// MARK: - Sample data (mock — replaced by real storage in Week 2)
+// MARK: - Sample data
+// TEMP (Week 2): these hardcoded samples stand in for real saved items.
+// When SwiftData lands, the Inbox reads stored records and this whole
+// block goes away.
 
 extension ActionItem {
     static let parkingTicket = ActionItem(

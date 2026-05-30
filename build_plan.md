@@ -21,7 +21,30 @@
 **Week 0 — Setup** ✓ mostly complete (pending: OpenAI key, product name, launch language)
 **Week 1 — SwiftUI shell** ⏳ in progress (Inbox built; Guides/Create/Settings are stubs; Detail + Review not yet created; navigation not wired)
 
-What's running today: tap-through tab bar where Inbox shows 4 sections with 5 mock items, masthead with live date, and privacy banner. Cmd+R works in the simulator.
+What's running today: tap-through tab bar where Inbox shows 4 sections with 5 mock items, masthead with live date, and privacy banner. Tapping a row/guide opens its own Detail; ＋ → Scan/Upload opens a mock Review with working Edit mode. Cmd+R works in the simulator.
+
+---
+
+## Temporary scaffolding — what's fake right now
+
+Everything below is mock/placeholder and gets replaced on the noted week.
+**In code, grep `TEMP:` to find each spot.** Nothing here persists yet.
+
+| What | Where | Real version |
+|---|---|---|
+| Sample items (parking ticket, ConEd, etc.) | `ActionItem.swift` sample block | Week 2 — saved SwiftData records |
+| `ActionItem` is a plain struct, not stored | `ActionItem.swift` | Week 2 — becomes `@Model`, persists |
+| Inbox sections/counts/"5 active" hardcoded | `InboxView.swift` | Week 2 — derived from saved items by due date |
+| Detail edits (checkboxes, status) don't save | `DetailView.swift` | Week 2 — writes back to storage |
+| Review is all mock; Edit-mode changes vanish | `ReviewView.swift` | Week 6 — real ExtractionResult, saves on "Add to inbox" |
+| ＋ Scan/Upload jumps straight to mock Review | `CreateView.swift` | Week 4/6 — camera → OCR → extraction → Review |
+| "Create it yourself" → placeholder screen | `CreateView.swift` | Week 2 — real manual form (title/due/steps) |
+| Guides → Detail with placeholder steps | `GuidesView.swift` `fromGuide` | Week 7 — real template steps, saved to inbox |
+| Settings is an empty stub | `SettingsView.swift` | Week 8 — language, reminders, privacy |
+| Raised ＋ tab button (floating circle) | `RootTabView.swift` | Week 7 polish — custom tab bar |
+
+Note: the 5 **guides themselves** (Moving, Bank, etc.) are *intentionally*
+static for Phase 1 — that's not temporary, it's the design.
 
 ---
 
