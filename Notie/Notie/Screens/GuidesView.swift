@@ -37,9 +37,13 @@ struct GuidesView: View {
 
                         VStack(spacing: 10) {
                             ForEach(visibleGuides) { guide in
-                                // Tapping a guide opens a checklist built
-                                // from it. Week 7: use the guide's real
-                                // template steps + save it to the inbox.
+                                // TEMP (Week 6/7): previews a Detail as a
+                                // stand-in. The real flow should open the
+                                // Review-style "confirm before adding"
+                                // screen (shared with the scan flow) so the
+                                // user reviews/customizes, then taps
+                                // "Add to inbox" — NOT a Detail (the guide
+                                // isn't a saved task yet).
                                 NavigationLink {
                                     DetailView(item: actionItem(from: guide))
                                 } label: {

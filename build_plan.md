@@ -276,8 +276,12 @@ me later / View actions. Mark done cancels future reminders. Overdue → red.
 
 ### Week 7: Guides + recurring
 - GuideTemplateService: 5 static checklists (Moving, Bank, Job, License, Visa)
-- Guides tab: tap → **Add to inbox** (creates an ActionItem from the guide).
-  (Not in the Week-1 mock — tapping a guide currently just previews a Detail.)
+- Guides tab: tap a guide → opens the **Review-style "confirm before adding"
+  screen** (the SAME screen the scan flow uses, just fed a guide instead of
+  an extraction) → review/customize steps → **Add to inbox**.
+  Decided 2026-05-30: Review is the single "confirm before adding" screen for
+  both scans (Wk 6) and guides (Wk 7) — a guide must NOT open a Detail (it
+  isn't a saved task yet). Week-1 mock previews a Detail as a stand-in only.
 - RecurringService: on mark-done with repeats, create next cycle with advanced due date
 - Pull `repeats` from LLM (don't hardcode)
 
