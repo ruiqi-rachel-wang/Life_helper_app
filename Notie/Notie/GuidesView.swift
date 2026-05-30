@@ -37,11 +37,11 @@ struct GuidesView: View {
 
                         VStack(spacing: 10) {
                             ForEach(visibleGuides) { guide in
-                                // Tapping a guide opens the Detail screen.
-                                // Week 7: this instead creates a checklist
-                                // from the guide's template.
+                                // Tapping a guide opens a checklist built
+                                // from it. Week 7: use the guide's real
+                                // template steps + save it to the inbox.
                                 NavigationLink {
-                                    DetailView()
+                                    DetailView(item: .fromGuide(guide))
                                 } label: {
                                     GuideCard(guide: guide)
                                 }

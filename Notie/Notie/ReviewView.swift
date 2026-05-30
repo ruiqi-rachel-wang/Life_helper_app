@@ -96,16 +96,11 @@ struct ReviewView: View {
                 .lineSpacing(2)
 
             // One-line summary with inline bold amount + date.
-            (
-                Text("Pay ")
-                + Text("$86.42").bold().foregroundColor(Color.ink)
-                + Text(" by ")
-                + Text("June 15").bold().foregroundColor(Color.ink)
-                + Text(" to avoid a late fee.")
-            )
-            .font(.subline)
-            .foregroundStyle(Color.faded)
-            .lineSpacing(2)
+            // Markdown ** ** renders bold; iOS 26 prefers this over Text +.
+            Text("Pay **$86.42** by **June 15** to avoid a late fee.")
+                .font(.subline)
+                .foregroundStyle(Color.faded)
+                .lineSpacing(2)
 
             Text("EN")
                 .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faint)

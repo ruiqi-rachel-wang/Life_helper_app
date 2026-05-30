@@ -24,57 +24,21 @@ struct InboxView: View {
                             .padding(.bottom, 18)
 
                         InboxSection(title: "Needs attention", count: 1, tone: .bad) {
-                            RowLink {
-                                InboxRow(
-                                    glyph: "parkingsign",
-                                    color: Color(hex: 0xC0532F),
-                                    title: "NYC parking ticket",
-                                    subtitle: "$115.00 · 2 days overdue",
-                                    isOverdue: true
-                                )
-                            }
+                            RowLink(item: .parkingTicket)
                         }
 
                         InboxSection(title: "Due this week", count: 2) {
-                            RowLink {
-                                InboxRow(
-                                    glyph: "bolt.fill",
-                                    color: Color.sourceScanned,
-                                    title: "Con Edison · electricity",
-                                    subtitle: "$86.42 · Sun Jun 15"
-                                )
-                            }
+                            RowLink(item: .conEdison)
                             InboxRowDivider()
-                            RowLink {
-                                InboxRow(
-                                    glyph: "phone.fill",
-                                    color: Color.sourceCustom,
-                                    title: "Call insurance — claim follow-up",
-                                    subtitle: "Fri Jun 20"
-                                )
-                            }
+                            RowLink(item: .insuranceCall)
                         }
 
                         InboxSection(title: "In progress", count: 1) {
-                            RowLink {
-                                InboxRow(
-                                    glyph: "checklist",
-                                    color: Color.sourceCustom,
-                                    title: "Apartment move-out inspection",
-                                    subtitle: "Checklist · 4 of 6 done · Jun 28"
-                                )
-                            }
+                            RowLink(item: .moveOut)
                         }
 
                         InboxSection(title: "Upcoming", count: 1, isMuted: true) {
-                            RowLink {
-                                InboxRow(
-                                    glyph: "cross.fill",
-                                    color: Color.sourceGuide,
-                                    title: "Sutter Health · clinic visit",
-                                    subtitle: "$214.00 · Thu Jul 2"
-                                )
-                            }
+                            RowLink(item: .sutterVisit)
                         }
 
                         PrivacyBanner()
@@ -164,16 +128,21 @@ private struct InboxSection<Content: View>: View {
     }
 }
 
-// Wraps a row so tapping it pushes the Detail screen. Every row opens
-// the same mock Detail for now; Week 2 passes the tapped item's data.
-// .plain keeps the row's own styling instead of NavigationLink's blue.
-private struct RowLink<Content: View>: View {
-    @ViewBuilder var content: Content
+// One inbox row that pushes that item's own Detail screen when tapped.
+// .plain keeps the row's styling instead of NavigationLink's blue tint.
+private struct RowLink: View {
+    let item: ActionItem
     var body: some View {
         NavigationLink {
-            DetailView()
+            DetailView(item: item)
         } label: {
-            content
+            InboxRow(
+                glyph: item.glyph,
+                color: item.color,
+                title: item.title,
+                subtitle: item.subtitle,
+                isOverdue: item.isOverdue
+            )
         }
         .buttonStyle(.plain)
     }

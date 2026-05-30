@@ -3,27 +3,29 @@
 //  Action detail — the full view of one inbox item, used to work it:
 //  check off steps, change status, see the reminder timeline, mark done.
 //
-//  This mock shows the worst-case visual state: an overdue parking
-//  ticket. Currently uses inline mock data; Week 2 feeds it a real
-//  ActionItem. Checkboxes and the status pill are interactive (@State)
-//  but don't persist yet.
+//  Driven by the ActionItem passed in, so each tapped row shows its own
+//  content. Checkbox + status edits live in @State (not persisted until
+//  Week 2, when the item comes from SwiftData).
 //
 
 import SwiftUI
 
 struct DetailView: View {
+    let item: ActionItem
+
     // Lets the custom back chevron pop this screen off the stack.
     @Environment(\.dismiss) private var dismiss
 
-    // Local editable copies so the checkboxes + status pill respond to
-    // taps. Not persisted until Week 2.
-    @State private var steps: [ChecklistStep] = [
-        ChecklistStep(text: "Decide: pay or contest.", done: true),
-        ChecklistStep(text: "Open NYC Pay Tickets.", done: true),
-        ChecklistStep(text: "Enter violation #1234567890.", done: false),
-        ChecklistStep(text: "Pay $115.00 before June 9.", done: false),
-    ]
-    @State private var status: WorkStatus = .inProgress
+    // Editable copies seeded from the item so checkboxes + status pill
+    // respond to taps.
+    @State private var steps: [ChecklistStep]
+    @State private var status: WorkStatus
+
+    init(item: ActionItem) {
+        self.item = item
+        _steps = State(initialValue: item.steps)
+        _status = State(initialValue: item.initialStatus)
+    }
 
     private var doneCount: Int { steps.filter(\.done).count }
 
@@ -42,13 +44,17 @@ struct DetailView: View {
                         .padding(.horizontal, 14)
                         .padding(.top, 16)
 
-                    checklistCard
-                        .padding(.horizontal, 14)
-                        .padding(.top, 14)
+                    if !steps.isEmpty {
+                        checklistCard
+                            .padding(.horizontal, 14)
+                            .padding(.top, 14)
+                    }
 
-                    remindersCard
-                        .padding(.horizontal, 14)
-                        .padding(.top, 14)
+                    if !item.reminders.isEmpty {
+                        remindersCard
+                            .padding(.horizontal, 14)
+                            .padding(.top, 14)
+                    }
 
                     footerActions
                         .padding(.horizontal, 14)
@@ -87,14 +93,16 @@ struct DetailView: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("NYC parking ticket")
+            Text(item.title)
                 .font(.serifDetail)
                 .tracking(-0.6)
                 .foregroundStyle(Color.ink)
-            Text("⚠ 2 DAYS OVERDUE · $50 PENALTY IF NOT PAID")
-                .font(.eyebrow)
-                .tracking(0.6)
-                .foregroundStyle(Color.bad)
+            if let note = item.statusNote {
+                Text(note)
+                    .font(.eyebrow)
+                    .tracking(0.6)
+                    .foregroundStyle(Color.bad)
+            }
         }
     }
 
@@ -103,8 +111,13 @@ struct DetailView: View {
     private var statusCard: some View {
         VStack(spacing: 0) {
             HStack(spacing: 14) {
-                statField(label: "AMOUNT", value: "$115.00", tone: Color.ink)
-                statField(label: "DUE", value: "Jun 9", tone: Color.bad)
+                if let amount = item.amountText {
+                    statField(label: "AMOUNT", value: amount, tone: Color.ink)
+                }
+                if let due = item.dueText {
+                    statField(label: "DUE", value: due,
+                              tone: item.dueIsBad ? Color.bad : Color.ink)
+                }
             }
             .padding(.bottom, 14)
 
@@ -211,10 +224,9 @@ struct DetailView: View {
             Text("REMINDERS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 .padding(.bottom, 10)
 
-            reminderRow(date: "Jun 06", label: "3 days before", isPast: true)
-            reminderRow(date: "Jun 08", label: "1 day before", isPast: true)
-            reminderRow(date: "Jun 09", label: "Due day", isPast: true)
-            reminderRow(date: "Today",  label: "Overdue follow-up", isPast: false)
+            ForEach(item.reminders) { reminder in
+                reminderRow(date: reminder.date, label: reminder.label, isPast: reminder.isPast)
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
@@ -234,7 +246,7 @@ struct DetailView: View {
                 .foregroundStyle(isPast ? Color.faded : Color.ink)
             Spacer()
             Circle()
-                .fill(isPast ? Color.hairD : Color.bad)
+                .fill(isPast ? Color.hairD : Color.accent)
                 .frame(width: 6, height: 6)
         }
         .padding(.vertical, 7)
@@ -263,28 +275,6 @@ struct DetailView: View {
     }
 }
 
-// MARK: - Supporting types
-
-struct ChecklistStep: Identifiable {
-    let id = UUID()
-    var text: String
-    var done: Bool
-}
-
-// The settable workflow states (overdue is derived, not settable).
-enum WorkStatus: CaseIterable {
-    case todo, inProgress, deferred, done
-
-    var label: String {
-        switch self {
-        case .todo:       return "Todo"
-        case .inProgress: return "In progress"
-        case .deferred:   return "Deferred"
-        case .done:       return "Done"
-        }
-    }
-}
-
 #Preview {
-    DetailView()
+    DetailView(item: .parkingTicket)
 }
