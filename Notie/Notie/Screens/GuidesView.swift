@@ -41,7 +41,7 @@ struct GuidesView: View {
                                 // from it. Week 7: use the guide's real
                                 // template steps + save it to the inbox.
                                 NavigationLink {
-                                    DetailView(item: .fromGuide(guide))
+                                    DetailView(item: actionItem(from: guide))
                                 } label: {
                                     GuideCard(guide: guide)
                                 }
@@ -79,25 +79,48 @@ struct GuidesView: View {
         }
     }
 
+    // Builds a checklist item from a tapped guide. Lives in the view layer
+    // (not the model) so the domain ActionItem stays free of Guide.
+    // TEMP (Week 7): placeholder steps; real version uses template steps.
+    private func actionItem(from guide: Guide) -> ActionItem {
+        let category: ItemCategory
+        switch guide.category {
+        case "Housing":    category = .housing
+        case "Finance":    category = .finance
+        case "Work":       category = .work
+        case "Government": category = .government
+        default:           category = .other
+        }
+        return ActionItem(
+            title: guide.title,
+            category: category,
+            steps: (1...min(guide.stepCount, 5)).map {
+                ChecklistStep(text: "Step \($0)")
+            }
+        )
+    }
+
     // Horizontally scrolling filter chips.
     private var categoryChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(categories, id: \.self) { category in
                     let isSelected = category == selectedCategory
-                    Text(category)
-                        .font(.eyebrow)
-                        .tracking(0.4)
-                        .foregroundStyle(isSelected ? Color.paper : Color.faded)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule().fill(isSelected ? Color.ink : Color.clear)
-                        )
-                        .overlay(
-                            Capsule().stroke(Color.hairD, lineWidth: isSelected ? 0 : 1)
-                        )
-                        .onTapGesture { selectedCategory = category }
+                    Button { selectedCategory = category } label: {
+                        Text(category)
+                            .font(.eyebrow)
+                            .tracking(0.4)
+                            .foregroundStyle(isSelected ? Color.paper : Color.faded)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule().fill(isSelected ? Color.ink : Color.clear)
+                            )
+                            .overlay(
+                                Capsule().stroke(Color.hairD, lineWidth: isSelected ? 0 : 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 18)

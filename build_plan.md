@@ -18,10 +18,20 @@
 
 ## Current progress (as of 2026-05-30)
 
-**Week 0 — Setup** ✓ mostly complete (pending: OpenAI key, product name, launch language)
-**Week 1 — SwiftUI shell** ⏳ in progress (Inbox built; Guides/Create/Settings are stubs; Detail + Review not yet created; navigation not wired)
+**Week 0 — Setup** ✓ complete (pending only: product name, launch language — not code-blocking)
+**Week 1 — SwiftUI shell** ✓ essentially complete
 
-What's running today: tap-through tab bar where Inbox shows 4 sections with 5 mock items, masthead with live date, and privacy banner. Tapping a row/guide opens its own Detail; ＋ → Scan/Upload opens a mock Review with working Edit mode. Cmd+R works in the simulator.
+What's running today:
+- All 5 screens built: Inbox, Guides, Detail, Review, Create (+ Settings stub).
+- Tab bar with all 4 tabs; navigation wired (row → Detail, guide → Detail, ＋ Scan/Upload → Review).
+- Inbox shows 4 urgency sections from sample data; each row opens its own Detail.
+- Review has a working Edit mode (due date, reminder date, steps, note).
+- Domain model (`ActionItem`) is pure Foundation; the view layer maps category → color/symbol and formats strings (`Theme/ItemStyle.swift`).
+- Interactive controls are `Button`s (accessible); primary actions are wired (dismiss placeholders, marked TEMP).
+- 9 unit tests on `ActionItem` (isOverdue, doneCount, reminderSchedule) — pass via Cmd+U.
+- Deployment target: iOS 17.0. Builds clean (no warnings).
+
+Still mock (see "Temporary scaffolding" below): no persistence — edits and "Add to inbox" / "Mark done" don't save yet. That's Week 2.
 
 ---
 

@@ -139,10 +139,12 @@ private struct CreateFormPlaceholder: View {
             Color.paper.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color.faint)
-                        .onTapGesture { dismiss() }
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(Color.faint)
+                    }
+                    .accessibilityLabel("Back")
                     Spacer()
                 }
                 Text("Create it yourself")

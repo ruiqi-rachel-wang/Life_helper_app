@@ -139,11 +139,13 @@ private struct RowLink: View {
         NavigationLink {
             DetailView(item: item)
         } label: {
+            // Color/symbol/subtitle are derived from the item's category
+            // and domain data (see Theme/ItemStyle.swift), not stored on it.
             InboxRow(
-                glyph: item.glyph,
-                color: item.color,
+                glyph: item.category.symbol,
+                color: item.category.tint,
                 title: item.title,
-                subtitle: item.subtitle,
+                subtitle: item.inboxSubtitle,
                 isOverdue: item.isOverdue
             )
         }

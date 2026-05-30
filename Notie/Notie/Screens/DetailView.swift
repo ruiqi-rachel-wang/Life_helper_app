@@ -3,9 +3,13 @@
 //  Action detail — the full view of one inbox item, used to work it:
 //  check off steps, change status, see the reminder timeline, mark done.
 //
-//  Driven by the ActionItem passed in, so each tapped row shows its own
-//  content. Checkbox + status edits live in @State (not persisted until
-//  Week 2, when the item comes from SwiftData).
+//  Driven by the ActionItem passed in. Presentation (amount/date strings,
+//  colors, the reminder timeline) is derived from the domain item via
+//  Theme/ItemStyle.swift + reminderSchedule(); nothing UI-specific is
+//  stored on the model.
+//
+//  TEMP (Week 2): checkbox/status edits and Mark done / Defer don't
+//  persist yet — they live in @State and the buttons just dismiss.
 //
 
 import SwiftUI
@@ -13,21 +17,23 @@ import SwiftUI
 struct DetailView: View {
     let item: ActionItem
 
-    // Lets the custom back chevron pop this screen off the stack.
     @Environment(\.dismiss) private var dismiss
 
-    // Editable copies seeded from the item so checkboxes + status pill
-    // respond to taps.
+    // Editable copies seeded from the item so checkboxes + status respond.
     @State private var steps: [ChecklistStep]
     @State private var status: WorkStatus
 
     init(item: ActionItem) {
         self.item = item
         _steps = State(initialValue: item.steps)
-        _status = State(initialValue: item.initialStatus)
+        _status = State(initialValue: item.status)
     }
 
     private var doneCount: Int { steps.filter(\.done).count }
+
+    // Reminder dates are computed from the item; "past" is relative to now.
+    private var reminders: [ScheduledReminder] { item.reminderSchedule() }
+    private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -50,7 +56,7 @@ struct DetailView: View {
                             .padding(.top, 14)
                     }
 
-                    if !item.reminders.isEmpty {
+                    if !reminders.isEmpty {
                         remindersCard
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
@@ -72,15 +78,15 @@ struct DetailView: View {
 
     private var navBar: some View {
         HStack {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Color.faint)
-                .onTapGesture { dismiss() }
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(Color.faint)
+            }
+            .accessibilityLabel("Back")
             Spacer()
             Text("ACTION")
-                .font(.eyebrow)
-                .tracking(1.4)
-                .foregroundStyle(Color.faded)
+                .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
             Spacer()
             Image(systemName: "ellipsis")
                 .font(.system(size: 17, weight: .medium))
@@ -97,7 +103,7 @@ struct DetailView: View {
                 .font(.serifDetail)
                 .tracking(-0.6)
                 .foregroundStyle(Color.ink)
-            if let note = item.statusNote {
+            if let note = item.overdueText {
                 Text(note)
                     .font(.eyebrow)
                     .tracking(0.6)
@@ -116,7 +122,7 @@ struct DetailView: View {
                 }
                 if let due = item.dueText {
                     statField(label: "DUE", value: due,
-                              tone: item.dueIsBad ? Color.bad : Color.ink)
+                              tone: item.isOverdue ? Color.bad : Color.ink)
                 }
             }
             .padding(.bottom, 14)
@@ -145,19 +151,20 @@ struct DetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Segmented status selector. Tapping a segment updates @State.
+    // Segmented status selector — each segment is a Button.
     private var statusPill: some View {
         HStack(spacing: 4) {
             ForEach(WorkStatus.allCases, id: \.self) { option in
                 let isActive = option == status
-                Text(option.label)
-                    .font(.eyebrow)
-                    .tracking(0.3)
-                    .foregroundStyle(isActive ? Color.paper : Color.faded)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Capsule().fill(isActive ? Color.ink : Color.clear))
-                    .onTapGesture { status = option }
+                Button { status = option } label: {
+                    Text(option.label)
+                        .font(.eyebrow).tracking(0.3)
+                        .foregroundStyle(isActive ? Color.paper : Color.faded)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(isActive ? Color.ink : Color.clear))
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(3)
@@ -177,16 +184,19 @@ struct DetailView: View {
             .padding(.bottom, 8)
 
             ForEach($steps) { $step in
-                HStack(alignment: .top, spacing: 10) {
-                    checkbox(done: step.done)
-                        .onTapGesture { step.done.toggle() }
-                    Text(step.text)
-                        .font(.body14)
-                        .foregroundStyle(step.done ? Color.faded : Color.ink)
-                        .strikethrough(step.done, color: Color.faded)
-                    Spacer()
+                Button { step.done.toggle() } label: {
+                    HStack(alignment: .top, spacing: 10) {
+                        checkbox(done: step.done)
+                        Text(step.text)
+                            .font(.body14)
+                            .foregroundStyle(step.done ? Color.faded : Color.ink)
+                            .strikethrough(step.done, color: Color.faded)
+                            .multilineTextAlignment(.leading)
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
                 }
-                .padding(.vertical, 8)
+                .buttonStyle(.plain)
                 .overlay(alignment: .top) {
                     if step.id != steps.first?.id {
                         Rectangle().fill(Color.hairD).frame(height: 1)
@@ -217,15 +227,29 @@ struct DetailView: View {
             }
     }
 
-    // MARK: reminders
+    // MARK: reminders (derived from the item's schedule)
 
     private var remindersCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("REMINDERS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 .padding(.bottom, 10)
 
-            ForEach(item.reminders) { reminder in
-                reminderRow(date: reminder.date, label: reminder.label, isPast: reminder.isPast)
+            ForEach(reminders) { reminder in
+                let isPast = reminder.date < startOfToday
+                HStack(spacing: 10) {
+                    Text(reminder.date.formatted(.dateTime.month(.abbreviated).day()))
+                        .font(.eyebrow).tracking(0.4)
+                        .foregroundStyle(isPast ? Color.faint : Color.ink)
+                        .frame(width: 60, alignment: .leading)
+                    Text(reminder.label)
+                        .font(.subline)
+                        .foregroundStyle(isPast ? Color.faded : Color.ink)
+                    Spacer()
+                    Circle()
+                        .fill(isPast ? Color.hairD : Color.accent)
+                        .frame(width: 6, height: 6)
+                }
+                .padding(.vertical, 7)
             }
         }
         .padding(.horizontal, 18)
@@ -235,42 +259,34 @@ struct DetailView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 
-    private func reminderRow(date: String, label: String, isPast: Bool) -> some View {
-        HStack(spacing: 10) {
-            Text(date)
-                .font(.eyebrow).tracking(0.4)
-                .foregroundStyle(isPast ? Color.faint : Color.ink)
-                .frame(width: 60, alignment: .leading)
-            Text(label)
-                .font(.subline)
-                .foregroundStyle(isPast ? Color.faded : Color.ink)
-            Spacer()
-            Circle()
-                .fill(isPast ? Color.hairD : Color.accent)
-                .frame(width: 6, height: 6)
-        }
-        .padding(.vertical, 7)
-    }
-
     // MARK: footer
 
+    // TEMP (Week 2/3): real versions persist the status change + cancel or
+    // reschedule reminders. For now they just close the screen.
     private var footerActions: some View {
         HStack(spacing: 8) {
-            Text("Mark done")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color.paper)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
-            Text("Defer")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Color.ink)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.hairD, lineWidth: 1)
-                )
+            Button { dismiss() } label: {
+                Text("Mark done")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.paper)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+            }
+            .buttonStyle(.plain)
+
+            Button { dismiss() } label: {
+                Text("Defer")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.ink)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.hairD, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
         }
     }
 }

@@ -78,20 +78,24 @@ struct ReviewView: View {
     // × close · "REVIEW" · Edit/Done toggle.
     private var modalHeader: some View {
         HStack {
-            Image(systemName: "xmark")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(Color.faint)
-                .onTapGesture { dismiss() }
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(Color.faint)
+            }
+            .accessibilityLabel("Close")
             Spacer()
             Text("REVIEW")
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
                 .tracking(1.6)
                 .foregroundStyle(Color.faded)
             Spacer()
-            Text(isEditing ? "Done" : "Edit")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.accent)
-                .onTapGesture { isEditing.toggle() }
+            Button { isEditing.toggle() } label: {
+                Text(isEditing ? "Done" : "Edit")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.accent)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 22)
     }
@@ -319,14 +323,19 @@ struct ReviewView: View {
 
     // MARK: confirm
 
+    // TEMP (Week 6): real version saves the item + schedules reminders,
+    // then routes to the inbox. For now it just closes the screen.
     private var confirmButton: some View {
         VStack(spacing: 10) {
-            Text("Add to inbox")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.paper)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 15)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+            Button { dismiss() } label: {
+                Text("Add to inbox")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.paper)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+            }
+            .buttonStyle(.plain)
             Text("ORIGINAL SCAN · KEEP / DELETE")
                 .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint)
         }
