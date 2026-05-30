@@ -115,6 +115,16 @@ The "pure logic vs iOS-specific" split (for a future Android port) is kept
 by keeping `Model/` and the parsers free of SwiftUI imports — not by a
 separate top-level `Core/` folder. Same payoff, less ceremony.
 
+### Per-type Detail structure (future — decided 2026-05-30)
+
+Different item TYPES should eventually render different Detail layouts — a
+bill (amount, pay steps, recurring) is not shaped like a phone call (script,
+number) or a checklist (just steps). We are **not** building per-type layouts
+yet. To stay ready: DetailView is composed of optional, item-driven sections
+(stats / steps / reminders / note) that appear only when the item has that
+data — so adding type-specific composition later is additive, not a rewrite.
+Don't collapse everything into one rigid template.
+
 ### NotieTests/ (auto-created with the project)
 
 ```
@@ -223,10 +233,18 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 - NotificationProtocol + UNNotificationService
 - Schedule on save: 3d before, 1d before, due day, +1 morning after overdue
 - Cancel reminders on done
-- State transitions in Detail's segmented control
+- **Notification actions** (decided 2026-05-30): each reminder notification
+  offers — **Mark done** (completes inline, cancels remaining), **Remind me
+  later** (snooze), and tapping the body / **View** opens that item's Detail.
 - `isOverdue` derived state + red styling
 
-**Done when:** notification fires on a real schedule. Mark done cancels future reminders. Overdue items render red.
+**Done when:** notification fires on a real schedule, with Mark done / Remind
+me later / View actions. Mark done cancels future reminders. Overdue → red.
+
+> Status model (decided 2026-05-30): the user does NOT set status manually
+> and there is no Defer. `inProgress` is derived (some steps checked), `done`
+> comes from the Mark done button, `overdue` is derived. The Detail screen's
+> top-right is **Edit** (like Review), not a status menu.
 
 ### Week 4: Camera + Apple Vision OCR
 - Camera UI (UIImagePickerController in SwiftUI, or AVFoundation)
@@ -258,7 +276,8 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 
 ### Week 7: Guides + recurring
 - GuideTemplateService: 5 static checklists (Moving, Bank, Job, License, Visa)
-- Guides tab: tap → instant ActionItem with source `.guide`
+- Guides tab: tap → **Add to inbox** (creates an ActionItem from the guide).
+  (Not in the Week-1 mock — tapping a guide currently just previews a Detail.)
 - RecurringService: on mark-done with repeats, create next cycle with advanced due date
 - Pull `repeats` from LLM (don't hardcode)
 
@@ -269,7 +288,9 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 2. Error states (LLM down, OCR garbled, no network)
 3. Settings: language picker, "keep original scans" toggle, version
 4. Privacy banner on Inbox: `LOCAL OCR · NO BANK LINK · NO AUTOPAY`
-5. Past items list (Done archive, no search)
+5. Past items list (Done archive, no search) — **with delete** (swipe-to-delete
+   here, plus the Delete button that already appears on a done item's Detail).
+   Decided 2026-05-30: done items go to this list and can be removed from it.
 6. Analytics events (`action_item_confirmed`, `action_item_completed`) → local JSON file
 7. App icon (even placeholder serif "N" on cream)
 8. **Apply for Apple Developer Program** if not already (1–3 day approval)

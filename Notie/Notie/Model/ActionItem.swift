@@ -19,15 +19,16 @@ enum ItemCategory: String, Codable, CaseIterable {
     case utility, government, medical, finance, housing, work, personal, other
 }
 
-// Settable workflow states. `overdue` is derived (see isOverdue), not stored.
-enum WorkStatus: String, Codable, CaseIterable {
-    case todo, inProgress, deferred, done
+// Workflow state. The user doesn't set this directly — `inProgress` is
+// derived (some steps checked), `done` comes from the "Mark done" button,
+// and `overdue` is derived (see isOverdue). No manual status, no defer.
+enum WorkStatus: String, Codable {
+    case todo, inProgress, done
 
     var label: String {
         switch self {
         case .todo:       return "Todo"
         case .inProgress: return "In progress"
-        case .deferred:   return "Deferred"
         case .done:       return "Done"
         }
     }
