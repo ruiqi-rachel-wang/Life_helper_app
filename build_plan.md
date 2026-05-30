@@ -70,15 +70,14 @@ Notie/
 │   ├── Create/
 │   └── Settings/
 │
-├── Shared/
-│   ├── Design/
-│   │   ├── Color+Notie.swift            ← all tokens from spec
-│   │   └── Font+Notie.swift             ← New York + SF Pro + SF Mono scale
-│   └── Components/
-│       ├── SourceTagView.swift
-│       ├── StatCardView.swift
-│       ├── StepRowView.swift
-│       └── EyebrowText.swift
+├── Theme/                                ← colors, fonts — the app's visual identity
+│   ├── Color+Notie.swift                 ← all tokens from spec
+│   └── Font+Notie.swift                  ← New York + SF Pro + SF Mono scale
+├── Components/                           ← reusable views used by many screens
+│   ├── SourceTagView.swift
+│   ├── StatCardView.swift
+│   ├── StepRowView.swift
+│   └── EyebrowText.swift
 │
 └── NotieTests/                          ← XCTest unit tests
     ├── CoreTests/
