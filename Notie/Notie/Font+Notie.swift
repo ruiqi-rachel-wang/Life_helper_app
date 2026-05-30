@@ -1,11 +1,22 @@
+//  Font+Notie.swift
+//
+//  Type scale tokens, mapping the spec's typography to Apple's system
+//  fonts (New York serif, SF Pro sans, SF Mono). Used via
+//  .font(.serifTitle), .font(.eyebrow), etc.
+//
+//  Letter-spacing (tracking) is applied at the call site via
+//  .tracking(value) — SwiftUI's Font type doesn't carry it.
+//
+
 import SwiftUI
 
 extension Font {
-    // Serif (New York)
-    static let serifTitle   = Font.system(size: 34, weight: .medium, design: .serif)
-    static let serifModal   = Font.system(size: 30, weight: .medium, design: .serif)
-    static let serifDetail  = Font.system(size: 28, weight: .medium, design: .serif)
-    static let serifStat    = Font.system(size: 32, weight: .medium, design: .serif)
+    // Serif (New York). Sizes trimmed from the spec to leave more room
+    // for content on real device screens. Spec had 34/30/28/32 — trimmed.
+    static let serifTitle   = Font.system(size: 26, weight: .medium, design: .serif)
+    static let serifModal   = Font.system(size: 24, weight: .medium, design: .serif)
+    static let serifDetail  = Font.system(size: 22, weight: .medium, design: .serif)
+    static let serifStat    = Font.system(size: 26, weight: .medium, design: .serif)
     static let serifSection = Font.system(size: 14, weight: .medium, design: .serif)
 
     // Sans (SF Pro)

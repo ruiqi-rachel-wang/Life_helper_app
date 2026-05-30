@@ -1,3 +1,13 @@
+//  Color+Notie.swift
+//
+//  Extends SwiftUI's Color with all design tokens from the spec.
+//  Single source of truth — `Color.paper`, `Color.ink`, `Color.accent`
+//  are used across every screen. Change one here, every screen updates.
+//
+//  "extension Color { ... }" lets us add properties/methods to Apple's
+//  built-in Color type without subclassing it.
+//
+
 import SwiftUI
 
 extension Color {

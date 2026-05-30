@@ -16,6 +16,15 @@
 
 ---
 
+## Current progress (as of 2026-05-30)
+
+**Week 0 — Setup** ✓ mostly complete (pending: OpenAI key, product name, launch language)
+**Week 1 — SwiftUI shell** ⏳ in progress (Inbox built; Guides/Create/Settings are stubs; Detail + Review not yet created; navigation not wired)
+
+What's running today: tap-through tab bar where Inbox shows 4 sections with 5 mock items, masthead with live date, and privacy banner. Cmd+R works in the simulator.
+
+---
+
 ## Why this tech stack
 
 | Question | Answer |
@@ -154,23 +163,23 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 ## Build order — 8 weeks
 
 ### Week 0: Setup (NOT code)
-- Install Xcode (free, ~15GB)
-- Apple Developer account: **defer until Week 6**
-- Sign in to Xcode with free Apple ID → "Personal Team"
-- Create OpenAI account, generate API key, set $20/mo spending cap
-- Create Notie Xcode project (SwiftUI, Swift, Storage: None, Tests: ✓)
-- Set up folder structure (Core, Platform, Features, Shared)
-- Write design tokens (Color+Notie.swift, Font+Notie.swift)
-- Pick product name (test "Noted" vs "Handle" with 5 target users)
-- Pick launch language (EN, 中文, or ES)
+- [x] Install Xcode (free, ~15GB)
+- [ ] Apple Developer account — **deferred until Week 6 (intentional)**
+- [x] Sign in to Xcode with free Apple ID → "Personal Team"
+- [x] Create OpenAI account, generate API key, set $20/mo spending cap
+- [x] Create Notie Xcode project (SwiftUI, Swift, Storage: None, Tests: ✓)
+- [x] Set up folder structure (flat for now — grow incrementally as features need them)
+- [x] Write design tokens (Color+Notie.swift, Font+Notie.swift)
+- [ ] Pick product name (test "Noted" vs "Handle" with 5 target users)
+- [ ] Pick launch language (EN, 中文, or ES)
 
-**Done when:** Xcode signed in, "Hello World" running in simulator, design tokens compile.
+**Done when:** Xcode signed in, "Hello World" running in simulator, design tokens compile. ✓
 
 ### Week 1: SwiftUI shell with fake data
-- Tab bar: Inbox · Guides · ＋ · Settings
-- 5 screen views with hardcoded mock data (copy from prototype)
-- Reusable components: SourceTagView, StatCardView, StepRowView, EyebrowText
-- Navigation: inbox row → Detail, ＋ → Create sheet, Guide → Detail
+- [x] Tab bar: Inbox · Guides · ＋ · Settings
+- [ ] 5 screen views with hardcoded mock data — **Inbox done (4 sections, 5 items, masthead, privacy banner); Guides / Create / Settings are stubs; Detail + Review not yet created**
+- [ ] Reusable components — `SourceTag` enum done; `InboxRow` / `InboxSection` / `InboxRowDivider` / `PrivacyBanner` built inline in InboxView (extract when reused); `StatCardView`, `StepRowView`, `EyebrowText` not yet built
+- [ ] Navigation: inbox row → Detail, ＋ → Create sheet, Guide → Detail
 
 **Done when:** every screen renders matching prototype within ~10%. All navigation works. No real data anywhere.
 
@@ -296,10 +305,10 @@ let bad    = Color(hex: "#a93420")   // overdue / penalty
 
 | Use | Size | Weight | Tracking | Family |
 |---|---:|---:|---:|---|
-| Screen title | 34pt | 500 | -0.8 | Serif |
-| Modal title | 30pt | 500 | -0.6 | Serif |
-| Detail title | 28pt | 500 | -0.6 | Serif |
-| Stat number | 32pt | 500 | -1.0 | Serif |
+| Screen title | 26pt | 500 | -0.8 | Serif | trimmed from spec's 34pt — saves vertical space on device |
+| Modal title | 24pt | 500 | -0.6 | Serif | trimmed from 30pt |
+| Detail title | 22pt | 500 | -0.6 | Serif | trimmed from 28pt |
+| Stat number | 26pt | 500 | -1.0 | Serif | trimmed from 32pt |
 | Section header | 14pt | 500 | -0.2 | Serif |
 | Card title | 14.5pt | 600 | -0.2 | Sans |
 | Body | 14pt | 400 | 0 | Sans |
@@ -400,4 +409,4 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 
 ---
 
-*Last updated: 2026-05-29. Update this doc whenever architecture decisions change.*
+*Last updated: 2026-05-30. Update this doc whenever architecture decisions change.*

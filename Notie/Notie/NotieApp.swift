@@ -1,8 +1,7 @@
-//
 //  NotieApp.swift
-//  Notie
 //
-//  Created by Ruiqi Wang on 5/29/26.
+//  Entry point. Tells iOS: "when the app launches, show RootTabView."
+//  This is the first code that runs. Exactly one @main exists per app.
 //
 
 import SwiftUI
@@ -11,7 +10,7 @@ import SwiftUI
 struct NotieApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootTabView()
         }
     }
 }
