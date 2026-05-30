@@ -63,61 +63,53 @@ static for Phase 1 — that's not temporary, it's the design.
 
 ## Architecture
 
+Folders are plain-English and created only when they have content (grow
+incrementally). Today's layout:
+
 ```
-Notie/
-├── App/
-│   └── NotieApp.swift                  ← @main entry point
+Notie/Notie/
+├── App/                      ← entry point + app shell
+│   ├── NotieApp.swift        ← @main; launches RootTabView
+│   └── RootTabView.swift     ← the 4-tab bar (Inbox · Guides · Add · Settings)
 │
-├── Core/                                ← "Backend" — pure logic, ZERO UIKit/SwiftUI imports
-│   ├── Models/
-│   │   ├── ActionItem.swift             ← Codable struct
-│   │   ├── Step.swift
-│   │   ├── Recurrence.swift             ← unit + interval + nextDate() math
-│   │   ├── WorkflowState.swift          ← .todo / .inProgress / .deferred / .done
-│   │   ├── Source.swift                 ← .scanned / .guide / .custom
-│   │   └── ExtractionResult.swift       ← THE critical shared type
-│   ├── Protocols/                       ← interfaces Android reimplements
-│   │   ├── StorageProtocol.swift
-│   │   ├── NotificationProtocol.swift
-│   │   └── LLMClientProtocol.swift
-│   ├── Services/
-│   │   ├── ExtractionService.swift      ← orchestrates OCR → parse → (LLM) → merge
-│   │   ├── RuleBasedParser.swift        ← regex: amount, date, account#
-│   │   ├── RecurringService.swift       ← creates next cycle on mark-done
-│   │   └── GuideTemplateService.swift   ← returns 5 static checklists
-│   └── Repositories/
-│       └── ActionItemRepository.swift   ← talks to StorageProtocol
+├── Screens/                  ← one SwiftUI view per screen (the build plan's "Features")
+│   ├── InboxView.swift       ← home list, urgency sections
+│   ├── GuidesView.swift      ← 5 guide cards + filter chips
+│   ├── DetailView.swift      ← one item: checklist, status, reminders
+│   ├── ReviewView.swift      ← post-scan hero (editable)
+│   ├── CreateView.swift      ← ＋ picker (scan / upload / manual)
+│   └── SettingsView.swift    ← stub
 │
-├── Platform/                            ← iOS-specific implementations of Core protocols
-│   ├── SwiftDataStorage.swift           ← implements StorageProtocol
-│   ├── UNNotificationService.swift      ← implements NotificationProtocol
-│   ├── VisionOCREngine.swift            ← Apple Vision wrapper
-│   └── OpenAIClient.swift               ← implements LLMClientProtocol (HTTPS → Worker)
+├── Model/                    ← data types (no UI)
+│   └── ActionItem.swift      ← ActionItem + ChecklistStep + WorkStatus + samples
 │
-├── Features/                            ← SwiftUI views + ViewModels (one folder per screen)
-│   ├── Inbox/
-│   ├── Review/                          ← the hero screen
-│   ├── Detail/
-│   ├── Guides/
-│   ├── Create/
-│   └── Settings/
+├── Theme/                    ← the app's visual identity
+│   ├── Color+Notie.swift     ← all color tokens
+│   └── Font+Notie.swift      ← serif / sans / mono scale
 │
-├── Theme/                                ← colors, fonts — the app's visual identity
-│   ├── Color+Notie.swift                 ← all tokens from spec
-│   └── Font+Notie.swift                  ← New York + SF Pro + SF Mono scale
-├── Components/                           ← reusable views used by many screens
-│   ├── SourceTagView.swift
-│   ├── StatCardView.swift
-│   ├── StepRowView.swift
-│   └── EyebrowText.swift
-│
-└── NotieTests/                          ← XCTest unit tests
-    ├── CoreTests/
-    │   ├── RuleBasedParserTests.swift
-    │   ├── RecurrenceTests.swift
-    │   └── ExtractionServiceTests.swift
-    └── UITests/
-        └── InboxUITests.swift
+└── Assets.xcassets
+```
+
+### Where future code lands (created the week it's needed)
+
+```
+Model/        Recurrence.swift, ExtractionResult.swift     (Wk 2 / Wk 5)
+Storage/      ActionItemStore.swift (SwiftData)            (Wk 2)
+Notifications/ Reminders.swift (UNUserNotificationCenter)  (Wk 3)
+Scanning/     VisionOCR.swift, RuleBasedParser.swift       (Wk 4 / Wk 5)
+AI/           OpenAIClient.swift (→ Cloudflare Worker)     (Wk 5)
+Components/   shared views, once something is reused twice
+```
+
+The "pure logic vs iOS-specific" split (for a future Android port) is kept
+by keeping `Model/` and the parsers free of SwiftUI imports — not by a
+separate top-level `Core/` folder. Same payoff, less ceremony.
+
+### NotieTests/ (auto-created with the project)
+
+```
+NotieTests/        RecurrenceTests, RuleBasedParserTests, …   (Wk 2+)
+NotieUITests/      basic tap-through (auto-generated)
 ```
 
 ### Data flow
@@ -143,9 +135,9 @@ UNNotificationService    ← Platform/  (schedules 3 reminders)
 
 ### Future Android port
 
-Reuse: `Core/Models/`, `Core/Services/`, `Core/Protocols/`, `Core/Repositories/` (port Swift → Kotlin, same structure)
-Rewrite: `Platform/` (Room, WorkManager, ML Kit OCR) + `Features/` (Jetpack Compose)
-Keep identical: prompts to LLM, ExtractionResult shape, design tokens
+Reuse (port Swift → Kotlin, same logic): `Model/`, the parsers, the LLM prompt/response shape.
+Rewrite per-platform: `Storage/` (Room), `Notifications/` (WorkManager), `Scanning/` (ML Kit OCR), `Screens/` (Jetpack Compose).
+Keep identical: LLM prompts, `ExtractionResult` shape, design-token values.
 
 ---
 
