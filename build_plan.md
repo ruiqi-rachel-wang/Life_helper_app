@@ -19,7 +19,9 @@
 ## Current progress (as of 2026-05-30)
 
 **Week 0 — Setup** ✓ complete (pending only: product name, launch language — not code-blocking)
-**Week 1 — SwiftUI shell** ✓ essentially complete
+**Week 1 — SwiftUI shell** ✓ complete
+**Week 2 — Persistence** ✓ complete — SwiftData store; Inbox reads live (@Query) with a Done section; Detail binds to the live object so Mark done / Delete / edits write back; Create form saves (title-only valid) with optional due date, steps, and a text+photo note. Backed up on GitHub (`ruiqi-rachel-wang/Life_helper_app`, branch `main`). 10 unit tests incl. a SwiftData round-trip.
+**Week 3 — Notifications** ⏳ next.
 
 What's running today:
 - All 5 screens built: Inbox, Guides, Detail, Review, Create (+ Settings stub).
