@@ -13,10 +13,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ReviewView: View {
     // Lets the × close button pop this screen off the stack.
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
 
     // Tapping "Edit" flips the editable fields into input controls.
     @State private var isEditing = false
@@ -350,11 +352,13 @@ struct ReviewView: View {
 
     // MARK: confirm
 
-    // TEMP (Week 6): real version saves the item + schedules reminders,
-    // then routes to the inbox. For now it just closes the screen.
+    // Saves the (edited) fields as a real ActionItem and closes.
+    // TEMP (Week 6): fields are still seeded from a mock scan + category
+    // is fixed; the real flow fills them from OCR/AI extraction. But the
+    // save itself is real — the item shows up in the Inbox.
     private var confirmButton: some View {
         VStack(spacing: 10) {
-            Button { dismiss() } label: {
+            Button { save() } label: {
                 Text("Add to inbox")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.paper)
@@ -366,6 +370,25 @@ struct ReviewView: View {
             Text("ORIGINAL SCAN · KEEP / DELETE")
                 .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint)
         }
+    }
+
+    private func save() {
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanSender = sender.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanSteps = steps
+            .map { ChecklistStep(text: $0.text.trimmingCharacters(in: .whitespaces), done: $0.done) }
+            .filter { !$0.text.isEmpty }
+        let item = ActionItem(
+            title: cleanTitle.isEmpty ? (cleanSender.isEmpty ? "Untitled" : cleanSender) : cleanTitle,
+            category: .other,                          // TODO (Week 6): from AI extraction
+            amount: Decimal(string: amountText),
+            dueDate: dueDate,
+            note: note.trimmingCharacters(in: .whitespacesAndNewlines),
+            steps: cleanSteps,
+            repeatsMonthly: repeatsMonthly
+        )
+        context.insert(item)
+        dismiss()
     }
 
     // MARK: helpers
@@ -396,4 +419,5 @@ struct ReviewView: View {
 
 #Preview {
     ReviewView()
+        .modelContainer(for: ActionItem.self, inMemory: true)
 }
