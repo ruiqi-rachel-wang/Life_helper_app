@@ -22,7 +22,13 @@ struct ReviewView: View {
     @State private var isEditing = false
 
     // ── Editable fields ──────────────────────────────────────────
-    // TEMP: seeded with mock values; not persisted until Week 6.
+    // TEMP: seeded with mock values; not persisted until Week 6. Every
+    // field here is editable in Edit mode — Review is where the user
+    // fixes anything the AI got wrong.
+    @State private var docType      = "Utility bill"
+    @State private var sender       = "Con Edison"
+    @State private var title        = "An electricity bill for your apartment."
+    @State private var amountText   = "86.42"
     @State private var dueDate      = Self.mockDate(month: 6, day: 15)
     @State private var reminderDate = Self.mockDate(month: 6, day: 12)
     @State private var note         = ""
@@ -100,25 +106,27 @@ struct ReviewView: View {
         .padding(.horizontal, 22)
     }
 
-    // MARK: document head — the AI explanation
+    // MARK: document head — the AI explanation (all editable)
 
     private var documentHead: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("UTILITY BILL · CON EDISON")
-                .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
-
-            Text("An electricity bill for your apartment.")
-                .font(.serifModal)
-                .tracking(-0.4)
-                .foregroundStyle(Color.ink)
-                .lineSpacing(2)
-
-            // One-line summary with inline bold amount + date.
-            // Markdown ** ** renders bold; iOS 26 prefers this over Text +.
-            Text("Pay **$86.42** by **June 15** to avoid a late fee.")
-                .font(.subline)
-                .foregroundStyle(Color.faded)
-                .lineSpacing(2)
+            if isEditing {
+                // Type · Sender as two small editable chips.
+                HStack(spacing: 6) {
+                    editChip("Type", text: $docType)
+                    editChip("Sender", text: $sender)
+                }
+                // The title / explanation.
+                TextField("Title", text: $title, axis: .vertical)
+                    .font(.serifModal).tracking(-0.4).foregroundStyle(Color.ink)
+            } else {
+                Text("\(docType.uppercased()) · \(sender.uppercased())")
+                    .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
+                Text(title)
+                    .font(.serifModal).tracking(-0.4).foregroundStyle(Color.ink).lineSpacing(2)
+                Text("Pay $\(amountText) by \(shortDate(dueDate)) to avoid a late fee.")
+                    .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+            }
 
             Text("EN")
                 .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faint)
@@ -126,15 +134,34 @@ struct ReviewView: View {
         }
     }
 
-    // MARK: stat cards — Amount (static) + Due (editable)
+    // A small pill-shaped editable field for the type / sender line.
+    private func editChip(_ placeholder: String, text: Binding<String>) -> some View {
+        TextField(placeholder, text: text)
+            .font(.eyebrow).tracking(0.6).foregroundStyle(Color.ink)
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(Capsule().fill(Color.bg))
+    }
+
+    // MARK: stat cards — Amount + Due (both editable)
 
     private var statCards: some View {
         HStack(spacing: 8) {
-            statCard(label: "AMOUNT", value: "$86.42", sub: "electricity",
-                     tone: Color.ink, editor: nil)
+            statCard(label: "AMOUNT", value: "$\(amountText)", sub: "electricity",
+                     tone: Color.ink,
+                     editor: isEditing ? AnyView(amountEditor) : nil)
             statCard(label: "DUE", value: shortDate(dueDate), sub: dueRelative,
                      tone: Color.warn,
                      editor: isEditing ? AnyView(dueEditor) : nil)
+        }
+    }
+
+    // Edits the amount inside the stat card (the big value updates live).
+    private var amountEditor: some View {
+        HStack(spacing: 2) {
+            Text("$").font(.subline).foregroundStyle(Color.faded)
+            TextField("0.00", text: $amountText)
+                .font(.subline).foregroundStyle(Color.ink)
+                .keyboardType(.decimalPad)
         }
     }
 
