@@ -1,18 +1,47 @@
 //  InboxView.swift
 //
-//  The home tab — the landing screen users open daily. Lists their
-//  active tasks grouped by urgency (overdue, due soon, in progress,
-//  upcoming).
+//  The home tab — the daily landing screen. Reads items live from the
+//  SwiftData store (@Query) and groups them by urgency at render time.
+//  Done items collect in a section at the bottom until deleted.
 //
-//  Currently uses mock data inline to demonstrate the layout. Week 2
-//  replaces mocks with real data from SwiftData storage.
+//  Marking done / deleting / editing on the Detail screen flows back here
+//  automatically, because both screens share the same stored objects.
 //
 
 import SwiftUI
+import SwiftData
 
 struct InboxView: View {
+    @Environment(\.modelContext) private var context
+    @Query(sort: \ActionItem.createdAt, order: .reverse) private var items: [ActionItem]
+
+    // TEMP (Week 2): seed sample items once on first launch so a fresh
+    // install isn't empty while testing. Real app starts empty.
+    @AppStorage("didSeedSamples") private var didSeed = false
+
+    // MARK: derived buckets (mutually exclusive)
+
+    private var active: [ActionItem] { items.filter { $0.status != .done } }
+    private var doneItems: [ActionItem] { items.filter { $0.status == .done } }
+
+    private func within7(_ item: ActionItem) -> Bool {
+        guard let due = item.dueDate else { return false }
+        let days = Calendar.current.dateComponents(
+            [.day], from: Calendar.current.startOfDay(for: .now),
+            to: Calendar.current.startOfDay(for: due)).day ?? 0
+        return (0...7).contains(days)
+    }
+
+    private var needsAttention: [ActionItem] { active.filter(\.isOverdue) }
+    private var dueThisWeek: [ActionItem] { active.filter { !$0.isOverdue && within7($0) } }
+    private var inProgress: [ActionItem] {
+        active.filter { !$0.isOverdue && !within7($0) && $0.doneCount > 0 }
+    }
+    private var upcoming: [ActionItem] {
+        active.filter { !$0.isOverdue && !within7($0) && $0.doneCount == 0 }
+    }
+
     var body: some View {
-        // NavigationStack lets rows push the Detail screen on top.
         NavigationStack {
             ZStack(alignment: .top) {
                 Color.paper.ignoresSafeArea()
@@ -23,25 +52,14 @@ struct InboxView: View {
                             .padding(.horizontal, 24)
                             .padding(.bottom, 18)
 
-                        // TEMP (Week 2): sections, counts, and items are
-                        // hardcoded. Real version reads saved items from
-                        // storage and buckets them by due date at render.
-                        InboxSection(title: "Needs attention", count: 1, tone: .bad) {
-                            RowLink(item: .parkingTicket)
-                        }
-
-                        InboxSection(title: "Due this week", count: 2) {
-                            RowLink(item: .conEdison)
-                            InboxRowDivider()
-                            RowLink(item: .insuranceCall)
-                        }
-
-                        InboxSection(title: "In progress", count: 1) {
-                            RowLink(item: .moveOut)
-                        }
-
-                        InboxSection(title: "Upcoming", count: 1, isMuted: true) {
-                            RowLink(item: .sutterVisit)
+                        if items.isEmpty {
+                            emptyState
+                        } else {
+                            section("Needs attention", needsAttention, tone: .bad)
+                            section("Due this week", dueThisWeek)
+                            section("In progress", inProgress)
+                            section("Upcoming", upcoming, muted: true)
+                            section("Done", doneItems, muted: true, done: true)
                         }
 
                         PrivacyBanner()
@@ -55,129 +73,131 @@ struct InboxView: View {
             }
             .navigationBarHidden(true)
         }
+        .task {
+            if !didSeed {
+                for sample in ActionItem.samples { context.insert(sample) }
+                didSeed = true
+            }
+        }
     }
 
-    // Date eyebrow + title + active-count counter
+    // MARK: masthead
+
     private var masthead: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(dateLabel)
-                    .font(.eyebrow)
-                    .tracking(1.4)
-                    .foregroundStyle(Color.faded)
+                    .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
                 Text("Inbox")
-                    .font(.serifTitle)
-                    .tracking(-0.6)
-                    .foregroundStyle(Color.ink)
+                    .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
             }
             Spacer()
-            Text("5 active")   // TEMP (Week 2): hardcoded; derive from count
-                .font(.eyebrow)
-                .tracking(0.6)
-                .foregroundStyle(Color.faded)
+            Text("\(active.count) active")
+                .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
         }
     }
 
-    // "FRI · MAY 30"-style label built from today's date.
     private var dateLabel: String {
         let weekday  = Date.now.formatted(.dateTime.weekday(.abbreviated)).uppercased()
         let monthDay = Date.now.formatted(.dateTime.month(.abbreviated).day()).uppercased()
         return "\(weekday) · \(monthDay)"
     }
-}
 
-// MARK: - Section (header + grouped white card)
+    // MARK: a section (only renders when it has items)
 
-private struct InboxSection<Content: View>: View {
-    let title: String
-    let count: Int
-    var tone: Tone = .normal
-    var isMuted: Bool = false
-    @ViewBuilder var content: Content
+    @ViewBuilder
+    private func section(_ title: String, _ rows: [ActionItem],
+                         tone: SectionTone = .normal,
+                         muted: Bool = false,
+                         done: Bool = false) -> some View {
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title)
+                        .font(.serifSection)
+                        .foregroundStyle(
+                            muted ? Color.faded
+                            : tone == .bad ? Color.bad
+                            : Color.ink
+                        )
+                    Spacer()
+                    Text("\(rows.count)")
+                        .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
 
-    enum Tone { case normal, bad }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(title)
-                    .font(.serifSection)
-                    .foregroundStyle(
-                        isMuted ? Color.faded
-                        : tone == .bad ? Color.bad
-                        : Color.ink
-                    )
-                Spacer()
-                Text("\(count)")
-                    .font(.eyebrow)
-                    .tracking(0.6)
-                    .foregroundStyle(Color.faded)
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
+                        if index != 0 { InboxRowDivider() }
+                        RowLink(item: item, done: done)
+                    }
+                }
+                .background(Color.card)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+                .padding(.horizontal, 14)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 8)
-
-            VStack(spacing: 0) {
-                content
-            }
-            .background(Color.card)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.hair, lineWidth: 1)
-            )
-            .padding(.horizontal, 14)
+            .padding(.top, 16)
         }
-        .padding(.top, 16)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Text("Nothing yet")
+                .font(.serifSection).foregroundStyle(Color.faded)
+            Text("Tap ＋ to scan a document or add a task.")
+                .font(.subline).foregroundStyle(Color.faint)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 60)
     }
 }
 
-// One inbox row that pushes that item's own Detail screen when tapped.
-// .plain keeps the row's styling instead of NavigationLink's blue tint.
+enum SectionTone { case normal, bad }
+
+// MARK: - Row link
+
 private struct RowLink: View {
     let item: ActionItem
+    var done: Bool = false
+
     var body: some View {
         NavigationLink {
             DetailView(item: item)
         } label: {
-            // Color/symbol/subtitle are derived from the item's category
-            // and domain data (see Theme/ItemStyle.swift), not stored on it.
             InboxRow(
                 glyph: item.category.symbol,
                 color: item.category.tint,
                 title: item.title,
-                subtitle: item.inboxSubtitle,
-                isOverdue: item.isOverdue
+                subtitle: done ? "Completed" : item.inboxSubtitle,
+                isOverdue: item.isOverdue,
+                done: done
             )
         }
         .buttonStyle(.plain)
     }
 }
 
-// Hairline between rows inside a section card — inset from the leading
-// edge so it doesn't extend under the row's circular icon.
 private struct InboxRowDivider: View {
     var body: some View {
-        Rectangle()
-            .fill(Color.hair)
-            .frame(height: 1)
-            .padding(.leading, 64)
+        Rectangle().fill(Color.hair).frame(height: 1).padding(.leading, 64)
     }
 }
 
-// MARK: - Row
-
 private struct InboxRow: View {
-    let glyph: String       // SF Symbol name
-    let color: Color        // circle background
+    let glyph: String
+    let color: Color
     let title: String
     let subtitle: String
     var isOverdue: Bool = false
+    var done: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                Circle().fill(color)
-                Image(systemName: glyph)
+                Circle().fill(done ? Color.faint : color)
+                Image(systemName: done ? "checkmark" : glyph)
                     .foregroundStyle(.white)
                     .font(.system(size: 15, weight: .semibold))
             }
@@ -186,16 +206,15 @@ private struct InboxRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.cardTitle)
-                    .foregroundStyle(Color.ink)
+                    .foregroundStyle(done ? Color.faded : Color.ink)
+                    .strikethrough(done, color: Color.faded)
                     .lineLimit(1)
-
                 Text(subtitle)
                     .font(.subline)
                     .foregroundStyle(isOverdue ? Color.bad : Color.faded)
             }
 
             Spacer()
-
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .regular))
                 .foregroundStyle(Color.faint)
@@ -207,26 +226,20 @@ private struct InboxRow: View {
 
 // MARK: - Privacy banner
 
-// Quiet posture statement pinned to the bottom of the home list — the
-// spec wants this visible without being loud.
 private struct PrivacyBanner: View {
     var body: some View {
         Text("LOCAL OCR · NO BANK LINK · NO AUTOPAY")
-            .font(.eyebrow)
-            .tracking(0.4)
-            .foregroundStyle(Color.faded)
-            .padding(.vertical, 14)
-            .padding(.horizontal, 18)
+            .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faded)
+            .padding(.vertical, 14).padding(.horizontal, 18)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.bg)
             .overlay(alignment: .leading) {
-                Rectangle()
-                    .fill(Color.accent)
-                    .frame(width: 2)
+                Rectangle().fill(Color.accent).frame(width: 2)
             }
     }
 }
 
 #Preview {
     InboxView()
+        .modelContainer(for: ActionItem.self, inMemory: true)
 }

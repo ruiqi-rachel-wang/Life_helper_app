@@ -219,14 +219,28 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 **Done when:** every screen renders matching prototype within ~10%. All navigation works. No real data anywhere.
 
 ### Week 2: SwiftData + Create flow (first real persistence)
-- SwiftData models: ActionItem, Step
-- StorageProtocol + SwiftDataStorage
-- ActionItemRepository (only thing ViewModels touch)
-- InboxViewModel reads from repo (delete mocks)
-- CreateView saves real items (title, due date, optional notes, optional steps)
-- First XCTest: ActionItemRepositoryTests, RecurrenceTests
+- SwiftData `@Model` on ActionItem (+ Step); a small store/repository layer
+- Inbox reads from the store (delete the hardcoded samples; seed starter data on first launch)
+- CreateView saves real items
+- Mark done / Delete / checkbox toggles write back to the store
+- First unit tests for save / load / delete
 
-**Done when:** Create form saves; force-quit + reopen → item still there. Cmd+U runs tests, they pass.
+**Decisions (2026-05-30):**
+- **Create form:** only **Title is required**. Due date optional, steps optional,
+  note optional. (No steps = a reminder; with steps = a checklist.)
+- **Note supports images:** the note can hold a photo, not just text (e.g. a
+  snapshot of the document). Stored as image data (external storage). Stretch
+  part of Week 2 — text note first, then add the photo attachment.
+- **Marking done (no delete):** the item moves to a **"Done" section at the
+  bottom of the Inbox** — it does NOT vanish. It stays there until deleted.
+- **Deleting a done item:** it disappears. For a **recurring** task, deleting
+  must first ask: **delete just this one, or this and all future ones?**
+  (The future-instances part only bites once recurring generates them — so the
+  recurring-aware confirm dialog lands with recurrence in **Week 7**; Week 2
+  handles plain one-off delete.)
+
+**Done when:** Create a task (title only is enough) → force-quit + reopen →
+still there. Mark done → moves to Done section. Delete → gone. Tests pass.
 
 ### Week 3: Notifications + workflow states
 - Request notification permission (graceful degradation if denied)

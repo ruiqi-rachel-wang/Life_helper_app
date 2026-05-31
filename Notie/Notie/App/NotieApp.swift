@@ -5,6 +5,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct NotieApp: App {
@@ -12,5 +13,8 @@ struct NotieApp: App {
         WindowGroup {
             RootTabView()
         }
+        // Sets up the on-device SwiftData store and injects a modelContext
+        // into the environment so every screen can read/write items.
+        .modelContainer(for: ActionItem.self)
     }
 }

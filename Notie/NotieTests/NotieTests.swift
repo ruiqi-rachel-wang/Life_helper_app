@@ -1,17 +1,17 @@
 //  NotieTests.swift
 //
-//  Unit tests for the domain logic on ActionItem. These run with Cmd+U
-//  (or `xcodebuild test`) in seconds and need no UI — exactly the kind
-//  of logic that's worth locking down before persistence lands.
+//  Unit tests for ActionItem — domain logic (isOverdue, doneCount,
+//  reminderSchedule) plus a real SwiftData round-trip on an in-memory
+//  store (insert → save → fetch → delete). Run with Cmd+U.
 //
 
 import Testing
 import Foundation
+import SwiftData
 @testable import Notie
 
 struct ActionItemTests {
 
-    // Helper: a date N days from the start of today.
     private func day(_ offset: Int) -> Date {
         Calendar.current.date(byAdding: .day, value: offset,
                               to: Calendar.current.startOfDay(for: .now))!
@@ -20,24 +20,20 @@ struct ActionItemTests {
     // MARK: isOverdue
 
     @Test func dueInPastIsOverdue() {
-        let item = ActionItem(title: "x", category: .other, dueDate: day(-2))
-        #expect(item.isOverdue == true)
+        #expect(ActionItem(title: "x", category: .other, dueDate: day(-2)).isOverdue)
     }
 
     @Test func dueInFutureIsNotOverdue() {
-        let item = ActionItem(title: "x", category: .other, dueDate: day(5))
-        #expect(item.isOverdue == false)
+        #expect(!ActionItem(title: "x", category: .other, dueDate: day(5)).isOverdue)
     }
 
     @Test func doneItemIsNeverOverdue() {
-        let item = ActionItem(title: "x", category: .other,
-                              dueDate: day(-10), status: .done)
-        #expect(item.isOverdue == false)
+        #expect(!ActionItem(title: "x", category: .other,
+                            dueDate: day(-10), status: .done).isOverdue)
     }
 
     @Test func noDueDateIsNotOverdue() {
-        let item = ActionItem(title: "x", category: .other)
-        #expect(item.isOverdue == false)
+        #expect(!ActionItem(title: "x", category: .other).isOverdue)
     }
 
     // MARK: doneCount
@@ -54,31 +50,54 @@ struct ActionItemTests {
     // MARK: reminderSchedule
 
     @Test func noDueDateHasNoReminders() {
-        let item = ActionItem(title: "x", category: .other)
-        #expect(item.reminderSchedule().isEmpty)
+        #expect(ActionItem(title: "x", category: .other).reminderSchedule().isEmpty)
     }
 
     @Test func futureItemHasThreeReminders() {
-        let item = ActionItem(title: "x", category: .other, dueDate: day(10))
-        let schedule = item.reminderSchedule()
+        let schedule = ActionItem(title: "x", category: .other, dueDate: day(10)).reminderSchedule()
         #expect(schedule.count == 3)
         #expect(schedule.map(\.label) == ["3 days before", "1 day before", "Due day"])
     }
 
     @Test func overdueItemAddsFollowUp() {
-        let item = ActionItem(title: "x", category: .other, dueDate: day(-2))
-        let schedule = item.reminderSchedule()
+        let schedule = ActionItem(title: "x", category: .other, dueDate: day(-2)).reminderSchedule()
         #expect(schedule.count == 4)
         #expect(schedule.last?.label == "Overdue follow-up")
     }
 
     @Test func reminderDatesAreOffsetFromDueDate() {
         let due = day(10)
-        let item = ActionItem(title: "x", category: .other, dueDate: due)
-        let schedule = item.reminderSchedule()
+        let schedule = ActionItem(title: "x", category: .other, dueDate: due).reminderSchedule()
         let cal = Calendar.current
         #expect(schedule[0].date == cal.date(byAdding: .day, value: -3, to: due))
         #expect(schedule[1].date == cal.date(byAdding: .day, value: -1, to: due))
         #expect(schedule[2].date == due)
+    }
+
+    // MARK: SwiftData persistence (in-memory store)
+
+    @MainActor
+    @Test func savesLoadsAndDeletes() throws {
+        let container = try ModelContainer(
+            for: ActionItem.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+
+        let item = ActionItem(title: "Rent", category: .housing,
+                              amount: Decimal(string: "1200"), dueDate: day(5),
+                              steps: [ChecklistStep(text: "Pay landlord")])
+        context.insert(item)
+        try context.save()
+
+        var fetched = try context.fetch(FetchDescriptor<ActionItem>())
+        #expect(fetched.count == 1)
+        #expect(fetched.first?.title == "Rent")
+        #expect(fetched.first?.steps.count == 1)          // array of structs persisted
+        #expect(fetched.first?.amount == Decimal(string: "1200"))
+
+        context.delete(item)
+        try context.save()
+        fetched = try context.fetch(FetchDescriptor<ActionItem>())
+        #expect(fetched.isEmpty)
     }
 }

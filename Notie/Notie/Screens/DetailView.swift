@@ -1,57 +1,27 @@
 //  DetailView.swift
 //
-//  Action detail — the full view of one inbox item. View it, edit it
-//  (top-right Edit, like Review), check off steps, and mark it done.
+//  Action detail — the full view of one stored item. Because it binds to
+//  the live SwiftData object (@Bindable), edits, Mark done, and Delete
+//  write straight through to the store and the Inbox reflects them.
 //
-//  The screen is composed of optional, item-driven sections — stats,
-//  steps, reminders, note — each shown only when the item has that data.
-//  This is deliberate: later, different item TYPES (a bill vs. a phone
-//  call vs. a checklist) will compose different sections. We're not
-//  building per-type layouts yet, but the structure is ready for it —
-//  nothing here assumes every item looks the same.
-//
-//  No manual status and no Defer (per product decision): status is
-//  derived; the only explicit action is Mark done. Once done, a Delete
-//  option appears.
-//
-//  TEMP (Week 2): edits, Mark done, and Delete don't persist yet — they
-//  live in @State; Delete just closes the screen.
+//  Composed of optional, item-driven sections (stats / steps / reminders
+//  / note) — different item TYPES can compose different sections later
+//  without a rewrite. Top-right Edit (like Review); no manual status, no
+//  Defer; once done, a Delete option appears.
 //
 
 import SwiftUI
+import SwiftData
 
 struct DetailView: View {
-    let item: ActionItem
+    @Bindable var item: ActionItem
 
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-
-    @State private var steps: [ChecklistStep]
-    @State private var due: Date?
-    @State private var note: String
     @State private var isEditing = false
-    @State private var isDone: Bool
 
-    init(item: ActionItem) {
-        self.item = item
-        _steps = State(initialValue: item.steps)
-        _due   = State(initialValue: item.dueDate)
-        _note  = State(initialValue: item.note)
-        _isDone = State(initialValue: item.status == .done)
-    }
-
-    // A live copy reflecting the current edits, so all display + date math
-    // reuses the model's own logic (amountText, overdueText, reminders…).
-    private var live: ActionItem {
-        var c = item
-        c.dueDate = due
-        c.steps = steps
-        c.note = note
-        c.status = isDone ? .done : item.status
-        return c
-    }
-
+    private var isDone: Bool { item.status == .done }
     private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
-    private var hasStats: Bool { live.amountText != nil || live.dueText != nil }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -64,25 +34,25 @@ struct DetailView: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 8)
 
-                    if hasStats {
+                    if item.amountText != nil || item.dueText != nil {
                         statsCard
                             .padding(.horizontal, 14)
                             .padding(.top, 16)
                     }
 
-                    if !steps.isEmpty || isEditing {
+                    if !item.steps.isEmpty || isEditing {
                         checklistCard
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
                     }
 
-                    if !live.reminderSchedule().isEmpty {
+                    if !item.reminderSchedule().isEmpty {
                         remindersCard
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
                     }
 
-                    if !note.isEmpty || isEditing {
+                    if !item.note.isEmpty || isEditing {
                         noteCard
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
@@ -106,39 +76,32 @@ struct DetailView: View {
         HStack {
             Button { dismiss() } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(Color.faint)
+                    .font(.system(size: 17, weight: .medium)).foregroundStyle(Color.faint)
             }
             .accessibilityLabel("Back")
             Spacer()
-            Text("ACTION")
-                .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
+            Text("ACTION").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
             Spacer()
             Button { isEditing.toggle() } label: {
                 Text(isEditing ? "Done" : "Edit")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.accent)
+                    .font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.accent)
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 22)
     }
 
-    // MARK: title + overdue banner
+    // MARK: title + status line
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(item.title)
-                .font(.serifDetail)
-                .tracking(-0.6)
-                .foregroundStyle(Color.ink)
-            if !isEditing, !isDone, let note = live.overdueText {
-                Text(note)
-                    .font(.eyebrow).tracking(0.6).foregroundStyle(Color.bad)
+                .font(.serifDetail).tracking(-0.6).foregroundStyle(Color.ink)
+            if !isEditing, !isDone, let note = item.overdueText {
+                Text(note).font(.eyebrow).tracking(0.6).foregroundStyle(Color.bad)
             }
             if isDone {
-                Text("✓ COMPLETED")
-                    .font(.eyebrow).tracking(0.6).foregroundStyle(Color.ok)
+                Text("✓ COMPLETED").font(.eyebrow).tracking(0.6).foregroundStyle(Color.ok)
             }
         }
     }
@@ -147,7 +110,7 @@ struct DetailView: View {
 
     private var statsCard: some View {
         HStack(spacing: 14) {
-            if let amount = live.amountText {
+            if let amount = item.amountText {
                 statField(label: "AMOUNT", value: amount, tone: Color.ink)
             }
             if isEditing {
@@ -157,9 +120,9 @@ struct DetailView: View {
                         .labelsHidden().datePickerStyle(.compact)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            } else if let dueText = live.dueText {
+            } else if let dueText = item.dueText {
                 statField(label: "DUE", value: dueText,
-                          tone: live.isOverdue ? Color.bad : Color.ink)
+                          tone: item.isOverdue ? Color.bad : Color.ink)
             }
         }
         .padding(16)
@@ -176,7 +139,7 @@ struct DetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: checklist (editable in edit mode)
+    // MARK: checklist
 
     private var checklistCard: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -184,18 +147,18 @@ struct DetailView: View {
                 Text("STEPS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 Spacer()
                 if !isEditing {
-                    Text("\(live.doneCount) of \(steps.count)")
+                    Text("\(item.doneCount) of \(item.steps.count)")
                         .font(.eyebrow).foregroundStyle(Color.faded)
                 }
             }
             .padding(.bottom, 8)
 
-            ForEach($steps) { $step in
+            ForEach($item.steps) { $step in
                 if isEditing {
                     HStack(alignment: .top, spacing: 10) {
                         TextField("Step", text: $step.text, axis: .vertical)
                             .font(.body14).foregroundStyle(Color.ink)
-                        Button { steps.removeAll { $0.id == step.id } } label: {
+                        Button { item.steps.removeAll { $0.id == step.id } } label: {
                             Image(systemName: "minus.circle.fill")
                                 .font(.system(size: 18)).foregroundStyle(Color.faint)
                         }
@@ -222,7 +185,7 @@ struct DetailView: View {
             }
 
             if isEditing {
-                Button { steps.append(ChecklistStep(text: "")) } label: {
+                Button { item.steps.append(ChecklistStep(text: "")) } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "plus.circle").font(.system(size: 16))
                         Text("Add a step").font(.body14)
@@ -242,7 +205,7 @@ struct DetailView: View {
 
     @ViewBuilder
     private func divider(above step: ChecklistStep) -> some View {
-        if step.id != steps.first?.id {
+        if step.id != item.steps.first?.id {
             Rectangle().fill(Color.hairD).frame(height: 1)
         }
     }
@@ -260,14 +223,14 @@ struct DetailView: View {
             }
     }
 
-    // MARK: reminders (derived from the live due date)
+    // MARK: reminders (derived)
 
     private var remindersCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("REMINDERS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 .padding(.bottom, 10)
 
-            ForEach(live.reminderSchedule()) { reminder in
+            ForEach(item.reminderSchedule()) { reminder in
                 let isPast = reminder.date < startOfToday
                 HStack(spacing: 10) {
                     Text(reminder.date.formatted(.dateTime.month(.abbreviated).day()))
@@ -275,11 +238,9 @@ struct DetailView: View {
                         .foregroundStyle(isPast ? Color.faint : Color.ink)
                         .frame(width: 60, alignment: .leading)
                     Text(reminder.label)
-                        .font(.subline)
-                        .foregroundStyle(isPast ? Color.faded : Color.ink)
+                        .font(.subline).foregroundStyle(isPast ? Color.faded : Color.ink)
                     Spacer()
-                    Circle().fill(isPast ? Color.hairD : Color.accent)
-                        .frame(width: 6, height: 6)
+                    Circle().fill(isPast ? Color.hairD : Color.accent).frame(width: 6, height: 6)
                 }
                 .padding(.vertical, 7)
             }
@@ -291,16 +252,16 @@ struct DetailView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 
-    // MARK: note (editable in edit mode)
+    // MARK: note
 
     private var noteCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("NOTE").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             if isEditing {
-                TextField("Add a note…", text: $note, axis: .vertical)
+                TextField("Add a note…", text: $item.note, axis: .vertical)
                     .font(.body14).foregroundStyle(Color.ink).lineLimit(2...5)
             } else {
-                Text(note).font(.body14).foregroundStyle(Color.ink)
+                Text(item.note).font(.body14).foregroundStyle(Color.ink)
             }
         }
         .padding(.horizontal, 18)
@@ -316,25 +277,19 @@ struct DetailView: View {
     private var footer: some View {
         Group {
             if isDone {
-                // TEMP (Week 2): real Delete removes the item from storage.
-                Button { dismiss() } label: {
+                Button(role: .destructive) { deleteItem() } label: {
                     Text("Delete")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.bad)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.bad)
+                        .frame(maxWidth: .infinity).padding(.vertical, 13)
                         .background(RoundedRectangle(cornerRadius: 12)
                             .stroke(Color.bad.opacity(0.4), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             } else {
-                // TEMP (Week 2): real version persists status + cancels reminders.
-                Button { isDone = true } label: {
+                Button { item.status = .done } label: {
                     Text("Mark done")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.paper)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.paper)
+                        .frame(maxWidth: .infinity).padding(.vertical, 13)
                         .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
                 }
                 .buttonStyle(.plain)
@@ -342,12 +297,20 @@ struct DetailView: View {
         }
     }
 
-    // Non-optional binding for the DatePicker (defaults to today if unset).
+    // Delete only touches the store if the item actually lives there
+    // (a guide-preview item isn't saved yet — just close).
+    // TODO (Week 7): recurring items should ask "this one or future too?".
+    private func deleteItem() {
+        if item.modelContext != nil { context.delete(item) }
+        dismiss()
+    }
+
     private var dueBinding: Binding<Date> {
-        Binding(get: { due ?? startOfToday }, set: { due = $0 })
+        Binding(get: { item.dueDate ?? startOfToday }, set: { item.dueDate = $0 })
     }
 }
 
 #Preview {
-    DetailView(item: .parkingTicket)
+    DetailView(item: ActionItem.samples[0])
+        .modelContainer(for: ActionItem.self, inMemory: true)
 }

@@ -1,27 +1,26 @@
 //  ActionItem.swift
 //
-//  The core domain type — one task/bill/reminder. Pure data: no SwiftUI,
-//  no colors, no screen-local types. The view layer maps `category` to a
-//  color + SF Symbol (see Theme/ItemStyle.swift) and formats amounts/dates.
+//  The core domain type — one task/bill/reminder — now a SwiftData @Model
+//  so items actually persist to disk. Still UI-free: no colors, no
+//  screen-local types (the view layer maps category → color/symbol in
+//  Theme/ItemStyle.swift).
 //
-//  Keeping this Foundation-only is what makes Week 2 (SwiftData) and a
-//  future Android port clean: persistence stores semantic values, and the
-//  same logic ports to Kotlin unchanged.
-//
-//  Week 2 adds @Model + storage; the field shape is designed to carry over.
+//  @Model makes this a reference type (class), not a struct. That's what
+//  lets the Inbox (@Query) and Detail (@Bindable) share one live object:
+//  edit it on Detail and the Inbox updates, because they're the same
+//  instance backed by the store.
 //
 
 import Foundation
+import SwiftData
 
-// Semantic category of an item. Drives the icon/color in the view, NOT
-// the other way around. (The AI's extraction will set this.)
+// Semantic category. Drives the icon/color in the view, not vice-versa.
 enum ItemCategory: String, Codable, CaseIterable {
     case utility, government, medical, finance, housing, work, personal, other
 }
 
-// Workflow state. The user doesn't set this directly — `inProgress` is
-// derived (some steps checked), `done` comes from the "Mark done" button,
-// and `overdue` is derived (see isOverdue). No manual status, no defer.
+// Workflow state. Not user-set: inProgress is derived (some steps checked),
+// done comes from "Mark done", overdue is derived (see isOverdue).
 enum WorkStatus: String, Codable {
     case todo, inProgress, done
 
@@ -34,36 +33,60 @@ enum WorkStatus: String, Codable {
     }
 }
 
-struct ChecklistStep: Identifiable, Codable {
+// A checklist step. Stored as part of the item (SwiftData persists the
+// array of these Codable values).
+struct ChecklistStep: Identifiable, Codable, Hashable {
     var id = UUID()
     var text: String
     var done: Bool = false
 }
 
-// One scheduled reminder. Dates are domain data; whether it's "past" is
-// derived in the view against the current time.
+// One scheduled reminder — derived, never stored.
 struct ScheduledReminder: Identifiable {
     var id = UUID()
     var date: Date
     var label: String
 }
 
-struct ActionItem: Identifiable {
-    var id = UUID()
-
-    var title: String
-    var category: ItemCategory
-    var amount: Decimal?        // nil = not a bill
+@Model
+final class ActionItem {
+    var id: UUID = UUID()
+    var title: String = ""
+    var category: ItemCategory = ItemCategory.other
+    var amount: Decimal?
     var currency: String = "USD"
     var dueDate: Date?
     var note: String = ""
-    var status: WorkStatus = .todo
+    var imageData: Data?            // optional photo attached to the note
+    var status: WorkStatus = WorkStatus.todo
     var steps: [ChecklistStep] = []
     var repeatsMonthly: Bool = false
+    var createdAt: Date = Date.now
+
+    init(title: String,
+         category: ItemCategory,
+         amount: Decimal? = nil,
+         currency: String = "USD",
+         dueDate: Date? = nil,
+         note: String = "",
+         imageData: Data? = nil,
+         status: WorkStatus = .todo,
+         steps: [ChecklistStep] = [],
+         repeatsMonthly: Bool = false) {
+        self.title = title
+        self.category = category
+        self.amount = amount
+        self.currency = currency
+        self.dueDate = dueDate
+        self.note = note
+        self.imageData = imageData
+        self.status = status
+        self.steps = steps
+        self.repeatsMonthly = repeatsMonthly
+    }
 
     // MARK: derived (no UI, no formatting — just facts)
 
-    // Overdue = due before today and not finished. Not a settable state.
     var isOverdue: Bool {
         guard status != .done, let due = dueDate else { return false }
         return due < Calendar.current.startOfDay(for: .now)
@@ -71,9 +94,7 @@ struct ActionItem: Identifiable {
 
     var doneCount: Int { steps.filter(\.done).count }
 
-    // The reminder schedule for this item: 3 days before, 1 day before,
-    // due day, plus an overdue follow-up (today) if it's overdue. Pure
-    // date math so it's unit-testable without any UI.
+    // 3 days before, 1 day before, due day, + overdue follow-up if overdue.
     func reminderSchedule(now: Date = .now,
                           calendar: Calendar = .current) -> [ScheduledReminder] {
         guard let due = dueDate else { return [] }
@@ -94,9 +115,10 @@ struct ActionItem: Identifiable {
 }
 
 // MARK: - Sample data
-// TEMP (Week 2): these hardcoded samples stand in for real saved items.
-// Dates are relative to today so the derived states (overdue, due-soon)
-// stay correct no matter when the app is run. Replaced by SwiftData.
+// TEMP (Week 2): seeded into the store once on first launch so a fresh
+// install isn't empty during testing. A real app would start empty +
+// onboard. `samples` returns NEW instances each call (don't share @Model
+// objects across contexts).
 
 extension ActionItem {
     private static func day(_ offset: Int) -> Date {
@@ -105,67 +127,47 @@ extension ActionItem {
     }
     private static func usd(_ s: String) -> Decimal { Decimal(string: s) ?? .zero }
 
-    static let parkingTicket = ActionItem(
-        title: "NYC parking ticket",
-        category: .government,
-        amount: usd("115.00"),
-        dueDate: day(-2),                 // overdue
-        status: .inProgress,
-        steps: [
-            ChecklistStep(text: "Decide: pay or contest.", done: true),
-            ChecklistStep(text: "Open NYC Pay Tickets.", done: true),
-            ChecklistStep(text: "Enter violation #1234567890."),
-            ChecklistStep(text: "Pay the balance before the due date."),
+    static var samples: [ActionItem] {
+        [
+            ActionItem(title: "NYC parking ticket", category: .government,
+                       amount: usd("115.00"), dueDate: day(-2), status: .inProgress,
+                       steps: [
+                        ChecklistStep(text: "Decide: pay or contest.", done: true),
+                        ChecklistStep(text: "Open NYC Pay Tickets.", done: true),
+                        ChecklistStep(text: "Enter violation #1234567890."),
+                        ChecklistStep(text: "Pay the balance before the due date."),
+                       ]),
+            ActionItem(title: "Con Edison · electricity", category: .utility,
+                       amount: usd("86.42"), dueDate: day(16),
+                       steps: [
+                        ChecklistStep(text: "Open Con Edison and sign in."),
+                        ChecklistStep(text: "Pay the balance before the due date."),
+                        ChecklistStep(text: "Save the confirmation number."),
+                       ],
+                       repeatsMonthly: true),
+            ActionItem(title: "Call insurance — claim follow-up", category: .personal,
+                       dueDate: day(21),
+                       steps: [
+                        ChecklistStep(text: "Find claim reference #CL-4421."),
+                        ChecklistStep(text: "Call 1-800-555-0140."),
+                        ChecklistStep(text: "Ask about the copay refund."),
+                       ]),
+            ActionItem(title: "Apartment move-out inspection", category: .housing,
+                       dueDate: day(29), status: .inProgress,
+                       steps: [
+                        ChecklistStep(text: "Patch nail holes.", done: true),
+                        ChecklistStep(text: "Deep-clean kitchen.", done: true),
+                        ChecklistStep(text: "Shampoo carpets.", done: true),
+                        ChecklistStep(text: "Return all keys.", done: true),
+                        ChecklistStep(text: "Take dated photos of each room."),
+                        ChecklistStep(text: "Email landlord the forwarding address."),
+                       ]),
+            ActionItem(title: "Sutter Health · clinic visit", category: .medical,
+                       amount: usd("214.00"), dueDate: day(33),
+                       steps: [
+                        ChecklistStep(text: "Review the itemized charges."),
+                        ChecklistStep(text: "Pay the balance or set up a plan."),
+                       ]),
         ]
-    )
-
-    static let conEdison = ActionItem(
-        title: "Con Edison · electricity",
-        category: .utility,
-        amount: usd("86.42"),
-        dueDate: day(16),
-        steps: [
-            ChecklistStep(text: "Open Con Edison and sign in."),
-            ChecklistStep(text: "Pay the balance before the due date."),
-            ChecklistStep(text: "Save the confirmation number."),
-        ],
-        repeatsMonthly: true
-    )
-
-    static let insuranceCall = ActionItem(
-        title: "Call insurance — claim follow-up",
-        category: .personal,
-        dueDate: day(21),
-        steps: [
-            ChecklistStep(text: "Find claim reference #CL-4421."),
-            ChecklistStep(text: "Call 1-800-555-0140."),
-            ChecklistStep(text: "Ask about the copay refund."),
-        ]
-    )
-
-    static let moveOut = ActionItem(
-        title: "Apartment move-out inspection",
-        category: .housing,
-        dueDate: day(29),
-        status: .inProgress,
-        steps: [
-            ChecklistStep(text: "Patch nail holes.", done: true),
-            ChecklistStep(text: "Deep-clean kitchen.", done: true),
-            ChecklistStep(text: "Shampoo carpets.", done: true),
-            ChecklistStep(text: "Return all keys.", done: true),
-            ChecklistStep(text: "Take dated photos of each room."),
-            ChecklistStep(text: "Email landlord the forwarding address."),
-        ]
-    )
-
-    static let sutterVisit = ActionItem(
-        title: "Sutter Health · clinic visit",
-        category: .medical,
-        amount: usd("214.00"),
-        dueDate: day(33),
-        steps: [
-            ChecklistStep(text: "Review the itemized charges."),
-            ChecklistStep(text: "Pay the balance or set up a plan."),
-        ]
-    )
+    }
 }
