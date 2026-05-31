@@ -69,6 +69,13 @@ struct DetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .onDisappear {
+            // Sync reminders to the item's current state (e.g. an edited
+            // due date). Skips deleted / unsaved (guide-preview) items.
+            if item.modelContext != nil {
+                ReminderScheduler.shared.reschedule(for: item)
+            }
+        }
     }
 
     // MARK: nav — back · ACTION · Edit/Done
@@ -309,7 +316,7 @@ struct DetailView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Button { item.status = .done } label: {
+                Button { markDone() } label: {
                     Text("Mark done")
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.paper)
                         .frame(maxWidth: .infinity).padding(.vertical, 13)
@@ -325,10 +332,17 @@ struct DetailView: View {
         }
     }
 
+    // Mark done + cancel any pending reminders.
+    private func markDone() {
+        item.status = .done
+        ReminderScheduler.shared.cancel(itemID: item.id)
+    }
+
     // Delete only touches the store if the item actually lives there
     // (a guide-preview item isn't saved yet — just close).
     // TODO (Week 7): recurring items should ask "this one or future too?".
     private func deleteItem() {
+        ReminderScheduler.shared.cancel(itemID: item.id)
         if item.modelContext != nil { context.delete(item) }
         dismiss()
     }

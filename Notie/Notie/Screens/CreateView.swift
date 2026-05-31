@@ -359,6 +359,7 @@ private struct CreateForm: View {
             steps: cleanSteps
         )
         context.insert(item)
+        ReminderScheduler.shared.reschedule(for: item)   // schedule reminders
         router.goToInbox()   // land on the Inbox so the new item is visible
         dismiss()
     }

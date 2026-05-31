@@ -13,6 +13,7 @@ import SwiftData
 
 struct InboxView: View {
     @Environment(\.modelContext) private var context
+    @Environment(AppRouter.self) private var router
     @Query(sort: \ActionItem.createdAt, order: .reverse) private var items: [ActionItem]
 
     // TEMP (Week 2): seed sample items once on first launch so a fresh
@@ -54,6 +55,11 @@ struct InboxView: View {
                 }
             }
             .navigationBarHidden(true)
+            // Notification tap → open that item's Detail. The binding finds
+            // the item by the id the delegate stashed in the router.
+            .navigationDestination(item: pendingItem) { item in
+                DetailView(item: item)
+            }
         }
         .task {
             if !didSeed {
@@ -61,6 +67,14 @@ struct InboxView: View {
                 didSeed = true
             }
         }
+    }
+
+    // Resolves router.pendingItemID to the actual item; clearing it pops.
+    private var pendingItem: Binding<ActionItem?> {
+        Binding(
+            get: { items.first { $0.id == router.pendingItemID } },
+            set: { if $0 == nil { router.pendingItemID = nil } }
+        )
     }
 
     // MARK: masthead
@@ -224,4 +238,5 @@ private struct PrivacyBanner: View {
 #Preview {
     InboxView()
         .modelContainer(for: ActionItem.self, inMemory: true)
+        .environment(AppRouter())
 }

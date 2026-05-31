@@ -377,6 +377,7 @@ struct ReviewView: View {
             // recurring (repeatsMonthly / a real cadence) — Week 7
         )
         context.insert(item)
+        ReminderScheduler.shared.reschedule(for: item)   // schedule reminders
         router.goToInbox()   // land on the Inbox so the new item is visible
         dismiss()
     }

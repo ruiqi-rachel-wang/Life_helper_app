@@ -13,10 +13,11 @@ import SwiftUI
 import SwiftData
 
 struct RootTabView: View {
-    @State private var router = AppRouter()
+    @Environment(AppRouter.self) private var router
 
     var body: some View {
-        TabView(selection: $router.selectedTab) {
+        @Bindable var router = router
+        return TabView(selection: $router.selectedTab) {
             InboxView()
                 .tabItem { Label("Inbox", systemImage: "tray") }
                 .tag(AppRouter.Tab.inbox)
@@ -41,4 +42,5 @@ struct RootTabView: View {
 #Preview {
     RootTabView()
         .modelContainer(for: ActionItem.self, inMemory: true)
+        .environment(AppRouter())
 }

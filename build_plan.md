@@ -20,8 +20,9 @@
 
 **Week 0 — Setup** ✓ complete (pending only: product name, launch language — not code-blocking)
 **Week 1 — SwiftUI shell** ✓ complete
-**Week 2 — Persistence** ✓ complete — SwiftData store; Inbox reads live (@Query) with a Done section; Detail binds to the live object so Mark done / Delete / edits write back; Create form saves (title-only valid) with optional due date, steps, and a text+photo note. Backed up on GitHub (`ruiqi-rachel-wang/Life_helper_app`, branch `main`). 10 unit tests incl. a SwiftData round-trip.
-**Week 3 — Notifications** ⏳ next.
+**Week 2 — Persistence** ✓ complete — SwiftData store; Inbox reads live (@Query) with a Done section; Detail binds to the live object so Mark done / Delete / edits write back; Create form saves (title-only valid) with optional due date, steps, and a text+photo note. Backed up on GitHub (`ruiqi-rachel-wang/Life_helper_app`, branch `main`).
+**Week 3 — Notifications** ✓ complete — local reminders (3d/1d/due/overdue at 9am) scheduled on save, cancelled on done/delete, rescheduled on edit; interactive Mark done / Remind me later actions; tap a banner to open the item. 14 unit tests.
+**Week 4 — Camera + OCR** ⏳ next.
 
 What's running today:
 - All 5 screens built: Inbox, Guides, Detail, Review, Create (+ Settings stub).
@@ -247,19 +248,20 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 **Done when:** Create a task (title only is enough) → force-quit + reopen →
 still there. Mark done → moves to Done section. Delete → gone. Tests pass.
 
-### Week 3: Notifications + workflow states ⏳ NOT STARTED
-- [ ] Request notification permission (graceful degradation if denied)
-- [ ] Notifications service (schedule + cancel) wrapping UNUserNotificationCenter
-- [ ] Schedule on save: 3d before, 1d before, due day, +1 morning after overdue
-- [ ] Cancel reminders when an item is marked done or deleted
-- [ ] Re-schedule reminders when the due date is edited
-- [ ] **Notification actions** (decided 2026-05-30): each reminder offers
-  **Mark done** (completes inline, cancels remaining), **Remind me later**
-  (snooze), and tapping the body / **View** opens that item's Detail.
-- [x] `isOverdue` derived + red styling (already done in Week 1/2)
+### Week 3: Notifications + workflow states ✓ COMPLETE
+- [x] Request notification permission at launch (graceful if denied)
+- [x] ReminderScheduler wrapping UNUserNotificationCenter (schedule/cancel/reschedule/snooze)
+- [x] Schedule on save: 3d before, 1d before, due day, + overdue follow-up (fire 9am, skip past)
+- [x] Cancel reminders when marked done or deleted
+- [x] Re-schedule when the due date is edited (Detail .onDisappear)
+- [x] **Notification actions**: Mark done (writes to store + cancels), Remind me
+  later (snooze 2h), and tapping the banner opens that item's Detail (deep link
+  via AppRouter.pendingItemID + navigationDestination)
+- [x] `isOverdue` derived + red styling (Week 1/2)
+- [x] DEBUG: Settings "Send a test reminder (5s)" + notification-status row
 
 **Done when:** notification fires on a real schedule, with Mark done / Remind
-me later / View actions. Mark done cancels future reminders. Overdue → red.
+me later / View actions. Mark done cancels future reminders. Overdue → red. ✓
 
 > Status model (decided 2026-05-30): the user does NOT set status manually
 > and there is no Defer. `inProgress` is derived (some steps checked), `done`
