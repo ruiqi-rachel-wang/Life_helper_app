@@ -212,20 +212,23 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 
 **Done when:** Xcode signed in, "Hello World" running in simulator, design tokens compile. ✓
 
-### Week 1: SwiftUI shell with fake data
+### Week 1: SwiftUI shell with fake data ✓ COMPLETE
 - [x] Tab bar: Inbox · Guides · ＋ · Settings
-- [ ] 5 screen views with hardcoded mock data — **Inbox done (4 sections, 5 items, masthead, privacy banner); Guides / Create / Settings are stubs; Detail + Review not yet created**
-- [ ] Reusable components — `SourceTag` enum done; `InboxRow` / `InboxSection` / `InboxRowDivider` / `PrivacyBanner` built inline in InboxView (extract when reused); `StatCardView`, `StepRowView`, `EyebrowText` not yet built
-- [ ] Navigation: inbox row → Detail, ＋ → Create sheet, Guide → Detail
+- [x] All 5 screens built (Inbox, Guides, Detail, Review, Create) + Settings stub
+- [x] Reusable row/section/tile components (built per-screen; extract further when reused)
+- [x] Navigation: inbox row → Detail, guide → Detail, ＋ Scan/Upload → Review
+- [ ] *Polish deferred:* raised ＋ tab button (floating circle) → Week 7
 
-**Done when:** every screen renders matching prototype within ~10%. All navigation works. No real data anywhere.
+**Done when:** every screen renders matching prototype within ~10%. All navigation works. No real data anywhere. ✓
 
-### Week 2: SwiftData + Create flow (first real persistence)
-- SwiftData `@Model` on ActionItem (+ Step); a small store/repository layer
-- Inbox reads from the store (delete the hardcoded samples; seed starter data on first launch)
-- CreateView saves real items
-- Mark done / Delete / checkbox toggles write back to the store
-- First unit tests for save / load / delete
+### Week 2: SwiftData + Create flow (first real persistence) ✓ COMPLETE
+- [x] SwiftData `@Model` on ActionItem (steps stored as Codable array; + imageData, createdAt)
+- [x] Inbox reads from the store via @Query; buckets by urgency + Done section; seeds on first launch
+- [x] Create form saves real items (title-only valid; optional due/steps/note + photo)
+- [x] Mark done (→ Done section) / Delete / checkbox toggles write back to the store
+- [x] Review "Add to inbox" saves too (mock pre-fill, real save)
+- [x] Full editing on Detail + Review (title, type/sender, amount, due, steps, note)
+- [x] Unit tests incl. a real SwiftData save/load/delete round-trip (10 pass)
 
 **Decisions (2026-05-30):**
 - **Create form:** only **Title is required**. Due date optional, steps optional,
@@ -244,15 +247,16 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 **Done when:** Create a task (title only is enough) → force-quit + reopen →
 still there. Mark done → moves to Done section. Delete → gone. Tests pass.
 
-### Week 3: Notifications + workflow states
-- Request notification permission (graceful degradation if denied)
-- NotificationProtocol + UNNotificationService
-- Schedule on save: 3d before, 1d before, due day, +1 morning after overdue
-- Cancel reminders on done
-- **Notification actions** (decided 2026-05-30): each reminder notification
-  offers — **Mark done** (completes inline, cancels remaining), **Remind me
-  later** (snooze), and tapping the body / **View** opens that item's Detail.
-- `isOverdue` derived state + red styling
+### Week 3: Notifications + workflow states ⏳ NOT STARTED
+- [ ] Request notification permission (graceful degradation if denied)
+- [ ] Notifications service (schedule + cancel) wrapping UNUserNotificationCenter
+- [ ] Schedule on save: 3d before, 1d before, due day, +1 morning after overdue
+- [ ] Cancel reminders when an item is marked done or deleted
+- [ ] Re-schedule reminders when the due date is edited
+- [ ] **Notification actions** (decided 2026-05-30): each reminder offers
+  **Mark done** (completes inline, cancels remaining), **Remind me later**
+  (snooze), and tapping the body / **View** opens that item's Detail.
+- [x] `isOverdue` derived + red styling (already done in Week 1/2)
 
 **Done when:** notification fires on a real schedule, with Mark done / Remind
 me later / View actions. Mark done cancels future reminders. Overdue → red.
