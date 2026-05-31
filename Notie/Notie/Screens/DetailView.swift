@@ -35,7 +35,7 @@ struct DetailView: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 8)
 
-                    if item.amountText != nil || item.dueText != nil {
+                    if item.amountText != nil || item.dueText != nil || isEditing {
                         statsCard
                             .padding(.horizontal, 14)
                             .padding(.top, 16)
@@ -117,8 +117,27 @@ struct DetailView: View {
             if isEditing {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("DUE").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-                    DatePicker("", selection: dueBinding, displayedComponents: .date)
-                        .labelsHidden().datePickerStyle(.compact)
+                    if item.dueDate != nil {
+                        HStack(spacing: 6) {
+                            DatePicker("", selection: dueBinding, displayedComponents: .date)
+                                .labelsHidden().datePickerStyle(.compact)
+                            Button { item.dueDate = nil } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 16)).foregroundStyle(Color.faint)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Remove due date")
+                        }
+                    } else {
+                        Button { item.dueDate = startOfToday } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus.circle").font(.system(size: 15))
+                                Text("Add date").font(.subline)
+                            }
+                            .foregroundStyle(Color.accent)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else if let dueText = item.dueText {

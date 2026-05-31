@@ -8,8 +8,8 @@
 //    done            → status == .done
 //    needsAttention  → overdue (and not done)
 //    dueThisWeek     → due within the next 7 days
-//    inProgress      → some steps checked
-//    upcoming        → everything else
+//    inProgress      → no due date (ongoing) OR some steps checked
+//    upcoming        → has a future due date (>7 days) and not started
 //
 
 import Foundation
@@ -41,9 +41,11 @@ extension Array where Element == ActionItem {
                                                          to: calendar.startOfDay(for: due)).day,
                       (0...7).contains(days) {
                 b.dueThisWeek.append(item)
-            } else if item.doneCount > 0 {
+            } else if item.dueDate == nil || item.doneCount > 0 {
+                // No due date = ongoing, or already started = in progress.
                 b.inProgress.append(item)
             } else {
+                // Has a future due date (>7 days out) and not started yet.
                 b.upcoming.append(item)
             }
         }

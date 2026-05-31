@@ -101,6 +101,12 @@ struct ActionItemTests {
         #expect(b.needsAttention.isEmpty)
     }
 
+    @Test func noDueDateGoesToInProgressNotUpcoming() {
+        let b = [ActionItem(title: "no date", category: .other)].groupedForInbox()
+        #expect(b.inProgress.count == 1)
+        #expect(b.upcoming.isEmpty)
+    }
+
     @Test func doneItemNeverCountsAsActive() {
         // Overdue date but already done → lands in Done, not Needs attention.
         let b = [ActionItem(title: "x", category: .other,
