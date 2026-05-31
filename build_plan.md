@@ -9,7 +9,7 @@
 
 - **Language/Framework**: 100% Swift + SwiftUI (no Objective-C, no JS, no Python)
 - **Stack**: SwiftData (local storage) · Apple Vision (on-device OCR) · GPT-4o-mini via Cloudflare Worker proxy · UNUserNotificationCenter (local notifications)
-- **Architecture**: Clean layered — `Core/` (zero platform imports, future Android-portable) + `Platform/` (iOS adapters) + `Features/` (SwiftUI views) + `Shared/` (design tokens, components)
+- **Architecture**: Plain-English folders — `App/` (entry + tab shell) · `Model/` (data: `ActionItem` is a SwiftData `@Model`, plus pure logic like bucketing/reminder math — UI-free, no `Color`/screen types) · `Screens/` (SwiftUI views) · `Theme/` (color/symbol + formatting) · `Notifications/` (UNUserNotificationCenter wrapper). The model uses SwiftData (iOS), but its *logic* (enums, derived state, grouping) is what ports to Android; the view layer owns all presentation.
 - **Timeline**: 8 weeks to TestFlight (scoped down from spec's 12-week ambition)
 - **Cost**: ~$8–15/month at first 1,000 users · ~$0.0004 per scan
 - **One metric that matters**: % of confirmed action items marked done before due date. >50% working, <30% broken loop.
@@ -25,36 +25,35 @@
 **Week 4 — Camera + OCR** ⏳ next.
 
 What's running today:
-- All 5 screens built: Inbox, Guides, Detail, Review, Create (+ Settings stub).
-- Tab bar with all 4 tabs; navigation wired (row → Detail, guide → Detail, ＋ Scan/Upload → Review).
-- Inbox shows 4 urgency sections from sample data; each row opens its own Detail.
-- Review has a working Edit mode (due date, reminder date, steps, note).
-- Domain model (`ActionItem`) is pure Foundation; the view layer maps category → color/symbol and formats strings (`Theme/ItemStyle.swift`).
-- Interactive controls are `Button`s (accessible); primary actions are wired (dismiss placeholders, marked TEMP).
-- 9 unit tests on `ActionItem` (isOverdue, doneCount, reminderSchedule) — pass via Cmd+U.
-- Deployment target: iOS 17.0. Builds clean (no warnings).
+- All 5 screens + Settings. Tab bar; navigation wired; Inbox groups items by urgency with a Done section.
+- **Persistence works:** Create / Scan-Review / edits / check-offs / Mark done / Delete all save (SwiftData) and survive a restart. `ActionItem` is a `@Model` (UI-free — no `Color`/screen types); the view layer (`Theme/ItemStyle.swift`) maps category → color/symbol and formats strings.
+- **Notifications work:** reminders scheduled on save, cancelled on done/delete, rescheduled on edit; interactive Mark done / Remind me later; tap a banner to open the item. DEBUG test button in Settings.
+- Interactive controls are `Button`s (accessible).
+- 14 unit tests (isOverdue, doneCount, reminderSchedule, inbox bucketing, a SwiftData round-trip) pass via Cmd+U. Deployment target iOS 17.0. Builds clean, no warnings.
 
-Still mock (see "Temporary scaffolding" below): no persistence — edits and "Add to inbox" / "Mark done" don't save yet. That's Week 2.
+Still mock (see "Temporary scaffolding" below): the **scan/Review pre-fill is fake** (no camera/OCR yet — Week 4–6); sample items are seeded on first launch; guides preview a Detail instead of adding; recurring isn't built (Week 7).
 
 ---
 
 ## Temporary scaffolding — what's fake right now
 
 Everything below is mock/placeholder and gets replaced on the noted week.
-**In code, grep `TEMP:` to find each spot.** Nothing here persists yet.
+**In code, grep `TEMP:` to find each spot.** (Persistence + notifications are
+real now — what remains fake is mostly the scan pipeline and recurring.)
 
 | What | Where | Real version |
 |---|---|---|
-| Sample items (parking ticket, ConEd, etc.) | `ActionItem.swift` sample block | Week 2 — saved SwiftData records |
-| `ActionItem` is a plain struct, not stored | `ActionItem.swift` | Week 2 — becomes `@Model`, persists |
-| Inbox sections/counts/"5 active" hardcoded | `InboxView.swift` | Week 2 — derived from saved items by due date |
-| Detail edits (checkboxes, status) don't save | `DetailView.swift` | Week 2 — writes back to storage |
-| Review is all mock; Edit-mode changes vanish | `ReviewView.swift` | Week 6 — real ExtractionResult, saves on "Add to inbox" |
-| ＋ Scan/Upload jumps straight to mock Review | `CreateView.swift` | Week 4/6 — camera → OCR → extraction → Review |
-| "Create it yourself" → placeholder screen | `CreateView.swift` | Week 2 — real manual form (title/due/steps) |
-| Guides → Detail with placeholder steps | `GuidesView.swift` `fromGuide` | Week 7 — real template steps, saved to inbox |
-| Settings is an empty stub | `SettingsView.swift` | Week 8 — language, reminders, privacy |
+| Sample items seeded on first launch | `ActionItem.swift` sample block + Inbox `.task` | replaced by real data once scanning/onboarding exist; harmless seed for testing |
+| ＋ Scan/Upload jumps straight to a mock Review (pre-filled with Con Edison) | `CreateView.swift`, `ReviewView.swift` | Week 4–6 — camera → OCR → AI extraction fills Review for real |
+| Review's category is fixed to `.other` on save | `ReviewView.swift` | Week 6 — category from AI extraction |
+| Guides → Detail with placeholder steps (should be Review → Add) | `GuidesView.swift` | Week 7 — real template steps, via Review → Add to inbox |
+| Recurring not built (no cadence; done/delete don't respawn) | model `repeatsMonthly` unused | Week 7 — Recurrence + auto next-cycle + recurring-aware delete |
+| Settings mostly a stub (has a DEBUG test-reminder button) | `SettingsView.swift` | Week 8 — language, reminder timing, privacy, export |
 | Raised ＋ tab button (floating circle) | `RootTabView.swift` | Week 7 polish — custom tab bar |
+
+Done since (no longer fake): `ActionItem` is a SwiftData `@Model`; the Inbox
+reads the live store and buckets by urgency; Create form saves; Detail edits /
+Mark done / Delete persist; Review "Add to inbox" saves; reminders schedule.
 
 Note: the 5 **guides themselves** (Moving, Bank, etc.) are *intentionally*
 static for Phase 1 — that's not temporary, it's the design.

@@ -45,8 +45,19 @@ final class ReminderScheduler {
         center.setNotificationCategories([category])
     }
 
-    // Cancel + (re)schedule all reminders for an item. Safe to call after
-    // any edit; it reflects the item's current due date + status.
+    // The identifier suffixes an item's notifications can have. MUST stay in
+    // sync with reminderSchedule()'s labels (+ snooze) so cancel() can remove
+    // them by exact id without an async fetch.
+    private static let idSuffixes = [
+        "3 days before", "1 day before", "Due day", "Overdue follow-up", "snooze",
+    ]
+
+    private func ids(for itemID: UUID) -> [String] {
+        Self.idSuffixes.map { "\(itemID.uuidString)|\($0)" }
+    }
+
+    // Cancel + (re)schedule all reminders for an item. cancel() is synchronous
+    // (removes known ids), so the adds below can't be undone by a late callback.
     func reschedule(for item: ActionItem) {
         cancel(itemID: item.id)
         guard item.status != .done else { return }
@@ -69,13 +80,10 @@ final class ReminderScheduler {
         }
     }
 
-    // Remove every pending reminder belonging to this item.
+    // Remove every pending reminder belonging to this item. Synchronous —
+    // removes the item's known identifiers directly (no fetch callback).
     func cancel(itemID: UUID) {
-        center.getPendingNotificationRequests { requests in
-            let ids = requests.map(\.identifier)
-                .filter { $0.hasPrefix(itemID.uuidString) }
-            self.center.removePendingNotificationRequests(withIdentifiers: ids)
-        }
+        center.removePendingNotificationRequests(withIdentifiers: ids(for: itemID))
     }
 
     // "Remind me later" → fire again in 2 hours.

@@ -20,6 +20,7 @@ struct DetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
+    @State private var didDelete = false
 
     private var isDone: Bool { item.status == .done }
     private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
@@ -71,8 +72,8 @@ struct DetailView: View {
         .navigationBarHidden(true)
         .onDisappear {
             // Sync reminders to the item's current state (e.g. an edited
-            // due date). Skips deleted / unsaved (guide-preview) items.
-            if item.modelContext != nil {
+            // due date). Skips just-deleted and unsaved (guide-preview) items.
+            if !didDelete, item.modelContext != nil {
                 ReminderScheduler.shared.reschedule(for: item)
             }
         }
@@ -342,6 +343,7 @@ struct DetailView: View {
     // (a guide-preview item isn't saved yet — just close).
     // TODO (Week 7): recurring items should ask "this one or future too?".
     private func deleteItem() {
+        didDelete = true   // stop onDisappear from re-adding reminders
         ReminderScheduler.shared.cancel(itemID: item.id)
         if item.modelContext != nil { context.delete(item) }
         dismiss()
