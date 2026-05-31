@@ -19,6 +19,7 @@ struct DetailView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
+    @State private var showDeleteConfirm = false
 
     private var isDone: Bool { item.status == .done }
     private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
@@ -272,12 +273,15 @@ struct DetailView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 
-    // MARK: footer — Mark done, then Delete once done
+    // MARK: footer
+    //
+    // Delete is available while editing (any task) and on a done task;
+    // otherwise the action is Mark done. Delete asks to confirm first.
 
     private var footer: some View {
         Group {
-            if isDone {
-                Button(role: .destructive) { deleteItem() } label: {
+            if isEditing || isDone {
+                Button(role: .destructive) { showDeleteConfirm = true } label: {
                     Text("Delete")
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.bad)
                         .frame(maxWidth: .infinity).padding(.vertical, 13)
@@ -294,6 +298,11 @@ struct DetailView: View {
                 }
                 .buttonStyle(.plain)
             }
+        }
+        .confirmationDialog("Delete this task?", isPresented: $showDeleteConfirm,
+                            titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { deleteItem() }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
