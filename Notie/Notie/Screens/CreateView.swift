@@ -140,6 +140,7 @@ private struct SecondaryTile: View {
 private struct CreateForm: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppRouter.self) private var router
 
     @State private var title = ""
     @State private var includeDue = false
@@ -358,6 +359,7 @@ private struct CreateForm: View {
             steps: cleanSteps
         )
         context.insert(item)
+        router.goToInbox()   // land on the Inbox so the new item is visible
         dismiss()
     }
 }
@@ -365,4 +367,5 @@ private struct CreateForm: View {
 #Preview {
     CreateView()
         .modelContainer(for: ActionItem.self, inMemory: true)
+        .environment(AppRouter())
 }

@@ -4,39 +4,41 @@
 //  destinations (Inbox, Guides, Add, Settings); tapping a tab swaps
 //  which screen is shown above the bar.
 //
-//  The raised ＋ button from the design spec is a Week 7 polish item.
-//  Right now "Add" is a regular tab.
+//  Tab selection is driven by a shared AppRouter so screens can jump
+//  back to the Inbox after saving. The raised ＋ button from the design
+//  spec is a Week 7 polish item; right now "Add" is a regular tab.
 //
 
 import SwiftUI
+import SwiftData
 
 struct RootTabView: View {
+    @State private var router = AppRouter()
+
     var body: some View {
-        TabView {
+        TabView(selection: $router.selectedTab) {
             InboxView()
-                .tabItem {
-                    Label("Inbox", systemImage: "tray")
-                }
+                .tabItem { Label("Inbox", systemImage: "tray") }
+                .tag(AppRouter.Tab.inbox)
 
             GuidesView()
-                .tabItem {
-                    Label("Guides", systemImage: "books.vertical")
-                }
+                .tabItem { Label("Guides", systemImage: "books.vertical") }
+                .tag(AppRouter.Tab.guides)
 
             CreateView()
-                .tabItem {
-                    Label("Add", systemImage: "plus.circle.fill")
-                }
+                .tabItem { Label("Add", systemImage: "plus.circle.fill") }
+                .tag(AppRouter.Tab.add)
 
             SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
-                }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(AppRouter.Tab.settings)
         }
         .tint(Color.ink)
+        .environment(router)
     }
 }
 
 #Preview {
     RootTabView()
+        .modelContainer(for: ActionItem.self, inMemory: true)
 }

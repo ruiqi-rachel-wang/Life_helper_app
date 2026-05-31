@@ -74,6 +74,41 @@ struct ActionItemTests {
         #expect(schedule[2].date == due)
     }
 
+    // MARK: Inbox urgency bucketing
+
+    @Test func groupsItemsIntoCorrectBuckets() {
+        let items = [
+            ActionItem(title: "overdue", category: .other, dueDate: day(-1)),
+            ActionItem(title: "due soon", category: .other, dueDate: day(3)),
+            ActionItem(title: "far off", category: .other, dueDate: day(30)),
+            ActionItem(title: "completed", category: .other, status: .done),
+            ActionItem(title: "started", category: .other,
+                       steps: [ChecklistStep(text: "a", done: true)]),
+        ]
+        let b = items.groupedForInbox()
+
+        #expect(b.needsAttention.map(\.title) == ["overdue"])
+        #expect(b.dueThisWeek.map(\.title) == ["due soon"])
+        #expect(b.upcoming.map(\.title) == ["far off"])
+        #expect(b.done.map(\.title) == ["completed"])
+        #expect(b.inProgress.map(\.title) == ["started"])
+        #expect(b.activeCount == 4)   // everything except the done one
+    }
+
+    @Test func dueTodayIsDueThisWeekNotOverdue() {
+        let b = [ActionItem(title: "today", category: .other, dueDate: day(0))].groupedForInbox()
+        #expect(b.dueThisWeek.count == 1)
+        #expect(b.needsAttention.isEmpty)
+    }
+
+    @Test func doneItemNeverCountsAsActive() {
+        // Overdue date but already done → lands in Done, not Needs attention.
+        let b = [ActionItem(title: "x", category: .other,
+                            dueDate: day(-5), status: .done)].groupedForInbox()
+        #expect(b.done.count == 1)
+        #expect(b.activeCount == 0)
+    }
+
     // MARK: SwiftData persistence (in-memory store)
 
     @MainActor

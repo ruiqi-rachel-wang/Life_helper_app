@@ -19,27 +19,8 @@ struct InboxView: View {
     // install isn't empty while testing. Real app starts empty.
     @AppStorage("didSeedSamples") private var didSeed = false
 
-    // MARK: derived buckets (mutually exclusive)
-
-    private var active: [ActionItem] { items.filter { $0.status != .done } }
-    private var doneItems: [ActionItem] { items.filter { $0.status == .done } }
-
-    private func within7(_ item: ActionItem) -> Bool {
-        guard let due = item.dueDate else { return false }
-        let days = Calendar.current.dateComponents(
-            [.day], from: Calendar.current.startOfDay(for: .now),
-            to: Calendar.current.startOfDay(for: due)).day ?? 0
-        return (0...7).contains(days)
-    }
-
-    private var needsAttention: [ActionItem] { active.filter(\.isOverdue) }
-    private var dueThisWeek: [ActionItem] { active.filter { !$0.isOverdue && within7($0) } }
-    private var inProgress: [ActionItem] {
-        active.filter { !$0.isOverdue && !within7($0) && $0.doneCount > 0 }
-    }
-    private var upcoming: [ActionItem] {
-        active.filter { !$0.isOverdue && !within7($0) && $0.doneCount == 0 }
-    }
+    // Urgency buckets — computed by the pure, tested grouping function.
+    private var buckets: InboxBuckets { items.groupedForInbox() }
 
     var body: some View {
         NavigationStack {
@@ -55,11 +36,12 @@ struct InboxView: View {
                         if items.isEmpty {
                             emptyState
                         } else {
-                            section("Needs attention", needsAttention, tone: .bad)
-                            section("Due this week", dueThisWeek)
-                            section("In progress", inProgress)
-                            section("Upcoming", upcoming, muted: true)
-                            section("Done", doneItems, muted: true, done: true)
+                            let b = buckets
+                            section("Needs attention", b.needsAttention, tone: .bad)
+                            section("Due this week", b.dueThisWeek)
+                            section("In progress", b.inProgress)
+                            section("Upcoming", b.upcoming, muted: true)
+                            section("Done", b.done, muted: true, done: true)
                         }
 
                         PrivacyBanner()
@@ -92,7 +74,7 @@ struct InboxView: View {
                     .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
             }
             Spacer()
-            Text("\(active.count) active")
+            Text("\(buckets.activeCount) active")
                 .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
         }
     }

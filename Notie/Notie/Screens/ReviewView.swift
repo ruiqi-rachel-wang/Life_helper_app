@@ -19,6 +19,7 @@ struct ReviewView: View {
     // Lets the × close button pop this screen off the stack.
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Environment(AppRouter.self) private var router
 
     // Tapping "Edit" flips the editable fields into input controls.
     @State private var isEditing = false
@@ -388,6 +389,7 @@ struct ReviewView: View {
             repeatsMonthly: repeatsMonthly
         )
         context.insert(item)
+        router.goToInbox()   // land on the Inbox so the new item is visible
         dismiss()
     }
 
@@ -420,4 +422,5 @@ struct ReviewView: View {
 #Preview {
     ReviewView()
         .modelContainer(for: ActionItem.self, inMemory: true)
+        .environment(AppRouter())
 }
