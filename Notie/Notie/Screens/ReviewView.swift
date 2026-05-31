@@ -35,7 +35,6 @@ struct ReviewView: View {
     @State private var dueDate      = Self.mockDate(month: 6, day: 15)
     @State private var reminderDate = Self.mockDate(month: 6, day: 12)
     @State private var note         = ""
-    @State private var repeatsMonthly = true
     @State private var steps: [ChecklistStep] = [
         ChecklistStep(text: "Open Con Edison and sign in."),
         ChecklistStep(text: "Pay $86.42 before June 15."),
@@ -330,19 +329,8 @@ struct ReviewView: View {
                     }
                 }
             }
-
-            Rectangle().fill(Color.hairD).frame(height: 1)
-                .padding(.vertical, 12)
-
-            HStack {
-                Text("Repeats monthly")
-                    .font(.system(size: 13.5))
-                    .foregroundStyle(Color.ink)
-                Spacer()
-                Toggle("", isOn: $repeatsMonthly)
-                    .labelsHidden()
-                    .tint(Color.ink)
-            }
+            // NOTE: a real recurring control (set a cadence; auto-create the
+            // next cycle on Mark done) lands in Week 7. No dead toggle here.
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -385,8 +373,8 @@ struct ReviewView: View {
             amount: Decimal(string: amountText),
             dueDate: dueDate,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
-            steps: cleanSteps,
-            repeatsMonthly: repeatsMonthly
+            steps: cleanSteps
+            // recurring (repeatsMonthly / a real cadence) — Week 7
         )
         context.insert(item)
         router.goToInbox()   // land on the Inbox so the new item is visible
