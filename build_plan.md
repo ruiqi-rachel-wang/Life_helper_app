@@ -321,6 +321,10 @@ needs a real device.)
 5. Past items list (Done archive, no search) — **with delete** (swipe-to-delete
    here, plus the Delete button that already appears on a done item's Detail).
    Decided 2026-05-30: done items go to this list and can be removed from it.
+   **Plus an "undo done" / Reopen** (decided 2026-06-05): a done item's Detail
+   should offer "Mark as not done" → sets status back to active, reschedules
+   reminders, moves it out of the Done section. (Delete stays final — no undo
+   needed there; only *done* needs reversing.)
 6. Analytics events (`action_item_confirmed`, `action_item_completed`) → local JSON file
 7. App icon (even placeholder serif "N" on cream)
 8. **Apply for Apple Developer Program** if not already (1–3 day approval)

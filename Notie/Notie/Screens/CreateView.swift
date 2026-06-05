@@ -26,9 +26,14 @@ private struct ScanRoute: Identifiable, Hashable {
 
 struct CreateView: View {
     @State private var showCamera = false
+    @State private var showPhotoPicker = false
     @State private var cameraImage: UIImage?
     @State private var photoItem: PhotosPickerItem?
     @State private var scanRoute: ScanRoute?
+
+    private var cameraAvailable: Bool {
+        UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
 
     var body: some View {
         NavigationStack {
@@ -59,6 +64,8 @@ struct CreateView: View {
             .fullScreenCover(isPresented: $showCamera) {
                 CameraPicker(image: $cameraImage).ignoresSafeArea()
             }
+            // Fallback when there's no camera (e.g. Simulator): pick a photo.
+            .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
             // After capture/pick, push the OCR result screen.
             .navigationDestination(item: $scanRoute) { route in
                 ScanResultView(image: route.image)
@@ -78,9 +85,12 @@ struct CreateView: View {
         }
     }
 
-    // Big primary action: Scan a document → camera → OCR.
+    // Big primary action: Scan a document → camera → OCR. With no camera
+    // (Simulator), fall back to the photo picker so it still works.
     private var heroTile: some View {
-        Button { showCamera = true } label: {
+        Button {
+            if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+        } label: {
             HStack(alignment: .center, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("MOST COMMON")
