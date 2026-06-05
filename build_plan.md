@@ -22,7 +22,8 @@
 **Week 1 — SwiftUI shell** ✓ complete
 **Week 2 — Persistence** ✓ complete — SwiftData store; Inbox reads live (@Query) with a Done section; Detail binds to the live object so Mark done / Delete / edits write back; Create form saves (title-only valid) with optional due date, steps, and a text+photo note. Backed up on GitHub (`ruiqi-rachel-wang/Life_helper_app`, branch `main`).
 **Week 3 — Notifications** ✓ complete — local reminders (3d/1d/due/overdue at 9am) scheduled on save, cancelled on done/delete, rescheduled on edit; interactive Mark done / Remind me later actions; tap a banner to open the item. 14 unit tests.
-**Week 4 — Camera + OCR** ⏳ next.
+**Week 4 — Camera + OCR** ✓ complete — Apple Vision OCR on-device; Scan (camera) / Upload (Photos) → ScanResultView shows the real extracted text. (Test via Upload in the Simulator; camera needs a device.)
+**Week 5 — Rule parser + OpenAI extraction** ⏳ next.
 
 What's running today:
 - All 5 screens + Settings. Tab bar; navigation wired; Inbox groups items by urgency with a Done section.
@@ -267,13 +268,17 @@ me later / View actions. Mark done cancels future reminders. Overdue → red. �
 > comes from the Mark done button, `overdue` is derived. The Detail screen's
 > top-right is **Edit** (like Review), not a status menu.
 
-### Week 4: Camera + Apple Vision OCR
-- Camera UI (UIImagePickerController in SwiftUI, or AVFoundation)
-- Photo picker (native SwiftUI `PhotosPicker`)
-- VisionOCREngine using `VNRecognizeTextRequest`
-- Debug screen showing raw OCR text
+### Week 4: Camera + Apple Vision OCR ✓ COMPLETE
+- [x] `VisionOCR` engine — `VNRecognizeTextRequest` (on-device, async), `Scanning/`
+- [x] Camera capture (`CameraPicker`, UIImagePickerController) — device only
+- [x] Photo upload (`PhotosPicker`) — works in the Simulator too
+- [x] `ScanResultView` shows the photo + the raw extracted text (the debug screen)
+- [x] `NSCameraUsageDescription` added to build settings (device camera permission)
+- [x] Wired: ＋ → Scan (camera) / Upload (Photos) → ScanResultView → (mock) Review
 
-**Done when:** scan a real bill → see extracted text. Works for ~80% of typical printed mail.
+**Done when:** scan/upload a real bill → see extracted text. ✓ (Test in the
+Simulator via Upload — drag a bill image onto the simulator first. Camera
+needs a real device.)
 
 ### Week 5: Parser + OpenAI extraction
 - RuleBasedParser: regex for amount, date, account number

@@ -15,7 +15,21 @@ import SwiftUI
 import SwiftData
 import PhotosUI
 
+// Wraps a captured/picked image so navigationDestination can push the
+// scan result once an image exists. Hashable by id (UIImage isn't Hashable).
+private struct ScanRoute: Identifiable, Hashable {
+    let id = UUID()
+    let image: UIImage
+    static func == (a: ScanRoute, b: ScanRoute) -> Bool { a.id == b.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+}
+
 struct CreateView: View {
+    @State private var showCamera = false
+    @State private var cameraImage: UIImage?
+    @State private var photoItem: PhotosPickerItem?
+    @State private var scanRoute: ScanRoute?
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -41,16 +55,32 @@ struct CreateView: View {
                 .padding(.top, 48)
             }
             .navigationBarHidden(true)
+            // Camera capture (real device only) → OCR result.
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPicker(image: $cameraImage).ignoresSafeArea()
+            }
+            // After capture/pick, push the OCR result screen.
+            .navigationDestination(item: $scanRoute) { route in
+                ScanResultView(image: route.image)
+            }
+        }
+        .onChange(of: cameraImage) { _, new in
+            if let new { scanRoute = ScanRoute(image: new); cameraImage = nil }
+        }
+        .onChange(of: photoItem) { _, item in
+            Task {
+                if let data = try? await item?.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    scanRoute = ScanRoute(image: image)
+                }
+                photoItem = nil
+            }
         }
     }
 
-    // Big primary action: Scan a document → Review.
-    // TEMP (Week 4/6): jumps straight to a mock Review. Real version
-    // opens the camera, runs OCR + extraction, then shows Review.
+    // Big primary action: Scan a document → camera → OCR.
     private var heroTile: some View {
-        NavigationLink {
-            ReviewView()
-        } label: {
+        Button { showCamera = true } label: {
             HStack(alignment: .center, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("MOST COMMON")
@@ -80,12 +110,10 @@ struct CreateView: View {
         .buttonStyle(.plain)
     }
 
-    // Two smaller tiles: Upload from Photos, Create it yourself.
+    // Two smaller tiles: Upload from Photos (→ OCR), Create it yourself.
     private var secondaryRow: some View {
         HStack(spacing: 8) {
-            NavigationLink {
-                ReviewView()
-            } label: {
+            PhotosPicker(selection: $photoItem, matching: .images) {
                 SecondaryTile(symbol: "photo.on.rectangle.angled",
                               title: "Upload from Photos")
             }
