@@ -29,7 +29,7 @@ struct NotieApp: App {
         WindowGroup {
             RootTabView()
                 .environment(router)
-                .onAppear { notificationDelegate.router = router }
+                .onAppear { notificationDelegate.attach(router: router) }
                 .task { await ReminderScheduler.shared.requestAuthorization() }
         }
         .modelContainer(container)

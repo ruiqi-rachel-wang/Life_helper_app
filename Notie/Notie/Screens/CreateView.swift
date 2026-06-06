@@ -7,8 +7,8 @@
 //
 //  "Sheet" layout from the spec: a big primary Scan hero + two smaller
 //  secondary tiles. "Create it yourself" opens a real form that saves to
-//  the store (title-only is valid). Scan/Upload still navigate to a mock
-//  Review — the real camera + OCR come in Week 4.
+//  the store (title-only is valid). Scan/Upload run the real Week 4 OCR
+//  path; Review is still mock until Week 5–6 extraction is wired.
 //
 
 import SwiftUI

@@ -116,8 +116,9 @@ final class ReminderScheduler {
     }
 
     #if DEBUG
-    // Dev-only: fire a sample reminder a few seconds out so the banner +
-    // action buttons can be tested without waiting for a real due date.
+    // Dev-only: fire a sample reminder a few seconds out so banner delivery
+    // can be tested without waiting for a real due date. This notification has
+    // no itemID, so action routing must be tested with a real scheduled item.
     func fireTestReminder() {
         let content = UNMutableNotificationContent()
         content.title = "Test reminder"

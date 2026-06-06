@@ -16,7 +16,20 @@ import UserNotifications
 @MainActor
 final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     var container: ModelContainer?
-    var router: AppRouter?
+    private(set) var router: AppRouter?
+
+    // If a notification is tapped before the router is attached (cold launch),
+    // remember the item here and route it the moment the router arrives.
+    private var bufferedItemID: UUID?
+
+    func attach(router: AppRouter) {
+        self.router = router
+        if let id = bufferedItemID {
+            bufferedItemID = nil
+            router.selectedTab = .inbox
+            router.pendingItemID = id
+        }
+    }
 
     // Show the banner even when the app is in the foreground.
     func userNotificationCenter(
@@ -43,9 +56,14 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
                 itemID: id,
                 title: response.notification.request.content.title)
         default:
-            // Banner tapped (or "open") → route to the item.
-            router?.selectedTab = .inbox
-            router?.pendingItemID = id
+            // Banner tapped (or "open") → route to the item. If the router
+            // isn't attached yet (cold launch), buffer it for attach().
+            if let router {
+                router.selectedTab = .inbox
+                router.pendingItemID = id
+            } else {
+                bufferedItemID = id
+            }
         }
     }
 

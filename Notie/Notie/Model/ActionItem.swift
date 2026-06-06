@@ -57,7 +57,9 @@ final class ActionItem {
     var currency: String = "USD"
     var dueDate: Date?
     var note: String = ""
-    var imageData: Data?            // optional photo attached to the note
+    // Photo stored as an external file (not inline in the SQLite store) so big
+    // images don't bloat the database. SwiftData manages the file for us.
+    @Attribute(.externalStorage) var imageData: Data?
     var status: WorkStatus = WorkStatus.todo
     var steps: [ChecklistStep] = []
     var repeatsMonthly: Bool = false
@@ -106,9 +108,18 @@ final class ActionItem {
             out.append(ScheduledReminder(date: d, label: "1 day before"))
         }
         out.append(ScheduledReminder(date: due, label: "Due day"))
-        if isOverdue {
-            out.append(ScheduledReminder(date: calendar.startOfDay(for: now),
-                                         label: "Overdue follow-up"))
+
+        // Overdue follow-up — computed against the passed `now` (not .now), and
+        // placed on the next 9am that's still in the future, so it isn't
+        // silently skipped when an overdue item is created/rescheduled after 9am.
+        let overdue = (status != .done)
+            && ((dueDate.map { $0 < calendar.startOfDay(for: now) }) ?? false)
+        if overdue {
+            let nineToday = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
+            let followUpDay = now < nineToday
+                ? calendar.startOfDay(for: now)                                       // today (9am still ahead)
+                : (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now)  // tomorrow
+            out.append(ScheduledReminder(date: followUpDay, label: "Overdue follow-up"))
         }
         return out
     }

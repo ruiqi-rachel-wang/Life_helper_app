@@ -7,9 +7,9 @@
 //  This is the screen the product wins or loses on. Treat it like a
 //  product detail page, not a results screen.
 //
-//  TEMP: all content is mock (the Con Edison bill) and edits are held
-//  in @State only — nothing persists. Week 6 wires this to a real
-//  ExtractionResult and saves on "Add to inbox."
+//  TEMP: all content is mock (the Con Edison bill). Edits live in @State until
+//  "Add to inbox"; that save is real, but the pre-fill is not. Week 6 wires
+//  this to a real ExtractionResult.
 //
 
 import SwiftUI

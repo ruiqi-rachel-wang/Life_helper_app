@@ -4,9 +4,10 @@
 //  on the image and shows the raw recognized text — the Week 4 deliverable
 //  ("scan a letter → see the text").
 //
-//  TEMP (Week 5–6): "Continue to review" goes to the still-mock Review.
-//  Week 5 adds rule parsing + AI extraction that fills Review from THIS
-//  text; for now the text is real but Review's pre-fill is not.
+//  Week 4 endpoint: the raw text IS the deliverable. There is intentionally
+//  no "Continue" hand-off yet — turning this text into a plain-English summary
+//  (what it is · amount · due · steps) is the Week 5–6 AI extraction. Until
+//  that's real we don't open the mock Review, so a scan can never save fake data.
 //
 
 import SwiftUI
@@ -40,23 +41,13 @@ struct ScanResultView: View {
                         .padding(.top, 14)
 
                     if text?.isEmpty == false {
-                        NavigationLink {
-                            ReviewView()
-                        } label: {
-                            Text("Continue to review")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Color.paper)
-                                .frame(maxWidth: .infinity).padding(.vertical, 15)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 14)
-                        .padding(.top, 18)
-
-                        Text("NEXT: AI WILL FILL IN AMOUNT / DUE / STEPS (WEEK 6)")
-                            .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faint)
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 10)
+                        // No "Continue" hand-off yet. Week 4 ends at the raw
+                        // text above; the next step is turning it into a plain-
+                        // English summary (Week 5–6 AI extraction). We don't open
+                        // the mock Review, so a scan can't save fake data.
+                        nextStepNote
+                            .padding(.horizontal, 14)
+                            .padding(.top, 18)
                     }
 
                     Spacer(minLength: 40)
@@ -92,6 +83,27 @@ struct ScanResultView: View {
                     .foregroundStyle(Color.ink)
                     .textSelection(.enabled)
             }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
+
+    // A forward-looking note — NOT real output. Explains that the raw text
+    // above will become a short plain-English summary once Week 5–6 AI
+    // extraction lands. Replaces the old "Continue to review" button, which
+    // jumped to a mock pre-filled Review and could save fake data.
+    private var nextStepNote: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("WHAT'S NEXT")
+                .font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+            Text("Soon Notie will read this text and write a short summary — what the letter is, how much, by when, and the steps to handle it. For now, the text above is the result.")
+                .font(.body14).foregroundStyle(Color.faded).lineSpacing(2)
+            Text("AI SUMMARY · WEEK 5–6")
+                .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faint)
+                .padding(.top, 2)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

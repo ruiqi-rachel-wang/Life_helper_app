@@ -10,7 +10,7 @@
 - **Language/Framework**: 100% Swift + SwiftUI (no Objective-C, no JS, no Python)
 - **Stack**: SwiftData (local storage) · Apple Vision (on-device OCR) · GPT-4o-mini via Cloudflare Worker proxy · UNUserNotificationCenter (local notifications)
 - **Architecture**: Plain-English folders — `App/` (entry + tab shell) · `Model/` (data: `ActionItem` is a SwiftData `@Model`, plus pure logic like bucketing/reminder math — UI-free, no `Color`/screen types) · `Screens/` (SwiftUI views) · `Theme/` (color/symbol + formatting) · `Notifications/` (UNUserNotificationCenter wrapper). The model uses SwiftData (iOS), but its *logic* (enums, derived state, grouping) is what ports to Android; the view layer owns all presentation.
-- **Timeline**: 8 weeks to TestFlight (scoped down from spec's 12-week ambition)
+- **Timeline**: ~10 weeks to TestFlight (8-week core + adaptive guides + buffer; revised 2026-06-05)
 - **Cost**: ~$8–15/month at first 1,000 users · ~$0.0004 per scan
 - **One metric that matters**: % of confirmed action items marked done before due date. >50% working, <30% broken loop.
 
@@ -32,7 +32,7 @@ What's running today:
 - Interactive controls are `Button`s (accessible).
 - 14 unit tests (isOverdue, doneCount, reminderSchedule, inbox bucketing, a SwiftData round-trip) pass via Cmd+U. Deployment target iOS 17.0. Builds clean, no warnings.
 
-Still mock (see "Temporary scaffolding" below): the **scan/Review pre-fill is fake** (no camera/OCR yet — Week 4–6); sample items are seeded on first launch; guides preview a Detail instead of adding; recurring isn't built (Week 7).
+Still mock (see "Temporary scaffolding" below): scan/upload now runs **real on-device OCR** and shows the recognized text, but the **AI summary** that turns that text into fields (what it is · amount · due · steps) is still to come (Week 5–6) — so the scan screen stops at the text and does **not** open the old mock Review; sample items are seeded on first launch; guides preview a Detail instead of adding; recurring isn't built (Week 7).
 
 ---
 
@@ -45,8 +45,8 @@ real now — what remains fake is mostly the scan pipeline and recurring.)
 | What | Where | Real version |
 |---|---|---|
 | Sample items seeded on first launch | `ActionItem.swift` sample block + Inbox `.task` | replaced by real data once scanning/onboarding exist; harmless seed for testing |
-| ＋ Scan/Upload jumps straight to a mock Review (pre-filled with Con Edison) | `CreateView.swift`, `ReviewView.swift` | Week 4–6 — camera → OCR → AI extraction fills Review for real |
-| Review's category is fixed to `.other` on save | `ReviewView.swift` | Week 6 — category from AI extraction |
+| ＋ Scan/Upload → real OCR text, but **no AI summary yet** (no Review hand-off) | `CreateView.swift` → `ScanResultView.swift` | Week 5–6 — text → AI extraction writes a plain-English summary + fills Review |
+| Review screen is **parked**: mock Con Edison pre-fill, category fixed to `.other`, only reachable from its own `#Preview` until extraction exists | `ReviewView.swift` | Week 6 — opened from a real scan; fields + category from AI extraction |
 | Guides → Detail with placeholder steps (should be Review → Add) | `GuidesView.swift` | Week 7 — real template steps, via Review → Add to inbox |
 | Recurring not built (no cadence; done/delete don't respawn) | model `repeatsMonthly` unused | Week 7 — Recurrence + auto next-cycle + recurring-aware delete |
 | Settings mostly a stub (has a DEBUG test-reminder button) | `SettingsView.swift` | Week 8 — language, reminder timing, privacy, export |
@@ -56,8 +56,15 @@ Done since (no longer fake): `ActionItem` is a SwiftData `@Model`; the Inbox
 reads the live store and buckets by urgency; Create form saves; Detail edits /
 Mark done / Delete persist; Review "Add to inbox" saves; reminders schedule.
 
-Note: the 5 **guides themselves** (Moving, Bank, etc.) are *intentionally*
-static for Phase 1 — that's not temporary, it's the design.
+Note: guides are now **adaptive (hybrid)** in Phase 1 (decided 2026-06-05) —
+hardcoded questions + base checklist, AI fills in details. Built in Week 7–8.
+
+Scan pipeline — what the "summary" means: capture/upload → **on-device OCR**
+(`VisionOCR`, done — downsamples first for speed, recognizes en/zh-Hans/es) →
+**AI summary / extraction** (Week 5–6) turns the raw text into a short plain-
+English summary — *what the document is, the amount, the due date, and the
+steps to handle it* — which then pre-fills Review. The scan screen shows a
+"What's next" placeholder for this today; the raw text is the real Week-4 output.
 
 ---
 
@@ -188,7 +195,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 |---|---|
 | EN/中文/ES live toggle on Review | One language only, chosen in Settings, generated once |
 | Document history with search | Plain "Past items" list, no search |
-| 5 guides with AI customization | 5 static checklist templates, no customization screen |
+| 5 guides with AI customization | **Adaptive hybrid guides** (changed 2026-06-05, now in Phase 1): hardcoded questions + hardcoded base checklist, AI only fills in details. 5 starters + car accident. |
 | Recurring monthly + yearly hardcoded | Cadence read from the document by AI (any interval) |
 | Overdue follow-up daily up to 7 days | One overdue reminder the next morning |
 | Vision-AI fallback for bad OCR | No vision model. Re-shoot the photo. |
@@ -198,7 +205,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 
 ---
 
-## Build order — 8 weeks
+## Build order — ~10 weeks (8-week core + adaptive guides + buffer)
 
 ### Week 0: Setup (NOT code)
 - [x] Install Xcode (free, ~15GB)
@@ -300,18 +307,33 @@ needs a real device.)
 
 **Done when:** photo of a letter → pre-filled Review → Add to Inbox → see it. **This is the shippable moment.** Everything after is polish + breadth.
 
-### Week 7: Guides + recurring
-- GuideTemplateService: 5 static checklists (Moving, Bank, Job, License, Visa)
-- Guides tab: tap a guide → opens the **Review-style "confirm before adding"
-  screen** (the SAME screen the scan flow uses, just fed a guide instead of
-  an extraction) → review/customize steps → **Add to inbox**.
-  Decided 2026-05-30: Review is the single "confirm before adding" screen for
-  both scans (Wk 6) and guides (Wk 7) — a guide must NOT open a Detail (it
-  isn't a saved task yet). Week-1 mock previews a Detail as a stand-in only.
-- RecurringService: on mark-done with repeats, create next cycle with advanced due date
-- Pull `repeats` from LLM (don't hardcode)
+### Week 7–8: Adaptive guides + recurring  (expanded — see timeline note)
+- **Guides are adaptive, hybrid** (decided 2026-06-05, moved INTO Phase 1):
+  - Each guide can ask **a few hardcoded questions** first (e.g. rent vs. buy,
+    first-time vs. renewal, which state).
+  - The answers pick a **hardcoded base checklist** (deterministic branching —
+    no AI for structure).
+  - **AI lightly adapts details only** — fills in the state name, employer,
+    address, etc. into the steps (reuses the Week 5–6 OpenAI setup). Structure
+    stays hardcoded; AI just personalizes wording.
+- Topics: the 5 starters (Moving, Bank, Job, License, Visa) **+ car accident**,
+  more added from real user requests.
+- Flow: tap a guide → answer its questions → **Review-style "confirm before
+  adding"** screen (same screen scans use) → **Add to inbox**. A guide never
+  opens a Detail (it isn't a saved task yet).
+- RecurringService: on mark-done with `repeats`, create next cycle (cadence from
+  the document / guide, not hardcoded). Recurring-aware delete ("this one or
+  future?").
 
-**Done when:** guide → checklist in 1 tap. Recurring bill marked done → next cycle exists with correct cadence.
+**Done when:** answer a guide's questions → a tailored checklist with your
+details filled in → Add to inbox. Recurring item respawns on the right date.
+
+> **Timeline note (2026-06-05):** adaptive guides are real scope — branching
+> model + a questions UI + per-guide authoring. Timeline revised to **~10 weeks**
+> (with buffer) to fit them comfortably. Sequencing
+> unchanged: build the scan→review→done spine + notifications first; adaptive
+> guides come after the AI pipeline (Wk 5–6) is solid, since the "fill in
+> details" step depends on it. Phase-1 guides are **no longer static.**
 
 ### Week 8: Polish + TestFlight
 1. Empty states (no inbox, no past items, OCR failed)

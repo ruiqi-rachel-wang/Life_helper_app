@@ -3,8 +3,8 @@
 //  Language, reminder timing, privacy, notifications, export.
 //
 //  Mostly a stub until Week 8. For now it carries a DEBUG-only button to
-//  fire a test reminder in 5 seconds, so the notification banner + action
-//  buttons can be verified without waiting for a real due date.
+//  fire a test reminder in 5 seconds, so banner delivery can be verified
+//  without waiting for a real due date.
 //
 
 import SwiftUI

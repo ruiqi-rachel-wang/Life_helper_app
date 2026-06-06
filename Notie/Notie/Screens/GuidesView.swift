@@ -1,11 +1,11 @@
 //  GuidesView.swift
 //
-//  The Guides tab — library of 5 life-event templates (Moving, Bank,
-//  Job, License, Visa). Tapping one will (Week 7) create an Inbox
-//  checklist from a static template.
+//  The Guides tab — current library of 5 life-event templates (Moving, Bank,
+//  Job, License, Visa). Week 7–8 expands this into adaptive hybrid guides.
 //
-//  Currently displays the cards + category filter chips with mock
-//  data. Tapping does nothing yet; navigation is wired later in Week 1.
+//  Currently displays the cards + category filter chips with mock metadata.
+//  Tapping previews a placeholder Detail; the real guide flow opens a
+//  Review-style confirmation screen before saving.
 //
 
 import SwiftUI
@@ -185,8 +185,8 @@ private struct GuideCard: View {
 
 // MARK: - Guide model (mock data for now)
 
-// The 5 starter life guides. In Week 7 each gets a real list of
-// template steps; for now they're just card metadata.
+// The 5 starter life guides. In Week 7–8 each gets adaptive questions and a
+// real checklist; for now they're just card metadata.
 struct Guide: Identifiable {
     let id = UUID()
     let title: String

@@ -31,3 +31,8 @@ Packages/
 *.env
 secrets.plist
 APIKeys.swift
+*.key
+*.pub
+*.pem
+*.p12
+*.mobileprovision
