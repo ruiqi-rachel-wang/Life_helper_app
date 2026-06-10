@@ -42,6 +42,12 @@ struct OpenAIClientParsingTests {
         #expect(ExtractionJSON.parse(#"{"category":"government"}"#)?.category == .government)
         #expect(ExtractionJSON.parse(#"{"category":"UTILITY"}"#)?.category == .utility)
         #expect(ExtractionJSON.parse(#"{"category":"spaceship"}"#)?.category == nil)
+        // synonym safety-net for the model's common drift
+        #expect(ExtractionJSON.parse(#"{"category":"insurance"}"#)?.category == .finance)
+        #expect(ExtractionJSON.parse(#"{"category":"travel"}"#)?.category == .personal)
+        #expect(ExtractionJSON.parse(#"{"category":"tax"}"#)?.category == .government)
+        // model sometimes returns category as an array
+        #expect(ExtractionJSON.parse(#"{"category":["finance"]}"#)?.category == .finance)
     }
 
     @Test func repeatsParsing() {
@@ -70,6 +76,37 @@ struct OpenAIClientParsingTests {
 
     @Test func otherIDsDefaultsToEmpty() {
         #expect(ExtractionJSON.parse(#"{"sender":"x"}"#)?.otherIDs == [])
+    }
+
+    @Test func notesParsing() {
+        let json = #"{"steps":["Move the car."],"notes":["Call 972-808-4154 with questions.",""]}"#
+        let r = ExtractionJSON.parse(json)
+        #expect(r?.steps == ["Move the car."])
+        #expect(r?.notes == ["Call 972-808-4154 with questions."])   // blank dropped
+        #expect(ExtractionJSON.parse(#"{"sender":"x"}"#)?.notes == [])
+    }
+
+    @Test func dueDateWithTimeSetsHasTime() {
+        let r = ExtractionJSON.parse(#"{"dueDate":"2026-06-25T08:05"}"#)
+        #expect(r?.dueHasTime == true)
+        let c = Calendar.current.dateComponents([.hour, .minute], from: r!.dueDate!)
+        #expect(c.hour == 8 && c.minute == 5)
+    }
+
+    @Test func dueDateWithoutTimeHasNoTime() {
+        let r = ExtractionJSON.parse(#"{"dueDate":"2026-06-25"}"#)
+        #expect(r?.dueDate != nil)
+        #expect(r?.dueHasTime == false)
+    }
+
+    // #4: the client validates its OWN injected key, not a global.
+    @Test func clientWithPlaceholderKeyThrowsMissingKey() async {
+        let client = OpenAIClient(apiKey: "sk-REPLACE-WITH-YOUR-OPENAI-KEY")
+        await #expect(throws: OpenAIClient.ClientError.self) {
+            _ = try await client.extract(text: "hello",
+                                         hints: RuleBasedParser.Hints(),
+                                         language: .english)
+        }
     }
 
     @Test func malformedJSONReturnsNil() {

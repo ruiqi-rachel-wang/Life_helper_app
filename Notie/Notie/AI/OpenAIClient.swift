@@ -16,7 +16,7 @@
 
 import Foundation
 
-struct OpenAIClient: Extractor {
+nonisolated struct OpenAIClient: Extractor {
     var apiKey: String = APIKeys.openAI
     var model: String = "gpt-4o-mini"
     var endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
@@ -41,7 +41,11 @@ struct OpenAIClient: Extractor {
     func extract(text: String,
                  hints: RuleBasedParser.Hints,
                  language: ExplainLanguage) async throws -> ExtractionResult {
-        guard APIKeys.hasOpenAIKey else { throw ClientError.missingKey }
+        // Validate THIS client's key (injected or default), not a global — so an
+        // injected client / the future Worker swap behaves as the protocol implies.
+        guard apiKey.hasPrefix("sk-"), !apiKey.contains("REPLACE") else {
+            throw ClientError.missingKey
+        }
 
         let body = ChatRequest(
             model: model,
@@ -89,29 +93,63 @@ struct OpenAIClient: Extractor {
           sender        : the organization that sent it, e.g. "Con Edison"
           senderShort   : a 1-2 word short form for a chip
           amount        : the amount owed as a STRING like "86.42" (no symbol), or null
-                          (null if nothing is owed, e.g. a paid receipt or a credit)
+                          (null if nothing is owed, e.g. a paid receipt or a credit).
+                          For a credit-card or loan statement, use the FULL statement /
+                          new balance (paying that avoids interest) — NOT the minimum
+                          payment. Ignore form/reference codes (e.g. "PC0313.00",
+                          policy/claim numbers) — those are NOT amounts.
           currency      : ISO 4217 like "USD", or null
-          dueDate       : the SINGLE most important action date as "YYYY-MM-DD", or null.
-                          Not every doc is a bill — this may be a payment due date, an
-                          appointment date, a flight departure, a prescription/registration
-                          expiry, or a submission deadline. The date an email was SENT is
-                          NOT the due date. If the deadline is described in words (e.g.
-                          "within 90 days of the exam"), compute it and add "dueDate" to
-                          lowConfidenceFields.
+          dueDate       : the SINGLE most important action date, or null. Use "YYYY-MM-DD"
+                          for a plain deadline; use "YYYY-MM-DDTHH:MM" (24-hour) when the
+                          event has a SPECIFIC TIME, like a flight departure or an
+                          appointment (e.g. "2026-06-25T08:05"). Not every doc is a bill —
+                          it may be a payment due date, appointment, flight departure,
+                          prescription/registration expiry, or submission deadline. The date
+                          an email was SENT is NOT the due date. If the deadline is in words
+                          (e.g. "within 90 days of the exam"), compute it and add "dueDate"
+                          to lowConfidenceFields.
           accountNumber : the PRIMARY account / reference / confirmation / violation number, or null
-          otherIDs      : any OTHER identifiers as an array of {"label","value"} objects
-                          (eTicket, member #, customer ID, policy #, …), or [] if none
+          otherIDs      : ALL other identifiers the reader may need later, as an array of
+                          {"label","value"} objects (claim #, policy #, eTicket, member #,
+                          customer ID, …). Always capture claim and policy numbers. [] if none.
           category      : EXACTLY one of these 8 lowercase words and NOTHING else:
                           utility, government, medical, finance, housing, work, personal, other.
                           Travel, flights, appointments, and personal errands are "personal".
                           Never invent a category like "travel" — use one of the 8.
-          summary       : a few short sentences in \(language.promptName) explaining what this is and what to do
-          steps         : action steps in \(language.promptName), each a plain imperative; a step
-                          may include a URL; use [] if there is nothing to do
+          summary       : in \(language.promptName). Say WHAT KIND of document this is and
+                          what it's about. Keep it AS SHORT AS POSSIBLE: for a self-
+                          explanatory document, ONE plain sentence with the key facts is
+                          enough — e.g. "This is a flight ticket from New York to Chicago,
+                          flight UA623, departing June 25 at 8:05 AM." Only add more
+                          explanation when there's a term or situation the reader likely
+                          won't understand (e.g. the insurance "storage facility" = the tow
+                          yard / body shop where their car is kept after the accident). Add
+                          understanding, do NOT just reword the text, and don't pad it.
+          steps         : the concrete, ORDERED actions to get this done, in
+                          \(language.promptName). Be specific and operational, not vague — no
+                          "pay it" / "contact them". When there is an ONLINE option, give it
+                          as a step WITH the website/app (e.g. "Check in online at united.com,
+                          or check in at the airport counter"), then real next steps (e.g.
+                          "arrive ~2 hours early", "go through security", "find your gate").
+                          For a bill: "Go to <site> and log in", "open the bill", "pay and
+                          save the confirmation". If a step is a phone call or visit AND
+                          \(language.promptName) is not English, add a sub-step to ask for an
+                          interpreter in \(language.promptName). Use [] if nothing to do.
+          notes         : short helpful side-info that is NOT an action — who to contact and
+                          how, useful context, caveats, deadlines context. Phone numbers and
+                          URLs welcome here. [] if none.
           siteURL       : a relevant URL if the document names one, else null
           repeats       : one of "monthly", "yearly", "every:N" (N = days), or null for one-off — only if the document recurs
           confidence    : your overall confidence 0.0-1.0
           lowConfidenceFields : array of field names you are unsure about
+
+        If the document shows interest charged, a late fee, or any penalty, treat it \
+        as a likely missed or late payment: in notes, (a) gently note they may have \
+        missed a payment, (b) suggest paying the full balance and setting a reminder \
+        so it doesn't happen again, and (c) tell them they can call the company (use \
+        any phone number shown) to ask for a one-time waiver or refund of the fee. \
+        For a statement with a minimum payment, add a note that paying only the \
+        minimum (and the minimum amount) accrues interest at the stated APR.
 
         Write summary and steps in \(language.promptName). Do not invent an amount \
         or a date that is not in the text.
@@ -120,7 +158,7 @@ struct OpenAIClient: Extractor {
 
     static func userPrompt(text: String, hints: RuleBasedParser.Hints) -> String {
         var known = ""
-        if let a = hints.amount { known += "\n- amount (regex-detected, trust this): \(a)" }
+        if let a = hints.amount { known += "\n- amount candidate (exact digits from regex): \(a) — use this number for the amount IF money is actually owed; if this is a credit, a paid receipt, or a positive balance, set amount to null" }
         if let c = hints.currency { known += "\n- currency (regex-detected): \(c)" }
         if let d = hints.dueDate {
             let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
@@ -135,7 +173,7 @@ struct OpenAIClient: Extractor {
 
 // MARK: - Wire types (Codable bridges to/from JSON)
 
-private struct ChatRequest: Encodable {
+private nonisolated struct ChatRequest: Encodable {
     struct ResponseFormat: Encodable { let type: String }
     struct Message: Encodable { let role: String; let content: String }
     let model: String
@@ -144,7 +182,7 @@ private struct ChatRequest: Encodable {
     let messages: [Message]
 }
 
-private struct ChatResponse: Decodable {
+private nonisolated struct ChatResponse: Decodable {
     struct Choice: Decodable { struct Msg: Decodable { let content: String? }; let message: Msg }
     let choices: [Choice]
 }
@@ -156,7 +194,7 @@ private struct ChatResponse: Decodable {
 // result over one odd field. Here each field is coerced independently, so a
 // surprise in one field never loses the others. (Made into a type so it's
 // testable without a network call — see OpenAIClientParsingTests.)
-enum ExtractionJSON {
+nonisolated enum ExtractionJSON {
     static func parse(_ content: String) -> ExtractionResult? {
         guard let data = content.data(using: .utf8),
               let dict = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
@@ -189,10 +227,18 @@ enum ExtractionJSON {
             }
             return 0
         }
-        let steps = (dict["steps"] as? [Any])?
-            .compactMap { ($0 as? String)?.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty } ?? []
+        func stringList(_ key: String) -> [String] {
+            (dict[key] as? [Any])?
+                .compactMap { ($0 as? String)?.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty } ?? []
+        }
+        let steps = stringList("steps")
+        let notes = stringList("notes")
+        let due = parseDueDate(str("dueDate"))
         let lowConf = (dict["lowConfidenceFields"] as? [Any])?.compactMap { $0 as? String } ?? []
+        // The model sometimes returns category as ["finance"] instead of "finance".
+        let categoryRaw = (dict["category"] as? String)
+            ?? (dict["category"] as? [Any])?.compactMap { $0 as? String }.first
         let otherIDs = (dict["otherIDs"] as? [Any])?.compactMap { item -> DocID? in
             guard let o = item as? [String: Any],
                   let value = (o["value"] as? String)?.trimmingCharacters(in: .whitespaces),
@@ -207,12 +253,14 @@ enum ExtractionJSON {
             senderShort: str("senderShort"),
             amount: decimal("amount"),
             currency: str("currency"),
-            dueDate: parseDate(str("dueDate")),
+            dueDate: due.date,
+            dueHasTime: due.hasTime,
             accountNumber: str("accountNumber"),
             otherIDs: otherIDs,
-            category: str("category").flatMap { ItemCategory(rawValue: $0.lowercased()) },
+            category: normalizedCategory(categoryRaw),
             summary: str("summary"),
             steps: steps,
+            notes: notes,
             siteURL: str("siteURL").flatMap { URL(string: $0) },
             repeats: parseRepeats(str("repeats")),
             confidence: confidence(),
@@ -227,6 +275,49 @@ enum ExtractionJSON {
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = .current
         return f.date(from: s)
+    }
+
+    // The model returns "YYYY-MM-DD" for a plain deadline, or "YYYY-MM-DDTHH:MM"
+    // when the event has a specific time (a flight departure, an appointment).
+    // hasTime lets the UI show the time and Week 6 schedule a reminder N hours
+    // before it (not just at 9am the day-of).
+    static func parseDueDate(_ s: String?) -> (date: Date?, hasTime: Bool) {
+        guard let s, !s.isEmpty else { return (nil, false) }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        for fmt in ["yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd'T'HH:mm:ss"] {
+            f.dateFormat = fmt
+            if let d = f.date(from: s) { return (d, true) }
+        }
+        return (parseDate(s), false)
+    }
+
+    // Map the model's category to one of our 8 enum cases. The model sometimes
+    // returns a sensible-but-off word ("insurance", "travel") despite the prompt;
+    // this catches the common ones so we don't lose the category. Truly unknown
+    // → nil (the user/Review can set it).
+    static func normalizedCategory(_ raw: String?) -> ItemCategory? {
+        guard let raw = raw?.lowercased().trimmingCharacters(in: .whitespaces), !raw.isEmpty else { return nil }
+        if let exact = ItemCategory(rawValue: raw) { return exact }
+        switch raw {
+        case "travel", "flight", "flights", "appointment", "appointments", "errand", "errands":
+            return .personal
+        case "insurance", "bank", "banking", "loan", "investment", "credit card":
+            return .finance
+        case "tax", "taxes", "dmv", "immigration", "court", "license", "ticket", "violation":
+            return .government
+        case "rent", "mortgage", "lease", "apartment":
+            return .housing
+        case "health", "dental", "pharmacy", "prescription", "clinic", "hospital":
+            return .medical
+        case "electricity", "water", "internet", "cable":
+            return .utility
+        case "job", "employer", "employment", "payroll":
+            return .work
+        default:
+            return nil
+        }
     }
 
     static func parseRepeats(_ s: String?) -> Recurrence? {

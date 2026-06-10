@@ -20,23 +20,27 @@ import Foundation
 // "0162108515648". A single doc often carries several (a flight has a
 // confirmation code AND an eTicket; a receipt has invoice + member numbers).
 // `accountNumber` holds the primary one; `otherIDs` holds the rest.
-struct DocID: Equatable {
+nonisolated struct DocID: Equatable {
     var label: String
     var value: String
 }
 
-struct ExtractionResult: Equatable {
+nonisolated struct ExtractionResult: Equatable {
     var documentType: String?          // "Utility bill", "Parking ticket"…
     var sender: String?                // "Con Edison"
     var senderShort: String?           // short form for chips, if any
     var amount: Decimal?
     var currency: String?              // ISO 4217, e.g. "USD"
     var dueDate: Date?
+    var dueHasTime: Bool               // true if dueDate carries a specific time
+                                       // (a flight/appointment), not just a day —
+                                       // drives time-based reminders (Week 6)
     var accountNumber: String?         // the primary identifier
     var otherIDs: [DocID]              // any additional identifiers
     var category: ItemCategory?        // utility / government / medical…
-    var summary: String?               // 1–2 sentence plain-language explanation
-    var steps: [String]                // 3–5 action steps
+    var summary: String?               // what KIND of doc this is + plain context
+    var steps: [String]                // concrete, ordered "do this now" actions
+    var notes: [String]                // side info / advice that isn't an action
     var siteURL: URL?
     var repeats: Recurrence?           // nil = one-off; AI reads cadence from doc
     var confidence: Double             // 0–1 overall
@@ -48,11 +52,13 @@ struct ExtractionResult: Equatable {
          amount: Decimal? = nil,
          currency: String? = nil,
          dueDate: Date? = nil,
+         dueHasTime: Bool = false,
          accountNumber: String? = nil,
          otherIDs: [DocID] = [],
          category: ItemCategory? = nil,
          summary: String? = nil,
          steps: [String] = [],
+         notes: [String] = [],
          siteURL: URL? = nil,
          repeats: Recurrence? = nil,
          confidence: Double = 0,
@@ -63,11 +69,13 @@ struct ExtractionResult: Equatable {
         self.amount = amount
         self.currency = currency
         self.dueDate = dueDate
+        self.dueHasTime = dueHasTime
         self.accountNumber = accountNumber
         self.otherIDs = otherIDs
         self.category = category
         self.summary = summary
         self.steps = steps
+        self.notes = notes
         self.siteURL = siteURL
         self.repeats = repeats
         self.confidence = confidence

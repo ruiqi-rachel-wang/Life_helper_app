@@ -14,7 +14,7 @@
 
 import Foundation
 
-struct RuleBasedParser {
+nonisolated struct RuleBasedParser {
 
     // The exact fields regex can find. All optional — a friendly letter with
     // no money or date yields an all-nil Hints, and that's fine.
@@ -71,13 +71,18 @@ struct RuleBasedParser {
             }
         }
 
-        // No keyword nearby: take the largest symbol-marked amount (a bill's
-        // headline number is almost always the biggest dollar figure on it).
-        let best = all.max { $0.value < $1.value }!
-        return Money(value: best.value, currency: best.currency)
+        // No keyword nearby: take the largest amount that ACTUALLY has a currency
+        // marker ($ / € / £ / USD…). We do NOT fall back to bare decimals here:
+        // form/reference codes like "PC0313.00" look like money to a regex but
+        // aren't. A bare decimal only counts when it sits next to an amount/total/
+        // due keyword (handled in the loop above).
+        if let best = all.filter(\.hasCurrency).max(by: { $0.value < $1.value }) {
+            return Money(value: best.value, currency: best.currency)
+        }
+        return nil
     }
 
-    private struct MoneyMatch { let value: Decimal; let currency: String; let range: NSRange }
+    private struct MoneyMatch { let value: Decimal; let currency: String; let hasCurrency: Bool; let range: NSRange }
 
     // Find every money-looking token: an optional symbol/code, then a number
     // with optional thousands separators and cents.
@@ -98,7 +103,9 @@ struct RuleBasedParser {
             let symbol = m.range(at: 1).location != NSNotFound ? ns.substring(with: m.range(at: 1)) : ""
             let code = m.range(at: 2).location != NSNotFound ? ns.substring(with: m.range(at: 2))
                      : (m.range(at: 5).location != NSNotFound ? ns.substring(with: m.range(at: 5)) : "")
-            return MoneyMatch(value: value, currency: currencyCode(symbol: symbol, code: code), range: m.range)
+            let hasCurrency = !symbol.isEmpty || !code.isEmpty
+            return MoneyMatch(value: value, currency: currencyCode(symbol: symbol, code: code),
+                              hasCurrency: hasCurrency, range: m.range)
         }
     }
 

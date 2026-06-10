@@ -145,6 +145,20 @@ yet. To stay ready: DetailView is composed of optional, item-driven sections
 data — so adding type-specific composition later is additive, not a rewrite.
 Don't collapse everything into one rigid template.
 
+### Bilingual term toggle (future — decided 2026-06-09)
+
+For bilingual users, the AI explanation is in their language (e.g. 中文), but the
+real world (a website form, a clerk) uses the **English** term. Example: the
+summary says "确认码" but the airline site asks for the "Confirmation code" — the
+user won't know what to look for. So on the Detail/Review page, **tapping certain
+words/labels reveals the English original; tapping again toggles back.** Applies
+to field labels and key terms (confirmation code, policy number, "storage
+facility", etc.). Needs the extraction to keep both the translated text AND the
+English term (e.g. each `DocID`/label could carry an `english` variant, or a
+parallel English extraction). Not Phase-1-core; a strong accessibility win for
+the ESL target. Builds on the single-language setup — this is the "show the
+English when you need it" escape hatch, not a full live re-translate.
+
 ### NotieTests/ (auto-created with the project)
 
 ```
@@ -343,10 +357,26 @@ skips the call; all unit tests green. All-in live-API test cost <$1.
 ### Week 6: Review screen end-to-end (THE SPINE)
 - ExtractionService orchestrates full pipeline
 - ReviewView connected to real ExtractionResult
+- **Map the FULL ExtractionResult → Review/ActionItem (don't silently drop
+  fields).** Week 5 produces documentType, sender, senderShort, currency,
+  dueHasTime, otherIDs, notes, siteURL, repeats, confidence, lowConfidenceFields —
+  but `ActionItem` today only has title/category/amount/currency/dueDate/note/
+  steps/repeatsMonthly. Decide per field: persist on ActionItem (extend the
+  model), fold into the note, or show-only. At minimum don't lose otherIDs, notes,
+  dueHasTime (drives timed reminders), and lowConfidenceFields (drives the accent
+  underlines). Map `category` via the AI value (default `.other`).
 - Quiet progress shimmer on captured photo (~3–5s target)
 - Inline field editing
 - Low-confidence fields get accent underline (no popup, no friction)
 - "Add to inbox" creates real ActionItem + schedules reminders
+- **Time-based reminders for timed events (decided 2026-06-09):** when the
+  extraction has `dueHasTime == true` (a flight departure, an appointment), the
+  reminder should fire a few HOURS before the actual time, not at 9am the day-of
+  like a bill. **Default lead time depends on event type** (user-editable):
+  e.g. appointment ~1h, flight ~2–3h, other timed events a sensible default. The
+  type can come from `category`/`documentType`. `ExtractionResult` already carries
+  the time + `dueHasTime`; ReminderScheduler + the Review reminder UI need to honor
+  it. (Week-3 scheduler currently only does 3d/1d/due-day at 9am.)
 - **Unreadable / nonsense scan handling (decided 2026-06-06, deferred here):**
   - Add an explicit prompt instruction: *if the OCR text is unreadable or
     meaningless, set documentType "unknown", a short summary saying so, steps [],

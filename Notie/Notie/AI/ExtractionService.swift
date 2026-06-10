@@ -17,7 +17,7 @@
 
 import Foundation
 
-struct ExtractionService {
+nonisolated struct ExtractionService {
     let parser: RuleBasedParser
     let extractor: Extractor
 
@@ -39,24 +39,52 @@ struct ExtractionService {
         return merge(hints: hints, llm: llm)
     }
 
-    // Parser facts beat the model on the exact fields; the model fills the rest.
-    // Also flag any field the parser couldn't confirm as low-confidence so the
-    // Review screen (Week 6) can nudge the user to check it.
+    // The parser reads exact values; the model judges meaning. Merge keeps the
+    // parser's precision WITHOUT letting it override the model's judgment about
+    // whether money is owed or whether a date carries a time. Disagreements are
+    // flagged low-confidence so the Review screen (Week 6) can nudge a check.
     func merge(hints: RuleBasedParser.Hints, llm: ExtractionResult) -> ExtractionResult {
         var out = llm
+        var lowConf = out.lowConfidenceFields
 
-        if let a = hints.amount { out.amount = a }
-        if let c = hints.currency { out.currency = c }
-        if let d = hints.dueDate { out.dueDate = d }
+        // AMOUNT: the regex reads exact digits but can't tell "owed" from a
+        // credit / paid receipt / positive balance — the model can. So respect
+        // the model's call on WHETHER money is owed; use the regex only to
+        // sharpen the number when the model agrees there is one.
+        switch (hints.amount, llm.amount) {
+        case let (parsed?, model?):
+            out.amount = parsed                          // exact digits from regex
+            if parsed != model { lowConf.insert("amount") }   // they disagree → check
+        case (_?, nil):
+            // Regex found a number but the model said nothing is owed (a credit,
+            // a paid receipt, a positive balance). Trust the model; just flag it
+            // so the user can confirm it really isn't owed.
+            out.amount = nil
+            lowConf.insert("amount")
+        case (nil, _?):
+            lowConf.insert("amount")                     // only the model found it
+        case (nil, nil):
+            break
+        }
+        if let c = hints.currency, out.amount != nil { out.currency = c }
+
+        // DUE DATE: the regex date wins for the DAY, but preserve the model's
+        // TIME when it lands on that same day (the regex only knows the date, not
+        // the 8:05 AM departure). Otherwise a regex date has no time.
+        if let parsedDue = hints.dueDate {
+            let modelHadSameDayTime = out.dueHasTime
+                && out.dueDate.map { Calendar.current.isDate($0, inSameDayAs: parsedDue) } == true
+            if !modelHadSameDayTime {
+                out.dueDate = parsedDue
+                out.dueHasTime = false
+            }
+        } else if out.dueDate != nil {
+            lowConf.insert("dueDate")                     // only the model found a date
+        }
+
         if let n = hints.accountNumber { out.accountNumber = n }
 
-        // If the parser didn't find the amount/date but the model supplied one,
-        // mark it for review — those are the values worth a second glance.
-        var lowConf = out.lowConfidenceFields
-        if hints.amount == nil, out.amount != nil { lowConf.insert("amount") }
-        if hints.dueDate == nil, out.dueDate != nil { lowConf.insert("dueDate") }
         out.lowConfidenceFields = lowConf
-
         return out
     }
 }

@@ -15,7 +15,7 @@
 import Foundation
 
 // nil ExtractionResult.repeats = a one-off. A non-nil value = it repeats.
-enum Recurrence: Equatable, Codable {
+nonisolated enum Recurrence: Equatable, Codable {
     case monthly
     case yearly
     case everyNDays(Int)      // arbitrary cadence read from the document

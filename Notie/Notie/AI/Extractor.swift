@@ -17,7 +17,7 @@ import Foundation
 // in Week 5 (Settings is still a stub); the real Settings picker that drives
 // this — and defaults to device language — lands in Week 8. UI chrome stays
 // English; only the AI's prose respects this.
-enum ExplainLanguage: String, Codable, CaseIterable {
+nonisolated enum ExplainLanguage: String, Codable, CaseIterable {
     case english, chinese, spanish
 
     // How we name the language TO the model in the prompt.
@@ -30,7 +30,7 @@ enum ExplainLanguage: String, Codable, CaseIterable {
     }
 }
 
-protocol Extractor {
+nonisolated protocol Extractor {
     /// Turn raw OCR text into a structured ExtractionResult.
     /// - Parameters:
     ///   - text: the raw OCR output.
@@ -45,7 +45,7 @@ protocol Extractor {
 // A fake Extractor for tests + previews. Returns a canned result, can be told
 // to throw, and records whether it was actually called (so a test can prove
 // ExtractionService skipped the model on empty OCR).
-final class MockExtractor: Extractor {
+nonisolated final class MockExtractor: Extractor {
     var stub: ExtractionResult
     var error: Error?
     private(set) var callCount = 0

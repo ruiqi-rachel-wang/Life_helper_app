@@ -102,6 +102,57 @@ struct ExtractionServiceTests {
         #expect(!merged.lowConfidenceFields.contains("amount"))
     }
 
+    // MARK: amount — credit / disagreement (don't show a credit as owed)
+
+    @Test func creditBalanceNotShownAsOwed() {
+        // Regex found "$120.60" (a positive lunch-account balance); the model
+        // judged nothing is owed (nil). Trust the model, but flag for review.
+        let service = ExtractionService(extractor: MockExtractor())
+        let merged = service.merge(hints: RuleBasedParser.Hints(amount: dec("120.60")),
+                                   llm: ExtractionResult(amount: nil))
+        #expect(merged.amount == nil)
+        #expect(merged.lowConfidenceFields.contains("amount"))
+    }
+
+    @Test func agreedAmountUsesRegexDigitsAndIsNotFlagged() {
+        let service = ExtractionService(extractor: MockExtractor())
+        let merged = service.merge(hints: RuleBasedParser.Hints(amount: dec("86.42")),
+                                   llm: ExtractionResult(amount: dec("86.42")))
+        #expect(merged.amount == dec("86.42"))
+        #expect(!merged.lowConfidenceFields.contains("amount"))
+    }
+
+    @Test func disagreedAmountKeepsRegexButFlags() {
+        let service = ExtractionService(extractor: MockExtractor())
+        let merged = service.merge(hints: RuleBasedParser.Hints(amount: dec("86.42")),
+                                   llm: ExtractionResult(amount: dec("84.62")))
+        #expect(merged.amount == dec("86.42"))   // exact regex digits win
+        #expect(merged.lowConfidenceFields.contains("amount"))
+    }
+
+    // MARK: due date — preserve the model's TIME on the same day
+
+    @Test func timedDuePreservesModelTimeOnSameDay() {
+        let service = ExtractionService(extractor: MockExtractor())
+        let day = DateComponents(calendar: .current, year: 2026, month: 6, day: 25).date!
+        let dayTime = DateComponents(calendar: .current, year: 2026, month: 6, day: 25, hour: 8, minute: 5).date!
+        let merged = service.merge(hints: RuleBasedParser.Hints(dueDate: day),
+                                   llm: ExtractionResult(dueDate: dayTime, dueHasTime: true))
+        #expect(merged.dueHasTime == true)
+        let c = Calendar.current.dateComponents([.hour, .minute], from: merged.dueDate!)
+        #expect(c.hour == 8 && c.minute == 5)    // not midnight
+    }
+
+    @Test func timedDueResetsWhenModelTimeIsDifferentDay() {
+        let service = ExtractionService(extractor: MockExtractor())
+        let day25 = DateComponents(calendar: .current, year: 2026, month: 6, day: 25).date!
+        let day20Time = DateComponents(calendar: .current, year: 2026, month: 6, day: 20, hour: 8, minute: 5).date!
+        let merged = service.merge(hints: RuleBasedParser.Hints(dueDate: day25),
+                                   llm: ExtractionResult(dueDate: day20Time, dueHasTime: true))
+        #expect(merged.dueHasTime == false)      // regex date has no time
+        #expect(ymd(merged.dueDate!) == (2026, 6, 25))
+    }
+
     // MARK: errors
 
     @Test func modelErrorPropagates() async {

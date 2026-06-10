@@ -74,6 +74,41 @@ struct RealSampleParserTests {
         #expect(h.amount == nil)
     }
 
+    // 5b. Liberty Mutual claim letter (real): a bare decimal in the form code
+    //     "PC0313.00" must NOT become an amount; the actionable date is the
+    //     "by 06/12/2026" move-your-vehicle deadline.
+    @Test func libertyMutualClaimNoFakeAmount() {
+        let text = """
+        LIBERTY MUTUAL FIRE INSURANCE COMPANY
+        June 2, 2026   Claim Number: AB949-741488-99   Policy Number: AS2-665-067247-456
+        On 06/02/2026, a claim was reported for damage to your 2020 Lexus GX.
+        We recommend that you move your vehicle to a facility that does not charge a
+        fee by 06/12/2026 to reduce the expenses you may incur.
+        Event # 910167250    Correspondence Copy # 747677543    PC0313.00
+        """
+        let h = parser.parse(text)
+        #expect(h.amount == nil)            // "PC0313.00" is a form code, not money
+        #expect(h.dueDate != nil)
+        #expect(ymd(h.dueDate!) == (2026, 6, 12))
+    }
+
+    @Test func bareDecimalWithoutCurrencyOrKeywordIsNotAmount() {
+        #expect(parser.parse("Reference PC0313.00 on file").amount == nil)
+        #expect(parser.parse("Form 1040.00 instructions").amount == nil)
+    }
+
+    // Multi-amount bill: previous balance, late fee, minimum due, total due —
+    // the "total due" keyword should win over the other figures.
+    @Test func multiAmountBillPicksTotalDue() {
+        let text = """
+        Previous balance $50.00
+        Late fee $10.00
+        Minimum due $25.00
+        Total due $86.42
+        """
+        #expect(parser.parse(text).amount == dec("86.42"))
+    }
+
     // 6. Standard utility bill — the classic case the parser should fully nail.
     @Test func standardConEdisonBill() {
         let text = """

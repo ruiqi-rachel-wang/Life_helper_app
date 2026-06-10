@@ -15,7 +15,7 @@ import Foundation
 import SwiftData
 
 // Semantic category. Drives the icon/color in the view, not vice-versa.
-enum ItemCategory: String, Codable, CaseIterable {
+nonisolated enum ItemCategory: String, Codable, CaseIterable {
     case utility, government, medical, finance, housing, work, personal, other
 }
 
