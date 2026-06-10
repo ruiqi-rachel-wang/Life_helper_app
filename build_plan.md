@@ -23,7 +23,17 @@
 **Week 2 — Persistence** ✓ complete — SwiftData store; Inbox reads live (@Query) with a Done section; Detail binds to the live object so Mark done / Delete / edits write back; Create form saves (title-only valid) with optional due date, steps, and a text+photo note. Backed up on GitHub (`ruiqi-rachel-wang/Life_helper_app`, branch `main`).
 **Week 3 — Notifications** ✓ complete — local reminders (3d/1d/due/overdue at 9am) scheduled on save, cancelled on done/delete, rescheduled on edit; interactive Mark done / Remind me later actions; tap a banner to open the item. 14 unit tests.
 **Week 4 — Camera + OCR** ✓ complete — Apple Vision OCR on-device; Scan (camera) / Upload (Photos) → ScanResultView shows the real extracted text. (Test via Upload in the Simulator; camera needs a device.)
-**Week 5 — Rule parser + OpenAI extraction** ⏳ next.
+**Week 5 — Rule parser + OpenAI extraction** ✓ complete (2026-06-06) —
+`ExtractionResult` + minimal `Recurrence`; `RuleBasedParser` (amount/currency/
+date/account, cue-aware dates that handle appointments/expiries/departures, not
+just bills); `Extractor` protocol + `OpenAIClient` (GPT-4o-mini, JSON mode, calls
+OpenAI directly with the gitignored dev key) + `MockExtractor`; `ExtractionService`
+(parser+LLM merge, parser wins on exact fields, skips LLM on empty OCR). Prompt
+tuned against the real Week-4 samples + a live smoke test (~$0.0002/2 calls):
+fixed dueDate-for-non-bills + travel→personal, and made JSON parsing tolerant
+(the model returned `"confidence":"high"`). ~61 unit tests pass. Tuning corpus in
+`sample_documents.md`. NOT wired into the Review UI yet — that's Week 6.
+**Week 6 — Review screen end-to-end (the spine)** ⏳ next.
 
 What's running today:
 - All 5 screens + Settings. Tab bar; navigation wired; Inbox groups items by urgency with a Done section.
@@ -288,14 +298,47 @@ Simulator via Upload — drag a bill image onto the simulator first. Camera
 needs a real device.)
 
 ### Week 5: Parser + OpenAI extraction
-- RuleBasedParser: regex for amount, date, account number
-- Cloudflare Worker proxy (free tier, ~30 min setup)
-- OpenAIClient calls the Worker, not OpenAI directly
-- Tune prompt with 5 real bills from Week 4
-- ExtractionService skips LLM when parser is confident
-- Tests: RuleBasedParserTests (20+ cases), ExtractionServiceTests with mock LLM
+- `ExtractionResult` (the shared type, built first) + a **minimal `Recurrence`**
+  enum (`monthly` / `yearly` / `everyNDays`). NOTE: `Recurrence` is NOT wired into
+  `ActionItem` yet — that migration (off `repeatsMonthly: Bool`) waits for Week 7,
+  when recurring behavior is actually built. Defining the enum now just keeps
+  `ExtractionResult` stable.
+- RuleBasedParser: regex for amount, currency, date, account number (free, exact)
+- `Extractor` protocol → real `OpenAIClient` + a test mock both conform
+- OpenAIClient (GPT-4o-mini, JSON mode) for summary / steps / category / repeats
+- ExtractionService: parser first, then LLM; **merge** prefers the parser's exact
+  regex for amount/date/account, takes summary/steps/category from the LLM.
+  (Skips the LLM only on empty OCR — the broad "skip when parser is confident"
+  optimization is deferred: steps/summary always need the model, so there's no
+  real skip path yet. No dead branch.)
+- Tune prompt with the 5 real OCR samples from Week 4
+- Tests: RuleBasedParserTests (20+ cases), ExtractionServiceTests with the mock
+  LLM (verifies merge precedence + empty-OCR skip — zero API cost)
 
-**Done when:** paste OCR text → get valid JSON with amount, date, sender, steps, repeats. All-in test cost <$1.
+**API key handling (DECIDED 2026-06-06):**
+- **Week 5 dev calls OpenAI DIRECTLY** with Rachel's real key — fine because it
+  runs on the Simulator only and nothing ships. `OpenAIClient` sits behind the
+  `Extractor` protocol, so swapping "direct call" → "call the Worker" later is a
+  one-line change.
+- The key lives in a **gitignored `AI/APIKeys.swift`** (`APIKeys.swift` is already
+  in `.gitignore`). **The key must NEVER be committed** — a leaked OpenAI key in a
+  committed `.env` is exactly finding F1 in the JobDrop pre-deploy review; same
+  failure mode, don't repeat it.
+
+**Cloudflare Worker — deferred to pre-TestFlight (Week 6+), and it's free:**
+- WHY a Worker at all: the app ships as a binary on strangers' phones; any key
+  baked in can be extracted and used to run up your OpenAI bill. The Worker holds
+  the key server-side so it never ships, and rate-limits per IP. Only matters once
+  real users have the build — not during Simulator dev.
+- COST: **$0**. Free tier = 100K requests/day; you'd use a few hundred at 1K
+  users. You only leave free tier at 10M+ req/month, where the paid plan is a flat
+  **$5/mo**. The only real per-scan cost is OpenAI itself (~$0.0004/scan): ~$0/mo
+  at 10 testers, ~$2/mo at 1K users, ~$15–20/mo at 10K. See the Costs table.
+- Setup is a ~30-min task slotted right before the first TestFlight build.
+
+**Done when:** paste OCR text → get a valid `ExtractionResult` (amount, date,
+sender, category, summary, steps, repeats); parser facts win on merge; empty OCR
+skips the call; all unit tests green. All-in live-API test cost <$1.
 
 ### Week 6: Review screen end-to-end (THE SPINE)
 - ExtractionService orchestrates full pipeline
@@ -304,8 +347,27 @@ needs a real device.)
 - Inline field editing
 - Low-confidence fields get accent underline (no popup, no friction)
 - "Add to inbox" creates real ActionItem + schedules reminders
+- **Unreadable / nonsense scan handling (decided 2026-06-06, deferred here):**
+  - Add an explicit prompt instruction: *if the OCR text is unreadable or
+    meaningless, set documentType "unknown", a short summary saying so, steps [],
+    and confidence < 0.2; never invent a document.* (Today the model does this on
+    its own but it isn't pinned — verified live with gibberish input.) Add a unit
+    test for the unreadable path.
+  - **Consume `confidence`:** when it's very low (or documentType "unknown"), the
+    Review screen shows a "We couldn't read this clearly — retake the photo?"
+    state instead of a normal pre-filled Review. (This is the "OCR failed" empty
+    state listed in Week 8; the *signal* — `confidence` — already exists, the
+    *reaction* is built here.) VisionOCR already handles the truly-no-text case;
+    this covers "OCR returned garbage."
+- **Product decision needed:** what does a no-action FYI (a real doc, but
+  `steps: []` — e.g. an event flyer) become? Options: save as a plain note, save
+  as a step-less reminder, or just show the summary and let the user dismiss
+  without adding. Decide when wiring Review. (Verified: a no-action flyer returns
+  a good summary + empty steps + confidence 1 today.)
 
-**Done when:** photo of a letter → pre-filled Review → Add to Inbox → see it. **This is the shippable moment.** Everything after is polish + breadth.
+**Done when:** photo of a letter → pre-filled Review → Add to Inbox → see it.
+A garbled/blank scan → "retake" state, not a fake item. **This is the shippable
+moment.** Everything after is polish + breadth.
 
 ### Week 7–8: Adaptive guides + recurring  (expanded — see timeline note)
 - **Guides are adaptive, hybrid** (decided 2026-06-05, moved INTO Phase 1):
@@ -349,11 +411,20 @@ details filled in → Add to inbox. Recurring item respawns on the right date.
    needed there; only *done* needs reversing.)
 6. Analytics events (`action_item_confirmed`, `action_item_completed`) → local JSON file
 7. App icon (even placeholder serif "N" on cream)
-8. **Apply for Apple Developer Program** if not already (1–3 day approval)
-9. Xcode → Product → Archive → Distribute App → App Store Connect
-10. 24–48h Apple automated review
-11. Add 10 testers in App Store Connect → TestFlight tab
-12. Recruit testers from target audience (immigrants, ESL families)
+8. 🔴 **BLOCKER before Archive — move the OpenAI key off-device (Cloudflare
+   Worker).** Until now the key lives in the gitignored `AI/APIKeys.swift`, which
+   is fine on the Simulator but **gets compiled into any shipped build** — a
+   TestFlight binary with the key in it can be extracted and your account drained.
+   `.gitignore` does NOT prevent this (it only stops the GitHub leak). Steps
+   (~30 min): create a free Cloudflare Worker holding the key + per-IP rate limit;
+   point `OpenAIClient.endpoint` at the Worker URL and drop the `Authorization`
+   header (one-line change, thanks to the `Extractor` protocol); remove the real
+   key from `APIKeys.swift`. Verify the shipped build contains only the Worker URL.
+9. **Apply for Apple Developer Program** if not already (1–3 day approval)
+10. Xcode → Product → Archive → Distribute App → App Store Connect
+11. 24–48h Apple automated review
+12. Add 10 testers in App Store Connect → TestFlight tab
+13. Recruit testers from target audience (immigrants, ESL families)
 
 **Done when:** 10 real users have the build. You're logging the one metric.
 
