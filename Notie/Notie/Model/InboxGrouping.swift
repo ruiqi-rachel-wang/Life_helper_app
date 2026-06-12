@@ -49,6 +49,22 @@ extension Array where Element == ActionItem {
                 b.upcoming.append(item)
             }
         }
+
+        // Sort every section by due date (soonest first); undated items go last,
+        // then by creation time. So within each section the order makes sense.
+        let byDue: (ActionItem, ActionItem) -> Bool = { a, c in
+            switch (a.dueDate, c.dueDate) {
+            case let (x?, y?): return x < y
+            case (_?, nil):    return true
+            case (nil, _?):    return false
+            case (nil, nil):   return a.createdAt < c.createdAt
+            }
+        }
+        b.needsAttention.sort(by: byDue)
+        b.dueThisWeek.sort(by: byDue)
+        b.inProgress.sort(by: byDue)
+        b.upcoming.sort(by: byDue)
+        b.done.sort(by: byDue)
         return b
     }
 }

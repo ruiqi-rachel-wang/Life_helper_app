@@ -33,7 +33,11 @@ tuned against the real Week-4 samples + a live smoke test (~$0.0002/2 calls):
 fixed dueDate-for-non-bills + travel→personal, and made JSON parsing tolerant
 (the model returned `"confidence":"high"`). ~61 unit tests pass. Tuning corpus in
 `sample_documents.md`. NOT wired into the Review UI yet — that's Week 6.
-**Week 6 — Review screen end-to-end (the spine)** ⏳ next.
+**Week 6 — Review screen end-to-end (the spine)** ✓ complete (2026-06-10) — one
+combined editable Review screen (OCR→AI→edit→Add saves a rich ActionItem +
+schedules reminders); Detail page redesigned to match; time-based reminders by
+type (editable lead); unreadable→retake; multi-item documents → multiple items.
+**This is the shippable moment.** Week 7 (adaptive guides + recurring) ⏳ next.
 
 What's running today:
 - All 5 screens + Settings. Tab bar; navigation wired; Inbox groups items by urgency with a Done section.
@@ -355,49 +359,90 @@ sender, category, summary, steps, repeats); parser facts win on merge; empty OCR
 skips the call; all unit tests green. All-in live-API test cost <$1.
 
 ### Week 6: Review screen end-to-end (THE SPINE)
-- ExtractionService orchestrates full pipeline
-- ReviewView connected to real ExtractionResult
-- **Map the FULL ExtractionResult → Review/ActionItem (don't silently drop
-  fields).** Week 5 produces documentType, sender, senderShort, currency,
-  dueHasTime, otherIDs, notes, siteURL, repeats, confidence, lowConfidenceFields —
-  but `ActionItem` today only has title/category/amount/currency/dueDate/note/
-  steps/repeatsMonthly. Decide per field: persist on ActionItem (extend the
-  model), fold into the note, or show-only. At minimum don't lose otherIDs, notes,
-  dueHasTime (drives timed reminders), and lowConfidenceFields (drives the accent
-  underlines). Map `category` via the AI value (default `.other`).
-- Quiet progress shimmer on captured photo (~3–5s target)
-- Inline field editing
-- Low-confidence fields get accent underline (no popup, no friction)
-- "Add to inbox" creates real ActionItem + schedules reminders
-- **Time-based reminders for timed events (decided 2026-06-09):** when the
-  extraction has `dueHasTime == true` (a flight departure, an appointment), the
-  reminder should fire a few HOURS before the actual time, not at 9am the day-of
-  like a bill. **Default lead time depends on event type** (user-editable):
-  e.g. appointment ~1h, flight ~2–3h, other timed events a sensible default. The
-  type can come from `category`/`documentType`. `ExtractionResult` already carries
-  the time + `dueHasTime`; ReminderScheduler + the Review reminder UI need to honor
-  it. (Week-3 scheduler currently only does 3d/1d/due-day at 9am.)
-- **Unreadable / nonsense scan handling (decided 2026-06-06, deferred here):**
-  - Add an explicit prompt instruction: *if the OCR text is unreadable or
-    meaningless, set documentType "unknown", a short summary saying so, steps [],
-    and confidence < 0.2; never invent a document.* (Today the model does this on
-    its own but it isn't pinned — verified live with gibberish input.) Add a unit
-    test for the unreadable path.
-  - **Consume `confidence`:** when it's very low (or documentType "unknown"), the
-    Review screen shows a "We couldn't read this clearly — retake the photo?"
-    state instead of a normal pre-filled Review. (This is the "OCR failed" empty
-    state listed in Week 8; the *signal* — `confidence` — already exists, the
-    *reaction* is built here.) VisionOCR already handles the truly-no-text case;
-    this covers "OCR returned garbage."
-- **Product decision needed:** what does a no-action FYI (a real doc, but
-  `steps: []` — e.g. an event flyer) become? Options: save as a plain note, save
-  as a step-less reminder, or just show the summary and let the user dismiss
-  without adding. Decide when wiring Review. (Verified: a no-action flyer returns
-  a good summary + empty steps + confidence 1 today.)
 
-**Done when:** photo of a letter → pre-filled Review → Add to Inbox → see it.
-A garbled/blank scan → "retake" state, not a fake item. **This is the shippable
-moment.** Everything after is polish + breadth.
+The Week-5 engine exists + is tested; the scan screen shows it read-only. Week 6
+turns that into the real, editable Review that saves and schedules. **This is the
+shippable moment.**
+
+**Decisions (2026-06-10):**
+- **Combine the two screens into ONE.** Today there's a read-only AI card
+  (`ScanResultView`) + an old mock editable `ReviewView`. Merge them into a single
+  Review screen used after every capture (and later, guides). Retire the duplicates.
+- **Single-item first, then multi-item** — multi-item reuses the same per-item card.
+- **Keep the rich detail** — extend `ActionItem` so saved items carry the full
+  extraction (not just title/amount/due), so the Detail page shows everything.
+
+**Step 1 — One combined Review screen (single item). ✓ DONE (2026-06-10)**
+(Merged ReviewView; OCR→extract→editable card→Add saves a rich ActionItem +
+schedules reminders; no-action → Done; unreadable → retake. Detail page
+redesigned to match. siteURL link surfaced; date/amount formatting unified.)
+- New/merged `ReviewView(image:)`: runs OCR → `ExtractionService.extract` with a
+  quiet progress shimmer on the captured photo (~3–5s), then renders the editable
+  result using the card design (summary · type/sender · amount+due · steps · notes
+  · DETAILS/IDs · tappable links).
+- Inline editing (Edit/Done toggle): title, summary, amount, due **date + time**,
+  category, steps (add/edit/remove), notes.
+- Low-confidence fields (`lowConfidenceFields`) get an accent underline — no popup.
+- "Add to inbox" → save the ActionItem + schedule reminders → land on Inbox.
+- Needs a short **`title`** for the inbox row (e.g. "Con Edison electricity bill",
+  "Flight to Chicago"): add a `title` field to the extraction/prompt (recommended)
+  rather than deriving it.
+
+**Step 2 — Extend `ActionItem` to keep the rich detail (SwiftData migration).**
+- Add stored fields: `title`, `summary`, `documentType`, `sender`, `senderShort`,
+  `dueHasTime`, `otherIDs` ([DocID] — make `DocID` Codable), `notes` ([String]),
+  `siteURL`, plus a `sourceType` (scanned/guide/custom) for the source tag.
+  (`amount`/`currency`/`dueDate`/`category`/`steps` already exist.)
+- `repeats`: keep `repeatsMonthly` for now; full `Recurrence` wiring is Week 7.
+- `confidence`/`lowConfidenceFields`: **transient** (Review-time only — for the
+  underlines); NOT persisted.
+- Adding optional fields with defaults = SwiftData lightweight (automatic)
+  migration; existing seeded items still load.
+- Write the explicit `ExtractionResult → ActionItem` mapping (no dropped fields);
+  Detail page renders the new fields (IDs, links, notes).
+
+**Step 3 — Time-based reminders (the `dueHasTime` payoff). ✓ DONE (2026-06-10)**
+(Timed events: heads-up the day before @9am + a reminder `reminderLeadHours`
+before the exact time, which fires at that time, not 9am. Smart default by type
+(flight 3h, appointment 1h, else 2h), editable via a picker on Review + Detail.)
+- When `dueHasTime == true` (flight, appointment), fire a few HOURS before the
+  actual time, not 9am day-of. **Default lead time by type, user-editable:**
+  appointment ~1h, flight ~2–3h, else a sensible default (from `category`/
+  `documentType`). Extend `ReminderScheduler` (Week-3 it only does 3d/1d/due-day @9am).
+
+**Step 4 — Unreadable / low-confidence → retake (not a fake item). ✓ DONE (2026-06-10)**
+(Prompt pinned: gibberish → documentType "unknown" + confidence < 0.2; Review shows
+a retake state for unreadable / low-confidence / no-text / failed.)
+- Pin the prompt: if OCR is unreadable/meaningless → documentType "unknown",
+  short summary saying so, steps [], confidence < 0.2; never invent. + a unit test.
+- Review **consumes `confidence`**: very low (or "unknown") → show a "couldn't read
+  this clearly — retake the photo?" state instead of a pre-filled Review. (The
+  read-only bridge already shows a banner; Week 6 makes it a proper state.)
+
+**Step 5 — Multi-item documents → multiple ActionItems. ✓ DONE (2026-06-10)**
+(Extractor returns `[ExtractionResult]`; prompt returns `{"items":[…]}`; service
+applies the regex merge only when there's one item; Review shows an "N things
+found" selectable list → Add selected, each its own ActionItem + reminders.
+Verified live: the Northwell list yields all 3 appointments, incl. the one that
+used to drop.)
+- A scan can hold SEVERAL events (appointment list, two deadlines, multi-line
+  statement). One-item handling crams them into one item and **drops events** (the
+  6/18 CT scan vanished in testing). Fix: extraction returns a LIST of items; the
+  prompt returns an array; Review shows "this scan has N things — add them"
+  (review/edit each, toggle which to add); each → its own ActionItem + reminders.
+  Single item is just N = 1, so the Step-1 card is reused.
+
+**No-action docs (decided 2026-06-10): show, then dismiss.** When a real document
+has nothing to do (`steps: []` — a flyer, a paid receipt, a past itinerary),
+Review shows the summary so the user understands it, with a **Done/dismiss**
+button and **no "Add to inbox"** — the inbox stays action-only. (Docs that imply
+an action — e.g. an interest charge → "set a reminder" — still have steps and are
+added normally.) Heuristic: empty steps + no due date → treat as no-action.
+
+**Done when:** photo → combined editable Review (AI-filled) → Add to Inbox → see
+it, with reminders scheduled (timed events remind hours before). An appointment
+list adds all N items. A garbled/blank scan → "retake" state, not a fake item.
+**This is the shippable moment.** Everything after is polish + breadth.
 
 ### Week 7–8: Adaptive guides + recurring  (expanded — see timeline note)
 - **Guides are adaptive, hybrid** (decided 2026-06-05, moved INTO Phase 1):

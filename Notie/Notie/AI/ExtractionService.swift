@@ -28,15 +28,21 @@ nonisolated struct ExtractionService {
     }
 
     func extract(from ocrText: String,
-                 language: ExplainLanguage = .english) async throws -> ExtractionResult {
+                 language: ExplainLanguage = .english) async throws -> [ExtractionResult] {
         // No text → nothing to do, and never spend an API call on a blank page.
         guard !ocrText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return .empty
+            return []
         }
 
         let hints = parser.parse(ocrText)
-        let llm = try await extractor.extract(text: ocrText, hints: hints, language: language)
-        return merge(hints: hints, llm: llm)
+        let items = try await extractor.extract(text: ocrText, hints: hints, language: language)
+        // The regex hints describe the WHOLE page, so merging them only makes
+        // sense for a single item. For a multi-item document, trust the model's
+        // per-item amount/date — it did the splitting.
+        if items.count == 1 {
+            return [merge(hints: hints, llm: items[0])]
+        }
+        return items
     }
 
     // The parser reads exact values; the model judges meaning. Merge keeps the

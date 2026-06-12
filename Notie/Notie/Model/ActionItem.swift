@@ -19,6 +19,11 @@ nonisolated enum ItemCategory: String, Codable, CaseIterable {
     case utility, government, medical, finance, housing, work, personal, other
 }
 
+// Where an item came from — drives the source tag (Scanned / guide / Custom).
+nonisolated enum ItemSource: String, Codable {
+    case scanned, guide, custom
+}
+
 // Workflow state. Not user-set: inProgress is derived (some steps checked),
 // done comes from "Mark done", overdue is derived (see isOverdue).
 enum WorkStatus: String, Codable {
@@ -41,11 +46,14 @@ struct ChecklistStep: Identifiable, Codable, Hashable {
     var done: Bool = false
 }
 
-// One scheduled reminder — derived, never stored.
+// One scheduled reminder — derived, never stored. `exactTime` = fire at this
+// precise time (a timed event, e.g. 3h before a flight); otherwise the scheduler
+// fires at 9am on that day (a bill heads-up).
 struct ScheduledReminder: Identifiable {
     var id = UUID()
     var date: Date
     var label: String
+    var exactTime: Bool = false
 }
 
 @Model
@@ -64,6 +72,28 @@ final class ActionItem {
     var steps: [ChecklistStep] = []
     var repeatsMonthly: Bool = false
     var createdAt: Date = Date.now
+
+    // Rich detail from AI extraction (Week 6). All optional with defaults, so
+    // adding them is a lightweight SwiftData migration and manual items just
+    // leave them empty. `confidence`/`lowConfidenceFields` are intentionally NOT
+    // stored — they only matter at Review time (the accent underlines).
+    var summary: String = ""
+    var documentType: String = ""
+    var sender: String = ""
+    var senderShort: String = ""
+    var dueHasTime: Bool = false        // dueDate carries a real time (flight/appt)
+    var siteURL: String = ""
+    var otherIDs: [DocID] = []          // claim/policy/confirmation numbers
+    var notes: [String] = []            // side info (not action steps)
+    var source: ItemSource = ItemSource.custom
+    // How many hours before a TIMED event (dueHasTime) to remind — seeds the
+    // default schedule (flight ~3h, appointment ~1h). Ignored for plain dates.
+    var reminderLeadHours: Int = 2
+    // User-customized reminder fire-times. Empty + !customized = use the smart
+    // defaults (defaultReminderDates). Once the user edits, `customized` flips on
+    // and THIS list is authoritative (even if emptied = no reminders).
+    var reminders: [Date] = []
+    var remindersCustomized: Bool = false
 
     init(title: String,
          category: ItemCategory,
@@ -87,6 +117,52 @@ final class ActionItem {
         self.repeatsMonthly = repeatsMonthly
     }
 
+    // Build an item from an AI extraction (Week 6). Folds the primary
+    // accountNumber into otherIDs (deduped) so the Detail page shows every
+    // identifier. repeats → repeatsMonthly for now (full Recurrence is Week 7).
+    convenience init(from r: ExtractionResult,
+                     imageData: Data? = nil,
+                     source: ItemSource = .scanned) {
+        var ids = r.otherIDs
+        if let acct = r.accountNumber, !acct.isEmpty,
+           !ids.contains(where: { $0.value == acct }) {
+            ids.insert(DocID(label: "Reference", value: acct), at: 0)
+        }
+        let cleanTitle = r.title?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.init(
+            title: (cleanTitle?.isEmpty == false ? cleanTitle! : (r.sender ?? r.documentType ?? "Untitled")),
+            category: r.category ?? .other,
+            amount: r.amount,
+            currency: r.currency ?? "USD",
+            dueDate: r.dueDate,
+            imageData: imageData,
+            steps: r.steps.map { ChecklistStep(text: $0) },
+            repeatsMonthly: r.repeats == .monthly
+        )
+        self.summary = r.summary ?? ""
+        self.documentType = r.documentType ?? ""
+        self.sender = r.sender ?? ""
+        self.senderShort = r.senderShort ?? ""
+        self.dueHasTime = r.dueHasTime
+        self.siteURL = r.siteURL?.absoluteString ?? ""
+        self.otherIDs = ids
+        self.notes = r.notes
+        self.source = source
+        self.reminderLeadHours = Self.defaultLeadHours(documentType: r.documentType ?? "", category: r.category)
+    }
+
+    // Choices for the "remind me _ before" picker (hours; 24 = one day).
+    static let leadOptions = [1, 2, 3, 6, 12, 24]
+    static func leadLabel(_ h: Int) -> String { h >= 24 ? "1 day" : "\(h) hour\(h == 1 ? "" : "s")" }
+
+    // Smart default for how many hours before a timed event to remind.
+    static func defaultLeadHours(documentType: String, category: ItemCategory?) -> Int {
+        let t = documentType.lowercased()
+        if t.contains("flight") || t.contains("itinerary") || t.contains("boarding") { return 3 }
+        if t.contains("appointment") || category == .medical { return 1 }
+        return 2
+    }
+
     // MARK: derived (no UI, no formatting — just facts)
 
     var isOverdue: Bool {
@@ -96,10 +172,24 @@ final class ActionItem {
 
     var doneCount: Int { steps.filter(\.done).count }
 
-    // 3 days before, 1 day before, due day, + overdue follow-up if overdue.
+    // Timed events (dueHasTime): a heads-up the day before (9am) + a reminder
+    // `reminderLeadHours` before the exact time. Plain dates: 3 days / 1 day /
+    // due day (+ overdue follow-up).
     func reminderSchedule(now: Date = .now,
                           calendar: Calendar = .current) -> [ScheduledReminder] {
         guard let due = dueDate else { return [] }
+
+        if dueHasTime {
+            var timed: [ScheduledReminder] = []
+            if let dayBefore = calendar.date(byAdding: .day, value: -1, to: due) {
+                timed.append(ScheduledReminder(date: calendar.startOfDay(for: dayBefore), label: "Day before"))
+            }
+            if let hoursBefore = calendar.date(byAdding: .hour, value: -reminderLeadHours, to: due) {
+                timed.append(ScheduledReminder(date: hoursBefore, label: "Hours before", exactTime: true))
+            }
+            return timed
+        }
+
         var out: [ScheduledReminder] = []
         if let d = calendar.date(byAdding: .day, value: -3, to: due) {
             out.append(ScheduledReminder(date: d, label: "3 days before"))
@@ -122,6 +212,20 @@ final class ActionItem {
             out.append(ScheduledReminder(date: followUpDay, label: "Overdue follow-up"))
         }
         return out
+    }
+
+    // The default reminder fire-times (day reminders resolved to 9am; timed
+    // reminders at their exact time). Used to seed the editable list.
+    func defaultReminderDates(now: Date = .now, calendar: Calendar = .current) -> [Date] {
+        reminderSchedule(now: now, calendar: calendar).compactMap {
+            $0.exactTime ? $0.date : calendar.date(bySettingHour: 9, minute: 0, second: 0, of: $0.date)
+        }
+    }
+
+    // What actually gets scheduled/shown: the user's custom list once edited,
+    // otherwise the smart defaults.
+    var effectiveReminders: [Date] {
+        remindersCustomized ? reminders : defaultReminderDates()
     }
 }
 

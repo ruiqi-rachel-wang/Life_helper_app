@@ -37,52 +37,67 @@ struct ExtractionServiceTests {
     // MARK: empty-OCR skip (the one real "don't call the model" path)
 
     @Test func emptyOCRSkipsModel() async throws {
-        let mock = MockExtractor(stub: stub())
+        let mock = MockExtractor(stub: [stub()])
         let service = ExtractionService(extractor: mock)
         let result = try await service.extract(from: "")
-        #expect(result == .empty)
+        #expect(result.isEmpty)
         #expect(mock.callCount == 0)
     }
 
     @Test func whitespaceOnlySkipsModel() async throws {
-        let mock = MockExtractor(stub: stub())
+        let mock = MockExtractor(stub: [stub()])
         let service = ExtractionService(extractor: mock)
         _ = try await service.extract(from: "   \n\t ")
         #expect(mock.callCount == 0)
     }
 
     @Test func nonEmptyOCRCallsModelOnce() async throws {
-        let mock = MockExtractor(stub: stub())
+        let mock = MockExtractor(stub: [stub()])
         let service = ExtractionService(extractor: mock)
         _ = try await service.extract(from: "Amount due: $86.42")
         #expect(mock.callCount == 1)
     }
 
-    // MARK: merge precedence
+    // MARK: merge precedence (single item)
 
     @Test func parserAmountWinsOverModel() async throws {
-        let mock = MockExtractor(stub: stub())
+        let mock = MockExtractor(stub: [stub()])
         let service = ExtractionService(extractor: mock)
         let r = try await service.extract(from: "Amount due: $86.42")
-        #expect(r.amount == dec("86.42"))      // not the model's 999.99
+        #expect(r.first?.amount == dec("86.42"))      // not the model's 999.99
     }
 
     @Test func parserDateWinsOverModel() async throws {
-        let mock = MockExtractor(stub: stub())
+        let mock = MockExtractor(stub: [stub()])
         let service = ExtractionService(extractor: mock)
         let r = try await service.extract(from: "Payment is due on 06/15/2026.")
-        #expect(r.dueDate != nil)
-        #expect(ymd(r.dueDate!) == (2026, 6, 15))   // not the model's 2030
+        #expect(r.first?.dueDate != nil)
+        #expect(ymd(r.first!.dueDate!) == (2026, 6, 15))   // not the model's 2030
     }
 
     @Test func modelSuppliesSummaryStepsAndCategory() async throws {
-        let mock = MockExtractor(stub: stub())
+        let mock = MockExtractor(stub: [stub()])
         let service = ExtractionService(extractor: mock)
-        let r = try await service.extract(from: "Amount due: $86.42")
-        #expect(r.summary == "This is your electricity bill.")
-        #expect(r.steps.count == 3)
-        #expect(r.category == .utility)
-        #expect(r.sender == "Con Edison")
+        let r = try await service.extract(from: "Amount due: $86.42").first
+        #expect(r?.summary == "This is your electricity bill.")
+        #expect(r?.steps.count == 3)
+        #expect(r?.category == .utility)
+        #expect(r?.sender == "Con Edison")
+    }
+
+    // MARK: multi-item — return all, no whole-page merge
+
+    @Test func multipleItemsReturnedAndParserMergeSkipped() async throws {
+        let a = ExtractionResult(title: "Neurology appt", amount: dec("10.00"))
+        let b = ExtractionResult(title: "CT scan", amount: dec("20.00"))
+        let mock = MockExtractor(stub: [a, b])
+        let service = ExtractionService(extractor: mock)
+        // OCR text has a single "$5" — must NOT overwrite either item's amount.
+        let r = try await service.extract(from: "Amount due: $5.00 across visits")
+        #expect(r.count == 2)
+        #expect(r.map(\.title) == ["Neurology appt", "CT scan"])
+        #expect(r[0].amount == dec("10.00"))   // not the page's $5
+        #expect(r[1].amount == dec("20.00"))
     }
 
     // MARK: low-confidence flagging

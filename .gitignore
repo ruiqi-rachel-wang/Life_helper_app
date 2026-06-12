@@ -36,3 +36,6 @@ APIKeys.swift
 *.pem
 *.p12
 *.mobileprovision
+
+# Personal test documents (PII) — never commit
+testing files/

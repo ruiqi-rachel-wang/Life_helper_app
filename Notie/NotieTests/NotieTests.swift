@@ -141,4 +141,85 @@ struct ActionItemTests {
         fetched = try context.fetch(FetchDescriptor<ActionItem>())
         #expect(fetched.isEmpty)
     }
+
+    @Test func sectionsAreSortedByDueDateSoonestFirst() {
+        let items = [
+            ActionItem(title: "later", category: .other, dueDate: day(5)),
+            ActionItem(title: "sooner", category: .other, dueDate: day(1)),
+            ActionItem(title: "middle", category: .other, dueDate: day(3)),
+        ]
+        #expect(items.groupedForInbox().dueThisWeek.map(\.title) == ["sooner", "middle", "later"])
+    }
+
+    // MARK: timed-event reminders (Week 6, Step 3)
+
+    @Test func timedItemRemindsDayBeforeAndHoursBefore() {
+        let due = DateComponents(calendar: .current, year: 2026, month: 6, day: 25,
+                                 hour: 8, minute: 5).date!
+        let item = ActionItem(title: "Flight", category: .personal, dueDate: due)
+        item.dueHasTime = true
+        item.reminderLeadHours = 3
+        let s = item.reminderSchedule()
+        #expect(s.map(\.label) == ["Day before", "Hours before"])
+        #expect(s[1].exactTime)
+        let c = Calendar.current.dateComponents([.day, .hour, .minute], from: s[1].date)
+        #expect(c.day == 25 && c.hour == 5 && c.minute == 5)   // 3h before 8:05 AM
+    }
+
+    @Test func plainDateItemKeepsDayBasedReminders() {
+        // dueHasTime defaults false → the original 3d/1d/due-day schedule.
+        let item = ActionItem(title: "Bill", category: .utility, dueDate: day(10))
+        #expect(item.reminderSchedule().map(\.label) == ["3 days before", "1 day before", "Due day"])
+    }
+
+    @Test func effectiveRemindersUseDefaultsThenCustom() {
+        let item = ActionItem(title: "Bill", category: .utility, dueDate: day(10))
+        #expect(item.effectiveReminders.count == 3)        // smart defaults (9am)
+        let custom = day(7)
+        item.reminders = [custom]
+        item.remindersCustomized = true
+        #expect(item.effectiveReminders == [custom])        // custom wins
+    }
+
+    @Test func customizedEmptyMeansNoReminders() {
+        let item = ActionItem(title: "Bill", category: .utility, dueDate: day(10))
+        item.remindersCustomized = true                     // emptied on purpose
+        #expect(item.effectiveReminders.isEmpty)
+    }
+
+    // MARK: ExtractionResult → ActionItem mapping (Week 6)
+
+    @Test func buildsActionItemFromExtraction() {
+        let r = ExtractionResult(
+            title: "Con Edison electricity bill",
+            documentType: "Utility bill",
+            sender: "Con Edison",
+            amount: Decimal(string: "86.42"),
+            currency: "USD",
+            dueDate: day(10),
+            accountNumber: "12-3456",
+            otherIDs: [DocID(label: "Policy", value: "AS2")],
+            category: .utility,
+            summary: "Your monthly electricity bill.",
+            steps: ["Pay it", "Save the receipt"],
+            notes: ["Autopay is off."],
+            repeats: .monthly)
+        let item = ActionItem(from: r)
+
+        #expect(item.title == "Con Edison electricity bill")
+        #expect(item.category == .utility)
+        #expect(item.amount == Decimal(string: "86.42"))
+        #expect(item.summary == "Your monthly electricity bill.")
+        #expect(item.steps.map(\.text) == ["Pay it", "Save the receipt"])
+        #expect(item.notes == ["Autopay is off."])
+        #expect(item.repeatsMonthly)
+        #expect(item.source == .scanned)
+        // primary accountNumber folded into otherIDs (deduped), first
+        #expect(item.otherIDs.first == DocID(label: "Reference", value: "12-3456"))
+        #expect(item.otherIDs.contains(DocID(label: "Policy", value: "AS2")))
+    }
+
+    @Test func extractionTitleFallsBackToSender() {
+        #expect(ActionItem(from: ExtractionResult(sender: "GEICO")).title == "GEICO")
+    }
 }

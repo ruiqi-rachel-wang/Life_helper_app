@@ -20,12 +20,13 @@ import Foundation
 // "0162108515648". A single doc often carries several (a flight has a
 // confirmation code AND an eTicket; a receipt has invoice + member numbers).
 // `accountNumber` holds the primary one; `otherIDs` holds the rest.
-nonisolated struct DocID: Equatable {
+nonisolated struct DocID: Equatable, Codable, Hashable {
     var label: String
     var value: String
 }
 
 nonisolated struct ExtractionResult: Equatable {
+    var title: String?                 // short headline for the inbox row
     var documentType: String?          // "Utility bill", "Parking ticket"…
     var sender: String?                // "Con Edison"
     var senderShort: String?           // short form for chips, if any
@@ -46,7 +47,8 @@ nonisolated struct ExtractionResult: Equatable {
     var confidence: Double             // 0–1 overall
     var lowConfidenceFields: Set<String>   // field names the user should double-check
 
-    init(documentType: String? = nil,
+    init(title: String? = nil,
+         documentType: String? = nil,
          sender: String? = nil,
          senderShort: String? = nil,
          amount: Decimal? = nil,
@@ -63,6 +65,7 @@ nonisolated struct ExtractionResult: Equatable {
          repeats: Recurrence? = nil,
          confidence: Double = 0,
          lowConfidenceFields: Set<String> = []) {
+        self.title = title
         self.documentType = documentType
         self.sender = sender
         self.senderShort = senderShort

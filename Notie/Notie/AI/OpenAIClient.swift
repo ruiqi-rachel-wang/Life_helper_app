@@ -40,7 +40,7 @@ nonisolated struct OpenAIClient: Extractor {
 
     func extract(text: String,
                  hints: RuleBasedParser.Hints,
-                 language: ExplainLanguage) async throws -> ExtractionResult {
+                 language: ExplainLanguage) async throws -> [ExtractionResult] {
         // Validate THIS client's key (injected or default), not a global — so an
         // injected client / the future Worker swap behaves as the protocol implies.
         guard apiKey.hasPrefix("sk-"), !apiKey.contains("REPLACE") else {
@@ -73,8 +73,9 @@ nonisolated struct OpenAIClient: Extractor {
         guard let content = chat.choices.first?.message.content, !content.isEmpty else {
             throw ClientError.emptyContent
         }
-        guard let result = ExtractionJSON.parse(content) else { throw ClientError.badJSON }
-        return result
+        let results = ExtractionJSON.parseItems(content)
+        guard !results.isEmpty else { throw ClientError.badJSON }
+        return results
     }
 
     // MARK: - Prompts
@@ -88,7 +89,14 @@ nonisolated struct OpenAIClient: Extractor {
         plain words to someone who may not read English well and may have no idea \
         what the document is.
 
-        Return ONLY a JSON object with these keys (use null when unknown):
+        Return ONLY a JSON object of the form {"items": [ ... ]}. MOST documents
+        have exactly ONE item. Include SEVERAL items only when the document clearly
+        lists separate things — e.g. multiple appointments, multiple bills, or two
+        different deadlines — one object per thing; do not split a single task.
+        Each item in "items" has these keys (use null when unknown):
+          title         : a SHORT headline for a list row (≤ ~5 words), e.g.
+                          "Con Edison electricity bill", "Flight to Chicago",
+                          "Neurology appointment"
           documentType  : short label, e.g. "Utility bill", "Parking ticket"
           sender        : the organization that sent it, e.g. "Con Edison"
           senderShort   : a 1-2 word short form for a chip
@@ -151,6 +159,17 @@ nonisolated struct OpenAIClient: Extractor {
         For a statement with a minimum payment, add a note that paying only the \
         minimum (and the minimum amount) accrues interest at the stated APR.
 
+        For a flight or travel document, steps should include checking in (online \
+        AND at the airport counter), arriving ~2 hours early, going through security, \
+        and finding the gate; put the flight number in otherIDs; and add a note on \
+        how to check the live gate/status (the airline's website, or searching the \
+        flight number). Set siteURL to the airline's site when known.
+
+        If the text is unreadable or meaningless (gibberish, too garbled to tell \
+        what it is), return ONE item with documentType "unknown", a short summary \
+        saying you couldn't read it, steps [], and confidence below 0.2. Never \
+        invent a document.
+
         Write summary and steps in \(language.promptName). Do not invent an amount \
         or a date that is not in the text.
         """
@@ -195,11 +214,31 @@ private nonisolated struct ChatResponse: Decodable {
 // surprise in one field never loses the others. (Made into a type so it's
 // testable without a network call — see OpenAIClientParsingTests.)
 nonisolated enum ExtractionJSON {
+    // A document usually yields ONE item, but may yield several (a list of
+    // appointments, two deadlines…). The model returns {"items":[ ... ]}; we also
+    // accept a bare single object for robustness.
     static func parse(_ content: String) -> ExtractionResult? {
-        guard let data = content.data(using: .utf8),
-              let dict = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
-            return nil
+        guard let dict = object(content) else { return nil }
+        if let items = dict["items"] as? [Any], let first = items.first as? [String: Any] {
+            return item(from: first)
         }
+        return item(from: dict)
+    }
+
+    static func parseItems(_ content: String) -> [ExtractionResult] {
+        guard let dict = object(content) else { return [] }
+        if let items = dict["items"] as? [Any] {
+            return items.compactMap { ($0 as? [String: Any]).map(item(from:)) }
+        }
+        return [item(from: dict)]
+    }
+
+    private static func object(_ content: String) -> [String: Any]? {
+        guard let data = content.data(using: .utf8) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
+
+    static func item(from dict: [String: Any]) -> ExtractionResult {
 
         func str(_ key: String) -> String? {
             guard let v = dict[key], !(v is NSNull) else { return nil }
@@ -248,6 +287,7 @@ nonisolated enum ExtractionJSON {
         } ?? []
 
         return ExtractionResult(
+            title: str("title"),
             documentType: str("documentType"),
             sender: str("sender"),
             senderShort: str("senderShort"),
@@ -288,7 +328,12 @@ nonisolated enum ExtractionJSON {
         f.timeZone = .current
         for fmt in ["yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd'T'HH:mm:ss"] {
             f.dateFormat = fmt
-            if let d = f.date(from: s) { return (d, true) }
+            if let d = f.date(from: s) {
+                // Midnight means the model appended a placeholder time to a
+                // plain date (a bill, not a 12:00 AM event) — treat as no time.
+                let c = Calendar.current.dateComponents([.hour, .minute], from: d)
+                return (d, !(c.hour == 0 && c.minute == 0))
+            }
         }
         return (parseDate(s), false)
     }

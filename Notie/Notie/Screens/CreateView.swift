@@ -66,9 +66,10 @@ struct CreateView: View {
             }
             // Fallback when there's no camera (e.g. Simulator): pick a photo.
             .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
-            // After capture/pick, push the OCR result screen.
+            // After capture/pick, push the combined Review screen (OCR → AI →
+            // editable result → Add to inbox).
             .navigationDestination(item: $scanRoute) { route in
-                ScanResultView(image: route.image)
+                ReviewView(image: route.image)
             }
         }
         .onChange(of: cameraImage) { _, new in

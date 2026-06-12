@@ -37,28 +37,30 @@ nonisolated protocol Extractor {
     ///   - hints: exact fields the rule parser already found (passed to the
     ///     model as ground truth so it doesn't re-guess the amount/date).
     ///   - language: the language the summary + steps should be written in.
+    /// Returns one ExtractionResult per action item found. Most documents yield
+    /// exactly one; a list (e.g. several appointments) yields several.
     func extract(text: String,
                  hints: RuleBasedParser.Hints,
-                 language: ExplainLanguage) async throws -> ExtractionResult
+                 language: ExplainLanguage) async throws -> [ExtractionResult]
 }
 
 // A fake Extractor for tests + previews. Returns a canned result, can be told
 // to throw, and records whether it was actually called (so a test can prove
 // ExtractionService skipped the model on empty OCR).
 nonisolated final class MockExtractor: Extractor {
-    var stub: ExtractionResult
+    var stub: [ExtractionResult]
     var error: Error?
     private(set) var callCount = 0
     private(set) var lastText: String?
 
-    init(stub: ExtractionResult = .empty, error: Error? = nil) {
+    init(stub: [ExtractionResult] = [], error: Error? = nil) {
         self.stub = stub
         self.error = error
     }
 
     func extract(text: String,
                  hints: RuleBasedParser.Hints,
-                 language: ExplainLanguage) async throws -> ExtractionResult {
+                 language: ExplainLanguage) async throws -> [ExtractionResult] {
         callCount += 1
         lastText = text
         if let error { throw error }

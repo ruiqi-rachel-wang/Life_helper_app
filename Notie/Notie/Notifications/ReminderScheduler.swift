@@ -45,15 +45,15 @@ final class ReminderScheduler {
         center.setNotificationCategories([category])
     }
 
-    // The identifier suffixes an item's notifications can have. MUST stay in
-    // sync with reminderSchedule()'s labels (+ snooze) so cancel() can remove
-    // them by exact id without an async fetch.
-    private static let idSuffixes = [
-        "3 days before", "1 day before", "Due day", "Overdue follow-up", "snooze",
-    ]
+    // Reminders are now an editable list, so notifications are id'd by index
+    // ("<uuid>|r0", "r1", …). cancel() clears a generous range so a variable
+    // count is always fully removed without an async fetch.
+    private static let maxReminders = 32
 
     private func ids(for itemID: UUID) -> [String] {
-        Self.idSuffixes.map { "\(itemID.uuidString)|\($0)" }
+        var ids = (0..<Self.maxReminders).map { "\(itemID.uuidString)|r\($0)" }
+        ids.append("\(itemID.uuidString)|snooze")
+        return ids
     }
 
     // Cancel + (re)schedule all reminders for an item. cancel() is synchronous
@@ -63,11 +63,11 @@ final class ReminderScheduler {
         guard item.status != .done else { return }
 
         let now = Date.now
-        for reminder in item.reminderSchedule() {
-            guard let fire = at9am(reminder.date), fire > now else { continue }
+        for (index, fire) in item.effectiveReminders.enumerated() where fire > now {
+            guard index < Self.maxReminders else { break }
             let content = UNMutableNotificationContent()
             content.title = item.title
-            content.body = body(for: reminder.label)
+            content.body = body(fireDate: fire, due: item.dueDate)
             content.sound = .default
             content.categoryIdentifier = ReminderID.category
             content.userInfo = [ReminderID.itemKey: item.id.uuidString]
@@ -75,7 +75,7 @@ final class ReminderScheduler {
             let comps = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute], from: fire)
             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
-            let id = "\(item.id.uuidString)|\(reminder.label)"
+            let id = "\(item.id.uuidString)|r\(index)"
             center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
         }
     }
@@ -105,13 +105,18 @@ final class ReminderScheduler {
         calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day)
     }
 
-    private func body(for label: String) -> String {
-        switch label {
-        case "3 days before":     return "Due in 3 days"
-        case "1 day before":      return "Due tomorrow"
-        case "Due day":           return "Due today"
-        case "Overdue follow-up": return "Overdue — still not done"
-        default:                  return label
+    // Friendly body computed from how far the fire date is before the due date.
+    private func body(fireDate: Date, due: Date?, calendar: Calendar = .current) -> String {
+        guard let due else { return "Reminder" }
+        if fireDate >= due.addingTimeInterval(-90 * 60) { return "Starting soon" }
+        let days = calendar.dateComponents([.day],
+            from: calendar.startOfDay(for: fireDate),
+            to: calendar.startOfDay(for: due)).day ?? 0
+        switch days {
+        case ..<0:  return "Overdue — still not done"
+        case 0:     return "Due today"
+        case 1:     return "Due tomorrow"
+        default:    return "Due in \(days) days"
         }
     }
 

@@ -99,6 +99,13 @@ struct OpenAIClientParsingTests {
         #expect(r?.dueHasTime == false)
     }
 
+    @Test func midnightTimeIsTreatedAsNoTime() {
+        // The model appends a placeholder time to a plain date → not a real time.
+        let r = ExtractionJSON.parse(#"{"dueDate":"2026-06-25T00:00"}"#)
+        #expect(r?.dueDate != nil)
+        #expect(r?.dueHasTime == false)
+    }
+
     // #4: the client validates its OWN injected key, not a global.
     @Test func clientWithPlaceholderKeyThrowsMissingKey() async {
         let client = OpenAIClient(apiKey: "sk-REPLACE-WITH-YOUR-OPENAI-KEY")
@@ -107,6 +114,17 @@ struct OpenAIClientParsingTests {
                                          hints: RuleBasedParser.Hints(),
                                          language: .english)
         }
+    }
+
+    @Test func parseItemsHandlesArrayAndBareObject() {
+        let multi = #"{"items":[{"title":"A","amount":"1.00"},{"title":"B","amount":"2.00"}]}"#
+        let r = ExtractionJSON.parseItems(multi)
+        #expect(r.count == 2)
+        #expect(r.map(\.title) == ["A", "B"])
+        // a bare single object → one item
+        #expect(ExtractionJSON.parseItems(#"{"title":"Solo"}"#).map(\.title) == ["Solo"])
+        // parse(_:) still returns the first item for a wrapped array
+        #expect(ExtractionJSON.parse(multi)?.title == "A")
     }
 
     @Test func malformedJSONReturnsNil() {

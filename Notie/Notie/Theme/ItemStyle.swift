@@ -8,6 +8,14 @@
 
 import SwiftUI
 
+// Shared due-date display used by both Review and Detail so they always match:
+// "Jun 25, 2026" for a plain date, or "Jun 30, 8:30 AM" when it has a real time.
+nonisolated func dueDisplay(_ date: Date, hasTime: Bool) -> String {
+    hasTime
+        ? date.formatted(.dateTime.month(.abbreviated).day().hour().minute())
+        : date.formatted(.dateTime.month(.abbreviated).day().year())
+}
+
 extension ItemCategory {
     // Avatar circle color.
     var tint: Color {
@@ -59,21 +67,16 @@ extension ActionItem {
         return "⚠ \(days) DAY\(days == 1 ? "" : "S") OVERDUE"
     }
 
-    // The inbox subline: amount or checklist progress, then the due hint.
+    // The inbox subline: the meaningful facts only — amount (if any) + due date.
+    // (No "checklist X of Y done" — the step progress lives on the Detail page.)
     var inboxSubtitle: String {
-        var lead: String?
-        if let amountText {
-            lead = amountText
-        } else if !steps.isEmpty {
-            lead = "Checklist · \(doneCount) of \(steps.count) done"
-        }
         let tail: String
         if isOverdue {
             tail = overdueText.map { _ in dueRelative } ?? "overdue"
         } else {
             tail = dueText ?? ""
         }
-        return [lead, tail].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ")
+        return [amountText, tail].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ")
     }
 
     // "in 4 days" / "today" / "2 days overdue"
