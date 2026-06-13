@@ -66,10 +66,17 @@ struct CreateView: View {
             }
             // Fallback when there's no camera (e.g. Simulator): pick a photo.
             .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
-            // After capture/pick, push the combined Review screen (OCR → AI →
-            // editable result → Add to inbox).
+            // After capture/pick, push the combined Review screen. The scan
+            // `load` is OCR → AI extraction; Review handles the rest.
             .navigationDestination(item: $scanRoute) { route in
-                ReviewView(image: route.image)
+                ReviewView(
+                    load: {
+                        let ocr = await VisionOCR.recognizeText(in: route.image)
+                        guard !ocr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
+                        return try await ExtractionService(extractor: OpenAIClient()).extract(from: ocr)
+                    },
+                    image: route.image,
+                    source: .scanned)
             }
         }
         .onChange(of: cameraImage) { _, new in

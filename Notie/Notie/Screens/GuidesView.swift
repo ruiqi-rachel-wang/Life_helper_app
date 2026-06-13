@@ -1,51 +1,37 @@
 //  GuidesView.swift
 //
-//  The Guides tab — current library of 5 life-event templates (Moving, Bank,
-//  Job, License, Visa). Week 7–8 expands this into adaptive hybrid guides.
-//
-//  Currently displays the cards + category filter chips with mock metadata.
-//  Tapping previews a placeholder Detail; the real guide flow opens a
-//  Review-style confirmation screen before saving.
+//  The Guides tab — a library of life-event guides. Tapping one opens its
+//  questions (GuideQuestionsView); answering builds a tailored checklist and
+//  pushes the shared Review screen (build → AI polish → Add to inbox). A guide
+//  never opens a Detail directly — it isn't a saved task until you confirm.
 //
 
 import SwiftUI
+import SwiftData
 
 struct GuidesView: View {
-    // Which category chip is selected. "All" shows everything.
-    @State private var selectedCategory: String = "All"
+    @State private var selectedCategory: ItemCategory?   // nil = All
 
-    private let categories = ["All", "Housing", "Finance", "Work", "Government", "Other"]
-
+    private var chipCategories: [ItemCategory] {
+        Array(Set(Guide.all.map(\.category))).sorted { $0.rawValue < $1.rawValue }
+    }
     private var visibleGuides: [Guide] {
-        selectedCategory == "All"
-            ? Guide.all
-            : Guide.all.filter { $0.category == selectedCategory }
+        guard let selectedCategory else { return Guide.all }
+        return Guide.all.filter { $0.category == selectedCategory }
     }
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
                 Color.paper.ignoresSafeArea()
-
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        masthead
-                            .padding(.horizontal, 24)
-
-                        categoryChips
-                            .padding(.top, 18)
-
+                        masthead.padding(.horizontal, 24)
+                        categoryChips.padding(.top, 18)
                         VStack(spacing: 10) {
                             ForEach(visibleGuides) { guide in
-                                // TEMP (Week 6/7): previews a Detail as a
-                                // stand-in. The real flow should open the
-                                // Review-style "confirm before adding"
-                                // screen (shared with the scan flow) so the
-                                // user reviews/customizes, then taps
-                                // "Add to inbox" — NOT a Detail (the guide
-                                // isn't a saved task yet).
                                 NavigationLink {
-                                    DetailView(item: actionItem(from: guide))
+                                    GuideQuestionsView(guide: guide)
                                 } label: {
                                     GuideCard(guide: guide)
                                 }
@@ -54,7 +40,6 @@ struct GuidesView: View {
                         }
                         .padding(.horizontal, 14)
                         .padding(.top, 14)
-
                         Spacer(minLength: 40)
                     }
                     .padding(.top, 48)
@@ -66,69 +51,35 @@ struct GuidesView: View {
 
     private var masthead: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("LIBRARY")
-                .font(.eyebrow)
-                .tracking(1.4)
-                .foregroundStyle(Color.faded)
-            Text("Guides")
-                .font(.serifTitle)
-                .tracking(-0.6)
-                .foregroundStyle(Color.ink)
+            Text("LIBRARY").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
+            Text("Guides").font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
             Text("Life events come with a stack of paperwork. Pick a guide and Notie walks you through it.")
-                .font(.subline)
-                .foregroundStyle(Color.faded)
-                .lineSpacing(2)
-                .padding(.top, 4)
-                .frame(maxWidth: 300, alignment: .leading)
+                .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                .padding(.top, 4).frame(maxWidth: 300, alignment: .leading)
         }
     }
 
-    // Builds a checklist item from a tapped guide. Lives in the view layer
-    // (not the model) so the domain ActionItem stays free of Guide.
-    // TEMP (Week 7): placeholder steps; real version uses template steps.
-    private func actionItem(from guide: Guide) -> ActionItem {
-        let category: ItemCategory
-        switch guide.category {
-        case "Housing":    category = .housing
-        case "Finance":    category = .finance
-        case "Work":       category = .work
-        case "Government": category = .government
-        default:           category = .other
-        }
-        return ActionItem(
-            title: guide.title,
-            category: category,
-            steps: (1...min(guide.stepCount, 5)).map {
-                ChecklistStep(text: "Step \($0)")
-            }
-        )
-    }
-
-    // Horizontally scrolling filter chips.
     private var categoryChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                ForEach(categories, id: \.self) { category in
-                    let isSelected = category == selectedCategory
-                    Button { selectedCategory = category } label: {
-                        Text(category)
-                            .font(.eyebrow)
-                            .tracking(0.4)
-                            .foregroundStyle(isSelected ? Color.paper : Color.faded)
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule().fill(isSelected ? Color.ink : Color.clear)
-                            )
-                            .overlay(
-                                Capsule().stroke(Color.hairD, lineWidth: isSelected ? 0 : 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                chip("All", selected: selectedCategory == nil) { selectedCategory = nil }
+                ForEach(chipCategories, id: \.self) { cat in
+                    chip(cat.rawValue.capitalized, selected: selectedCategory == cat) { selectedCategory = cat }
                 }
             }
             .padding(.horizontal, 18)
         }
+    }
+
+    private func chip(_ label: String, selected: Bool, _ tap: @escaping () -> Void) -> some View {
+        Button(action: tap) {
+            Text(label).font(.eyebrow).tracking(0.4)
+                .foregroundStyle(selected ? Color.paper : Color.faded)
+                .padding(.horizontal, 11).padding(.vertical, 6)
+                .background(Capsule().fill(selected ? Color.ink : Color.clear))
+                .overlay(Capsule().stroke(Color.hairD, lineWidth: selected ? 0 : 1))
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -136,90 +87,151 @@ struct GuidesView: View {
 
 private struct GuideCard: View {
     let guide: Guide
+    // Representative step count from the default branch.
+    private var stepCount: Int { guide.build([:]).steps.count }
 
     var body: some View {
         HStack(spacing: 14) {
-            // 44×44 squircle with category color + white glyph
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(guide.color)
-                Image(systemName: guide.symbol)
-                    .foregroundStyle(.white)
-                    .font(.system(size: 19, weight: .medium))
+                RoundedRectangle(cornerRadius: 8).fill(guide.category.tint)
+                Image(systemName: guide.category.symbol)
+                    .foregroundStyle(.white).font(.system(size: 19, weight: .medium))
             }
             .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(guide.title)
-                    .font(.cardTitle)
-                    .foregroundStyle(Color.ink)
-                    .lineLimit(1)
-                Text(guide.subtitle)
-                    .font(.subline)
-                    .foregroundStyle(Color.faded)
-                    .lineLimit(1)
-                Text("\(guide.category.uppercased()) · \(guide.stepCount) STEPS")
-                    .font(.eyebrow)
-                    .tracking(0.5)
-                    .foregroundStyle(Color.faint)
-                    .padding(.top, 4)
+                Text(guide.title).font(.cardTitle).foregroundStyle(Color.ink).lineLimit(1)
+                Text(guide.subtitle).font(.subline).foregroundStyle(Color.faded).lineLimit(1)
+                Text("\(guide.category.rawValue.uppercased()) · \(stepCount) STEPS")
+                    .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint).padding(.top, 4)
             }
-
             Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .regular))
-                .foregroundStyle(Color.faint)
+            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Color.faint)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 16).padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.card)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.hair, lineWidth: 1)
-        )
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 }
 
-// MARK: - Guide model (mock data for now)
+// MARK: - Questions → Review
 
-// The 5 starter life guides. In Week 7–8 each gets adaptive questions and a
-// real checklist; for now they're just card metadata.
-struct Guide: Identifiable {
-    let id = UUID()
-    let title: String
-    let subtitle: String
-    let stepCount: Int
-    let category: String
-    let symbol: String   // SF Symbol name
-    let color: Color
+struct GuideQuestionsView: View {
+    let guide: Guide
+    @State private var answers: [String: String] = [:]
+    @State private var proceed = false
 
-    static let all: [Guide] = [
-        Guide(title: "Moving",
-              subtitle: "Address change, utilities, mail forward",
-              stepCount: 11, category: "Housing",
-              symbol: "house.fill", color: Color(hex: 0x7a6a4a)),
-        Guide(title: "Opening a bank account",
-              subtitle: "ID requirements, what to bring",
-              stepCount: 7, category: "Finance",
-              symbol: "building.columns.fill", color: Color(hex: 0x2A6FDB)),
-        Guide(title: "Starting a new job",
-              subtitle: "Tax forms, direct deposit, benefits",
-              stepCount: 9, category: "Work",
-              symbol: "briefcase.fill", color: Color(hex: 0x1F8A5B)),
-        Guide(title: "Driver's license",
-              subtitle: "Renewal or first-time, by state",
-              stepCount: 6, category: "Government",
-              symbol: "creditcard.fill", color: Color(hex: 0xb14a2a)),
-        Guide(title: "Green card / visa",
-              subtitle: "Renewal forms, fees, photo, timeline",
-              stepCount: 12, category: "Government",
-              symbol: "globe", color: Color(hex: 0xa8651b)),
-    ]
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.paper.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(guide.category.rawValue.uppercased())
+                            .font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                        Text(guide.title).font(.serifModal).foregroundStyle(Color.ink)
+                        Text("A few quick questions so Notie can tailor the checklist.")
+                            .font(.subline).foregroundStyle(Color.faded)
+                    }
+                    .padding(.horizontal, 8)
+
+                    ForEach(guide.questions) { q in questionCard(q) }
+
+                    Button { proceed = true } label: {
+                        Text("Build my checklist")
+                            .font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.paper)
+                            .frame(maxWidth: .infinity).padding(.vertical, 15)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+                    }
+                    .buttonStyle(.plain)
+                    Spacer(minLength: 40)
+                }
+                .padding(.horizontal, 14).padding(.top, 24)
+            }
+        }
+        .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+        .onAppear { seedDefaults() }
+        .navigationDestination(isPresented: $proceed) {
+            ReviewView(
+                load: {
+                    var base = guide.build(answers)
+                    base.confidence = 1   // deterministic checklist — always certain
+                    let context = "\(guide.title). "
+                        + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
+                    return [await OpenAIClient().polish(base, context: context)]
+                },
+                source: .guide,
+                loadingLabel: "Personalizing your checklist…")
+        }
+    }
+
+    // Pre-select the first option for each choice question so Continue always works.
+    private func seedDefaults() {
+        for q in guide.questions {
+            if case .choice(let options) = q.kind, answers[q.id] == nil {
+                answers[q.id] = options.first
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func questionCard(_ q: GuideQuestion) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(q.prompt).font(.cardTitle).foregroundStyle(Color.ink)
+            switch q.kind {
+            case .choice(let options):
+                VStack(spacing: 6) {
+                    ForEach(options, id: \.self) { option in
+                        let on = answers[q.id] == option
+                        Button { answers[q.id] = option } label: {
+                            HStack {
+                                Text(option).font(.body14).foregroundStyle(Color.ink)
+                                Spacer()
+                                if on { Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(Color.accent) }
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(on ? Color.bg : Color.clear))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(on ? Color.accent : Color.hair, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            case .text(let placeholder):
+                TextField(placeholder, text: Binding(
+                    get: { answers[q.id] ?? "" },
+                    set: { answers[q.id] = $0 }))
+                    .font(.body14).foregroundStyle(Color.ink)
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.bg))
+            case .state:
+                Menu {
+                    ForEach(USStates.all, id: \.self) { s in
+                        Button(s) { answers[q.id] = s }
+                    }
+                } label: {
+                    HStack {
+                        Text(answers[q.id] ?? "Select a state")
+                            .font(.body14).foregroundStyle(answers[q.id] == nil ? Color.faded : Color.ink)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 12)).foregroundStyle(Color.faint)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.bg))
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
 }
 
 #Preview {
     GuidesView()
+        .modelContainer(for: ActionItem.self, inMemory: true)
+        .environment(AppRouter())
 }

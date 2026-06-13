@@ -322,35 +322,40 @@ read-only ScanResultView and the mock Review.
 
 ### Week 7: Adaptive guides
 
-Goal: turn Guides from static previews into real task-generation flows.
+Goal: tap a guide → answer a few hardcoded questions → a tailored checklist (your
+answers filled in) → the **same Review screen** scans use → Add to inbox (tagged
+"Guide"). A guide never opens a Detail directly.
 
-1. **Guide data model**
-   - Define `GuideTemplate`: title, category/source tag, intro, questions,
-     branching rules, base checklist, optional default due/repeat hints.
-   - Keep guide structure hardcoded and deterministic. AI must not decide the
-     checklist shape.
-   - Start with the 5 starter guides (Moving, Bank, Job, License, Visa) +
-     car accident.
-2. **Question flow**
-   - Tap guide → answer 2–5 hardcoded questions.
-   - Inputs should cover the few facts that materially change the checklist
-     (e.g. state, renter vs owner, first-time vs renewal, employer name).
-   - Allow back/cancel without saving anything.
-3. **AI light adaptation**
-   - Reuse the Week 5–6 extraction setup only to personalize wording: state
-     name, employer, address, dates, labels.
-   - If AI fails or network is down, fall back to the deterministic base
-     checklist instead of blocking the guide.
-4. **Review before save**
-   - Guide output goes to a Review-style confirmation screen, not directly to
-     Detail.
-   - User can edit title, summary, steps, due date, notes, reminders, and source
-     before adding.
-   - Saved guide items use source = Guide and show the guide name.
+**Decisions (2026-06-13):**
+- **Deterministic structure + AI polish.** Questions pick a hardcoded branch and
+  fill answers into the steps via templates; then a best-effort GPT-4o-mini pass
+  rewords them naturally + adds situation-specific tips. AI never decides the
+  checklist shape, and if it fails/offline we fall back to the templated checklist.
+- **Framework + 3 guides deep this week:** Moving, New job, Driver's license.
+  Bank, Visa, Car accident come once the pattern is proven.
 
-**Done when:** a user can answer one starter guide and one car-accident guide,
-review the tailored checklist, add it to the inbox, force-quit/reopen, and still
-see the saved guide item with editable steps/reminders.
+**Build:**
+1. **Reuse Review for prefilled content.** Refactor `ReviewView` to be
+   source-agnostic: take an async `load: () async throws -> [ExtractionResult]`
+   producer + optional `image` + `source`. Scans pass OCR→extract; guides pass
+   build→polish. Hide the photo/OCR UI when there's no image. One confirm screen
+   for both (per the architecture).
+2. **Guide model + branching.** Expand `Guide` with `questions: [GuideQuestion]`
+   (single-select, hardcoded) and a pure `build(answers:) -> ExtractionResult`
+   (pick a base checklist, fill answers via templates like `{state}`/`{employer}`,
+   set title/category, optional due/repeat hints). Deterministic → unit-tested.
+3. **AI polish pass.** A `GuidePolisher` (reuses `OpenAIClient`/key) takes the base
+   result + answers → reworded steps + situation notes; best-effort with fallback.
+   Runs as a Review phase ("Personalizing…") using the existing loading UI.
+4. **Questions screen.** Tap guide → a single scrollable form of its questions →
+   Continue builds the base result and pushes Review (which runs the polish).
+   Back/cancel saves nothing.
+5. **Author content** for Moving / New job / Driver's license (questions, branches,
+   templated checklists). Save items with `source = .guide` (shows the guide tag).
+
+**Done when:** answer a guide's questions → tailored checklist in Review → edit if
+needed → Add → it's in the Inbox tagged "Guide", survives force-quit, with
+editable steps/reminders. AI-offline still produces the templated checklist.
 
 ### Week 8: Recurring + release polish
 

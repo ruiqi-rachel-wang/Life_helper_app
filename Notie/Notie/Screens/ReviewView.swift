@@ -1,37 +1,39 @@
 //  ReviewView.swift
 //
-//  Review & Action — the screen shown after every capture (scan/upload). It is
-//  the single combined screen (Week 6): it runs OCR → AI extraction on the
-//  photo, then shows the result as an EDITABLE card and saves it on "Add to
-//  inbox" (scheduling reminders). Replaces the old read-only ScanResultView and
-//  the earlier mock Review.
+//  Review & Action — the single confirm screen shared by BOTH scans and guides
+//  (Week 6–7). It runs a caller-supplied async `load` (scan: OCR → AI extraction;
+//  guide: build template → AI polish), shows the result(s) as an EDITABLE card,
+//  and saves on "Add to inbox" (scheduling reminders). Source-agnostic: the photo
+//  shows only for scans (when `image` is set).
 //
-//  Flow: reading (OCR) → thinking (AI) → ready (editable) → Add to inbox.
-//  Special cases: unreadable/low-confidence → "retake" state; a no-action
-//  document (no steps, no due date) → show + Done, with no inbox item.
+//  Flow: loading → ready (editable) → Add to inbox. Special cases:
+//  unreadable/low-confidence → retake/back; no-action (no steps, no due) → Done;
+//  several items → a selectable list.
 //
 
 import SwiftUI
 import SwiftData
 
 struct ReviewView: View {
-    let image: UIImage
-    // Injectable for previews/tests; defaults to the real OpenAI pipeline.
-    var service: ExtractionService = ExtractionService(extractor: OpenAIClient())
+    // What produces the result(s): scan → OCR+extract, guide → build+polish.
+    let load: () async throws -> [ExtractionResult]
+    var image: UIImage? = nil                 // shown for scans only
+    var source: ItemSource = .scanned         // tags saved items
+    var loadingLabel = "Reading your document…"
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
 
-    @State private var phase: Phase = .reading
+    @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
     @State private var includeDue = false
     @State private var isEditing = false
     @State private var leadHours = 2                     // for timed reminders
-    @State private var items: [ExtractionResult] = []    // when a scan has several
+    @State private var items: [ExtractionResult] = []    // when there are several
     @State private var selected: Set<Int> = []           // which multi-items to add
 
-    enum Phase: Equatable { case reading, thinking, ready, readyMulti, noText, failed(String) }
+    enum Phase: Equatable { case loading, ready, readyMulti, noText, failed(String) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -53,13 +55,8 @@ struct ReviewView: View {
     // MARK: pipeline
 
     private func run() async {
-        let ocr = await VisionOCR.recognizeText(in: image)
-        guard !ocr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            phase = .noText; return
-        }
-        phase = .thinking
         do {
-            let results = try await service.extract(from: ocr)
+            let results = try await load()
             if results.isEmpty {
                 phase = .noText
             } else if results.count == 1 {
@@ -109,12 +106,15 @@ struct ReviewView: View {
         .padding(.horizontal, 22)
     }
 
+    @ViewBuilder
     private var photo: some View {
-        Image(uiImage: image)
-            .resizable().scaledToFit()
-            .frame(maxWidth: .infinity, maxHeight: 160)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+        if let image {
+            Image(uiImage: image)
+                .resizable().scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 160)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+        }
     }
 
     // MARK: content by phase
@@ -122,8 +122,7 @@ struct ReviewView: View {
     @ViewBuilder
     private var content: some View {
         switch phase {
-        case .reading:  loadingCard("Reading the photo…")
-        case .thinking: loadingCard("Understanding the document…")
+        case .loading:  loadingCard(loadingLabel)
         case .readyMulti: multiList
         case .noText:   messageCard("Couldn't read any text. Try a clearer, well-lit photo.", retake: true)
         case .failed(let m): messageCard("Couldn't analyze this document.\n\(m)", retake: true)
@@ -148,7 +147,7 @@ struct ReviewView: View {
                 Text(text).font(.body14).foregroundStyle(Color.bad)
                 if retake {
                     Button { dismiss() } label: {
-                        Text("Retake photo").font(.system(size: 15, weight: .semibold))
+                        Text(image != nil ? "Retake photo" : "Go back").font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Color.paper).frame(maxWidth: .infinity).padding(.vertical, 13)
                             .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
                     }
@@ -366,7 +365,7 @@ struct ReviewView: View {
         if !includeDue { draft.dueDate = nil }
         draft.steps = draft.steps.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         draft.notes = draft.notes.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        let item = ActionItem(from: draft, imageData: image.jpegData(compressionQuality: 0.7))
+        let item = ActionItem(from: draft, imageData: image?.jpegData(compressionQuality: 0.7), source: source)
         item.reminderLeadHours = leadHours
         context.insert(item)
         ReminderScheduler.shared.reschedule(for: item)
@@ -450,9 +449,9 @@ struct ReviewView: View {
     }
 
     private func addSelected() {
-        let img = image.jpegData(compressionQuality: 0.7)
+        let img = image?.jpegData(compressionQuality: 0.7)
         for i in items.indices where selected.contains(i) {
-            let item = ActionItem(from: items[i], imageData: img)
+            let item = ActionItem(from: items[i], imageData: img, source: source)
             context.insert(item)
             ReminderScheduler.shared.reschedule(for: item)
         }
@@ -468,7 +467,9 @@ struct ReviewView: View {
     static func isNoAction(_ r: ExtractionResult) -> Bool {
         r.steps.isEmpty && r.dueDate == nil
     }
-    private var isUnreadable: Bool { Self.isUnreadable(draft) }
+    // Only a scan (with a photo) can be "unreadable" — guides are deterministic
+    // and always produce a valid checklist, so they never hit the retake state.
+    private var isUnreadable: Bool { image != nil && Self.isUnreadable(draft) }
     private var isNoAction: Bool { Self.isNoAction(draft) }
     // accountNumber (primary) + otherIDs, deduped by value.
     private var combinedIDs: [DocID] {

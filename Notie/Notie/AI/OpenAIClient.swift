@@ -376,3 +376,62 @@ nonisolated enum ExtractionJSON {
         return nil
     }
 }
+
+// MARK: - Guide polish (Week 7)
+
+extension OpenAIClient {
+    // Best-effort: reword a deterministic guide checklist to read naturally for
+    // this person and add a tip or two. Returns the base UNCHANGED on any
+    // failure (no key, offline, bad JSON) — guides must never block on the model.
+    func polish(_ base: ExtractionResult,
+                context: String,
+                language: ExplainLanguage = .english) async -> ExtractionResult {
+        guard apiKey.hasPrefix("sk-"), !apiKey.contains("REPLACE"), !base.steps.isEmpty else { return base }
+
+        let system = """
+        You refine a checklist for someone who may not read English well. Keep the \
+        steps concrete and in order, don't drop necessary steps, and add 1-2 short \
+        helpful tips. Reply ONLY as JSON {"steps":[...],"notes":[...]} written in \
+        \(language.promptName).
+        """
+        let user = "Situation: \(context)\nSteps:\n"
+            + base.steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
+        let body = ChatRequest(
+            model: model, response_format: .init(type: "json_object"), temperature: 0.3,
+            messages: [.init(role: "system", content: system), .init(role: "user", content: user)])
+
+        guard let httpBody = try? JSONEncoder().encode(body) else { return base }
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        req.httpBody = httpBody
+
+        guard let (data, resp) = try? await session.data(for: req),
+              let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode),
+              let chat = try? JSONDecoder().decode(ChatResponse.self, from: data),
+              let content = chat.choices.first?.message.content,
+              let json = content.data(using: .utf8),
+              let dict = (try? JSONSerialization.jsonObject(with: json)) as? [String: Any]
+        else { return base }
+
+        // The model sometimes returns steps as objects ({"action":…}/{"step":…})
+        // instead of plain strings — coerce both so the polish isn't lost.
+        func list(_ key: String) -> [String] {
+            guard let arr = dict[key] as? [Any] else { return [] }
+            return arr.compactMap { el -> String? in
+                if let s = el as? String { return s.trimmingCharacters(in: .whitespaces) }
+                if let o = el as? [String: Any] {
+                    let v = (o["action"] ?? o["text"] ?? o["step"] ?? o["note"]) as? String
+                    return v?.trimmingCharacters(in: .whitespaces)
+                }
+                return nil
+            }.filter { !$0.isEmpty }
+        }
+        var out = base
+        let steps = list("steps"), notes = list("notes")
+        if !steps.isEmpty { out.steps = steps }
+        if !notes.isEmpty { out.notes = notes }
+        return out
+    }
+}
