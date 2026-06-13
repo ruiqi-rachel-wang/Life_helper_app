@@ -9,8 +9,16 @@
 import SwiftUI
 import SwiftData
 
+// A route in the Guides stack. Carries plain values (id + answers) so the whole
+// stack can be reset to root with `path.removeAll()` after building a checklist.
+nonisolated enum GuideRoute: Hashable {
+    case questions(String)
+    case review(String, [String: String])
+}
+
 struct GuidesView: View {
     @State private var selectedCategory: ItemCategory?   // nil = All
+    @State private var path: [GuideRoute] = []
 
     private var chipCategories: [ItemCategory] {
         Array(Set(Guide.all.map(\.category))).sorted { $0.rawValue < $1.rawValue }
@@ -21,7 +29,7 @@ struct GuidesView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack(alignment: .top) {
                 Color.paper.ignoresSafeArea()
                 ScrollView {
@@ -30,9 +38,7 @@ struct GuidesView: View {
                         categoryChips.padding(.top, 18)
                         VStack(spacing: 10) {
                             ForEach(visibleGuides) { guide in
-                                NavigationLink {
-                                    GuideQuestionsView(guide: guide)
-                                } label: {
+                                Button { path.append(.questions(guide.id)) } label: {
                                     GuideCard(guide: guide)
                                 }
                                 .buttonStyle(.plain)
@@ -46,6 +52,28 @@ struct GuidesView: View {
                 }
             }
             .navigationBarHidden(true)
+            .navigationDestination(for: GuideRoute.self) { route in
+                switch route {
+                case .questions(let id):
+                    if let g = Guide.all.first(where: { $0.id == id }) {
+                        GuideQuestionsView(guide: g) { answers in path.append(.review(id, answers)) }
+                    }
+                case .review(let id, let answers):
+                    if let g = Guide.all.first(where: { $0.id == id }) {
+                        ReviewView(
+                            load: {
+                                var base = g.build(answers)
+                                base.confidence = 1   // deterministic checklist — always certain
+                                let context = "\(g.title). "
+                                    + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
+                                return [await OpenAIClient().polish(base, context: context)]
+                            },
+                            source: .guide,
+                            loadingLabel: "Personalizing your checklist…",
+                            onClose: { path.removeAll() })   // back to the guide list
+                    }
+                }
+            }
         }
     }
 
@@ -120,8 +148,8 @@ private struct GuideCard: View {
 
 struct GuideQuestionsView: View {
     let guide: Guide
+    var onContinue: ([String: String]) -> Void
     @State private var answers: [String: String] = [:]
-    @State private var proceed = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -139,7 +167,7 @@ struct GuideQuestionsView: View {
 
                     ForEach(guide.questions) { q in questionCard(q) }
 
-                    Button { proceed = true } label: {
+                    Button { onContinue(answers) } label: {
                         Text("Build my checklist")
                             .font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.paper)
                             .frame(maxWidth: .infinity).padding(.vertical, 15)
@@ -153,18 +181,6 @@ struct GuideQuestionsView: View {
         }
         .navigationTitle("").navigationBarTitleDisplayMode(.inline)
         .onAppear { seedDefaults() }
-        .navigationDestination(isPresented: $proceed) {
-            ReviewView(
-                load: {
-                    var base = guide.build(answers)
-                    base.confidence = 1   // deterministic checklist — always certain
-                    let context = "\(guide.title). "
-                        + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
-                    return [await OpenAIClient().polish(base, context: context)]
-                },
-                source: .guide,
-                loadingLabel: "Personalizing your checklist…")
-        }
     }
 
     // Pre-select the first option for each choice question so Continue always works.

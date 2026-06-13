@@ -195,23 +195,15 @@ struct DetailView: View {
                         HStack(alignment: .top, spacing: 10) {
                             Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
                                 .buttonStyle(.plain)
-                            // Tapping the text opens the step's detail (if any).
-                            Button { if step.hasDetail { detailStep = step } } label: {
-                                HStack(alignment: .top, spacing: 6) {
-                                    Text(linked(step.text))
-                                        .font(.body14)
-                                        .foregroundStyle(step.done ? Color.faded : Color.ink)
-                                        .strikethrough(step.done, color: Color.faded)
-                                        .multilineTextAlignment(.leading).tint(Color.accent)
-                                    Spacer()
-                                    if step.hasDetail {
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.faint)
-                                    }
-                                }
+                            // Tapping the text opens the step's detail, but only
+                            // when there IS detail — a plain step stays full-color
+                            // (a disabled Button would gray it out).
+                            if step.hasDetail {
+                                Button { detailStep = step } label: { stepText(step, chevron: true) }
+                                    .buttonStyle(.plain)
+                            } else {
+                                stepText(step, chevron: false)
                             }
-                            .buttonStyle(.plain)
-                            .disabled(!step.hasDetail)
                         }
                         .padding(.vertical, 8)
                         .overlay(alignment: .top) { divider(above: step) }
@@ -232,6 +224,21 @@ struct DetailView: View {
     private func divider(above step: ChecklistStep) -> some View {
         if step.id != item.steps.first?.id {
             Rectangle().fill(Color.hairD).frame(height: 1)
+        }
+    }
+
+    private func stepText(_ step: ChecklistStep, chevron: Bool) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text(linked(step.text))
+                .font(.body14)
+                .foregroundStyle(step.done ? Color.faded : Color.ink)
+                .strikethrough(step.done, color: Color.faded)
+                .multilineTextAlignment(.leading).tint(Color.accent)
+            Spacer()
+            if chevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.faint)
+            }
         }
     }
 

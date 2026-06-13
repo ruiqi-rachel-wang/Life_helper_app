@@ -100,9 +100,17 @@ struct GuideTests {
         #expect(internet?.detail?.miniChecklist.contains { $0.lowercased().contains("provider") } == true)
     }
 
-    @Test func plainGuideStepsHaveNoDetail() {
-        // Driver's license authored no step detail → all plain.
-        let item = ActionItem(from: Guide.driversLicense.build(["task": "Renewal", "state": "Ohio"]))
-        #expect(item.steps.allSatisfy { !$0.hasDetail })
+    @Test func licenseGatherStepHasDocumentsChecklist() {
+        let item = ActionItem(from: Guide.driversLicense.build(["task": "First-time", "state": "Ohio"]))
+        let gather = item.steps.first { $0.text.contains("Gather proof") }
+        #expect(gather?.hasDetail == true)
+        #expect(gather?.detail?.miniChecklist.contains { $0.contains("Social Security") } == true)
+    }
+
+    @Test func newJobI9StepHasDocumentsAndLink() {
+        let item = ActionItem(from: Guide.newJob.build(["type": "W-2 employee", "employer": "Acme"]))
+        let i9 = item.steps.first { $0.text.contains("Form I-9") }
+        #expect(i9?.hasDetail == true)
+        #expect(i9?.detail?.links.contains { $0.url.contains("uscis.gov") } == true)
     }
 }

@@ -76,7 +76,8 @@ struct CreateView: View {
                         return try await ExtractionService(extractor: OpenAIClient()).extract(from: ocr)
                     },
                     image: route.image,
-                    source: .scanned)
+                    source: .scanned,
+                    onClose: { scanRoute = nil })   // back to the Add screen
             }
         }
         .onChange(of: cameraImage) { _, new in

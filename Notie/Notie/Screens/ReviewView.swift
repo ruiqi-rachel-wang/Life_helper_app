@@ -20,6 +20,9 @@ struct ReviewView: View {
     var image: UIImage? = nil                 // shown for scans only
     var source: ItemSource = .scanned         // tags saved items
     var loadingLabel = "Reading your document…"
+    // How to leave this screen. Guides/scans pass a closure that pops their
+    // whole stack back to the tab's root; falls back to a one-level dismiss.
+    var onClose: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -32,6 +35,7 @@ struct ReviewView: View {
     @State private var leadHours = 2                     // for timed reminders
     @State private var items: [ExtractionResult] = []    // when there are several
     @State private var selected: Set<Int> = []           // which multi-items to add
+    @State private var detailStep: ChecklistStep?        // tapped step → detail sheet
 
     enum Phase: Equatable { case loading, ready, readyMulti, noText, failed(String) }
 
@@ -49,6 +53,7 @@ struct ReviewView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(item: $detailStep) { StepDetailView(step: $0) }
         .task { await run() }
     }
 
@@ -80,11 +85,17 @@ struct ReviewView: View {
         }
     }
 
+    // Leave the screen — pop the whole stack to root if the caller gave us a way,
+    // otherwise just dismiss one level.
+    private func finish() {
+        if let onClose { onClose() } else { dismiss() }
+    }
+
     // MARK: header
 
     private var header: some View {
         HStack {
-            Button { dismiss() } label: {
+            Button { finish() } label: {
                 Image(systemName: "xmark").font(.system(size: 18, weight: .medium))
                     .foregroundStyle(Color.faint)
             }
@@ -146,7 +157,7 @@ struct ReviewView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(text).font(.body14).foregroundStyle(Color.bad)
                 if retake {
-                    Button { dismiss() } label: {
+                    Button { finish() } label: {
                         Text(image != nil ? "Retake photo" : "Go back").font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Color.paper).frame(maxWidth: .infinity).padding(.vertical, 13)
                             .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
@@ -264,6 +275,13 @@ struct ReviewView: View {
         }
     }
 
+    // Detail for milestone i (guides only), if it has any.
+    private func stepDetail(_ i: Int) -> StepDetail? {
+        guard draft.detailedSteps.indices.contains(i) else { return nil }
+        let d = draft.detailedSteps[i].detail
+        return (d?.isEmpty == false) ? d : nil
+    }
+
     private var stepsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ACTION STEPS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
@@ -275,6 +293,17 @@ struct ReviewView: View {
                         TextField("Step", text: $draft.steps[i], axis: .vertical).font(.body14).foregroundStyle(Color.ink)
                         Button { draft.steps.remove(at: i) } label: {
                             Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                        }.buttonStyle(.plain)
+                    } else if let d = stepDetail(i) {
+                        // Same tap-to-detail as the Detail page, so the user can
+                        // see the instructions before adding.
+                        Button { detailStep = ChecklistStep(text: draft.steps[i], detail: d) } label: {
+                            HStack(alignment: .top, spacing: 6) {
+                                Text(linked(draft.steps[i])).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.faint)
+                            }
                         }.buttonStyle(.plain)
                     } else {
                         Text(linked(draft.steps[i])).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
@@ -346,7 +375,7 @@ struct ReviewView: View {
             VStack(spacing: 8) {
                 Text("Nothing to do — this is just for your information.")
                     .font(.subline).foregroundStyle(Color.faded)
-                Button { dismiss() } label: {
+                Button { finish() } label: {
                     primaryLabel("Done")
                 }.buttonStyle(.plain)
             }
@@ -370,7 +399,7 @@ struct ReviewView: View {
         context.insert(item)
         ReminderScheduler.shared.reschedule(for: item)
         router.goToInbox()
-        dismiss()
+        finish()
     }
 
     // MARK: multi-item — "this scan has N things"
@@ -456,7 +485,7 @@ struct ReviewView: View {
             ReminderScheduler.shared.reschedule(for: item)
         }
         router.goToInbox()
-        dismiss()
+        finish()
     }
 
     // MARK: derived

@@ -59,14 +59,27 @@ extension Guide {
 
     // MARK: Step detail (authored — AI may reword, must not invent live facts)
 
-    // Wrap milestone strings as checklist steps, attaching authored detail to
-    // the heavy ones via a per-guide lookup.
-    private static func detailed(_ steps: [String], _ detail: (String) -> StepDetail?) -> [ChecklistStep] {
-        steps.map { ChecklistStep(text: $0, detail: detail($0)) }
+    // A safe link for an online action: a web search (never a possibly-wrong
+    // official URL we'd be guessing). Used for state-specific sites like the DMV.
+    static func searchURL(_ query: String) -> String {
+        "https://www.google.com/search?q=" + (query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)
     }
 
-    private static func movingDetail(_ text: String) -> StepDetail? {
-        text.contains("utilities and internet") ? internetDetail : nil
+    // Wrap milestone strings as checklist steps, attaching authored detail (with
+    // the user's state, for links) to the heavy ones via a per-guide lookup.
+    private static func detailed(_ steps: [String], state: String,
+                                 _ detail: (String, String) -> StepDetail?) -> [ChecklistStep] {
+        steps.map { ChecklistStep(text: $0, detail: detail($0, state)) }
+    }
+
+    private static func movingDetail(_ text: String, _ state: String) -> StepDetail? {
+        if text.contains("utilities and internet") { return internetDetail }
+        if text.contains("driver's license") || text.contains("license/ID") {
+            return StepDetail(
+                explanation: "Update your license/ID address at the DMV — many states require this within ~10–30 days.",
+                links: [StepLink(label: "Find your state's DMV", url: searchURL("\(state) DMV change of address"))])
+        }
+        return nil
     }
     static let internetDetail = StepDetail(
         explanation: "Set up (or stop) electricity, gas, water, and internet. Internet usually needs the most lead time, so start there.",
@@ -80,9 +93,42 @@ extension Guide {
         ],
         needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"])
 
-    private static func newJobDetail(_ text: String) -> StepDetail? {
-        text.hasPrefix("Enroll in benefits") ? benefitsDetail : nil
+    private static func newJobDetail(_ text: String, _ state: String) -> StepDetail? {
+        if text.hasPrefix("Complete Form I-9") { return i9Detail }
+        if text.hasPrefix("Enroll in benefits") { return benefitsDetail }
+        return nil
     }
+    static let i9Detail = StepDetail(
+        explanation: "Form I-9 proves you can work in the U.S. Bring EITHER one document from List A, OR one from List B plus one from List C.",
+        miniChecklist: [
+            "List A (one): U.S. passport, OR permanent-resident card, OR a work permit.",
+            "OR List B (identity): driver's license or state ID …",
+            "… PLUS List C (work): Social Security card or birth certificate.",
+        ],
+        links: [StepLink(label: "Official I-9 acceptable documents (uscis.gov)",
+                         url: "https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents")],
+        needed: ["Originals — most documents can't be photocopies"])
+
+    private static func licenseDetail(_ text: String, _ state: String) -> StepDetail? {
+        if text.contains("Gather proof") { return licenseDocsDetail }
+        if text.contains("DMV requirements") || text.contains("renew online")
+            || text.contains("Report your new address") || text.contains("Exchange your out-of-state") {
+            return StepDetail(
+                explanation: "Use your state's official DMV site — search for it rather than trusting an ad.",
+                links: [StepLink(label: "Find the \(state) DMV", url: searchURL("\(state) DMV official site"))])
+        }
+        return nil
+    }
+    static let licenseDocsDetail = StepDetail(
+        explanation: "Bring ORIGINALS (not copies). You usually need to prove your identity, your Social Security number, and your residency.",
+        miniChecklist: [
+            "Identity: U.S. passport, OR birth certificate + a photo ID.",
+            "Social Security: SS card, a W-2, or a pay stub showing your SSN.",
+            "Residency (often TWO): lease, utility bill, bank statement, or government mail.",
+            "Name changed? Bring a marriage certificate or court order.",
+        ],
+        needed: ["Originals of each document", "Payment for the fee"])
+
     static let benefitsDetail = StepDetail(
         explanation: "Benefits enrollment is usually a one-time window (~30 days) when you start. Miss it and you may have to wait until the next year.",
         miniChecklist: [
@@ -163,7 +209,7 @@ extension Guide {
                 category: .housing,
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
-                detailedSteps: detailed(steps, movingDetail),
+                detailedSteps: detailed(steps, state: newState, movingDetail),
                 notes: ["Use the official USPS change-of-address — avoid paid sites that charge for the free service.",
                         "DMV address deadlines are state-specific (often 10–30 days) — don't wait."],
                 confidence: 1)
@@ -216,7 +262,7 @@ extension Guide {
                 category: .work,
                 summary: "What to set up when starting at \(employer)\(isContractor ? " as a contractor" : "") — paperwork, pay, and benefits.",
                 steps: steps,
-                detailedSteps: detailed(steps, newJobDetail),
+                detailedSteps: detailed(steps, state: "", newJobDetail),
                 notes: notes,
                 confidence: 1)
         })
@@ -285,6 +331,7 @@ extension Guide {
                 category: .government,
                 summary: "Steps for a \(task.lowercased()) driver's license in \(state).",
                 steps: steps,
+                detailedSteps: detailed(steps, state: state, licenseDetail),
                 notes: ["DMV deadlines are state-specific — new residents often must transfer a license/registration within ~30 days."],
                 confidence: 1)
         })
