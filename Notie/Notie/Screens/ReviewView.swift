@@ -69,9 +69,13 @@ struct ReviewView: View {
                 phase = .ready
             } else {
                 items = results
-                // Default-select only items that have something to do — a
-                // no-action item (no steps, no due) shouldn't auto-become a task.
-                selected = Set(results.indices.filter { !Self.isNoAction(results[$0]) })
+                // Default-select only items that are safe to add — skip no-action
+                // (nothing to do) and unreadable/low-confidence ones, so neither
+                // can silently become a task. The row flags say why; the user can
+                // still turn one on.
+                selected = Set(results.indices.filter {
+                    !Self.isNoAction(results[$0]) && !Self.isUnreadable(results[$0])
+                })
                 phase = .readyMulti
             }
         } catch {
@@ -161,7 +165,7 @@ struct ReviewView: View {
             card { documentHead }
             // Details (claim/policy/confirmation #) sit ABOVE steps — they're
             // what the user reaches for when a website/clerk asks.
-            if !combinedIDs.isEmpty { card { detailsSection } }
+            if !combinedIDs.isEmpty || siteURLToShow != nil { card { detailsSection } }
             if !draft.steps.isEmpty || isEditing { card { stepsSection } }
             if !draft.notes.isEmpty || isEditing { card { notesSection } }
             footer
@@ -317,7 +321,22 @@ struct ReviewView: View {
                 Text("\(combinedIDs[i].label): \(combinedIDs[i].value)")
                     .font(.subline).foregroundStyle(Color.faded).textSelection(.enabled)
             }
+            if let site = siteURLToShow {
+                Link(destination: site) {
+                    Text("Website: \(site.host() ?? site.absoluteString)")
+                        .font(.subline).foregroundStyle(Color.accent)
+                }
+            }
         }
+    }
+
+    // The website, but only if it isn't already linkified inside the steps/notes
+    // (avoids the duplicate "link below the date" we removed earlier).
+    private var siteURLToShow: URL? {
+        guard let url = draft.siteURL else { return nil }
+        let hay = (draft.steps + draft.notes).joined(separator: " ").lowercased()
+        let host = (url.host() ?? url.absoluteString).lowercased()
+        return hay.contains(host) ? nil : url
     }
 
     // MARK: footer — Add (action items) or Done (no-action)

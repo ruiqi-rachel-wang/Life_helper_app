@@ -10,21 +10,22 @@
 - **Language/Framework**: 100% Swift + SwiftUI (no Objective-C, no JS, no Python)
 - **Stack**: SwiftData (local storage) · Apple Vision (on-device OCR) · GPT-4o-mini via Cloudflare Worker proxy · UNUserNotificationCenter (local notifications)
 - **Architecture**: Plain-English folders — `App/` (entry + tab shell) · `Model/` (data: `ActionItem` is a SwiftData `@Model`, plus pure logic like bucketing/reminder math — UI-free, no `Color`/screen types) · `Screens/` (SwiftUI views) · `Theme/` (color/symbol + formatting) · `Notifications/` (UNUserNotificationCenter wrapper). The model uses SwiftData (iOS), but its *logic* (enums, derived state, grouping) is what ports to Android; the view layer owns all presentation.
-- **Timeline**: ~10 weeks to TestFlight (8-week core + adaptive guides + buffer; revised 2026-06-05)
+- **Timeline**: ~10 weeks to TestFlight (Week 0–9: core + guides + release buffer; revised 2026-06-13)
 - **Cost**: ~$8–15/month at first 1,000 users · ~$0.0004 per scan
 - **One metric that matters**: % of confirmed action items marked done before due date. >50% working, <30% broken loop.
 
 ---
 
-## Current status (2026-06-12)
+## Current status (2026-06-13)
 
 | Weeks | Status |
 |---|---|
 | 0 Setup · 1 Shell · 2 Persistence · 3 Notifications · 4 Camera+OCR | ✓ complete |
 | 5 Rule parser + OpenAI extraction | ✓ complete (2026-06-06) |
 | 6 Review spine (scan → AI → edit → Add) | ✓ complete (2026-06-10) — **the shippable moment** |
-| 7 Adaptive guides + recurring | ⏳ next |
-| 8 Polish + TestFlight | pending |
+| 7 Adaptive guides | ⏳ next |
+| 8 Recurring + release polish | pending |
+| 9 TestFlight launch | pending |
 
 **Working end-to-end today:** scan/upload → on-device OCR (`VisionOCR`) → AI
 extraction (`RuleBasedParser` + GPT-4o-mini, one or many items per doc) → one
@@ -38,7 +39,7 @@ clean (no warnings); iOS 17 target. Backed up on GitHub
 **Not built yet:** adaptive guides (still preview a Detail), recurring (the
 `repeats` → `Recurrence` wiring + recurring-aware delete), Settings (mostly a
 stub with a DEBUG test-reminder button), the Cloudflare Worker (key is local-only
-for now — see Week 8), the custom raised ＋ tab button. Sample items are seeded on
+for now — see Week 9), the custom raised ＋ tab button. Sample items are seeded on
 first launch for testing; grep `TEMP:` in code for remaining scaffolding.
 
 ---
@@ -194,7 +195,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 
 ---
 
-## Build order — ~10 weeks (8-week core + adaptive guides + buffer)
+## Build order — ~10 weeks (Week 0–9: core + guides + release buffer)
 
 ### Week 0: Setup (NOT code)
 - [x] Install Xcode (free, ~15GB)
@@ -214,7 +215,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 - [x] All 5 screens built (Inbox, Guides, Detail, Review, Create) + Settings stub
 - [x] Reusable row/section/tile components (built per-screen; extract further when reused)
 - [x] Navigation: inbox row → Detail, guide → Detail, ＋ Scan/Upload → Review
-- [ ] *Polish deferred:* raised ＋ tab button (floating circle) → Week 7
+- [ ] *Polish deferred:* raised ＋ tab button (floating circle) → Week 8
 
 **Done when:** every screen renders matching prototype within ~10%. All navigation works. No real data anywhere. ✓
 
@@ -238,7 +239,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 - **Deleting a done item:** it disappears. For a **recurring** task, deleting
   must first ask: **delete just this one, or this and all future ones?**
   (The future-instances part only bites once recurring generates them — so the
-  recurring-aware confirm dialog lands with recurrence in **Week 7**; Week 2
+  recurring-aware confirm dialog lands with recurrence in **Week 8**; Week 2
   handles plain one-off delete.)
 
 **Done when:** Create a task (title only is enough) → force-quit + reopen →
@@ -289,7 +290,7 @@ category-as-array) + a category synonym map. Tuning corpus in `sample_documents.
 **API key (DECIDED 2026-06-06):** dev calls OpenAI directly with the key in a
 **gitignored `AI/APIKeys.swift`** — **never commit it.** Before TestFlight the
 call moves behind a free **Cloudflare Worker** so the key never ships (a one-line
-swap, thanks to the `Extractor` protocol) — see Week 8. The Worker is $0 (free
+swap, thanks to the `Extractor` protocol) — see Week 9. The Worker is $0 (free
 tier covers it); the only real cost is OpenAI (~$0.0004/scan).
 
 ### Week 6: Review screen end-to-end (THE SPINE) ✓ DONE (2026-06-10)
@@ -319,68 +320,116 @@ read-only ScanResultView and the mock Review.
 
 ~95 unit tests pass. **The shippable moment** — everything after is polish + breadth.
 
-### Week 7–8: Adaptive guides + recurring  (expanded — see timeline note)
-- **Guides are adaptive, hybrid** (decided 2026-06-05, moved INTO Phase 1):
-  - Each guide can ask **a few hardcoded questions** first (e.g. rent vs. buy,
-    first-time vs. renewal, which state).
-  - The answers pick a **hardcoded base checklist** (deterministic branching —
-    no AI for structure).
-  - **AI lightly adapts details only** — fills in the state name, employer,
-    address, etc. into the steps (reuses the Week 5–6 OpenAI setup). Structure
-    stays hardcoded; AI just personalizes wording.
-- Topics: the 5 starters (Moving, Bank, Job, License, Visa) **+ car accident**,
-  more added from real user requests.
-- Flow: tap a guide → answer its questions → **Review-style "confirm before
-  adding"** screen (same screen scans use) → **Add to inbox**. A guide never
-  opens a Detail (it isn't a saved task yet).
-- RecurringService: on mark-done with `repeats`, create next cycle (cadence from
-  the document / guide, not hardcoded). Recurring-aware delete ("this one or
-  future?").
+### Week 7: Adaptive guides
 
-**Done when:** answer a guide's questions → a tailored checklist with your
-details filled in → Add to inbox. Recurring item respawns on the right date.
+Goal: turn Guides from static previews into real task-generation flows.
 
-> **Timeline note (2026-06-05):** adaptive guides are real scope — branching
-> model + a questions UI + per-guide authoring. Timeline revised to **~10 weeks**
-> (with buffer) to fit them comfortably. Sequencing
-> unchanged: build the scan→review→done spine + notifications first; adaptive
-> guides come after the AI pipeline (Wk 5–6) is solid, since the "fill in
-> details" step depends on it. Phase-1 guides are **no longer static.**
+1. **Guide data model**
+   - Define `GuideTemplate`: title, category/source tag, intro, questions,
+     branching rules, base checklist, optional default due/repeat hints.
+   - Keep guide structure hardcoded and deterministic. AI must not decide the
+     checklist shape.
+   - Start with the 5 starter guides (Moving, Bank, Job, License, Visa) +
+     car accident.
+2. **Question flow**
+   - Tap guide → answer 2–5 hardcoded questions.
+   - Inputs should cover the few facts that materially change the checklist
+     (e.g. state, renter vs owner, first-time vs renewal, employer name).
+   - Allow back/cancel without saving anything.
+3. **AI light adaptation**
+   - Reuse the Week 5–6 extraction setup only to personalize wording: state
+     name, employer, address, dates, labels.
+   - If AI fails or network is down, fall back to the deterministic base
+     checklist instead of blocking the guide.
+4. **Review before save**
+   - Guide output goes to a Review-style confirmation screen, not directly to
+     Detail.
+   - User can edit title, summary, steps, due date, notes, reminders, and source
+     before adding.
+   - Saved guide items use source = Guide and show the guide name.
 
-### Week 8: Polish + TestFlight
-1. Empty states (no inbox, no past items, OCR failed)
-2. Error states (LLM down, OCR garbled, no network)
-3. Settings: language picker, "keep original scans" toggle, version
-4. Privacy banner on Inbox: `LOCAL OCR · NO BANK LINK · NO AUTOPAY`
-5. Past items list (Done archive, no search) — **with delete** (swipe-to-delete
-   here, plus the Delete button that already appears on a done item's Detail).
-   Decided 2026-05-30: done items go to this list and can be removed from it.
-   **Plus an "undo done" / Reopen** (decided 2026-06-05): a done item's Detail
-   should offer "Mark as not done" → sets status back to active, reschedules
-   reminders, moves it out of the Done section. (Delete stays final — no undo
-   needed there; only *done* needs reversing.)
-6. Analytics events (`action_item_confirmed`, `action_item_completed`) → local JSON file
-7. App icon (even placeholder serif "N" on cream)
-8. 🔴 **BLOCKER before Archive — move the OpenAI key off-device (Cloudflare
-   Worker).** Until now the key lives in the gitignored `AI/APIKeys.swift`, which
-   is fine on the Simulator but **gets compiled into any shipped build** — a
-   TestFlight binary with the key in it can be extracted and your account drained.
-   `.gitignore` does NOT prevent this (it only stops the GitHub leak). Steps
-   (~30 min): create a free Cloudflare Worker holding the key + per-IP rate limit;
-   point `OpenAIClient.endpoint` at the Worker URL and drop the `Authorization`
-   header (one-line change, thanks to the `Extractor` protocol); remove the real
-   key from `APIKeys.swift`. Verify the shipped build contains only the Worker URL.
-9. **Apply for Apple Developer Program** if not already (1–3 day approval)
-10. Xcode → Product → Archive → Distribute App → App Store Connect
-11. 24–48h Apple automated review
-12. Add 10 testers in App Store Connect → TestFlight tab
-13. Recruit testers from target audience (immigrants, ESL families)
+**Done when:** a user can answer one starter guide and one car-accident guide,
+review the tailored checklist, add it to the inbox, force-quit/reopen, and still
+see the saved guide item with editable steps/reminders.
 
-**Done when:** 10 real users have the build. You're logging the one metric.
+### Week 8: Recurring + release polish
+
+Goal: make completed tasks, recurrence, settings, and edge states feel coherent
+before handing the app to testers.
+
+1. **Recurring tasks**
+   - Wire `ExtractionResult.repeats` into `ActionItem` / `Recurrence`.
+   - On mark-done for a recurring item, create the next cycle from the cadence
+     read from the document or guide.
+   - Add recurring-aware delete: "delete this one" vs "this and future".
+   - Make reminder scheduling use the next generated due date.
+2. **Done archive + reopen**
+   - Done items stay visible in a past/done area, with delete.
+   - Add "Mark as not done" / Reopen from a done item's Detail; it should move
+     back to active and reschedule reminders.
+   - Keep delete final; no undo is required for delete.
+3. **Settings**
+   - Language picker (EN / 中文 / ES) for future generations.
+   - "Keep original scans" toggle.
+   - Version/build row.
+   - Keep DEBUG-only test reminder separate from release settings.
+4. **Polish states**
+   - Empty states: no inbox, no done items, no guides result yet.
+   - Error states: OCR failed, garbled OCR, LLM down, no network, permission
+     denied.
+   - Privacy banner on Inbox: `LOCAL OCR · NO BANK LINK · NO AUTOPAY`.
+   - Custom raised ＋ tab button.
+   - App icon placeholder, even just serif "N" on cream.
+5. **Local metrics**
+   - Log `action_item_confirmed` and `action_item_completed` to a local JSON
+     file or local-only store.
+   - Keep this lightweight; the launch metric is more important than a full
+     analytics system.
+
+**Done when:** recurring items regenerate correctly, done items can be reopened
+or deleted, core empty/error states are visible, Settings has the launch controls,
+and a release-style build has no obvious debug scaffolding in the main flow.
+
+### Week 9: TestFlight launch
+
+Goal: remove shipping blockers, archive the app, and get it into 10 real users'
+hands.
+
+1. **Security blocker: move the OpenAI key off-device**
+   - Until now the key lives in gitignored `AI/APIKeys.swift`, which is fine on
+     the Simulator but gets compiled into any shipped build.
+   - Create a free Cloudflare Worker holding the key + per-IP rate limit.
+   - Point `OpenAIClient.endpoint` at the Worker URL and remove the app-side
+     OpenAI `Authorization` header.
+   - Remove the real key from `APIKeys.swift`.
+   - Verify the shipped build contains only the Worker URL, not the OpenAI key.
+2. **Apple release setup**
+   - Apply for Apple Developer Program if not already approved (1–3 days).
+   - Create App Store Connect app record.
+   - Add app icon, bundle/version/build numbers, privacy answers, and tester
+     notes.
+3. **Archive + TestFlight**
+   - Xcode → Product → Archive → Distribute App → App Store Connect.
+   - Wait for Apple processing / automated review.
+   - Add 10 testers in App Store Connect → TestFlight tab.
+   - Recruit testers from target audience (immigrants, ESL families).
+4. **Tester checklist**
+   - Ask each tester to try: scan/upload, manual item, one guide, one reminder,
+     mark done, reopen, delete.
+   - Track the one launch metric: confirmed action items marked done before due
+     date.
+
+**Done when:** 10 real users have the build, the OpenAI key is not in the
+binary, and the first tester feedback loop is running.
+
+> **Timeline note (2026-06-13):** adaptive guides are real Phase-1 scope, so the
+> endgame is split into Week 7 guides, Week 8 recurrence/polish, and Week 9
+> TestFlight. This keeps the scan→review→done spine stable while giving guides
+> and release hardening their own passes.
 
 ---
 
-## After Week 8
+## After Week 9
 
 Run for 4 weeks. Watch the one metric:
 
@@ -532,4 +581,4 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 
 ---
 
-*Last updated: 2026-06-12. Update this doc whenever architecture decisions change.*
+*Last updated: 2026-06-13. Update this doc whenever architecture decisions change.*

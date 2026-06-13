@@ -33,7 +33,7 @@ struct DetailView: View {
                     navBar.padding(.horizontal, 22)
                     headCard
                     if !item.steps.isEmpty || isEditing { checklistCard }
-                    if !item.otherIDs.isEmpty { detailsCard }
+                    if !item.otherIDs.isEmpty || siteURLToShow != nil { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
                     if !item.notes.isEmpty || !item.note.isEmpty || isEditing { noteCard }
                     footer
@@ -326,8 +326,22 @@ struct DetailView: View {
                     Text("\(item.otherIDs[i].label): \(item.otherIDs[i].value)")
                         .font(.subline).foregroundStyle(Color.faded).textSelection(.enabled)
                 }
+                if let site = siteURLToShow {
+                    Link(destination: site) {
+                        Text("Website: \(site.host() ?? site.absoluteString)")
+                            .font(.subline).foregroundStyle(Color.accent)
+                    }
+                }
             }
         }
+    }
+
+    // The website, but only if it isn't already linkified inside steps/notes.
+    private var siteURLToShow: URL? {
+        guard !item.siteURL.isEmpty, let url = URL(string: item.siteURL) else { return nil }
+        let hay = (item.steps.map(\.text) + item.notes).joined(separator: " ").lowercased()
+        let host = (url.host() ?? item.siteURL).lowercased()
+        return hay.contains(host) ? nil : url
     }
 
     // MARK: notes (AI notes + the user's free note) — last
