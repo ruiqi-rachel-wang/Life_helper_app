@@ -85,4 +85,24 @@ struct GuideTests {
         let steps = Guide.driversLicense.build([:]).steps.joined(separator: "\n")
         #expect(steps.contains("your state"))   // default fill, no crash
     }
+
+    // MARK: Step detail (guides only)
+
+    @Test func movingInternetStepCarriesDetailIntoActionItem() {
+        let r = Guide.moving.build(["home": "Renting", "scope": "Same state",
+                                    "knowAddress": "Yes", "car": "No"])
+        // The utilities/internet milestone has authored detail; others don't.
+        #expect(r.detailedSteps.contains { $0.hasDetail })
+
+        let item = ActionItem(from: r)
+        let internet = item.steps.first { $0.text.contains("utilities and internet") }
+        #expect(internet?.hasDetail == true)
+        #expect(internet?.detail?.miniChecklist.contains { $0.lowercased().contains("provider") } == true)
+    }
+
+    @Test func plainGuideStepsHaveNoDetail() {
+        // Driver's license authored no step detail → all plain.
+        let item = ActionItem(from: Guide.driversLicense.build(["task": "Renewal", "state": "Ohio"]))
+        #expect(item.steps.allSatisfy { !$0.hasDetail })
+    }
 }

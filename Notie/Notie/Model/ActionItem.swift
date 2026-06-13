@@ -38,12 +38,37 @@ enum WorkStatus: String, Codable {
     }
 }
 
-// A checklist step. Stored as part of the item (SwiftData persists the
-// array of these Codable values).
+// A link inside a step's detail (a website to open).
+nonisolated struct StepLink: Codable, Hashable {
+    var label: String
+    var url: String
+}
+
+// Optional structured help behind a milestone step — ONE level deep, no further
+// nesting. Authored by guides; nil for plain scanned-document steps. (Editable
+// "fields to save" like provider/account # are a deliberate later follow-up.)
+nonisolated struct StepDetail: Codable, Hashable {
+    var explanation: String = ""
+    var miniChecklist: [String] = []   // flat sub-steps, one level only
+    var links: [StepLink] = []
+    var script: String = ""            // what to say on a call / visit
+    var needed: [String] = []          // documents / info to have ready
+
+    var isEmpty: Bool {
+        explanation.isEmpty && miniChecklist.isEmpty && links.isEmpty
+            && script.isEmpty && needed.isEmpty
+    }
+}
+
+// A checklist step. Stored as part of the item (SwiftData persists the array of
+// these Codable values). `detail` is optional structured help shown on tap.
 struct ChecklistStep: Identifiable, Codable, Hashable {
     var id = UUID()
     var text: String
     var done: Bool = false
+    var detail: StepDetail? = nil
+
+    var hasDetail: Bool { detail?.isEmpty == false }
 }
 
 // One scheduled reminder — derived, never stored. `exactTime` = fire at this
@@ -136,7 +161,7 @@ final class ActionItem {
             currency: r.currency ?? "USD",
             dueDate: r.dueDate,
             imageData: imageData,
-            steps: r.steps.map { ChecklistStep(text: $0) },
+            steps: Self.mapSteps(r),
             repeatsMonthly: r.repeats == .monthly
         )
         self.summary = r.summary ?? ""
@@ -154,6 +179,19 @@ final class ActionItem {
     // Choices for the "remind me _ before" picker (hours; 24 = one day).
     static let leadOptions = [1, 2, 3, 6, 12, 24]
     static func leadLabel(_ h: Int) -> String { h >= 24 ? "1 day" : "\(h) hour\(h == 1 ? "" : "s")" }
+
+    // Map extraction steps → checklist steps. Guides supply `detailedSteps`
+    // (with optional StepDetail); when their count matches the milestone strings
+    // we sync the (possibly edited/polished) text but keep the authored detail.
+    private static func mapSteps(_ r: ExtractionResult) -> [ChecklistStep] {
+        if !r.detailedSteps.isEmpty {
+            if r.detailedSteps.count == r.steps.count {
+                return zip(r.steps, r.detailedSteps).map { ChecklistStep(text: $0, detail: $1.detail) }
+            }
+            return r.detailedSteps
+        }
+        return r.steps.map { ChecklistStep(text: $0) }
+    }
 
     // Smart default for how many hours before a timed event to remind.
     static func defaultLeadHours(documentType: String, category: ItemCategory?) -> Int {

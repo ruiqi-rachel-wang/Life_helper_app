@@ -8,6 +8,25 @@
 
 import SwiftUI
 
+// Turn plain text into an AttributedString where URLs and phone numbers are
+// tappable links (phones become tel:). Shared so screens render links the same.
+nonisolated func linkified(_ string: String) -> AttributedString {
+    var attr = AttributedString(string)
+    let types: NSTextCheckingResult.CheckingType = [.link, .phoneNumber]
+    guard let detector = try? NSDataDetector(types: types.rawValue) else { return attr }
+    let ns = string as NSString
+    for m in detector.matches(in: string, range: NSRange(location: 0, length: ns.length)) {
+        guard let sr = Range(m.range, in: string),
+              let lo = AttributedString.Index(sr.lowerBound, within: attr),
+              let hi = AttributedString.Index(sr.upperBound, within: attr) else { continue }
+        let url: URL? = (m.resultType == .phoneNumber)
+            ? m.phoneNumber.flatMap { URL(string: "tel:" + $0.filter { $0.isNumber || $0 == "+" }) }
+            : m.url
+        if let url { attr[lo..<hi].link = url; attr[lo..<hi].underlineStyle = .single }
+    }
+    return attr
+}
+
 // Shared due-date display used by both Review and Detail so they always match:
 // "Jun 25, 2026" for a plain date, or "Jun 30, 8:30 AM" when it has a real time.
 nonisolated func dueDisplay(_ date: Date, hasTime: Bool) -> String {

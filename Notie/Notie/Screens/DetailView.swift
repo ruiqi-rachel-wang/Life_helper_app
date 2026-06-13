@@ -20,6 +20,7 @@ struct DetailView: View {
     @State private var isEditing = false
     @State private var showDeleteConfirm = false
     @State private var didDelete = false
+    @State private var detailStep: ChecklistStep?   // tapped step → detail sheet
 
     private var isDone: Bool { item.status == .done }
     private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
@@ -44,6 +45,7 @@ struct DetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(item: $detailStep) { StepDetailView(step: $0) }
         .onDisappear {
             if !didDelete, item.modelContext != nil {
                 ReminderScheduler.shared.reschedule(for: item)
@@ -190,19 +192,28 @@ struct DetailView: View {
                         .padding(.vertical, 8)
                         .overlay(alignment: .top) { divider(above: step) }
                     } else {
-                        Button { $step.done.wrappedValue.toggle() } label: {
-                            HStack(alignment: .top, spacing: 10) {
-                                checkbox(done: step.done)
-                                Text(linked(step.text))
-                                    .font(.body14)
-                                    .foregroundStyle(step.done ? Color.faded : Color.ink)
-                                    .strikethrough(step.done, color: Color.faded)
-                                    .multilineTextAlignment(.leading).tint(Color.accent)
-                                Spacer()
+                        HStack(alignment: .top, spacing: 10) {
+                            Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
+                                .buttonStyle(.plain)
+                            // Tapping the text opens the step's detail (if any).
+                            Button { if step.hasDetail { detailStep = step } } label: {
+                                HStack(alignment: .top, spacing: 6) {
+                                    Text(linked(step.text))
+                                        .font(.body14)
+                                        .foregroundStyle(step.done ? Color.faded : Color.ink)
+                                        .strikethrough(step.done, color: Color.faded)
+                                        .multilineTextAlignment(.leading).tint(Color.accent)
+                                    Spacer()
+                                    if step.hasDetail {
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.faint)
+                                    }
+                                }
                             }
-                            .padding(.vertical, 8)
+                            .buttonStyle(.plain)
+                            .disabled(!step.hasDetail)
                         }
-                        .buttonStyle(.plain)
+                        .padding(.vertical, 8)
                         .overlay(alignment: .top) { divider(above: step) }
                     }
                 }

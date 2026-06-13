@@ -41,6 +41,9 @@ nonisolated struct ExtractionResult: Equatable {
     var category: ItemCategory?        // utility / government / medical…
     var summary: String?               // what KIND of doc this is + plain context
     var steps: [String]                // concrete, ordered "do this now" actions
+    // Guides only: the same steps but with optional StepDetail per milestone.
+    // When non-empty it's authoritative on save; scans leave it [].
+    var detailedSteps: [ChecklistStep]
     var notes: [String]                // side info / advice that isn't an action
     var siteURL: URL?
     var repeats: Recurrence?           // nil = one-off; AI reads cadence from doc
@@ -60,6 +63,7 @@ nonisolated struct ExtractionResult: Equatable {
          category: ItemCategory? = nil,
          summary: String? = nil,
          steps: [String] = [],
+         detailedSteps: [ChecklistStep] = [],
          notes: [String] = [],
          siteURL: URL? = nil,
          repeats: Recurrence? = nil,
@@ -78,6 +82,7 @@ nonisolated struct ExtractionResult: Equatable {
         self.category = category
         self.summary = summary
         self.steps = steps
+        self.detailedSteps = detailedSteps
         self.notes = notes
         self.siteURL = siteURL
         self.repeats = repeats

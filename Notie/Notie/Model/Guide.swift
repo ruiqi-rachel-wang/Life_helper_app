@@ -57,6 +57,43 @@ extension Guide {
         return v.isEmpty ? def : v
     }
 
+    // MARK: Step detail (authored — AI may reword, must not invent live facts)
+
+    // Wrap milestone strings as checklist steps, attaching authored detail to
+    // the heavy ones via a per-guide lookup.
+    private static func detailed(_ steps: [String], _ detail: (String) -> StepDetail?) -> [ChecklistStep] {
+        steps.map { ChecklistStep(text: $0, detail: detail($0)) }
+    }
+
+    private static func movingDetail(_ text: String) -> StepDetail? {
+        text.contains("utilities and internet") ? internetDetail : nil
+    }
+    static let internetDetail = StepDetail(
+        explanation: "Set up (or stop) electricity, gas, water, and internet. Internet usually needs the most lead time, so start there.",
+        miniChecklist: [
+            "Find which providers serve your new address (ask the building, neighbors, or your realtor).",
+            "Compare a couple of plans on speed and the total monthly price.",
+            "Ask about one-time fees: installation, equipment/router rental, deposits.",
+            "Schedule installation for on or just after your move-in date.",
+            "Start or transfer electricity, gas, and water for the same date.",
+            "Save your account number and confirmation after you sign up.",
+        ],
+        needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"])
+
+    private static func newJobDetail(_ text: String) -> StepDetail? {
+        text.hasPrefix("Enroll in benefits") ? benefitsDetail : nil
+    }
+    static let benefitsDetail = StepDetail(
+        explanation: "Benefits enrollment is usually a one-time window (~30 days) when you start. Miss it and you may have to wait until the next year.",
+        miniChecklist: [
+            "Review the health plans — premium, deductible, and whether your doctors are in-network.",
+            "Add dental and vision if they're offered.",
+            "Set your 401(k) contribution — at least enough to get any employer match.",
+            "Add dependents and beneficiaries if needed.",
+            "Submit before the deadline and save the confirmation.",
+        ],
+        needed: ["Dependents' info (if adding)", "Beneficiary / bank details"])
+
     // MARK: Moving
     static let moving = Guide(
         id: "moving",
@@ -126,6 +163,7 @@ extension Guide {
                 category: .housing,
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
+                detailedSteps: detailed(steps, movingDetail),
                 notes: ["Use the official USPS change-of-address — avoid paid sites that charge for the free service.",
                         "DMV address deadlines are state-specific (often 10–30 days) — don't wait."],
                 confidence: 1)
@@ -178,6 +216,7 @@ extension Guide {
                 category: .work,
                 summary: "What to set up when starting at \(employer)\(isContractor ? " as a contractor" : "") — paperwork, pay, and benefits.",
                 steps: steps,
+                detailedSteps: detailed(steps, newJobDetail),
                 notes: notes,
                 confidence: 1)
         })

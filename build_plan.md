@@ -353,9 +353,19 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
 5. **Author content** for Moving / New job / Driver's license (questions, branches,
    templated checklists). Save items with `source = .guide` (shows the guide tag).
 
+**Step Detail (decided 2026-06-13, guides only for now):** the main checklist
+shows MILESTONES; tapping a step with detail opens a Step Detail sheet
+(explanation · one-level mini-checklist · what you'll need · what to say · links).
+`ChecklistStep` gained an optional `StepDetail`; guides author it on heavy steps
+(e.g. Moving's "set up utilities/internet"); scans leave it nil. Rule: one level
+only (flat mini-checklist, no nesting). AI may reword but must not invent live
+facts (provider names/availability). Editable "fields to save" (provider/account
+#/install date) are a deliberate later follow-up.
+
 **Done when:** answer a guide's questions → tailored checklist in Review → edit if
 needed → Add → it's in the Inbox tagged "Guide", survives force-quit, with
-editable steps/reminders. AI-offline still produces the templated checklist.
+editable steps/reminders and tap-through Step Detail. AI-offline still produces
+the templated checklist.
 
 ### Week 8: Recurring + release polish
 
@@ -373,11 +383,17 @@ before handing the app to testers.
    - Add "Mark as not done" / Reopen from a done item's Detail; it should move
      back to active and reschedule reminders.
    - Keep delete final; no undo is required for delete.
-3. **Settings**
-   - Language picker (EN / 中文 / ES) for future generations.
-   - "Keep original scans" toggle.
-   - Version/build row.
-   - Keep DEBUG-only test reminder separate from release settings.
+3. **Profile tab (replaces Settings) — decided 2026-06-13**
+   - Rename the 4th tab Settings → **Profile** (person icon). No accounts yet, but
+     Profile is where future **account / family sharing / paid plan** features
+     land — scaffold those as "coming soon" rows now so the structure is ready.
+   - Layout: profile header (guest for now) · **Language** picker on top · then
+     **Settings** nested below (keep-original-scans toggle, version/build row,
+     DEBUG-only test reminder kept separate from release settings).
+   - **Language must be WIRED, not just shown:** store the choice (e.g.
+     `@AppStorage`), thread it into the scan + guide extraction calls (today they
+     default to English), default to device language but overridable (per the
+     Phase-1 decision). UI chrome stays English.
 4. **Polish states**
    - Empty states: no inbox, no done items, no guides result yet.
    - Error states: OCR failed, garbled OCR, LLM down, no network, permission
