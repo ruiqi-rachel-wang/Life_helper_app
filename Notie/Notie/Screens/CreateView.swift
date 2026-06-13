@@ -7,8 +7,8 @@
 //
 //  "Sheet" layout from the spec: a big primary Scan hero + two smaller
 //  secondary tiles. "Create it yourself" opens a real form that saves to
-//  the store (title-only is valid). Scan/Upload run the real Week 4 OCR
-//  path; Review is still mock until Week 5–6 extraction is wired.
+//  the store (title-only is valid). Scan/Upload run OCR → AI extraction in
+//  the combined ReviewView (edit → Add to inbox).
 //
 
 import SwiftUI

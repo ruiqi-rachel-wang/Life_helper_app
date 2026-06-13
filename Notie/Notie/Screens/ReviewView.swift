@@ -69,7 +69,9 @@ struct ReviewView: View {
                 phase = .ready
             } else {
                 items = results
-                selected = Set(results.indices)   // all on by default
+                // Default-select only items that have something to do — a
+                // no-action item (no steps, no due) shouldn't auto-become a task.
+                selected = Set(results.indices.filter { !Self.isNoAction(results[$0]) })
                 phase = .readyMulti
             }
         } catch {
@@ -209,6 +211,15 @@ struct ReviewView: View {
                     }
                 }
                 .padding(.top, 2)
+            }
+
+            // Fields the AI was unsure about beyond amount/due (which already get
+            // the chip underline) — e.g. sender, title, account #, category.
+            let otherFlags = draft.lowConfidenceFields.subtracting(["amount", "dueDate"])
+            if !otherFlags.isEmpty {
+                Text("Double-check: \(otherFlags.sorted().joined(separator: ", "))")
+                    .font(.subline).foregroundStyle(Color.accent)
+                    .padding(.top, 2)
             }
         }
     }
@@ -389,6 +400,17 @@ struct ReviewView: View {
                     if !bits.isEmpty {
                         Text(bits.joined(separator: " · ")).font(.subline).foregroundStyle(Color.faded)
                     }
+                    // Flag items that need a second look before they become tasks.
+                    if Self.isUnreadable(it) {
+                        Text("⚠︎ couldn't read clearly — review before adding")
+                            .font(.subline).foregroundStyle(Color.bad)
+                    } else if Self.isNoAction(it) {
+                        Text("Nothing to do — off by default")
+                            .font(.subline).foregroundStyle(Color.faded)
+                    } else if !it.lowConfidenceFields.isEmpty {
+                        Text("Double-check: \(it.lowConfidenceFields.sorted().joined(separator: ", "))")
+                            .font(.subline).foregroundStyle(Color.accent)
+                    }
                 }
                 Spacer()
             }
@@ -421,12 +443,14 @@ struct ReviewView: View {
 
     // MARK: derived
 
-    private var isUnreadable: Bool {
-        draft.confidence < 0.2 || draft.documentType?.lowercased() == "unknown"
+    static func isUnreadable(_ r: ExtractionResult) -> Bool {
+        r.confidence < 0.2 || r.documentType?.lowercased() == "unknown"
     }
-    private var isNoAction: Bool {
-        draft.steps.isEmpty && draft.dueDate == nil
+    static func isNoAction(_ r: ExtractionResult) -> Bool {
+        r.steps.isEmpty && r.dueDate == nil
     }
+    private var isUnreadable: Bool { Self.isUnreadable(draft) }
+    private var isNoAction: Bool { Self.isNoAction(draft) }
     // accountNumber (primary) + otherIDs, deduped by value.
     private var combinedIDs: [DocID] {
         var list = draft.otherIDs

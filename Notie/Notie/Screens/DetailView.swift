@@ -130,7 +130,13 @@ struct DetailView: View {
                         DatePicker("", selection: dueBinding,
                                    displayedComponents: item.dueHasTime ? [.date, .hourAndMinute] : [.date])
                             .labelsHidden().datePickerStyle(.compact)
-                        Button { item.dueDate = nil } label: {
+                        Button {
+                            // Clear the due date AND its (now-orphaned) reminders,
+                            // so we don't schedule reminders for an item with no date.
+                            item.dueDate = nil
+                            item.reminders = []
+                            item.remindersCustomized = false
+                        } label: {
                             Image(systemName: "xmark.circle.fill").font(.system(size: 16)).foregroundStyle(Color.faint)
                         }
                         .buttonStyle(.plain).accessibilityLabel("Remove due date")

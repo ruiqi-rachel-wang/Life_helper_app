@@ -16,69 +16,30 @@
 
 ---
 
-## Current progress (as of 2026-05-30)
+## Current status (2026-06-12)
 
-**Week 0 — Setup** ✓ complete (pending only: product name, launch language — not code-blocking)
-**Week 1 — SwiftUI shell** ✓ complete
-**Week 2 — Persistence** ✓ complete — SwiftData store; Inbox reads live (@Query) with a Done section; Detail binds to the live object so Mark done / Delete / edits write back; Create form saves (title-only valid) with optional due date, steps, and a text+photo note. Backed up on GitHub (`ruiqi-rachel-wang/Life_helper_app`, branch `main`).
-**Week 3 — Notifications** ✓ complete — local reminders (3d/1d/due/overdue at 9am) scheduled on save, cancelled on done/delete, rescheduled on edit; interactive Mark done / Remind me later actions; tap a banner to open the item. 14 unit tests.
-**Week 4 — Camera + OCR** ✓ complete — Apple Vision OCR on-device; Scan (camera) / Upload (Photos) → ScanResultView shows the real extracted text. (Test via Upload in the Simulator; camera needs a device.)
-**Week 5 — Rule parser + OpenAI extraction** ✓ complete (2026-06-06) —
-`ExtractionResult` + minimal `Recurrence`; `RuleBasedParser` (amount/currency/
-date/account, cue-aware dates that handle appointments/expiries/departures, not
-just bills); `Extractor` protocol + `OpenAIClient` (GPT-4o-mini, JSON mode, calls
-OpenAI directly with the gitignored dev key) + `MockExtractor`; `ExtractionService`
-(parser+LLM merge, parser wins on exact fields, skips LLM on empty OCR). Prompt
-tuned against the real Week-4 samples + a live smoke test (~$0.0002/2 calls):
-fixed dueDate-for-non-bills + travel→personal, and made JSON parsing tolerant
-(the model returned `"confidence":"high"`). ~61 unit tests pass. Tuning corpus in
-`sample_documents.md`. NOT wired into the Review UI yet — that's Week 6.
-**Week 6 — Review screen end-to-end (the spine)** ✓ complete (2026-06-10) — one
-combined editable Review screen (OCR→AI→edit→Add saves a rich ActionItem +
-schedules reminders); Detail page redesigned to match; time-based reminders by
-type (editable lead); unreadable→retake; multi-item documents → multiple items.
-**This is the shippable moment.** Week 7 (adaptive guides + recurring) ⏳ next.
+| Weeks | Status |
+|---|---|
+| 0 Setup · 1 Shell · 2 Persistence · 3 Notifications · 4 Camera+OCR | ✓ complete |
+| 5 Rule parser + OpenAI extraction | ✓ complete (2026-06-06) |
+| 6 Review spine (scan → AI → edit → Add) | ✓ complete (2026-06-10) — **the shippable moment** |
+| 7 Adaptive guides + recurring | ⏳ next |
+| 8 Polish + TestFlight | pending |
 
-What's running today:
-- All 5 screens + Settings. Tab bar; navigation wired; Inbox groups items by urgency with a Done section.
-- **Persistence works:** Create / Scan-Review / edits / check-offs / Mark done / Delete all save (SwiftData) and survive a restart. `ActionItem` is a `@Model` (UI-free — no `Color`/screen types); the view layer (`Theme/ItemStyle.swift`) maps category → color/symbol and formats strings.
-- **Notifications work:** reminders scheduled on save, cancelled on done/delete, rescheduled on edit; interactive Mark done / Remind me later; tap a banner to open the item. DEBUG test button in Settings.
-- Interactive controls are `Button`s (accessible).
-- 14 unit tests (isOverdue, doneCount, reminderSchedule, inbox bucketing, a SwiftData round-trip) pass via Cmd+U. Deployment target iOS 17.0. Builds clean, no warnings.
+**Working end-to-end today:** scan/upload → on-device OCR (`VisionOCR`) → AI
+extraction (`RuleBasedParser` + GPT-4o-mini, one or many items per doc) → one
+combined editable **Review** → saved as a rich `ActionItem` → **Inbox** (urgency
+sections, sorted by due date) → **Detail** (steps, IDs, fully-editable reminders,
+notes). Persistence (SwiftData), notifications (time-based + per-reminder
+editable), Mark done / Delete / edit all persist. ~95 unit tests pass; builds
+clean (no warnings); iOS 17 target. Backed up on GitHub
+(`ruiqi-rachel-wang/Life_helper_app`, `main`).
 
-Still mock (see "Temporary scaffolding" below): scan/upload now runs **real on-device OCR** and shows the recognized text, but the **AI summary** that turns that text into fields (what it is · amount · due · steps) is still to come (Week 5–6) — so the scan screen stops at the text and does **not** open the old mock Review; sample items are seeded on first launch; guides preview a Detail instead of adding; recurring isn't built (Week 7).
-
----
-
-## Temporary scaffolding — what's fake right now
-
-Everything below is mock/placeholder and gets replaced on the noted week.
-**In code, grep `TEMP:` to find each spot.** (Persistence + notifications are
-real now — what remains fake is mostly the scan pipeline and recurring.)
-
-| What | Where | Real version |
-|---|---|---|
-| Sample items seeded on first launch | `ActionItem.swift` sample block + Inbox `.task` | replaced by real data once scanning/onboarding exist; harmless seed for testing |
-| ＋ Scan/Upload → real OCR text, but **no AI summary yet** (no Review hand-off) | `CreateView.swift` → `ScanResultView.swift` | Week 5–6 — text → AI extraction writes a plain-English summary + fills Review |
-| Review screen is **parked**: mock Con Edison pre-fill, category fixed to `.other`, only reachable from its own `#Preview` until extraction exists | `ReviewView.swift` | Week 6 — opened from a real scan; fields + category from AI extraction |
-| Guides → Detail with placeholder steps (should be Review → Add) | `GuidesView.swift` | Week 7 — real template steps, via Review → Add to inbox |
-| Recurring not built (no cadence; done/delete don't respawn) | model `repeatsMonthly` unused | Week 7 — Recurrence + auto next-cycle + recurring-aware delete |
-| Settings mostly a stub (has a DEBUG test-reminder button) | `SettingsView.swift` | Week 8 — language, reminder timing, privacy, export |
-| Raised ＋ tab button (floating circle) | `RootTabView.swift` | Week 7 polish — custom tab bar |
-
-Done since (no longer fake): `ActionItem` is a SwiftData `@Model`; the Inbox
-reads the live store and buckets by urgency; Create form saves; Detail edits /
-Mark done / Delete persist; Review "Add to inbox" saves; reminders schedule.
-
-Note: guides are now **adaptive (hybrid)** in Phase 1 (decided 2026-06-05) —
-hardcoded questions + base checklist, AI fills in details. Built in Week 7–8.
-
-Scan pipeline — what the "summary" means: capture/upload → **on-device OCR**
-(`VisionOCR`, done — downsamples first for speed, recognizes en/zh-Hans/es) →
-**AI summary / extraction** (Week 5–6) turns the raw text into a short plain-
-English summary — *what the document is, the amount, the due date, and the
-steps to handle it* — which then pre-fills Review. The scan screen shows a
-"What's next" placeholder for this today; the raw text is the real Week-4 output.
+**Not built yet:** adaptive guides (still preview a Detail), recurring (the
+`repeats` → `Recurrence` wiring + recurring-aware delete), Settings (mostly a
+stub with a DEBUG test-reminder button), the Cloudflare Worker (key is local-only
+for now — see Week 8), the custom raised ＋ tab button. Sample items are seeded on
+first launch for testing; grep `TEMP:` in code for remaining scaffolding.
 
 ---
 
@@ -315,134 +276,48 @@ me later / View actions. Mark done cancels future reminders. Overdue → red. �
 Simulator via Upload — drag a bill image onto the simulator first. Camera
 needs a real device.)
 
-### Week 5: Parser + OpenAI extraction
-- `ExtractionResult` (the shared type, built first) + a **minimal `Recurrence`**
-  enum (`monthly` / `yearly` / `everyNDays`). NOTE: `Recurrence` is NOT wired into
-  `ActionItem` yet — that migration (off `repeatsMonthly: Bool`) waits for Week 7,
-  when recurring behavior is actually built. Defining the enum now just keeps
-  `ExtractionResult` stable.
-- RuleBasedParser: regex for amount, currency, date, account number (free, exact)
-- `Extractor` protocol → real `OpenAIClient` + a test mock both conform
-- OpenAIClient (GPT-4o-mini, JSON mode) for summary / steps / category / repeats
-- ExtractionService: parser first, then LLM; **merge** prefers the parser's exact
-  regex for amount/date/account, takes summary/steps/category from the LLM.
-  (Skips the LLM only on empty OCR — the broad "skip when parser is confident"
-  optimization is deferred: steps/summary always need the model, so there's no
-  real skip path yet. No dead branch.)
-- Tune prompt with the 5 real OCR samples from Week 4
-- Tests: RuleBasedParserTests (20+ cases), ExtractionServiceTests with the mock
-  LLM (verifies merge precedence + empty-OCR skip — zero API cost)
+### Week 5: Parser + OpenAI extraction ✓ DONE (2026-06-06)
 
-**API key handling (DECIDED 2026-06-06):**
-- **Week 5 dev calls OpenAI DIRECTLY** with Rachel's real key — fine because it
-  runs on the Simulator only and nothing ships. `OpenAIClient` sits behind the
-  `Extractor` protocol, so swapping "direct call" → "call the Worker" later is a
-  one-line change.
-- The key lives in a **gitignored `AI/APIKeys.swift`** (`APIKeys.swift` is already
-  in `.gitignore`). **The key must NEVER be committed** — a leaked OpenAI key in a
-  committed `.env` is exactly finding F1 in the JobDrop pre-deploy review; same
-  failure mode, don't repeat it.
+`ExtractionResult` (the shared type) + minimal `Recurrence` enum; `RuleBasedParser`
+(regex amount/currency/date/account, cue-aware dates that handle appointments /
+expiries / departures, not just bills); `Extractor` protocol → `OpenAIClient`
+(GPT-4o-mini, JSON mode) + `MockExtractor`; `ExtractionService` runs the parser
+then the LLM and **merges** (parser wins on exact amount/date/account; skips the
+LLM only on empty OCR). Tolerant JSON parsing (handles `"confidence":"high"`,
+category-as-array) + a category synonym map. Tuning corpus in `sample_documents.md`.
 
-**Cloudflare Worker — deferred to pre-TestFlight (Week 6+), and it's free:**
-- WHY a Worker at all: the app ships as a binary on strangers' phones; any key
-  baked in can be extracted and used to run up your OpenAI bill. The Worker holds
-  the key server-side so it never ships, and rate-limits per IP. Only matters once
-  real users have the build — not during Simulator dev.
-- COST: **$0**. Free tier = 100K requests/day; you'd use a few hundred at 1K
-  users. You only leave free tier at 10M+ req/month, where the paid plan is a flat
-  **$5/mo**. The only real per-scan cost is OpenAI itself (~$0.0004/scan): ~$0/mo
-  at 10 testers, ~$2/mo at 1K users, ~$15–20/mo at 10K. See the Costs table.
-- Setup is a ~30-min task slotted right before the first TestFlight build.
+**API key (DECIDED 2026-06-06):** dev calls OpenAI directly with the key in a
+**gitignored `AI/APIKeys.swift`** — **never commit it.** Before TestFlight the
+call moves behind a free **Cloudflare Worker** so the key never ships (a one-line
+swap, thanks to the `Extractor` protocol) — see Week 8. The Worker is $0 (free
+tier covers it); the only real cost is OpenAI (~$0.0004/scan).
 
-**Done when:** paste OCR text → get a valid `ExtractionResult` (amount, date,
-sender, category, summary, steps, repeats); parser facts win on merge; empty OCR
-skips the call; all unit tests green. All-in live-API test cost <$1.
+### Week 6: Review screen end-to-end (THE SPINE) ✓ DONE (2026-06-10)
 
-### Week 6: Review screen end-to-end (THE SPINE)
+One combined editable **ReviewView** after every capture: OCR → AI extraction →
+editable card (title · summary · type/sender · amount + due date/time · steps ·
+notes · details/IDs · tappable links; low-confidence fields underlined) → **Add
+to inbox** saves a rich `ActionItem` + schedules reminders. Replaced the old
+read-only ScanResultView and the mock Review.
 
-The Week-5 engine exists + is tested; the scan screen shows it read-only. Week 6
-turns that into the real, editable Review that saves and schedules. **This is the
-shippable moment.**
+- **Rich detail persisted:** `ActionItem` gained `title`, `summary`, `sender`,
+  `documentType`, `otherIDs`, `notes`, `siteURL`, `dueHasTime`, `source` (+ the
+  `ActionItem(from:)` mapping). `confidence`/`lowConfidenceFields` stay transient.
+- **Detail page** redesigned to match Review: tag · title · chips → steps →
+  details → reminders → notes.
+- **Reminders fully editable** — stored `reminders` list (add / remove / retime
+  each), with a smart-default fallback: bills 3d/1d/due-day @9am; timed events a
+  day-before heads-up + N hours before the exact time (default lead by type,
+  editable). Scheduler fires the effective list.
+- **Multi-item docs** → multiple items: extractor returns `[ExtractionResult]`,
+  Review shows an "N things found" selectable list, each added as its own item
+  (fixed the appointment-list that used to drop events).
+- **No-action docs** (no steps + no due) → show summary + **Done**, no inbox item
+  (inbox stays action-only).
+- **Unreadable / low-confidence** → a "retake the photo" state, not a fake item.
+- **Inbox**: subtitle is amount + date only; sections sorted by due date.
 
-**Decisions (2026-06-10):**
-- **Combine the two screens into ONE.** Today there's a read-only AI card
-  (`ScanResultView`) + an old mock editable `ReviewView`. Merge them into a single
-  Review screen used after every capture (and later, guides). Retire the duplicates.
-- **Single-item first, then multi-item** — multi-item reuses the same per-item card.
-- **Keep the rich detail** — extend `ActionItem` so saved items carry the full
-  extraction (not just title/amount/due), so the Detail page shows everything.
-
-**Step 1 — One combined Review screen (single item). ✓ DONE (2026-06-10)**
-(Merged ReviewView; OCR→extract→editable card→Add saves a rich ActionItem +
-schedules reminders; no-action → Done; unreadable → retake. Detail page
-redesigned to match. siteURL link surfaced; date/amount formatting unified.)
-- New/merged `ReviewView(image:)`: runs OCR → `ExtractionService.extract` with a
-  quiet progress shimmer on the captured photo (~3–5s), then renders the editable
-  result using the card design (summary · type/sender · amount+due · steps · notes
-  · DETAILS/IDs · tappable links).
-- Inline editing (Edit/Done toggle): title, summary, amount, due **date + time**,
-  category, steps (add/edit/remove), notes.
-- Low-confidence fields (`lowConfidenceFields`) get an accent underline — no popup.
-- "Add to inbox" → save the ActionItem + schedule reminders → land on Inbox.
-- Needs a short **`title`** for the inbox row (e.g. "Con Edison electricity bill",
-  "Flight to Chicago"): add a `title` field to the extraction/prompt (recommended)
-  rather than deriving it.
-
-**Step 2 — Extend `ActionItem` to keep the rich detail (SwiftData migration).**
-- Add stored fields: `title`, `summary`, `documentType`, `sender`, `senderShort`,
-  `dueHasTime`, `otherIDs` ([DocID] — make `DocID` Codable), `notes` ([String]),
-  `siteURL`, plus a `sourceType` (scanned/guide/custom) for the source tag.
-  (`amount`/`currency`/`dueDate`/`category`/`steps` already exist.)
-- `repeats`: keep `repeatsMonthly` for now; full `Recurrence` wiring is Week 7.
-- `confidence`/`lowConfidenceFields`: **transient** (Review-time only — for the
-  underlines); NOT persisted.
-- Adding optional fields with defaults = SwiftData lightweight (automatic)
-  migration; existing seeded items still load.
-- Write the explicit `ExtractionResult → ActionItem` mapping (no dropped fields);
-  Detail page renders the new fields (IDs, links, notes).
-
-**Step 3 — Time-based reminders (the `dueHasTime` payoff). ✓ DONE (2026-06-10)**
-(Timed events: heads-up the day before @9am + a reminder `reminderLeadHours`
-before the exact time, which fires at that time, not 9am. Smart default by type
-(flight 3h, appointment 1h, else 2h), editable via a picker on Review + Detail.)
-- When `dueHasTime == true` (flight, appointment), fire a few HOURS before the
-  actual time, not 9am day-of. **Default lead time by type, user-editable:**
-  appointment ~1h, flight ~2–3h, else a sensible default (from `category`/
-  `documentType`). Extend `ReminderScheduler` (Week-3 it only does 3d/1d/due-day @9am).
-
-**Step 4 — Unreadable / low-confidence → retake (not a fake item). ✓ DONE (2026-06-10)**
-(Prompt pinned: gibberish → documentType "unknown" + confidence < 0.2; Review shows
-a retake state for unreadable / low-confidence / no-text / failed.)
-- Pin the prompt: if OCR is unreadable/meaningless → documentType "unknown",
-  short summary saying so, steps [], confidence < 0.2; never invent. + a unit test.
-- Review **consumes `confidence`**: very low (or "unknown") → show a "couldn't read
-  this clearly — retake the photo?" state instead of a pre-filled Review. (The
-  read-only bridge already shows a banner; Week 6 makes it a proper state.)
-
-**Step 5 — Multi-item documents → multiple ActionItems. ✓ DONE (2026-06-10)**
-(Extractor returns `[ExtractionResult]`; prompt returns `{"items":[…]}`; service
-applies the regex merge only when there's one item; Review shows an "N things
-found" selectable list → Add selected, each its own ActionItem + reminders.
-Verified live: the Northwell list yields all 3 appointments, incl. the one that
-used to drop.)
-- A scan can hold SEVERAL events (appointment list, two deadlines, multi-line
-  statement). One-item handling crams them into one item and **drops events** (the
-  6/18 CT scan vanished in testing). Fix: extraction returns a LIST of items; the
-  prompt returns an array; Review shows "this scan has N things — add them"
-  (review/edit each, toggle which to add); each → its own ActionItem + reminders.
-  Single item is just N = 1, so the Step-1 card is reused.
-
-**No-action docs (decided 2026-06-10): show, then dismiss.** When a real document
-has nothing to do (`steps: []` — a flyer, a paid receipt, a past itinerary),
-Review shows the summary so the user understands it, with a **Done/dismiss**
-button and **no "Add to inbox"** — the inbox stays action-only. (Docs that imply
-an action — e.g. an interest charge → "set a reminder" — still have steps and are
-added normally.) Heuristic: empty steps + no due date → treat as no-action.
-
-**Done when:** photo → combined editable Review (AI-filled) → Add to Inbox → see
-it, with reminders scheduled (timed events remind hours before). An appointment
-list adds all N items. A garbled/blank scan → "retake" state, not a fake item.
-**This is the shippable moment.** Everything after is polish + breadth.
+~95 unit tests pass. **The shippable moment** — everything after is polish + breadth.
 
 ### Week 7–8: Adaptive guides + recurring  (expanded — see timeline note)
 - **Guides are adaptive, hybrid** (decided 2026-06-05, moved INTO Phase 1):
@@ -648,13 +523,13 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 
 ---
 
-## Open questions to resolve before Week 1
+## Still-open product decisions (not code-blocking)
 
-- [ ] Final product name (Noted? Handle? Something else?)
-- [ ] Launch language (EN, 中文, or ES?)
-- [ ] App icon direction (defer — serif "N" placeholder is fine for v1)
-- [ ] Domain name (optional, ~$12/year — useful for landing page later)
+- [ ] Final product name ("Notie"? something else?)
+- [ ] Launch language default (EN / 中文 / ES) — Settings picker is Week 8
+- [ ] App icon direction (serif "N" placeholder is fine for v1)
+- [ ] Domain name (optional, ~$12/year — for a landing page later)
 
 ---
 
-*Last updated: 2026-05-30. Update this doc whenever architecture decisions change.*
+*Last updated: 2026-06-12. Update this doc whenever architecture decisions change.*
