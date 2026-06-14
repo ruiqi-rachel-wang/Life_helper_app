@@ -266,7 +266,7 @@ extension Guide {
 
             var steps: [String] = []
             if home == "Renting" {
-                steps.append("Give your landlord written notice and confirm your move-out date.")
+                steps.append("Check your lease for how much notice you owe (often 30–60 days), then give your landlord written notice and confirm your move-out date.")
             }
             if knowsAddress {
                 steps.append("Set up USPS mail forwarding at usps.com/move (start ~2 weeks ahead; a small ID-verification fee applies). Use the official USPS site, not a third-party that charges extra.")
@@ -313,6 +313,7 @@ extension Guide {
                 detailedSteps: detailed(steps, state: newState, movingDetail),
                 notes: ["USPS forwarding only redirects your mail — you still have to update your bank, DMV, employer, etc. separately.",
                         "DMV address deadlines are state-specific (often 10–30 days) — don't wait.",
+                        "Set your move date as this task's reminder so the deadlines stay ahead of it.",
                         referenceNote],
                 confidence: 1)
         })
@@ -350,12 +351,17 @@ extension Guide {
                 if work == "Remote" || work == "Hybrid" {
                     steps.append("Arrange pickup or shipping of your work equipment.")
                 }
+                steps.append("Check your first paycheck — confirm the pay rate, tax withholding, and direct deposit are all correct.")
             }
 
             var notes = ["I-9 verifies you can work in the U.S.; W-4 sets your tax withholding.",
-                         "Benefits enrollment usually closes ~30 days after your start date — don't miss it."]
+                         "Benefits enrollment usually closes ~30 days after your start date — don't miss it.",
+                         "Only submit your SSN, bank, and ID through the employer's official HR portal — never by email or text."]
             if type == "Not sure" {
                 notes.insert("Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.", at: 0)
+            }
+            if type == "Internship" {
+                notes.insert("Paid internships usually get a W-2; unpaid ones have no tax forms. Confirm which yours is with HR.", at: 0)
             }
             notes.append(referenceNote)
 
@@ -453,13 +459,21 @@ extension Guide {
                           kind: .choice(["Checking", "Savings", "Both"])),
         ],
         build: { a in
+            let ssn = a["ssn"] ?? ""
             var steps = ["Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."]
-            if a["ssn"] == "No — I'll use an ITIN" {
-                steps.append("No SSN? Apply for an ITIN with IRS Form W-7 (it can take up to ~7 weeks).")
+            if ssn == "No — I'll use an ITIN" {
+                steps.append("No SSN? Apply for an ITIN with IRS Form W-7 (it can take up to ~7 weeks) — or call banks first, since some accept a foreign passport instead.")
+            } else if ssn == "Not sure" {
+                steps.append("Not sure if you have an SSN or ITIN? Check old tax documents, or call the IRS — you don't always need an SSN to open an account.")
             }
-            steps.append("Compare a few banks or credit unions on monthly fees, minimum balance, and ATM access.")
+            steps.append("Compare a few banks or credit unions on monthly fees, minimum balance, and ATM access — look for a no-fee, no-overdraft account.")
             steps.append("Open the account online or at a branch and make the opening deposit.")
             steps.append("Set up online banking, direct deposit, and alerts; order your debit card.")
+
+            var notes = ["Many banks and credit unions accept an ITIN or foreign passport instead of an SSN, but requirements vary — call ahead to confirm what they need.",
+                         "No standard proof of address? Ask which alternatives the bank accepts — a letter from an employer, school, or shelter sometimes works.",
+                         "Turned down before? Ask about a 'second-chance' checking account, and check your ChexSystems report for errors.",
+                         referenceNote]
             return ExtractionResult(
                 title: "Open a bank account",
                 documentType: "Banking guide",
@@ -467,8 +481,7 @@ extension Guide {
                 summary: "How to open a U.S. \((a["type"] ?? "bank").lowercased()) account — including without an SSN.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", bankDetail),
-                notes: ["Many banks and credit unions accept an ITIN instead of an SSN, but requirements vary — call ahead to confirm what they need.",
-                        referenceNote],
+                notes: notes,
                 confidence: 1)
         })
 
@@ -502,11 +515,11 @@ extension Guide {
         return nil
     }
 
-    // MARK: Green card / visa
+    // MARK: USCIS paperwork
     static let immigration = Guide(
         id: "immigration",
-        title: "Green card / visa",
-        subtitle: "Renew, citizenship, work permit, status",
+        title: "USCIS paperwork",
+        subtitle: "Green card, citizenship, work permit, case status",
         category: .government,
         questions: [
             GuideQuestion(id: "task", prompt: "What do you need to do?",
@@ -541,13 +554,14 @@ extension Guide {
                          "Track your case online until the new card arrives."]
             }
             return ExtractionResult(
-                title: "Green card / visa — \(task.lowercased())",
+                title: "USCIS paperwork — \(task.lowercased())",
                 documentType: "Immigration guide",
                 category: .government,
                 summary: "Steps to \(task.lowercased()) with USCIS.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", immigrationDetail),
-                notes: ["Immigration rules are complex — for anything unclear, consider free legal aid or a USCIS-accredited representative.",
+                notes: ["This covers common USCIS filings only — it doesn't cover every visa type or situation.",
+                        "Immigration rules are complex — for anything unclear, consider free legal aid or a USCIS-accredited representative.",
                         "USCIS may extend your green card's validity on the I-90 receipt notice — check the current I-90 page for how long.",
                         referenceNote],
                 confidence: 1)

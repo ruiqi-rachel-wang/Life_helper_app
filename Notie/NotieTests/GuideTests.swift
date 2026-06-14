@@ -117,6 +117,29 @@ struct GuideTests {
         #expect(itin?.detail?.links.contains { $0.url.contains("irs.gov") } == true)
     }
 
+    @Test func bankCoversDeniedAndNoAddressCases() {
+        let r = Guide.bankAccount.build(["ssn": "Yes", "type": "Checking"])
+        let notes = r.notes.joined(separator: "\n").lowercased()
+        #expect(notes.contains("second-chance"))            // denied-before path
+        #expect(notes.contains("proof of address"))          // no-address path
+        #expect(r.steps.joined().lowercased().contains("no-overdraft"))   // low-fee path
+    }
+
+    @Test func newJobInternshipAndSecurityNotes() {
+        let intern = Guide.newJob.build(["type": "Internship", "employer": "Acme"])
+        #expect(intern.notes.contains { $0.lowercased().contains("paid internships") })
+        // Security note appears for any employee-type role.
+        #expect(intern.notes.contains { $0.contains("official HR portal") })
+        #expect(intern.steps.contains { $0.contains("first paycheck") })
+    }
+
+    @Test func immigrationRenamedAndScopedConservatively() {
+        let g = Guide.all.first { $0.id == "immigration" }!
+        #expect(g.title == "USCIS paperwork")
+        let r = g.build(["task": "Apply for citizenship"])
+        #expect(r.notes.contains { $0.contains("doesn't cover every visa type") })
+    }
+
     @Test func immigrationCitizenshipUsesN400Link() {
         let item = ActionItem(from: Guide.immigration.build(["task": "Apply for citizenship"]))
         let n400 = item.steps.first { $0.text.contains("N-400") }
