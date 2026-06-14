@@ -45,7 +45,11 @@ struct DetailView: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(item: $detailStep) { StepDetailView(step: $0) }
+        .sheet(item: $detailStep) { tapped in
+            if let idx = item.steps.firstIndex(where: { $0.id == tapped.id }) {
+                StepDetailView(step: $item.steps[idx])   // edits persist to the item
+            }
+        }
         .onDisappear {
             if !didDelete, item.modelContext != nil {
                 ReminderScheduler.shared.reschedule(for: item)

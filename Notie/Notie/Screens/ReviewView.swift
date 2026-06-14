@@ -53,7 +53,11 @@ struct ReviewView: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(item: $detailStep) { StepDetailView(step: $0) }
+        .sheet(item: $detailStep) { tapped in
+            if let idx = draft.detailedSteps.firstIndex(where: { $0.id == tapped.id }) {
+                StepDetailView(step: $draft.detailedSteps[idx])   // edits ride into the saved item
+            }
+        }
         .task { await run() }
     }
 
@@ -68,6 +72,11 @@ struct ReviewView: View {
                 draft = results[0]
                 includeDue = draft.dueDate != nil
                 leadHours = ActionItem.defaultLeadHours(documentType: draft.documentType ?? "", category: draft.category)
+                // Keep detailed-step text in sync with the (polished) milestones
+                // so the Step Detail sheet shows/edits the same wording.
+                if draft.detailedSteps.count == draft.steps.count {
+                    for i in draft.steps.indices { draft.detailedSteps[i].text = draft.steps[i] }
+                }
                 phase = .ready
             } else {
                 items = results
@@ -294,10 +303,10 @@ struct ReviewView: View {
                         Button { draft.steps.remove(at: i) } label: {
                             Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                         }.buttonStyle(.plain)
-                    } else if let d = stepDetail(i) {
+                    } else if stepDetail(i) != nil {
                         // Same tap-to-detail as the Detail page, so the user can
-                        // see the instructions before adding.
-                        Button { detailStep = ChecklistStep(text: draft.steps[i], detail: d) } label: {
+                        // see/edit the instructions before adding.
+                        Button { detailStep = draft.detailedSteps[i] } label: {
                             HStack(alignment: .top, spacing: 6) {
                                 Text(linked(draft.steps[i])).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
                                 Spacer()
