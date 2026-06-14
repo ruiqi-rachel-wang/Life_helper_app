@@ -389,15 +389,16 @@ extension OpenAIClient {
         guard apiKey.hasPrefix("sk-"), !apiKey.contains("REPLACE"), !base.steps.isEmpty else { return base }
 
         let system = """
-        You refine a checklist for someone who may not read English well. Keep the \
-        steps concrete and in order, don't drop necessary steps, and add 1-2 short \
-        helpful tips. Reply ONLY as JSON {"steps":[...],"notes":[...]} written in \
-        \(language.promptName).
+        You LIGHTLY polish a checklist for someone who may not read English well. \
+        Make MINIMAL changes: keep each step's meaning, order, and any URLs; only \
+        fix wording for clarity. Do NOT add, remove, reorder, or merge steps. You \
+        may add 1-2 short tips in "notes". Reply ONLY as JSON \
+        {"steps":[...],"notes":[...]} in \(language.promptName).
         """
         let user = "Situation: \(context)\nSteps:\n"
             + base.steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
         let body = ChatRequest(
-            model: model, response_format: .init(type: "json_object"), temperature: 0.3,
+            model: model, response_format: .init(type: "json_object"), temperature: 0.2,
             messages: [.init(role: "system", content: system), .init(role: "user", content: user)])
 
         guard let httpBody = try? JSONEncoder().encode(body) else { return base }

@@ -67,14 +67,24 @@ struct StepDetailView: View {
             Text(d.explanation).font(.body14).foregroundStyle(Color.ink).lineSpacing(2).padding(.horizontal, 4)
         }
         if !d.miniChecklist.isEmpty {
-            section("STEPS") {
-                ForEach(Array(d.miniChecklist.enumerated()), id: \.offset) { i, line in
-                    HStack(alignment: .top, spacing: 10) {
-                        Text(String(format: "%02d", i + 1)).font(.eyebrow).foregroundStyle(Color.faded)
-                            .frame(width: 22, alignment: .leading)
-                        Text(linkified(line)).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
-                        Spacer()
+            section("CHECKLIST") {
+                ForEach(detail.miniChecklist.indices, id: \.self) { i in
+                    let sub = detail.miniChecklist.wrappedValue[i]
+                    Button {
+                        detail.miniChecklist[i].done.wrappedValue.toggle()
+                        rollUp()
+                    } label: {
+                        HStack(alignment: .top, spacing: 10) {
+                            checkbox(sub.done)
+                            Text(linkified(sub.text))
+                                .font(.body14)
+                                .foregroundStyle(sub.done ? Color.faded : Color.ink)
+                                .strikethrough(sub.done, color: Color.faded)
+                                .tint(Color.accent)
+                            Spacer()
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -114,13 +124,43 @@ struct StepDetailView: View {
             TextField("Explain this step…", text: detail.explanation, axis: .vertical)
                 .font(.body14).foregroundStyle(Color.ink)
         }
-        editList("STEPS", detail.miniChecklist, placeholder: "Sub-step")
+        editSubSteps(detail.miniChecklist)
         editList("WHAT YOU'LL NEED", detail.needed, placeholder: "Document or info")
         section("WHAT TO SAY") {
             TextField("Script / what to say…", text: detail.script, axis: .vertical)
                 .font(.body14).foregroundStyle(Color.ink)
         }
         editLinks(detail.links)
+    }
+
+    // When every sub-step is checked, the parent milestone is done too.
+    private func rollUp() {
+        let subs = step.detail?.miniChecklist ?? []
+        if !subs.isEmpty { step.done = subs.allSatisfy(\.done) }
+    }
+
+    private func checkbox(_ done: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 4)
+            .stroke(done ? Color.ok : Color.faint, lineWidth: 1.5)
+            .background(RoundedRectangle(cornerRadius: 4).fill(done ? Color.ok : Color.clear))
+            .frame(width: 18, height: 18)
+            .overlay { if done { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.white) } }
+    }
+
+    private func editSubSteps(_ items: Binding<[SubStep]>) -> some View {
+        section("CHECKLIST") {
+            ForEach(items.wrappedValue.indices, id: \.self) { i in
+                HStack(alignment: .top, spacing: 8) {
+                    TextField("Sub-step", text: items[i].text, axis: .vertical).font(.body14).foregroundStyle(Color.ink)
+                    Button { items.wrappedValue.remove(at: i) } label: {
+                        Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                    }.buttonStyle(.plain)
+                }
+            }
+            Button { items.wrappedValue.append(SubStep(text: "")) } label: {
+                Label("Add", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+            }.buttonStyle(.plain).padding(.top, 2)
+        }
     }
 
     private func editList(_ title: String, _ items: Binding<[String]>, placeholder: String) -> some View {

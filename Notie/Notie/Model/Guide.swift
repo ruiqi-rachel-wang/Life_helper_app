@@ -60,9 +60,43 @@ extension Guide {
     // MARK: Step detail (authored — AI may reword, must not invent live facts)
 
     // A safe link for an online action: a web search (never a possibly-wrong
-    // official URL we'd be guessing). Used for state-specific sites like the DMV.
+    // official URL we'd be guessing). Used when we don't have an official site.
     static func searchURL(_ query: String) -> String {
         "https://www.google.com/search?q=" + (query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)
+    }
+
+    // Official (government) DMV/licensing site per state — these are agencies,
+    // not businesses, so they're safe to link directly. Unknown → a web search.
+    // Best-effort; agencies occasionally rename pages.
+    static func dmvURL(_ state: String) -> String {
+        let map: [String: String] = [
+            "California": "https://www.dmv.ca.gov",
+            "New York": "https://dmv.ny.gov",
+            "Texas": "https://www.dps.texas.gov/section/driver-license",
+            "Florida": "https://www.flhsmv.gov",
+            "Illinois": "https://www.ilsos.gov",
+            "Pennsylvania": "https://www.dmv.pa.gov",
+            "Ohio": "https://www.bmv.ohio.gov",
+            "Georgia": "https://dds.georgia.gov",
+            "North Carolina": "https://www.ncdot.gov/dmv",
+            "Michigan": "https://www.michigan.gov/sos",
+            "New Jersey": "https://www.nj.gov/mvc/",
+            "Virginia": "https://www.dmv.virginia.gov",
+            "Washington": "https://www.dol.wa.gov",
+            "Arizona": "https://azdot.gov/mvd",
+            "Massachusetts": "https://www.mass.gov/rmv",
+            "Tennessee": "https://www.tn.gov/safety/driver-services.html",
+            "Indiana": "https://www.in.gov/bmv/",
+            "Maryland": "https://mva.maryland.gov",
+            "Colorado": "https://dmv.colorado.gov",
+            "Minnesota": "https://dps.mn.gov/divisions/dvs",
+            "Wisconsin": "https://wisconsindot.gov",
+            "Nevada": "https://dmv.nv.gov",
+            "Oregon": "https://www.oregon.gov/odot/dmv/",
+            "Connecticut": "https://portal.ct.gov/dmv",
+            "District of Columbia": "https://dmv.dc.gov",
+        ]
+        return map[state] ?? searchURL("\(state) DMV official site")
     }
 
     // Wrap milestone strings as checklist steps, attaching authored detail (with
@@ -77,10 +111,22 @@ extension Guide {
         if text.contains("driver's license") || text.contains("license/ID") {
             return StepDetail(
                 explanation: "Update your license/ID address at the DMV — many states require this within ~10–30 days.",
-                links: [StepLink(label: "Find your state's DMV", url: searchURL("\(state) DMV change of address"))])
+                links: [StepLink(label: "Open the \(state) DMV", url: dmvURL(state))])
         }
+        if text.contains("Arrange the move") { return movingOptionsDetail }
         return nil
     }
+    static let movingOptionsDetail = StepDetail(
+        explanation: "Decide HOW you'll move. Common options, cheapest to priciest: do-it-yourself truck rental, a portable storage container you load yourself, or full-service movers. Get a couple of quotes before booking.",
+        miniChecklist: [
+            "Estimate how much you're moving (a studio vs a 3-bedroom).",
+            "Compare options: rent a moving truck, rent a portable container, or hire full-service movers.",
+            "Get 2–3 quotes and check reviews before booking.",
+            "Book early for month-end or summer — they fill up.",
+            "Get boxes and packing supplies (stores, marketplaces, or free from local groups).",
+        ],
+        links: [StepLink(label: "Compare moving truck vs container vs movers",
+                         url: searchURL("compare moving truck rental vs portable container vs full service movers"))])
     static let internetDetail = StepDetail(
         explanation: "Set up (or stop) electricity, gas, water, and internet. Internet usually needs the most lead time, so start there.",
         miniChecklist: [
@@ -114,8 +160,8 @@ extension Guide {
         if text.contains("DMV requirements") || text.contains("renew online")
             || text.contains("Report your new address") || text.contains("Exchange your out-of-state") {
             return StepDetail(
-                explanation: "Use your state's official DMV site — search for it rather than trusting an ad.",
-                links: [StepLink(label: "Find the \(state) DMV", url: searchURL("\(state) DMV official site"))])
+                explanation: "Use your state's official DMV site — not a paid look-alike.",
+                links: [StepLink(label: "Open the \(state) DMV", url: dmvURL(state))])
         }
         return nil
     }
@@ -173,6 +219,7 @@ extension Guide {
             } else {
                 steps.append("Set up temporary mail forwarding or use a trusted mailing address until you have your new address.")
             }
+            steps.append("Arrange the move — truck, container, or movers — and get boxes.")
             steps.append("Update your address with your bank, credit cards, and insurance.")
             steps.append("Start or stop utilities and internet at both the old and new home.")
             steps.append("Update your address with your employer and for tax mail.")

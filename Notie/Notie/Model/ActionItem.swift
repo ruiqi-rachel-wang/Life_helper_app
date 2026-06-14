@@ -44,12 +44,20 @@ nonisolated struct StepLink: Codable, Hashable {
     var url: String
 }
 
+// One checkable sub-step inside a step's mini-checklist. Deliberately has NO
+// `detail` of its own — this is the one-level-only rule, enforced by the type.
+nonisolated struct SubStep: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var text: String
+    var done: Bool = false
+}
+
 // Optional structured help behind a milestone step — ONE level deep, no further
 // nesting. Authored by guides; nil for plain scanned-document steps. (Editable
 // "fields to save" like provider/account # are a deliberate later follow-up.)
 nonisolated struct StepDetail: Codable, Hashable {
     var explanation: String = ""
-    var miniChecklist: [String] = []   // flat sub-steps, one level only
+    var miniChecklist: [SubStep] = []  // flat, checkable sub-steps (one level)
     var links: [StepLink] = []
     var script: String = ""            // what to say on a call / visit
     var needed: [String] = []          // documents / info to have ready
@@ -57,6 +65,17 @@ nonisolated struct StepDetail: Codable, Hashable {
     var isEmpty: Bool {
         explanation.isEmpty && miniChecklist.isEmpty && links.isEmpty
             && script.isEmpty && needed.isEmpty
+    }
+
+    // Authoring convenience: pass the mini-checklist as plain strings; they become
+    // checkable SubSteps. (Codable's own init is still synthesized separately.)
+    init(explanation: String = "", miniChecklist: [String] = [],
+         links: [StepLink] = [], script: String = "", needed: [String] = []) {
+        self.explanation = explanation
+        self.miniChecklist = miniChecklist.map { SubStep(text: $0) }
+        self.links = links
+        self.script = script
+        self.needed = needed
     }
 }
 

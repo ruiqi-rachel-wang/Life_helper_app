@@ -97,14 +97,14 @@ struct GuideTests {
         let item = ActionItem(from: r)
         let internet = item.steps.first { $0.text.contains("utilities and internet") }
         #expect(internet?.hasDetail == true)
-        #expect(internet?.detail?.miniChecklist.contains { $0.lowercased().contains("provider") } == true)
+        #expect(internet?.detail?.miniChecklist.contains { $0.text.lowercased().contains("provider") } == true)
     }
 
     @Test func licenseGatherStepHasDocumentsChecklist() {
         let item = ActionItem(from: Guide.driversLicense.build(["task": "First-time", "state": "Ohio"]))
         let gather = item.steps.first { $0.text.contains("Gather proof") }
         #expect(gather?.hasDetail == true)
-        #expect(gather?.detail?.miniChecklist.contains { $0.contains("Social Security") } == true)
+        #expect(gather?.detail?.miniChecklist.contains { $0.text.contains("Social Security") } == true)
     }
 
     @Test func newJobI9StepHasDocumentsAndLink() {
