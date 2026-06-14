@@ -135,7 +135,8 @@ struct GuideTests {
         let item = ActionItem(from: Guide.driversLicense.build(["task": "First-time", "state": "Ohio"]))
         let gather = item.steps.first { $0.text.contains("Gather proof") }
         #expect(gather?.hasDetail == true)
-        #expect(gather?.detail?.miniChecklist.contains { $0.text.contains("Social Security") } == true)
+        #expect(gather?.detail?.miniChecklist.contains { $0.text.contains("SSN") } == true)
+        #expect(gather?.detail?.miniChecklist.contains { $0.text.contains("lawful presence") } == true)
     }
 
     @Test func newJobI9StepHasDocumentsAndLink() {

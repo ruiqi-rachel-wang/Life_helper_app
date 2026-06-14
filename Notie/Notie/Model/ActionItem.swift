@@ -81,7 +81,7 @@ nonisolated struct StepDetail: Codable, Hashable {
 
 // A checklist step. Stored as part of the item (SwiftData persists the array of
 // these Codable values). `detail` is optional structured help shown on tap.
-struct ChecklistStep: Identifiable, Codable, Hashable {
+nonisolated struct ChecklistStep: Identifiable, Codable, Hashable {
     var id = UUID()
     var text: String
     var done: Bool = false
@@ -93,7 +93,7 @@ struct ChecklistStep: Identifiable, Codable, Hashable {
 // One scheduled reminder — derived, never stored. `exactTime` = fire at this
 // precise time (a timed event, e.g. 3h before a flight); otherwise the scheduler
 // fires at 9am on that day (a bill heads-up).
-struct ScheduledReminder: Identifiable {
+nonisolated struct ScheduledReminder: Identifiable {
     var id = UUID()
     var date: Date
     var label: String

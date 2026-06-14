@@ -187,6 +187,26 @@ struct ActionItemTests {
         #expect(item.effectiveReminders.isEmpty)
     }
 
+    @MainActor
+    @Test func stepDetailSurvivesSwiftDataRoundTrip() throws {
+        let container = try ModelContainer(
+            for: ActionItem.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+
+        let detail = StepDetail(explanation: "do this", miniChecklist: ["a", "b"],
+                                links: [StepLink(label: "L", url: "https://example.com")])
+        context.insert(ActionItem(title: "Guide", category: .government,
+                                  steps: [ChecklistStep(text: "Step", detail: detail)]))
+        try context.save()
+
+        let d = try context.fetch(FetchDescriptor<ActionItem>()).first?.steps.first?.detail
+        #expect(d?.miniChecklist.count == 2)
+        #expect(d?.miniChecklist.first?.text == "a")
+        #expect(d?.miniChecklist.first?.done == false)
+        #expect(d?.links.first?.url == "https://example.com")
+    }
+
     // MARK: ExtractionResult → ActionItem mapping (Week 6)
 
     @Test func buildsActionItemFromExtraction() {

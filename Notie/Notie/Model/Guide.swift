@@ -194,11 +194,11 @@ extension Guide {
         return nil
     }
     static let licenseDocsDetail = StepDetail(
-        explanation: "Bring ORIGINALS (not copies). You usually need to prove your identity, your Social Security number, and your residency.",
+        explanation: "Requirements vary by state — check your DMV's exact accepted-documents list. Bring ORIGINALS, not copies. You generally prove identity / lawful presence, your SSN (or an alternative), and two proofs of residency.",
         miniChecklist: [
-            "Identity: U.S. passport, OR birth certificate + a photo ID.",
-            "Social Security: SS card, a W-2, or a pay stub showing your SSN.",
-            "Residency (often TWO): lease, utility bill, bank statement, or government mail.",
+            "Identity / lawful presence: passport, green card, EAD, or I-94 — per your DMV's list.",
+            "SSN proof if you have one (SS card, W-2, or pay stub) — or your DMV's alternative.",
+            "Two proofs of residency: lease, utility bill, bank statement, or government mail.",
             "Name changed? Bring a marriage certificate or court order.",
         ],
         needed: ["Originals of each document", "Payment for the fee"])
@@ -243,7 +243,7 @@ extension Guide {
                 steps.append("Give your landlord written notice and confirm your move-out date.")
             }
             if knowsAddress {
-                steps.append("Submit a USPS change-of-address at usps.com/move (~2 weeks ahead) — use the official USPS site, not a paid look-alike.")
+                steps.append("Set up USPS mail forwarding at usps.com/move (start ~2 weeks ahead; a small ID-verification fee applies). Use the official USPS site, not a third-party that charges extra.")
             } else {
                 steps.append("Set up temporary mail forwarding or use a trusted mailing address until you have your new address.")
             }
@@ -285,7 +285,7 @@ extension Guide {
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
                 detailedSteps: detailed(steps, state: newState, movingDetail),
-                notes: ["Use the official USPS change-of-address — avoid paid sites that charge for the free service.",
+                notes: ["USPS forwarding only redirects your mail — you still have to update your bank, DMV, employer, etc. separately.",
                         "DMV address deadlines are state-specific (often 10–30 days) — don't wait.",
                         referenceNote],
                 confidence: 1)
@@ -441,7 +441,7 @@ extension Guide {
                 summary: "How to open a U.S. \((a["type"] ?? "bank").lowercased()) account — including without an SSN.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", bankDetail),
-                notes: ["No law requires an SSN to open an account — a government ID plus an ITIN usually works.",
+                notes: ["Many banks and credit unions accept an ITIN instead of an SSN, but requirements vary — call ahead to confirm what they need.",
                         referenceNote],
                 confidence: 1)
         })
@@ -459,7 +459,7 @@ extension Guide {
         }
         if text.contains("ITIN with IRS Form W-7") {
             return StepDetail(
-                explanation: "An ITIN is a taxpayer ID for people who can't get an SSN. Apply with IRS Form W-7.",
+                explanation: "An ITIN is a federal tax ID for people who can't get an SSN. It's for tax purposes — it isn't a general photo ID. Apply with IRS Form W-7.",
                 links: [StepLink(label: "IRS — ITIN / Form W-7",
                                  url: "https://www.irs.gov/individuals/individual-taxpayer-identification-number")])
         }
@@ -495,7 +495,7 @@ extension Guide {
                 steps = ["Confirm you're eligible — usually 5 years as a permanent resident (3 if married to a U.S. citizen).",
                          "Create or sign in to your free USCIS online account.",
                          "File Form N-400, Application for Naturalization.",
-                         "Pay the fee, then go to your biometrics appointment.",
+                         "Pay the fee; go to a biometrics appointment if one is scheduled.",
                          "Attend the interview and pass the English and civics tests.",
                          "Take the Oath of Allegiance at your ceremony."]
             case "Renew work permit (EAD)":
@@ -522,7 +522,7 @@ extension Guide {
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", immigrationDetail),
                 notes: ["Immigration rules are complex — for anything unclear, consider free legal aid or a USCIS-accredited representative.",
-                        "Filing Form I-90 now auto-extends a green card up to 36 months.",
+                        "USCIS may extend your green card's validity on the I-90 receipt notice — check the current I-90 page for how long.",
                         referenceNote],
                 confidence: 1)
         })
@@ -555,12 +555,16 @@ extension Guide {
         subtitle: "At the scene, police report, insurance claim",
         category: .finance,
         questions: [
-            GuideQuestion(id: "injuries", prompt: "Was anyone hurt?", kind: .choice(["No", "Yes"])),
+            GuideQuestion(id: "injuries", prompt: "Was anyone hurt?", kind: .choice(["No", "Yes", "Not sure"])),
             GuideQuestion(id: "police", prompt: "Did the police come?", kind: .choice(["Yes", "No / not yet"])),
         ],
         build: { a in
             var steps: [String] = []
-            if a["injuries"] == "Yes" { steps.append("Call 911 — get medical help first.") }
+            if a["injuries"] == "Yes" {
+                steps.append("Call 911 — get medical help first.")
+            } else if a["injuries"] == "Not sure" {
+                steps.append("Check everyone for injuries — if anyone might be hurt, call 911.")
+            }
             steps.append("Move to safety if you can and turn on your hazard lights.")
             if a["police"] == "Yes" {
                 steps.append("Get the officers' names and badge numbers and ask how to get the police report.")
@@ -611,29 +615,37 @@ extension Guide {
         subtitle: "Find an in-network doctor and what to bring",
         category: .medical,
         questions: [
+            GuideQuestion(id: "insurance", prompt: "Do you have health insurance?", kind: .choice(["Yes", "No"])),
             GuideQuestion(id: "new", prompt: "New patient or a return visit?", kind: .choice(["New patient", "Return visit"])),
             GuideQuestion(id: "kind", prompt: "What kind of doctor?", kind: .text("e.g. primary care, dentist")),
         ],
         build: { a in
             let kind = val(a, "kind", default: "doctor")
-            var steps = ["Find an in-network \(kind) in your health plan's provider directory (insurer's website or the number on your card)."]
-            if a["new"] == "New patient" {
-                steps.append("Call or use the patient portal to book — new-patient slots can take weeks.")
+            let insured = a["insurance"] != "No"
+            var steps: [String] = []
+            if insured {
+                steps.append("Find an in-network \(kind) in your health plan's provider directory (insurer's website or the number on your card).")
             } else {
-                steps.append("Call or use the patient portal to book your visit.")
+                steps.append("Find a community health center or sliding-scale clinic near you — they charge based on your income.")
             }
-            steps.append("Confirm they take your insurance and ask what to bring.")
+            steps.append(a["new"] == "New patient"
+                ? "Call or use the patient portal to book — new-patient slots can take weeks."
+                : "Call or use the patient portal to book your visit.")
+            steps.append(insured ? "Confirm they take your insurance and ask what to bring."
+                                 : "Ask what it will cost up front and what to bring.")
             steps.append("Before the visit, write down your symptoms, medicines, allergies, and questions.")
-            steps.append("Bring your insurance card and a photo ID to the appointment.")
+            steps.append(insured ? "Bring your insurance card and a photo ID to the appointment."
+                                 : "Bring a photo ID and any medical records you have.")
             return ExtractionResult(
                 title: "Book a \(kind) appointment",
                 documentType: "Appointment guide",
                 category: .medical,
-                summary: "Find an in-network \(kind) and get ready for the visit.",
+                summary: insured ? "Find an in-network \(kind) and get ready for the visit."
+                                 : "Find an affordable \(kind) and get ready for the visit.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", doctorDetail),
-                notes: ["In-network providers usually cost much less out of pocket.",
-                        referenceNote],
+                notes: insured ? ["In-network providers usually cost much less out of pocket.", referenceNote]
+                               : ["Community health centers charge on a sliding scale based on income — you can be seen without insurance.", referenceNote],
                 confidence: 1)
         })
 
@@ -646,6 +658,14 @@ extension Guide {
                                 "Pick a convenient location and hours.",
                                 "If unsure, call the number on your insurance card."],
                 links: [StepLink(label: "HealthCare.gov — how to find a doctor", url: "https://www.healthcare.gov/blog/how-to-find-a-doctor")])
+        }
+        if text.hasPrefix("Find a community health center") {
+            return StepDetail(
+                explanation: "Community health centers (FQHCs) see patients regardless of insurance and charge on a sliding scale based on income.",
+                miniChecklist: ["Search for a federally funded health center near you.",
+                                "Call and ask if they're taking new patients.",
+                                "Ask what to bring to qualify for sliding-scale fees (often proof of income)."],
+                links: [StepLink(label: "HRSA — find a health center", url: "https://findahealthcenter.hrsa.gov")])
         }
         if text.hasPrefix("Before the visit") {
             return StepDetail(

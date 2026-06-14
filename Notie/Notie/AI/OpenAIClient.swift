@@ -440,9 +440,17 @@ extension OpenAIClient {
             }.filter { !$0.isEmpty }
         }
         var out = base
-        let steps = list("steps").map(ExtractionJSON.stripLeadingNumber), notes = list("notes")
-        if !steps.isEmpty { out.steps = steps }
-        if !notes.isEmpty { out.notes = notes }
+        let steps = list("steps").map(ExtractionJSON.stripLeadingNumber)
+        let extraNotes = list("notes")
+        // Only accept polished steps if the COUNT is unchanged — otherwise the
+        // milestone↔detail alignment breaks and an authored (safety) step could
+        // silently vanish. On any mismatch keep the deterministic steps.
+        if steps.count == base.steps.count, !steps.contains(where: { $0.isEmpty }) {
+            out.steps = steps
+        }
+        // APPEND the model's notes to the authored ones (deduped) — never replace,
+        // so reference/safety/official-site warnings can't be dropped by polish.
+        for n in extraNotes where !out.notes.contains(n) { out.notes.append(n) }
         return out
     }
 }
