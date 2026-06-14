@@ -296,8 +296,8 @@ struct ReviewView: View {
             Text("ACTION STEPS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             ForEach(draft.steps.indices, id: \.self) { i in
                 HStack(alignment: .top, spacing: 10) {
-                    Text(String(format: "%02d", i + 1)).font(.eyebrow).foregroundStyle(Color.faded)
-                        .frame(width: 22, alignment: .leading).padding(.top, isEditing ? 8 : 0)
+                    Text("•").font(.body14).foregroundStyle(Color.faded)
+                        .frame(width: 10, alignment: .leading).padding(.top, isEditing ? 8 : 0)
                     if isEditing {
                         TextField("Step", text: $draft.steps[i], axis: .vertical).font(.body14).foregroundStyle(Color.ink)
                         Button { draft.steps.remove(at: i) } label: {

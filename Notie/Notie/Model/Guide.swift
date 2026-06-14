@@ -59,42 +59,72 @@ extension Guide {
 
     // MARK: Step detail (authored — AI may reword, must not invent live facts)
 
+    // Shown on every guide: these are general checklists, not official/legal
+    // advice — confirm specifics on the official site, and the user can edit.
+    static let referenceNote = "This is a general guide — requirements vary, so check the official website. You can edit or check off any step."
+
     // A safe link for an online action: a web search (never a possibly-wrong
     // official URL we'd be guessing). Used when we don't have an official site.
     static func searchURL(_ query: String) -> String {
         "https://www.google.com/search?q=" + (query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)
     }
 
-    // Official (government) DMV/licensing site per state — these are agencies,
-    // not businesses, so they're safe to link directly. Unknown → a web search.
-    // Best-effort; agencies occasionally rename pages.
+    // Official (government) DMV/licensing site per state — agencies, not
+    // businesses, so safe to link directly. Best-effort; verify periodically as
+    // agencies rename pages. Unknown → a web search (shouldn't happen; all 51 listed).
     static func dmvURL(_ state: String) -> String {
         let map: [String: String] = [
+            "Alabama": "https://www.alea.gov/dps/driver-license",
+            "Alaska": "https://doa.alaska.gov/dmv/",
+            "Arizona": "https://azdot.gov/mvd",
+            "Arkansas": "https://www.dfa.arkansas.gov/driver-services/",
             "California": "https://www.dmv.ca.gov",
-            "New York": "https://dmv.ny.gov",
-            "Texas": "https://www.dps.texas.gov/section/driver-license",
+            "Colorado": "https://dmv.colorado.gov",
+            "Connecticut": "https://portal.ct.gov/dmv",
+            "Delaware": "https://www.dmv.de.gov",
+            "District of Columbia": "https://dmv.dc.gov",
             "Florida": "https://www.flhsmv.gov",
-            "Illinois": "https://www.ilsos.gov",
-            "Pennsylvania": "https://www.dmv.pa.gov",
-            "Ohio": "https://www.bmv.ohio.gov",
             "Georgia": "https://dds.georgia.gov",
-            "North Carolina": "https://www.ncdot.gov/dmv",
+            "Hawaii": "https://hidmv.ehawaii.gov",
+            "Idaho": "https://itd.idaho.gov/dmv/",
+            "Illinois": "https://www.ilsos.gov",
+            "Indiana": "https://www.in.gov/bmv/",
+            "Iowa": "https://iowadot.gov/mvd",
+            "Kansas": "https://www.ksrevenue.gov/dmv.html",
+            "Kentucky": "https://drive.ky.gov",
+            "Louisiana": "https://www.dps.louisiana.gov/omv",
+            "Maine": "https://www.maine.gov/sos/bmv/",
+            "Maryland": "https://mva.maryland.gov",
+            "Massachusetts": "https://www.mass.gov/rmv",
             "Michigan": "https://www.michigan.gov/sos",
+            "Minnesota": "https://dps.mn.gov/divisions/dvs",
+            "Mississippi": "https://www.dps.ms.gov",
+            "Missouri": "https://dor.mo.gov/driver-license/",
+            "Montana": "https://dojmt.gov/driving/",
+            "Nebraska": "https://dmv.nebraska.gov",
+            "Nevada": "https://dmv.nv.gov",
+            "New Hampshire": "https://www.dmv.nh.gov",
             "New Jersey": "https://www.nj.gov/mvc/",
+            "New Mexico": "https://www.mvd.newmexico.gov",
+            "New York": "https://dmv.ny.gov",
+            "North Carolina": "https://www.ncdot.gov/dmv",
+            "North Dakota": "https://www.dot.nd.gov/dmv",
+            "Ohio": "https://www.bmv.ohio.gov",
+            "Oklahoma": "https://oklahoma.gov/service.html",
+            "Oregon": "https://www.oregon.gov/odot/dmv/",
+            "Pennsylvania": "https://www.dmv.pa.gov",
+            "Rhode Island": "https://dmv.ri.gov",
+            "South Carolina": "https://www.scdmvonline.com",
+            "South Dakota": "https://dps.sd.gov/driver-licensing",
+            "Tennessee": "https://www.tn.gov/safety/driver-services.html",
+            "Texas": "https://www.dps.texas.gov/section/driver-license",
+            "Utah": "https://dld.utah.gov",
+            "Vermont": "https://dmv.vermont.gov",
             "Virginia": "https://www.dmv.virginia.gov",
             "Washington": "https://www.dol.wa.gov",
-            "Arizona": "https://azdot.gov/mvd",
-            "Massachusetts": "https://www.mass.gov/rmv",
-            "Tennessee": "https://www.tn.gov/safety/driver-services.html",
-            "Indiana": "https://www.in.gov/bmv/",
-            "Maryland": "https://mva.maryland.gov",
-            "Colorado": "https://dmv.colorado.gov",
-            "Minnesota": "https://dps.mn.gov/divisions/dvs",
+            "West Virginia": "https://transportation.wv.gov/DMV/",
             "Wisconsin": "https://wisconsindot.gov",
-            "Nevada": "https://dmv.nv.gov",
-            "Oregon": "https://www.oregon.gov/odot/dmv/",
-            "Connecticut": "https://portal.ct.gov/dmv",
-            "District of Columbia": "https://dmv.dc.gov",
+            "Wyoming": "https://www.dot.state.wy.us",
         ]
         return map[state] ?? searchURL("\(state) DMV official site")
     }
@@ -124,9 +154,7 @@ extension Guide {
             "Get 2–3 quotes and check reviews before booking.",
             "Book early for month-end or summer — they fill up.",
             "Get boxes and packing supplies (stores, marketplaces, or free from local groups).",
-        ],
-        links: [StepLink(label: "Compare moving truck vs container vs movers",
-                         url: searchURL("compare moving truck rental vs portable container vs full service movers"))])
+        ])
     static let internetDetail = StepDetail(
         explanation: "Set up (or stop) electricity, gas, water, and internet. Internet usually needs the most lead time, so start there.",
         miniChecklist: [
@@ -258,7 +286,8 @@ extension Guide {
                 steps: steps,
                 detailedSteps: detailed(steps, state: newState, movingDetail),
                 notes: ["Use the official USPS change-of-address — avoid paid sites that charge for the free service.",
-                        "DMV address deadlines are state-specific (often 10–30 days) — don't wait."],
+                        "DMV address deadlines are state-specific (often 10–30 days) — don't wait.",
+                        referenceNote],
                 confidence: 1)
         })
 
@@ -302,6 +331,7 @@ extension Guide {
             if type == "Not sure" {
                 notes.insert("Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.", at: 0)
             }
+            notes.append(referenceNote)
 
             return ExtractionResult(
                 title: "New job checklist",
@@ -379,7 +409,8 @@ extension Guide {
                 summary: "Steps for a \(task.lowercased()) driver's license in \(state).",
                 steps: steps,
                 detailedSteps: detailed(steps, state: state, licenseDetail),
-                notes: ["DMV deadlines are state-specific — new residents often must transfer a license/registration within ~30 days."],
+                notes: ["DMV deadlines are state-specific — new residents often must transfer a license/registration within ~30 days.",
+                        referenceNote],
                 confidence: 1)
         })
 }

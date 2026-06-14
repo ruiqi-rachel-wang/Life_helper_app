@@ -383,6 +383,11 @@ before handing the app to testers.
    - Add "Mark as not done" / Reopen from a done item's Detail; it should move
      back to active and reschedule reminders.
    - Keep delete final; no undo is required for delete.
+   - **Reminder notification text (decided 2026-06-13, later dev):** each reminder
+     should carry a short custom title/note that shows in the notification (today
+     the body is auto-computed like "Due in 3 days"). Add an editable per-reminder
+     label so the banner is meaningful. (Guides default to NO reminders — they have
+     no due date — which is correct.)
 3. **Profile tab (replaces Settings) — decided 2026-06-13**
    - Rename the 4th tab Settings → **Profile** (person icon). No accounts yet, but
      Profile is where future **account / family sharing / paid plan** features

@@ -271,7 +271,7 @@ nonisolated enum ExtractionJSON {
                 .compactMap { ($0 as? String)?.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty } ?? []
         }
-        let steps = stringList("steps")
+        let steps = stringList("steps").map(stripLeadingNumber)
         let notes = stringList("notes")
         let due = parseDueDate(str("dueDate"))
         let lowConf = (dict["lowConfidenceFields"] as? [Any])?.compactMap { $0 as? String } ?? []
@@ -306,6 +306,16 @@ nonisolated enum ExtractionJSON {
             confidence: confidence(),
             lowConfidenceFields: Set(lowConf)
         )
+    }
+
+    // Drop a leading "1." / "2)" the model sometimes adds — steps shouldn't be
+    // numbered (the UI handles ordering, and other items aren't numbered).
+    static func stripLeadingNumber(_ s: String) -> String {
+        let t = s.trimmingCharacters(in: .whitespaces)
+        if let r = t.range(of: #"^\d+[.)]\s+"#, options: .regularExpression) {
+            return String(t[r.upperBound...])
+        }
+        return t
     }
 
     static func parseDate(_ s: String?) -> Date? {
@@ -430,7 +440,7 @@ extension OpenAIClient {
             }.filter { !$0.isEmpty }
         }
         var out = base
-        let steps = list("steps"), notes = list("notes")
+        let steps = list("steps").map(ExtractionJSON.stripLeadingNumber), notes = list("notes")
         if !steps.isEmpty { out.steps = steps }
         if !notes.isEmpty { out.notes = notes }
         return out
