@@ -191,7 +191,8 @@ extension Guide {
             "Start or transfer electricity, gas, and water for the same date.",
             "Save your account number and confirmation after you sign up.",
         ],
-        needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"])
+        needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"],
+        fields: [SavedField(label: "Internet install date"), SavedField(label: "Account number")])
 
     private static func newJobDetail(_ text: String, _ state: String) -> StepDetail? {
         if text.hasPrefix("Complete Form I-9") { return i9Detail }
@@ -582,8 +583,11 @@ extension Guide {
         if text.contains("Form I-765") {
             return StepDetail(links: [StepLink(label: "USCIS — Form I-765 (work permit)", url: "https://www.uscis.gov/i-765")])
         }
-        if text.contains("case-status tool") || text.hasPrefix("Track your case") {
-            return StepDetail(links: [StepLink(label: "USCIS — check case status", url: "https://egov.uscis.gov/casestatus/landing.do")])
+        if text.contains("case-status tool") || text.hasPrefix("Track your case") || text.contains("receipt number") {
+            return StepDetail(
+                explanation: "Your receipt number (3 letters then numbers, e.g. IOE…) is on your I-797 receipt notice — save it here so it's easy to find.",
+                links: [StepLink(label: "USCIS — check case status", url: "https://egov.uscis.gov/casestatus/landing.do")],
+                fields: [SavedField(label: "Receipt number")])
         }
         return nil
     }
@@ -664,7 +668,10 @@ extension Guide {
                                 "Date, location, and what happened.",
                                 "The police report number, if you have one.",
                                 "Your photos and the other driver's info.",
-                                "Ask about your deductible, a rental car, and the timeline."])
+                                "Ask about your deductible, a rental car, and the timeline."],
+                fields: [SavedField(label: "Claim number"),
+                         SavedField(label: "Adjuster name & phone"),
+                         SavedField(label: "Police report number")])
         }
         return nil
     }
@@ -762,6 +769,13 @@ extension Guide {
                                 "Call and ask if they're taking new patients.",
                                 "Ask what to bring to qualify for sliding-scale fees (often proof of income)."],
                 links: [StepLink(label: "HRSA — find a health center", url: "https://findahealthcenter.hrsa.gov")])
+        }
+        if text.hasPrefix("Call or use the patient portal to book") {
+            return StepDetail(
+                explanation: "Once it's booked, save the details so you don't lose them.",
+                fields: [SavedField(label: "Appointment date & time"),
+                         SavedField(label: "Provider name"),
+                         SavedField(label: "Office phone")])
         }
         if text.hasPrefix("Before the visit") {
             return StepDetail(

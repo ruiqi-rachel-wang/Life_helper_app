@@ -187,6 +187,26 @@ struct GuideTests {
         #expect(find?.text.contains("dentist") == true)   // templated
     }
 
+    // MARK: Saved fields (info the user keeps on a step)
+
+    @Test func carAccidentClaimStepHasSaveableFields() {
+        let item = ActionItem(from: Guide.carAccident.build(["fault": "Me"]))
+        let claim = item.steps.first { $0.detail?.fields.contains { $0.label == "Claim number" } == true }
+        #expect(claim != nil)
+    }
+
+    @Test func doctorBookingStepSavesAppointmentTime() {
+        let item = ActionItem(from: Guide.doctorAppointment.build(["new": "New patient", "kind": "dentist"]))
+        let book = item.steps.first { $0.detail?.fields.contains { $0.label.contains("Appointment") } == true }
+        #expect(book != nil)
+    }
+
+    @Test func immigrationCaseStatusSavesReceiptNumber() {
+        let item = ActionItem(from: Guide.immigration.build(["task": "Check my case status"]))
+        let receipt = item.steps.first { $0.detail?.fields.contains { $0.label == "Receipt number" } == true }
+        #expect(receipt != nil)
+    }
+
     // MARK: Step detail (guides only)
 
     @Test func movingInternetStepCarriesDetailIntoActionItem() {

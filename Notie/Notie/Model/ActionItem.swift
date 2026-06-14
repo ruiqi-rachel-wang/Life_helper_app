@@ -52,30 +52,54 @@ nonisolated struct SubStep: Codable, Hashable, Identifiable {
     var done: Bool = false
 }
 
+// A piece of info the user fills in and keeps on a step — claim number, USCIS
+// receipt number, appointment time, install date, etc. The label can be authored
+// (an empty-value prompt) or added by the user; the value is theirs to fill.
+nonisolated struct SavedField: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var label: String
+    var value: String = ""
+}
+
 // Optional structured help behind a milestone step — ONE level deep, no further
-// nesting. Authored by guides; nil for plain scanned-document steps. (Editable
-// "fields to save" like provider/account # are a deliberate later follow-up.)
+// nesting. Authored by guides; nil for plain scanned-document steps.
 nonisolated struct StepDetail: Codable, Hashable {
     var explanation: String = ""
     var miniChecklist: [SubStep] = []  // flat, checkable sub-steps (one level)
     var links: [StepLink] = []
     var script: String = ""            // what to say on a call / visit
     var needed: [String] = []          // documents / info to have ready
+    var fields: [SavedField] = []      // info to save (claim #, receipt #, time…)
 
     var isEmpty: Bool {
         explanation.isEmpty && miniChecklist.isEmpty && links.isEmpty
-            && script.isEmpty && needed.isEmpty
+            && script.isEmpty && needed.isEmpty && fields.isEmpty
     }
 
     // Authoring convenience: pass the mini-checklist as plain strings; they become
-    // checkable SubSteps. (Codable's own init is still synthesized separately.)
+    // checkable SubSteps.
     init(explanation: String = "", miniChecklist: [String] = [],
-         links: [StepLink] = [], script: String = "", needed: [String] = []) {
+         links: [StepLink] = [], script: String = "", needed: [String] = [],
+         fields: [SavedField] = []) {
         self.explanation = explanation
         self.miniChecklist = miniChecklist.map { SubStep(text: $0) }
         self.links = links
         self.script = script
         self.needed = needed
+        self.fields = fields
+    }
+
+    // Tolerant decode: items saved before a field existed (e.g. `fields`) simply
+    // default, so adding new detail keys never breaks already-stored steps.
+    enum CodingKeys: String, CodingKey { case explanation, miniChecklist, links, script, needed, fields }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        explanation = try c.decodeIfPresent(String.self, forKey: .explanation) ?? ""
+        miniChecklist = try c.decodeIfPresent([SubStep].self, forKey: .miniChecklist) ?? []
+        links = try c.decodeIfPresent([StepLink].self, forKey: .links) ?? []
+        script = try c.decodeIfPresent(String.self, forKey: .script) ?? ""
+        needed = try c.decodeIfPresent([String].self, forKey: .needed) ?? []
+        fields = try c.decodeIfPresent([SavedField].self, forKey: .fields) ?? []
     }
 }
 

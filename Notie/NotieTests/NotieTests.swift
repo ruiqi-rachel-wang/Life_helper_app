@@ -207,6 +207,32 @@ struct ActionItemTests {
         #expect(d?.links.first?.url == "https://example.com")
     }
 
+    @Test func stepDetailDecodesWhenFieldsKeyMissing() throws {
+        // A step saved before `fields` existed must still decode (defaults to []).
+        let json = #"{"explanation":"x","miniChecklist":[],"links":[],"script":"","needed":[]}"#.data(using: .utf8)!
+        let d = try JSONDecoder().decode(StepDetail.self, from: json)
+        #expect(d.fields.isEmpty)
+        #expect(d.explanation == "x")
+    }
+
+    @MainActor
+    @Test func savedFieldsSurviveSwiftDataRoundTrip() throws {
+        let container = try ModelContainer(
+            for: ActionItem.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+
+        let detail = StepDetail(explanation: "e",
+                                fields: [SavedField(label: "Claim number", value: "ABC123")])
+        context.insert(ActionItem(title: "Guide", category: .finance,
+                                  steps: [ChecklistStep(text: "Step", detail: detail)]))
+        try context.save()
+
+        let f = try context.fetch(FetchDescriptor<ActionItem>()).first?.steps.first?.detail?.fields
+        #expect(f?.first?.label == "Claim number")
+        #expect(f?.first?.value == "ABC123")
+    }
+
     // MARK: ExtractionResult → ActionItem mapping (Week 6)
 
     @Test func buildsActionItemFromExtraction() {
