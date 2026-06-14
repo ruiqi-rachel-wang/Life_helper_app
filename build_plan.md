@@ -411,6 +411,14 @@ before handing the app to testers.
      file or local-only store.
    - Keep this lightweight; the launch metric is more important than a full
      analytics system.
+6. **Guides — follow-ups (deferred from Week 7, decided 2026-06-13)**
+   - **Editable "fields to save"** in Step Detail (provider / account # / install
+     date, etc.) — the deferred per-step structured fields.
+   - **More step-detail breadth** — author detail on the remaining steps across
+     all 7 guides (currently the heavy ones have it).
+   - **Per-state appointment deep-links** — today the DMV link is each state's
+     official homepage; add verified "book appointment" deep-links for big states.
+   - Bilingual term toggle (separate future note) ties in here.
 
 **Done when:** recurring items regenerate correctly, done items can be reopened
 or deleted, core empty/error states are visible, Settings has the launch controls,

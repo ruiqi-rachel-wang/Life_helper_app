@@ -190,6 +190,7 @@ private struct CreateForm: View {
     @Environment(AppRouter.self) private var router
 
     @State private var title = ""
+    @State private var category: ItemCategory = .other
     @State private var includeDue = false
     @State private var dueDate = Calendar.current.startOfDay(for: .now)
     @State private var steps: [ChecklistStep] = []
@@ -211,6 +212,9 @@ private struct CreateForm: View {
                     titleField
                         .padding(.horizontal, 14)
                         .padding(.top, 18)
+                    categoryCard
+                        .padding(.horizontal, 14)
+                        .padding(.top, 14)
                     dueCard
                         .padding(.horizontal, 14)
                         .padding(.top, 14)
@@ -258,6 +262,30 @@ private struct CreateForm: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
+
+    // MARK: category (pick the type → drives the icon/color)
+
+    private var categoryCard: some View {
+        HStack {
+            Text("Category").font(.system(size: 14)).foregroundStyle(Color.ink)
+            Spacer()
+            Menu {
+                ForEach(ItemCategory.allCases, id: \.self) { c in
+                    Button { category = c } label: { Label(c.rawValue.capitalized, systemImage: c.symbol) }
+                }
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: category.symbol).font(.system(size: 13)).foregroundStyle(category.tint)
+                    Text(category.rawValue.capitalized).font(.body14).foregroundStyle(Color.ink)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Color.faint)
+                }
+            }
+        }
+        .padding(16)
         .background(Color.card)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
@@ -399,7 +427,7 @@ private struct CreateForm: View {
             .filter { !$0.text.isEmpty }
         let item = ActionItem(
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-            category: .other,                       // TODO: optional category picker
+            category: category,
             dueDate: includeDue ? dueDate : nil,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             imageData: imageData,

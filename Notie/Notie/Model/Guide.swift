@@ -50,7 +50,7 @@ nonisolated enum USStates {
 // MARK: - The authored guides (3 deep for Week 7; more to come)
 
 extension Guide {
-    static let all: [Guide] = [moving, newJob, driversLicense]
+    static let all: [Guide] = [moving, bankAccount, newJob, driversLicense, immigration, carAccident, doctorAppointment]
 
     private static func val(_ a: [String: String], _ key: String, default def: String) -> String {
         let v = a[key] ?? ""
@@ -413,4 +413,249 @@ extension Guide {
                         referenceNote],
                 confidence: 1)
         })
+
+    // MARK: Open a bank account
+    static let bankAccount = Guide(
+        id: "bank_account",
+        title: "Open a bank account",
+        subtitle: "What to bring — with or without an SSN",
+        category: .finance,
+        questions: [
+            GuideQuestion(id: "ssn", prompt: "Do you have a Social Security number (SSN)?",
+                          kind: .choice(["Yes", "No — I'll use an ITIN", "Not sure"])),
+            GuideQuestion(id: "type", prompt: "Which account do you want?",
+                          kind: .choice(["Checking", "Savings", "Both"])),
+        ],
+        build: { a in
+            var steps = ["Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."]
+            if a["ssn"] == "No — I'll use an ITIN" {
+                steps.append("No SSN? Apply for an ITIN with IRS Form W-7 (it can take up to ~7 weeks).")
+            }
+            steps.append("Compare a few banks or credit unions on monthly fees, minimum balance, and ATM access.")
+            steps.append("Open the account online or at a branch and make the opening deposit.")
+            steps.append("Set up online banking, direct deposit, and alerts; order your debit card.")
+            return ExtractionResult(
+                title: "Open a bank account",
+                documentType: "Banking guide",
+                category: .finance,
+                summary: "How to open a U.S. \((a["type"] ?? "bank").lowercased()) account — including without an SSN.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", bankDetail),
+                notes: ["No law requires an SSN to open an account — a government ID plus an ITIN usually works.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func bankDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Gather your documents") {
+            return StepDetail(
+                explanation: "Banks must verify your identity — bring originals.",
+                miniChecklist: ["Government photo ID (passport, driver's license, or state ID).",
+                                "A second ID if the bank asks for two.",
+                                "Proof of address: a lease, utility bill, or bank statement.",
+                                "Your SSN, or an ITIN if you don't have an SSN.",
+                                "Money for the opening deposit (often $25–$100)."],
+                needed: ["Originals, not photocopies"])
+        }
+        if text.contains("ITIN with IRS Form W-7") {
+            return StepDetail(
+                explanation: "An ITIN is a taxpayer ID for people who can't get an SSN. Apply with IRS Form W-7.",
+                links: [StepLink(label: "IRS — ITIN / Form W-7",
+                                 url: "https://www.irs.gov/individuals/individual-taxpayer-identification-number")])
+        }
+        if text.hasPrefix("Compare a few banks") {
+            return StepDetail(
+                explanation: "Look for low or no monthly fees and a branch/ATM network near you.",
+                miniChecklist: ["Monthly maintenance fee (and how to waive it).",
+                                "Minimum opening deposit and balance.",
+                                "ATM network and out-of-network fees.",
+                                "Overdraft policy."],
+                links: [StepLink(label: "CFPB — choosing a bank account",
+                                 url: "https://www.consumerfinance.gov/consumer-tools/bank-accounts/")])
+        }
+        return nil
+    }
+
+    // MARK: Green card / visa
+    static let immigration = Guide(
+        id: "immigration",
+        title: "Green card / visa",
+        subtitle: "Renew, citizenship, work permit, status",
+        category: .government,
+        questions: [
+            GuideQuestion(id: "task", prompt: "What do you need to do?",
+                          kind: .choice(["Renew or replace green card", "Apply for citizenship",
+                                         "Renew work permit (EAD)", "Check my case status"])),
+        ],
+        build: { a in
+            let task = val(a, "task", default: "Renew or replace green card")
+            let steps: [String]
+            switch task {
+            case "Apply for citizenship":
+                steps = ["Confirm you're eligible — usually 5 years as a permanent resident (3 if married to a U.S. citizen).",
+                         "Create or sign in to your free USCIS online account.",
+                         "File Form N-400, Application for Naturalization.",
+                         "Pay the fee, then go to your biometrics appointment.",
+                         "Attend the interview and pass the English and civics tests.",
+                         "Take the Oath of Allegiance at your ceremony."]
+            case "Renew work permit (EAD)":
+                steps = ["Create or sign in to your free USCIS online account.",
+                         "File Form I-765, Application for Employment Authorization.",
+                         "Pay any fee (some categories are fee-exempt) and do biometrics if scheduled.",
+                         "Track your case and watch for your EAD card in the mail."]
+            case "Check my case status":
+                steps = ["Find your receipt number (3 letters then numbers, e.g. IOE…).",
+                         "Sign in to your USCIS online account, or use the case-status tool.",
+                         "Turn on case alerts so you're notified of updates."]
+            default:
+                steps = ["Create or sign in to your free USCIS online account.",
+                         "File Form I-90 to renew or replace your green card.",
+                         "Pay the filing fee and submit.",
+                         "Go to your biometrics appointment if USCIS schedules one.",
+                         "Track your case online until the new card arrives."]
+            }
+            return ExtractionResult(
+                title: "Green card / visa — \(task.lowercased())",
+                documentType: "Immigration guide",
+                category: .government,
+                summary: "Steps to \(task.lowercased()) with USCIS.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", immigrationDetail),
+                notes: ["Immigration rules are complex — for anything unclear, consider free legal aid or a USCIS-accredited representative.",
+                        "Filing Form I-90 now auto-extends a green card up to 36 months.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func immigrationDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.contains("USCIS online account") && text.hasPrefix("Create") {
+            return StepDetail(
+                explanation: "A free USCIS online account lets you file, pay, upload documents, and track your case.",
+                links: [StepLink(label: "USCIS — file online", url: "https://www.uscis.gov/file-online")])
+        }
+        if text.contains("Form I-90") {
+            return StepDetail(links: [StepLink(label: "USCIS — Form I-90 (renew/replace green card)", url: "https://www.uscis.gov/i-90")])
+        }
+        if text.contains("Form N-400") {
+            return StepDetail(links: [StepLink(label: "USCIS — Form N-400 (citizenship)", url: "https://www.uscis.gov/n-400")])
+        }
+        if text.contains("Form I-765") {
+            return StepDetail(links: [StepLink(label: "USCIS — Form I-765 (work permit)", url: "https://www.uscis.gov/i-765")])
+        }
+        if text.contains("case-status tool") || text.hasPrefix("Track your case") {
+            return StepDetail(links: [StepLink(label: "USCIS — check case status", url: "https://egov.uscis.gov/casestatus/landing.do")])
+        }
+        return nil
+    }
+
+    // MARK: Car accident
+    static let carAccident = Guide(
+        id: "car_accident",
+        title: "Car accident",
+        subtitle: "At the scene, police report, insurance claim",
+        category: .finance,
+        questions: [
+            GuideQuestion(id: "injuries", prompt: "Was anyone hurt?", kind: .choice(["No", "Yes"])),
+            GuideQuestion(id: "police", prompt: "Did the police come?", kind: .choice(["Yes", "No / not yet"])),
+        ],
+        build: { a in
+            var steps: [String] = []
+            if a["injuries"] == "Yes" { steps.append("Call 911 — get medical help first.") }
+            steps.append("Move to safety if you can and turn on your hazard lights.")
+            if a["police"] == "Yes" {
+                steps.append("Get the officers' names and badge numbers and ask how to get the police report.")
+            } else {
+                steps.append("File a report at the nearest police station or online — it helps your claim.")
+            }
+            steps.append("Collect info: the other driver's license, registration, and insurance ID; photos; and witness contacts.")
+            steps.append("File a claim with your insurer as soon as possible — they'll send a 'proof of claim' form.")
+            steps.append("Keep records: police report number, claim number, repair estimates, and any medical bills.")
+            return ExtractionResult(
+                title: "After a car accident",
+                documentType: "Car-accident guide",
+                category: .finance,
+                summary: "What to do after a car accident — at the scene, the police report, and the insurance claim.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", accidentDetail),
+                notes: ["Contact your OWN insurer even if the accident wasn't your fault.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func accidentDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Collect info") {
+            return StepDetail(
+                explanation: "Gather everything at the scene — it's hard to get later.",
+                miniChecklist: ["Other driver's name, phone, license, and license plate.",
+                                "Their insurance company and policy number.",
+                                "Photos of all vehicles, the damage, and the wider scene.",
+                                "Location, date/time, and weather.",
+                                "Names and phone numbers of any witnesses."],
+                links: [StepLink(label: "Insurance Info Institute — at the scene", url: "https://www.iii.org/article/scene-accident")])
+        }
+        if text.hasPrefix("File a claim") {
+            return StepDetail(
+                explanation: "Call your insurer (or use their app) and report it, even if it seems minor.",
+                miniChecklist: ["Have your policy number ready.",
+                                "Give the date, location, and what happened.",
+                                "Share the police report number if you have one.",
+                                "Ask about your deductible and a rental car."])
+        }
+        return nil
+    }
+
+    // MARK: Doctor's appointment
+    static let doctorAppointment = Guide(
+        id: "doctor_appointment",
+        title: "Book a doctor's appointment",
+        subtitle: "Find an in-network doctor and what to bring",
+        category: .medical,
+        questions: [
+            GuideQuestion(id: "new", prompt: "New patient or a return visit?", kind: .choice(["New patient", "Return visit"])),
+            GuideQuestion(id: "kind", prompt: "What kind of doctor?", kind: .text("e.g. primary care, dentist")),
+        ],
+        build: { a in
+            let kind = val(a, "kind", default: "doctor")
+            var steps = ["Find an in-network \(kind) in your health plan's provider directory (insurer's website or the number on your card)."]
+            if a["new"] == "New patient" {
+                steps.append("Call or use the patient portal to book — new-patient slots can take weeks.")
+            } else {
+                steps.append("Call or use the patient portal to book your visit.")
+            }
+            steps.append("Confirm they take your insurance and ask what to bring.")
+            steps.append("Before the visit, write down your symptoms, medicines, allergies, and questions.")
+            steps.append("Bring your insurance card and a photo ID to the appointment.")
+            return ExtractionResult(
+                title: "Book a \(kind) appointment",
+                documentType: "Appointment guide",
+                category: .medical,
+                summary: "Find an in-network \(kind) and get ready for the visit.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", doctorDetail),
+                notes: ["In-network providers usually cost much less out of pocket.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func doctorDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Find an in-network") {
+            return StepDetail(
+                explanation: "Your plan's provider directory lists doctors who are in-network (lower cost).",
+                miniChecklist: ["Check the doctor is in-network for YOUR plan.",
+                                "Check they're accepting new patients.",
+                                "Pick a convenient location and hours.",
+                                "If unsure, call the number on your insurance card."],
+                links: [StepLink(label: "HealthCare.gov — how to find a doctor", url: "https://www.healthcare.gov/blog/how-to-find-a-doctor")])
+        }
+        if text.hasPrefix("Before the visit") {
+            return StepDetail(
+                explanation: "A little prep makes the visit go smoothly.",
+                miniChecklist: ["Your symptoms and when they started.",
+                                "All medicines and doses (or bring the bottles).",
+                                "Allergies and your medical / family history.",
+                                "Your top questions, written down."],
+                links: [StepLink(label: "MedlinePlus — make the most of your visit", url: "https://medlineplus.gov/ency/patientinstructions/000860.htm")])
+        }
+        return nil
+    }
 }

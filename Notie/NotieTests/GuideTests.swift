@@ -86,6 +86,37 @@ struct GuideTests {
         #expect(steps.contains("your state"))   // default fill, no crash
     }
 
+    // MARK: new guides
+
+    @Test func allSevenGuidesPresent() {
+        #expect(Guide.all.count == 7)
+    }
+
+    @Test func bankNoSSNAddsITINStepWithIRSLink() {
+        let item = ActionItem(from: Guide.bankAccount.build(["ssn": "No — I'll use an ITIN", "type": "Checking"]))
+        let itin = item.steps.first { $0.text.contains("Form W-7") }
+        #expect(itin != nil)
+        #expect(itin?.detail?.links.contains { $0.url.contains("irs.gov") } == true)
+    }
+
+    @Test func immigrationCitizenshipUsesN400Link() {
+        let item = ActionItem(from: Guide.immigration.build(["task": "Apply for citizenship"]))
+        let n400 = item.steps.first { $0.text.contains("N-400") }
+        #expect(n400?.detail?.links.contains { $0.url == "https://www.uscis.gov/n-400" } == true)
+    }
+
+    @Test func carAccidentWithInjuriesCalls911() {
+        let steps = Guide.carAccident.build(["injuries": "Yes", "police": "Yes"]).steps
+        #expect(steps.first?.contains("911") == true)
+    }
+
+    @Test func doctorFindStepHasHealthcareLink() {
+        let item = ActionItem(from: Guide.doctorAppointment.build(["new": "New patient", "kind": "dentist"]))
+        let find = item.steps.first { $0.text.contains("in-network") }
+        #expect(find?.detail?.links.contains { $0.url.contains("healthcare.gov") } == true)
+        #expect(find?.text.contains("dentist") == true)   // templated
+    }
+
     // MARK: Step detail (guides only)
 
     @Test func movingInternetStepCarriesDetailIntoActionItem() {
