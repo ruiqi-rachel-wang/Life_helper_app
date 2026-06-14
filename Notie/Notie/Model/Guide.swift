@@ -562,11 +562,10 @@ extension Guide {
         build: { a in
             let fault = val(a, "fault", default: "Not sure / shared")
             var steps: [String] = []
-            // At the scene
+            // At the scene — safety first, always.
+            steps.append("Make sure everyone is safe. If anyone is hurt, might be hurt, or there's any danger — call 911 right now.")
             if a["injuries"] == "Yes" {
-                steps.append("Call 911 — get medical help first.")
-            } else if a["injuries"] == "Not sure" {
-                steps.append("Check everyone for injuries; call 911 if anyone might be hurt.")
+                steps.append("Get medical care even if injuries seem minor — some show up hours or days later.")
             }
             steps.append("Move to safety if the cars are drivable, and turn on your hazard lights.")
             steps.append("Call the police if anyone's hurt, the damage is major, or your state requires it — and note the report number.")
@@ -637,6 +636,8 @@ extension Guide {
         subtitle: "Find an in-network doctor and what to bring",
         category: .medical,
         questions: [
+            GuideQuestion(id: "urgency", prompt: "How urgent is this?",
+                          kind: .choice(["Routine visit", "Urgent — need care soon", "Emergency"])),
             GuideQuestion(id: "insurance", prompt: "Do you have health insurance?", kind: .choice(["Yes", "No"])),
             GuideQuestion(id: "insurer", prompt: "Which insurance plan? (optional)", kind: .text("e.g. Aetna, Blue Cross, Kaiser")),
             GuideQuestion(id: "new", prompt: "New patient or a return visit?", kind: .choice(["New patient", "Return visit"])),
@@ -646,7 +647,32 @@ extension Guide {
             let kind = val(a, "kind", default: "doctor")
             let insured = a["insurance"] != "No"
             let insurer = a["insurer"] ?? ""
+            let urgency = a["urgency"] ?? "Routine visit"
+
+            // Emergency — skip the booking flow entirely, route to care now.
+            if urgency == "Emergency" {
+                let steps = [
+                    "Call 911 or go to the nearest emergency room now — don't wait for an appointment.",
+                    "If you can, bring a photo ID and your insurance card — but don't delay care to find them.",
+                    "Tell them your symptoms, the medicines you take, and any allergies when you arrive.",
+                ]
+                return ExtractionResult(
+                    title: "Get emergency care",
+                    documentType: "Appointment guide",
+                    category: .medical,
+                    summary: "This is an emergency — get care right away, not through a regular appointment.",
+                    steps: steps,
+                    detailedSteps: detailed(steps, state: "", doctorDetail),
+                    notes: ["Emergency rooms must treat you regardless of insurance or ability to pay.",
+                            "Not sure if it's an emergency? Call the nurse line on your insurance card, or your doctor's after-hours line.",
+                            referenceNote],
+                    confidence: 1)
+            }
+
             var steps: [String] = []
+            if urgency.hasPrefix("Urgent") {
+                steps.append("If it can't wait but isn't life-threatening, go to an urgent care or walk-in clinic for same-day care.")
+            }
             if insured {
                 let on = insurer.isEmpty ? "" : " on \(insurer)"
                 steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (their website or the number on your card).")

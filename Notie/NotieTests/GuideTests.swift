@@ -105,9 +105,23 @@ struct GuideTests {
         #expect(n400?.detail?.links.contains { $0.url == "https://www.uscis.gov/n-400" } == true)
     }
 
-    @Test func carAccidentWithInjuriesCalls911() {
-        let steps = Guide.carAccident.build(["injuries": "Yes"]).steps
-        #expect(steps.first?.contains("911") == true)
+    @Test func carAccidentAlwaysLeadsWith911() {
+        // Safety step is unconditional now — even with "No" injuries selected.
+        for injuries in ["No", "Yes", "Not sure"] {
+            let steps = Guide.carAccident.build(["injuries": injuries]).steps
+            #expect(steps.first?.contains("911") == true)
+        }
+    }
+
+    @Test func doctorEmergencyRoutesTo911NotBooking() {
+        let steps = Guide.doctorAppointment.build(["urgency": "Emergency"]).steps.joined(separator: "\n")
+        #expect(steps.contains("911"))
+        #expect(!steps.lowercased().contains("provider directory"))   // skips the booking flow
+    }
+
+    @Test func doctorUrgentSuggestsUrgentCare() {
+        let steps = Guide.doctorAppointment.build(["urgency": "Urgent — need care soon"]).steps.joined(separator: "\n")
+        #expect(steps.lowercased().contains("urgent care"))
     }
 
     @Test func carAccidentClaimBranchesByFaultAndReachesRepair() {

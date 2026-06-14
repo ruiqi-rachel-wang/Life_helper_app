@@ -115,8 +115,6 @@ struct GuidesView: View {
 
 private struct GuideCard: View {
     let guide: Guide
-    // Representative step count from the default branch.
-    private var stepCount: Int { guide.build([:]).steps.count }
 
     var body: some View {
         HStack(spacing: 14) {
@@ -130,7 +128,7 @@ private struct GuideCard: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(guide.title).font(.cardTitle).foregroundStyle(Color.ink).lineLimit(1)
                 Text(guide.subtitle).font(.subline).foregroundStyle(Color.faded).lineLimit(1)
-                Text("\(guide.category.rawValue.uppercased()) · \(stepCount) STEPS")
+                Text(guide.category.rawValue.uppercased())
                     .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint).padding(.top, 4)
             }
             Spacer()
@@ -151,6 +149,18 @@ struct GuideQuestionsView: View {
     var onContinue: ([String: String]) -> Void
     @State private var answers: [String: String] = [:]
 
+    // Choice and state questions must be answered — we never assume a default,
+    // because the wrong assumption (e.g. "no injuries") sends the wrong checklist.
+    // Text questions stay optional.
+    private var missingRequired: Bool {
+        guide.questions.contains { q in
+            switch q.kind {
+            case .choice, .state: return answers[q.id] == nil
+            case .text: return false
+            }
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             Color.paper.ignoresSafeArea()
@@ -167,29 +177,20 @@ struct GuideQuestionsView: View {
 
                     ForEach(guide.questions) { q in questionCard(q) }
 
-                    Button { onContinue(answers) } label: {
-                        Text("Build my checklist")
+                    Button { if !missingRequired { onContinue(answers) } } label: {
+                        Text(missingRequired ? "Answer the questions above to continue" : "Build my checklist")
                             .font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.paper)
                             .frame(maxWidth: .infinity).padding(.vertical, 15)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+                            .background(RoundedRectangle(cornerRadius: 12).fill(missingRequired ? Color.faint : Color.ink))
                     }
                     .buttonStyle(.plain)
+                    .disabled(missingRequired)
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal, 14).padding(.top, 24)
             }
         }
         .navigationTitle("").navigationBarTitleDisplayMode(.inline)
-        .onAppear { seedDefaults() }
-    }
-
-    // Pre-select the first option for each choice question so Continue always works.
-    private func seedDefaults() {
-        for q in guide.questions {
-            if case .choice(let options) = q.kind, answers[q.id] == nil {
-                answers[q.id] = options.first
-            }
-        }
     }
 
     @ViewBuilder
