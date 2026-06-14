@@ -5,6 +5,7 @@
 //
 
 import Testing
+import Foundation
 @testable import Notie
 
 struct GuideTests {
@@ -173,11 +174,26 @@ struct GuideTests {
         #expect(other.lowercased().contains("repair"))         // full arc → repair
     }
 
-    @Test func doctorWithInsurerLinksToThatInsurer() {
+    @Test func doctorWithInsurerNamesItButKeepsLinkOfficial() {
         let item = ActionItem(from: Guide.doctorAppointment.build(
             ["insurance": "Yes", "insurer": "Aetna", "new": "New patient", "kind": "dentist"]))
         let find = item.steps.first { $0.text.contains("in-network") }
-        #expect(find?.detail?.links.first?.url.contains("Aetna") == true)
+        #expect(find?.text.contains("Aetna") == true)                               // insurer named in the step
+        #expect(find?.detail?.links.allSatisfy { $0.url.contains(".gov") } == true)  // but every link stays official
+    }
+
+    @Test func noGuideLinksToNonOfficialSites() {
+        // Every authored link across all guides must be a government (.gov/.us) site.
+        for guide in Guide.all {
+            let item = ActionItem(from: guide.build([:]))
+            for step in item.steps {
+                for link in step.detail?.links ?? [] {
+                    let host = URL(string: link.url)?.host ?? ""
+                    #expect(host.hasSuffix(".gov") || host.hasSuffix(".us"),
+                            "Non-official link in \(guide.id): \(link.url)")
+                }
+            }
+        }
     }
 
     @Test func doctorFindStepHasHealthcareLink() {

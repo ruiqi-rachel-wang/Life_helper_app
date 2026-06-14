@@ -89,11 +89,10 @@ extension Guide {
     // advice — confirm specifics on the official site, and the user can edit.
     static let referenceNote = "This is a general guide — requirements vary, so check the official website. You can edit or check off any step."
 
-    // A safe link for an online action: a web search (never a possibly-wrong
-    // official URL we'd be guessing). Used when we don't have an official site.
-    static func searchURL(_ query: String) -> String {
-        "https://www.google.com/search?q=" + (query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)
-    }
+    // The official federal portal that links out to every state DMV — used as a
+    // safe fallback when we don't have a specific state's URL (we never link to a
+    // web search or a non-government site).
+    static let usaGovDMV = "https://www.usa.gov/motor-vehicle-services"
 
     // Official (government) DMV/licensing site per state — agencies, not
     // businesses, so safe to link directly. Best-effort; verify periodically as
@@ -152,7 +151,7 @@ extension Guide {
             "Wisconsin": "https://wisconsindot.gov",
             "Wyoming": "https://www.dot.state.wy.us",
         ]
-        return map[state] ?? searchURL("\(state) DMV official site")
+        return map[state] ?? usaGovDMV
     }
 
     // Wrap milestone strings as checklist steps, attaching authored detail (with
@@ -658,8 +657,7 @@ extension Guide {
                                 "Their insurance company and policy number.",
                                 "Photos of all vehicles, the damage, and the wider scene.",
                                 "Location, date/time, and weather.",
-                                "Names and phone numbers of any witnesses."],
-                links: [StepLink(label: "Insurance Info Institute — at the scene", url: "https://www.iii.org/article/scene-accident")])
+                                "Names and phone numbers of any witnesses."])
         }
         if text.hasPrefix("File the claim") || text.hasPrefix("File a claim") || text.hasPrefix("Report it to your own insurer") {
             return StepDetail(
@@ -749,18 +747,15 @@ extension Guide {
 
     private static func doctorDetail(_ text: String, _ s: String) -> StepDetail? {
         if text.hasPrefix("Find an in-network") {
-            // s = the insurer name (if given). Link to their provider finder;
-            // otherwise the general HealthCare.gov how-to.
-            let link = s.isEmpty
-                ? StepLink(label: "HealthCare.gov — how to find a doctor", url: "https://www.healthcare.gov/blog/how-to-find-a-doctor")
-                : StepLink(label: "Find a doctor on \(s)", url: searchURL("\(s) find a doctor provider directory"))
+            // We don't link to a specific insurer's site (not official) — the user
+            // checks their own card/website. Only the official HealthCare.gov how-to.
             return StepDetail(
-                explanation: "Your plan's provider directory lists doctors who are in-network (lower cost).",
+                explanation: "Your plan's provider directory lists doctors who are in-network (lower cost). Find it on the back of your insurance card or your insurer's website.",
                 miniChecklist: ["Check the doctor is in-network for YOUR plan.",
                                 "Check they're accepting new patients.",
                                 "Pick a convenient location and hours.",
                                 "If unsure, call the number on your insurance card."],
-                links: [link])
+                links: [StepLink(label: "HealthCare.gov — how to find a doctor", url: "https://www.healthcare.gov/blog/how-to-find-a-doctor")])
         }
         if text.hasPrefix("Find a community health center") {
             return StepDetail(
