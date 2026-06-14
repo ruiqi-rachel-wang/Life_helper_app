@@ -556,38 +556,59 @@ extension Guide {
         category: .finance,
         questions: [
             GuideQuestion(id: "injuries", prompt: "Was anyone hurt?", kind: .choice(["No", "Yes", "Not sure"])),
-            GuideQuestion(id: "police", prompt: "Did the police come?", kind: .choice(["Yes", "No / not yet"])),
+            GuideQuestion(id: "fault", prompt: "Who was at fault?",
+                          kind: .choice(["The other driver", "Me", "Not sure / shared", "No other car involved"])),
         ],
         build: { a in
+            let fault = val(a, "fault", default: "Not sure / shared")
             var steps: [String] = []
+            // At the scene
             if a["injuries"] == "Yes" {
                 steps.append("Call 911 — get medical help first.")
             } else if a["injuries"] == "Not sure" {
-                steps.append("Check everyone for injuries — if anyone might be hurt, call 911.")
+                steps.append("Check everyone for injuries; call 911 if anyone might be hurt.")
             }
-            steps.append("Move to safety if you can and turn on your hazard lights.")
-            if a["police"] == "Yes" {
-                steps.append("Get the officers' names and badge numbers and ask how to get the police report.")
+            steps.append("Move to safety if the cars are drivable, and turn on your hazard lights.")
+            steps.append("Call the police if anyone's hurt, the damage is major, or your state requires it — and note the report number.")
+            if fault != "No other car involved" {
+                steps.append("Exchange info and photograph everything: the other driver's license, plate, and insurance; both cars; and the scene.")
             } else {
-                steps.append("File a report at the nearest police station or online — it helps your claim.")
+                steps.append("Photograph the damage and the scene, and note what happened.")
             }
-            steps.append("Collect info: the other driver's license, registration, and insurance ID; photos; and witness contacts.")
-            steps.append("File a claim with your insurer as soon as possible — they'll send a 'proof of claim' form.")
-            steps.append("Keep records: police report number, claim number, repair estimates, and any medical bills.")
+            // The claim — depends on who's responsible
+            switch fault {
+            case "The other driver":
+                steps.append("File the claim with the at-fault driver's insurer (a third-party claim) — OR file with your own insurer and let them recover the cost from the other side.")
+            case "Me":
+                steps.append("File a claim with your own insurer — this is where your collision coverage applies.")
+            case "No other car involved":
+                steps.append("File a claim with your own insurer under collision or comprehensive coverage.")
+            default:
+                steps.append("Report it to your own insurer; they'll investigate who was at fault.")
+            }
+            // Repair → done
+            steps.append("Get a repair estimate — the insurer may inspect the car or send you to a shop.")
+            steps.append("Choose a repair shop — you can usually pick your own, not only the insurer's.")
+            steps.append("Ask about a rental car while yours is in the shop, if your policy covers it.")
+            steps.append("Pay your deductible if one applies, then pick up the car and check the repairs.")
+            steps.append("Keep records: claim number, police report number, estimates, and any medical bills.")
             return ExtractionResult(
                 title: "After a car accident",
                 documentType: "Car-accident guide",
                 category: .finance,
-                summary: "What to do after a car accident — at the scene, the police report, and the insurance claim.",
+                summary: "From the scene to a repaired car — what to do after an accident\(fault == "The other driver" ? " the other driver caused" : "").",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", accidentDetail),
-                notes: ["Contact your OWN insurer even if the accident wasn't your fault.",
+                notes: ["You don't always need the police — but a report helps if there's an injury, major damage, or a dispute.",
+                        fault == "The other driver"
+                            ? "Other driver at fault? You can claim against THEIR insurer; your own insurer can also handle it and recover the cost."
+                            : "Report it to your insurer promptly — even a minor accident is worth reporting.",
                         referenceNote],
                 confidence: 1)
         })
 
     private static func accidentDetail(_ text: String, _ s: String) -> StepDetail? {
-        if text.hasPrefix("Collect info") {
+        if text.hasPrefix("Exchange info") || text.hasPrefix("Photograph the damage") {
             return StepDetail(
                 explanation: "Gather everything at the scene — it's hard to get later.",
                 miniChecklist: ["Other driver's name, phone, license, and license plate.",
@@ -597,13 +618,14 @@ extension Guide {
                                 "Names and phone numbers of any witnesses."],
                 links: [StepLink(label: "Insurance Info Institute — at the scene", url: "https://www.iii.org/article/scene-accident")])
         }
-        if text.hasPrefix("File a claim") {
+        if text.hasPrefix("File the claim") || text.hasPrefix("File a claim") || text.hasPrefix("Report it to your own insurer") {
             return StepDetail(
-                explanation: "Call your insurer (or use their app) and report it, even if it seems minor.",
-                miniChecklist: ["Have your policy number ready.",
-                                "Give the date, location, and what happened.",
-                                "Share the police report number if you have one.",
-                                "Ask about your deductible and a rental car."])
+                explanation: "Calling the insurer (yours or the at-fault driver's), have your details ready.",
+                miniChecklist: ["Your policy number — or the at-fault driver's insurer and policy number.",
+                                "Date, location, and what happened.",
+                                "The police report number, if you have one.",
+                                "Your photos and the other driver's info.",
+                                "Ask about your deductible, a rental car, and the timeline."])
         }
         return nil
     }
@@ -616,15 +638,18 @@ extension Guide {
         category: .medical,
         questions: [
             GuideQuestion(id: "insurance", prompt: "Do you have health insurance?", kind: .choice(["Yes", "No"])),
+            GuideQuestion(id: "insurer", prompt: "Which insurance plan? (optional)", kind: .text("e.g. Aetna, Blue Cross, Kaiser")),
             GuideQuestion(id: "new", prompt: "New patient or a return visit?", kind: .choice(["New patient", "Return visit"])),
             GuideQuestion(id: "kind", prompt: "What kind of doctor?", kind: .text("e.g. primary care, dentist")),
         ],
         build: { a in
             let kind = val(a, "kind", default: "doctor")
             let insured = a["insurance"] != "No"
+            let insurer = a["insurer"] ?? ""
             var steps: [String] = []
             if insured {
-                steps.append("Find an in-network \(kind) in your health plan's provider directory (insurer's website or the number on your card).")
+                let on = insurer.isEmpty ? "" : " on \(insurer)"
+                steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (their website or the number on your card).")
             } else {
                 steps.append("Find a community health center or sliding-scale clinic near you — they charge based on your income.")
             }
@@ -643,7 +668,7 @@ extension Guide {
                 summary: insured ? "Find an in-network \(kind) and get ready for the visit."
                                  : "Find an affordable \(kind) and get ready for the visit.",
                 steps: steps,
-                detailedSteps: detailed(steps, state: "", doctorDetail),
+                detailedSteps: detailed(steps, state: insurer, doctorDetail),
                 notes: insured ? ["In-network providers usually cost much less out of pocket.", referenceNote]
                                : ["Community health centers charge on a sliding scale based on income — you can be seen without insurance.", referenceNote],
                 confidence: 1)
@@ -651,13 +676,18 @@ extension Guide {
 
     private static func doctorDetail(_ text: String, _ s: String) -> StepDetail? {
         if text.hasPrefix("Find an in-network") {
+            // s = the insurer name (if given). Link to their provider finder;
+            // otherwise the general HealthCare.gov how-to.
+            let link = s.isEmpty
+                ? StepLink(label: "HealthCare.gov — how to find a doctor", url: "https://www.healthcare.gov/blog/how-to-find-a-doctor")
+                : StepLink(label: "Find a doctor on \(s)", url: searchURL("\(s) find a doctor provider directory"))
             return StepDetail(
                 explanation: "Your plan's provider directory lists doctors who are in-network (lower cost).",
                 miniChecklist: ["Check the doctor is in-network for YOUR plan.",
                                 "Check they're accepting new patients.",
                                 "Pick a convenient location and hours.",
                                 "If unsure, call the number on your insurance card."],
-                links: [StepLink(label: "HealthCare.gov — how to find a doctor", url: "https://www.healthcare.gov/blog/how-to-find-a-doctor")])
+                links: [link])
         }
         if text.hasPrefix("Find a community health center") {
             return StepDetail(

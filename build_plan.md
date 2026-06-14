@@ -331,8 +331,10 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
   fill answers into the steps via templates; then a best-effort GPT-4o-mini pass
   rewords them naturally + adds situation-specific tips. AI never decides the
   checklist shape, and if it fails/offline we fall back to the templated checklist.
-- **Framework + 3 guides deep this week:** Moving, New job, Driver's license.
-  Bank, Visa, Car accident come once the pattern is proven.
+- **Framework + 7 guides this week:** Moving, Bank account, New job, Driver's
+  license, Green card / visa, Car accident, and Doctor's appointment. All seven
+  use the same deterministic-question → templated-checklist → optional AI-polish
+  pattern.
 
 **Build:**
 1. **Reuse Review for prefilled content.** Refactor `ReviewView` to be
@@ -350,8 +352,9 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
 4. **Questions screen.** Tap guide → a single scrollable form of its questions →
    Continue builds the base result and pushes Review (which runs the polish).
    Back/cancel saves nothing.
-5. **Author content** for Moving / New job / Driver's license (questions, branches,
-   templated checklists). Save items with `source = .guide` (shows the guide tag).
+5. **Author content** for all 7 launch guides (questions, branches, templated
+   checklists, safety notes, official links where appropriate). Save items with
+   `source = .guide` (shows the guide tag).
 
 **Step Detail (decided 2026-06-13, guides only for now):** the main checklist
 shows MILESTONES; tapping a step with detail opens a Step Detail sheet
@@ -362,8 +365,8 @@ only (flat mini-checklist, no nesting). AI may reword but must not invent live
 facts (provider names/availability). Editable "fields to save" (provider/account
 #/install date) are a deliberate later follow-up.
 
-**Done when:** answer a guide's questions → tailored checklist in Review → edit if
-needed → Add → it's in the Inbox tagged "Guide", survives force-quit, with
+**Done when:** all 7 guides can be answered → tailored checklist in Review → edit
+if needed → Add → saved in the Inbox tagged "Guide", survives force-quit, with
 editable steps/reminders and tap-through Step Detail. AI-offline still produces
 the templated checklist.
 

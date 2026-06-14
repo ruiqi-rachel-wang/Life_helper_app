@@ -210,6 +210,7 @@ struct GuideQuestionsView: View {
                             .padding(.horizontal, 12).padding(.vertical, 10)
                             .background(RoundedRectangle(cornerRadius: 10).fill(on ? Color.bg : Color.clear))
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(on ? Color.accent : Color.hair, lineWidth: 1))
+                            .contentShape(Rectangle())   // make the whole row tappable, not just the text
                         }
                         .buttonStyle(.plain)
                     }

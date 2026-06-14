@@ -106,8 +106,23 @@ struct GuideTests {
     }
 
     @Test func carAccidentWithInjuriesCalls911() {
-        let steps = Guide.carAccident.build(["injuries": "Yes", "police": "Yes"]).steps
+        let steps = Guide.carAccident.build(["injuries": "Yes"]).steps
         #expect(steps.first?.contains("911") == true)
+    }
+
+    @Test func carAccidentClaimBranchesByFaultAndReachesRepair() {
+        let other = Guide.carAccident.build(["fault": "The other driver"]).steps.joined(separator: "\n")
+        #expect(other.contains("at-fault driver's insurer"))   // third-party path
+        let mine = Guide.carAccident.build(["fault": "Me"]).steps.joined(separator: "\n")
+        #expect(mine.contains("your own insurer"))
+        #expect(other.lowercased().contains("repair"))         // full arc → repair
+    }
+
+    @Test func doctorWithInsurerLinksToThatInsurer() {
+        let item = ActionItem(from: Guide.doctorAppointment.build(
+            ["insurance": "Yes", "insurer": "Aetna", "new": "New patient", "kind": "dentist"]))
+        let find = item.steps.first { $0.text.contains("in-network") }
+        #expect(find?.detail?.links.first?.url.contains("Aetna") == true)
     }
 
     @Test func doctorFindStepHasHealthcareLink() {
