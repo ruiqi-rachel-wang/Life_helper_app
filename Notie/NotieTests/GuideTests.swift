@@ -92,6 +92,24 @@ struct GuideTests {
         #expect(Guide.all.count == 7)
     }
 
+    // MARK: provenance + AI-risk metadata
+
+    private func guide(_ id: String) -> Guide { Guide.all.first { $0.id == id }! }
+
+    @Test func sensitiveTopicsAreFlaggedAsSensitive() {
+        for id in ["immigration", "bank_account", "doctor_appointment", "car_accident"] {
+            #expect(guide(id).risk == .sensitive)
+        }
+        #expect(guide("moving").risk == .general)
+        #expect(guide("new_job").risk == .general)
+    }
+
+    @Test func guidesCarryOfficialSourceAndReviewDate() {
+        #expect(guide("immigration").officialSource?.contains("uscis.gov") == true)
+        #expect(guide("moving").officialSource?.contains("usps") == true)
+        #expect(!guide("immigration").lastReviewed.isEmpty)
+    }
+
     @Test func bankNoSSNAddsITINStepWithIRSLink() {
         let item = ActionItem(from: Guide.bankAccount.build(["ssn": "No — I'll use an ITIN", "type": "Checking"]))
         let itin = item.steps.first { $0.text.contains("Form W-7") }

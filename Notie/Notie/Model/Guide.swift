@@ -21,6 +21,10 @@ nonisolated struct GuideQuestion: Identifiable, Equatable {
     let kind: Kind
 }
 
+// How careful we are with a guide's topic. `.sensitive` (immigration, money,
+// medical, legal) NEVER goes to the AI polish pass — it stays on the device.
+nonisolated enum GuideRisk { case general, sensitive }
+
 nonisolated struct Guide: Identifiable {
     let id: String
     let title: String
@@ -30,6 +34,12 @@ nonisolated struct Guide: Identifiable {
     // Deterministic: answers (questionID → chosen option / typed text / state) →
     // a tailored ExtractionResult (the AI polish is a separate pass).
     let build: ([String: String]) -> ExtractionResult
+
+    // Provenance / safety metadata (review-team requested). lastReviewed is when a
+    // human last checked this guide's facts against the official source.
+    var officialSource: String? = nil       // primary official site (label form)
+    var lastReviewed: String = "June 2026"
+    var risk: GuideRisk = .general
 }
 
 // US states + DC for the `.state` question kind.
@@ -50,7 +60,23 @@ nonisolated enum USStates {
 // MARK: - The authored guides (3 deep for Week 7; more to come)
 
 extension Guide {
-    static let all: [Guide] = [moving, bankAccount, newJob, driversLicense, immigration, carAccident, doctorAppointment]
+    // Stamp provenance/risk onto a guide (returns a copy).
+    private func meta(source: String? = nil, risk: GuideRisk = .general) -> Guide {
+        var g = self
+        g.officialSource = source
+        g.risk = risk
+        return g
+    }
+
+    static let all: [Guide] = [
+        moving.meta(source: "USPS (usps.com/move)"),
+        bankAccount.meta(source: "Consumer Financial Protection Bureau (consumerfinance.gov)", risk: .sensitive),
+        newJob.meta(source: "USCIS Form I-9 (uscis.gov)"),
+        driversLicense.meta(),   // source varies by state DMV
+        immigration.meta(source: "USCIS (uscis.gov)", risk: .sensitive),
+        carAccident.meta(risk: .sensitive),
+        doctorAppointment.meta(source: "HealthCare.gov", risk: .sensitive),
+    ]
 
     private static func val(_ a: [String: String], _ key: String, default def: String) -> String {
         let v = a[key] ?? ""

@@ -64,6 +64,15 @@ struct GuidesView: View {
                             load: {
                                 var base = g.build(answers)
                                 base.confidence = 1   // deterministic checklist — always certain
+                                if let src = g.officialSource {
+                                    base.notes.append("Source: \(src) — last checked \(g.lastReviewed).")
+                                }
+                                // Sensitive topics (immigration, money, medical, legal) stay on the
+                                // device — we never send them to the AI polish pass.
+                                guard g.risk == .general else {
+                                    base.notes.append("Sensitive topic — kept on your device, not sent to AI.")
+                                    return [base]
+                                }
                                 let context = "\(g.title). "
                                     + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
                                 return [await OpenAIClient().polish(base, context: context)]
