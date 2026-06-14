@@ -87,7 +87,7 @@ extension Guide {
 
     // Shown on every guide: these are general checklists, not official/legal
     // advice — confirm specifics on the official site, and the user can edit.
-    static let referenceNote = "This is a general guide — requirements vary, so check the official website. You can edit or check off any step."
+    static let referenceNote = "General guide — check the official site, and edit any step."
 
     // The official federal portal that links out to every state DMV — used as a
     // safe fallback when we don't have a specific state's URL (we never link to a
@@ -266,12 +266,12 @@ extension Guide {
 
             var steps: [String] = []
             if home == "Renting" {
-                steps.append("Check your lease for how much notice you owe (often 30–60 days), then give your landlord written notice and confirm your move-out date.")
+                steps.append("Give your landlord written notice (check your lease — often 30–60 days).")
             }
             if knowsAddress {
-                steps.append("Set up USPS mail forwarding at usps.com/move (start ~2 weeks ahead; a small ID-verification fee applies). Use the official USPS site, not a third-party that charges extra.")
+                steps.append("Set up USPS mail forwarding at usps.com/move (~2 weeks ahead; small fee). Use the official site.")
             } else {
-                steps.append("Set up temporary mail forwarding or use a trusted mailing address until you have your new address.")
+                steps.append("Set up temporary mail forwarding until you have your new address.")
             }
             steps.append("Arrange the move — truck, container, or movers — and get boxes.")
             steps.append("Update your address with your bank, credit cards, and insurance.")
@@ -290,18 +290,18 @@ extension Guide {
             }
 
             if another {
-                steps.append("Update your driver's license or state ID in \(newState) — many states require this within ~10–30 days, so check the DMV.")
+                steps.append("Update your license/ID in \(newState) (often within 10–30 days — check the DMV).")
                 if hasCar {
-                    steps.append("Register your car and get new plates in \(newState), and update your car insurance to the new garaging address.")
+                    steps.append("Register your car and get new \(newState) plates, and update your car insurance.")
                 }
                 steps.append("Register to vote in \(newState).")
             } else {
                 if hasCar {
-                    steps.append("Update the address on your license/ID and car registration with the DMV (often within ~10 days — check your state).")
+                    steps.append("Update your license/ID and car registration address at the DMV.")
                 } else {
-                    steps.append("Update the address on your driver's license or state ID with the DMV.")
+                    steps.append("Update your license/ID address at the DMV.")
                 }
-                steps.append("Update your voter registration with your new address.")
+                steps.append("Update your voter registration.")
             }
 
             return ExtractionResult(
@@ -311,9 +311,8 @@ extension Guide {
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
                 detailedSteps: detailed(steps, state: newState, movingDetail),
-                notes: ["USPS forwarding only redirects your mail — you still have to update your bank, DMV, employer, etc. separately.",
-                        "DMV address deadlines are state-specific (often 10–30 days) — don't wait.",
-                        "Set your move date as this task's reminder so the deadlines stay ahead of it.",
+                notes: ["USPS forwarding only moves your mail — update your bank, DMV, and employer separately.",
+                        "Set your move date as the reminder.",
                         referenceNote],
                 confidence: 1)
         })
@@ -337,26 +336,26 @@ extension Guide {
             let work = a["work"] ?? ""
             let isContractor = type == "Contractor / 1099"
 
-            var steps = ["Save your offer letter or contract and confirm your start date, location, and first-day instructions."]
+            var steps = ["Save your offer letter and confirm your start date and first-day details."]
             if isContractor {
-                steps.append("Send \(employer) a W-9 (not I-9/W-4) along with your payment details and invoice schedule.")
-                steps.append("Set aside money for taxes — contractors usually pay quarterly estimated taxes.")
+                steps.append("Send \(employer) a W-9 (not I-9/W-4) with your payment and invoice details.")
+                steps.append("Set aside money for taxes — contractors usually pay quarterly.")
                 steps.append("Decide how you'll invoice and track payments.")
             } else {
-                steps.append("Complete Form I-9 (identity + work authorization) and Form W-4 (federal tax withholding) for \(employer).")
-                steps.append("Complete your state tax-withholding form, if your state has one.")
-                steps.append("Set up direct deposit with a voided check or your bank details.")
-                steps.append("Fill out emergency-contact info and finish any background check / onboarding portal.")
+                steps.append("Complete Form I-9 (work authorization) and Form W-4 (tax withholding) for \(employer).")
+                steps.append("Complete your state tax form, if any.")
+                steps.append("Set up direct deposit (voided check or bank details).")
+                steps.append("Finish emergency-contact info and any background check / onboarding.")
                 steps.append("Enroll in benefits (health, dental, retirement) before the deadline.")
                 if work == "Remote" || work == "Hybrid" {
-                    steps.append("Arrange pickup or shipping of your work equipment.")
+                    steps.append("Arrange your work equipment.")
                 }
-                steps.append("Check your first paycheck — confirm the pay rate, tax withholding, and direct deposit are all correct.")
+                steps.append("Check your first paycheck — pay rate, taxes, and direct deposit.")
             }
 
             var notes = ["I-9 verifies you can work in the U.S.; W-4 sets your tax withholding.",
-                         "Benefits enrollment usually closes ~30 days after your start date — don't miss it.",
-                         "Only submit your SSN, bank, and ID through the employer's official HR portal — never by email or text."]
+                         "Benefits enrollment usually closes ~30 days after you start.",
+                         "Submit your SSN, bank, and ID only through the official HR portal — never by email or text."]
             if type == "Not sure" {
                 notes.insert("Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.", at: 0)
             }
@@ -462,17 +461,17 @@ extension Guide {
             let ssn = a["ssn"] ?? ""
             var steps = ["Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."]
             if ssn == "No — I'll use an ITIN" {
-                steps.append("No SSN? Apply for an ITIN with IRS Form W-7 (it can take up to ~7 weeks) — or call banks first, since some accept a foreign passport instead.")
+                steps.append("No SSN? Apply for an ITIN (IRS Form W-7, ~7 weeks) — or ask banks first; some take a foreign passport.")
             } else if ssn == "Not sure" {
-                steps.append("Not sure if you have an SSN or ITIN? Check old tax documents, or call the IRS — you don't always need an SSN to open an account.")
+                steps.append("Not sure? Check old tax forms or call the IRS — you may not need an SSN.")
             }
-            steps.append("Compare a few banks or credit unions on monthly fees, minimum balance, and ATM access — look for a no-fee, no-overdraft account.")
-            steps.append("Open the account online or at a branch and make the opening deposit.")
+            steps.append("Compare banks/credit unions on fees, minimum balance, and ATMs — look for a no-fee, no-overdraft account.")
+            steps.append("Open the account and make the opening deposit.")
             steps.append("Set up online banking, direct deposit, and alerts; order your debit card.")
 
-            var notes = ["Many banks and credit unions accept an ITIN or foreign passport instead of an SSN, but requirements vary — call ahead to confirm what they need.",
-                         "No standard proof of address? Ask which alternatives the bank accepts — a letter from an employer, school, or shelter sometimes works.",
-                         "Turned down before? Ask about a 'second-chance' checking account, and check your ChexSystems report for errors.",
+            var notes = ["Many banks accept an ITIN or foreign passport instead of an SSN — call ahead to confirm.",
+                         "No proof of address? Ask what alternatives the bank accepts (an employer, school, or shelter letter often works).",
+                         "Turned down before? Ask about a 'second-chance' account and check your ChexSystems report for errors.",
                          referenceNote]
             return ExtractionResult(
                 title: "Open a bank account",
@@ -496,7 +495,7 @@ extension Guide {
                                 "Money for the opening deposit (often $25–$100)."],
                 needed: ["Originals, not photocopies"])
         }
-        if text.contains("ITIN with IRS Form W-7") {
+        if text.contains("Form W-7") {
             return StepDetail(
                 explanation: "An ITIN is a federal tax ID for people who can't get an SSN. It's for tax purposes — it isn't a general photo ID. Apply with IRS Form W-7.",
                 links: [StepLink(label: "IRS — ITIN / Form W-7",
@@ -560,9 +559,9 @@ extension Guide {
                 summary: "Steps to \(task.lowercased()) with USCIS.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", immigrationDetail),
-                notes: ["This covers common USCIS filings only — it doesn't cover every visa type or situation.",
-                        "Immigration rules are complex — for anything unclear, consider free legal aid or a USCIS-accredited representative.",
-                        "USCIS may extend your green card's validity on the I-90 receipt notice — check the current I-90 page for how long.",
+                notes: ["Covers common USCIS filings only — it doesn't cover every visa type or situation.",
+                        "Immigration rules are complex — for anything unclear, get free legal aid or a USCIS-accredited rep.",
+                        "USCIS may extend your green card on the I-90 receipt notice — check the I-90 page.",
                         referenceNote],
                 confidence: 1)
         })
@@ -606,45 +605,43 @@ extension Guide {
             let fault = val(a, "fault", default: "Not sure / shared")
             var steps: [String] = []
             // At the scene — safety first, always.
-            steps.append("Make sure everyone is safe. If anyone is hurt, might be hurt, or there's any danger — call 911 right now.")
+            steps.append("Make sure everyone is safe — if anyone is hurt or in danger, call 911 now.")
             if a["injuries"] == "Yes" {
-                steps.append("Get medical care even if injuries seem minor — some show up hours or days later.")
+                steps.append("Get medical care even if injuries seem minor — some show up later.")
             }
-            steps.append("Move to safety if the cars are drivable, and turn on your hazard lights.")
-            steps.append("Call the police if anyone's hurt, the damage is major, or your state requires it — and note the report number.")
+            steps.append("Move to safety if you can, and turn on your hazard lights.")
+            steps.append("Call the police if anyone's hurt, damage is major, or your state requires it — note the report number.")
             if fault != "No other car involved" {
-                steps.append("Exchange info and photograph everything: the other driver's license, plate, and insurance; both cars; and the scene.")
+                steps.append("Exchange info and photograph everything: the other driver's license, plate, insurance, both cars, and the scene.")
             } else {
-                steps.append("Photograph the damage and the scene, and note what happened.")
+                steps.append("Photograph the damage and scene, and note what happened.")
             }
             // The claim — depends on who's responsible
             switch fault {
             case "The other driver":
-                steps.append("File the claim with the at-fault driver's insurer (a third-party claim) — OR file with your own insurer and let them recover the cost from the other side.")
+                steps.append("File with the at-fault driver's insurer (third-party claim) — or file with your own and let them recover the cost.")
             case "Me":
-                steps.append("File a claim with your own insurer — this is where your collision coverage applies.")
+                steps.append("File a claim with your own insurer (collision coverage).")
             case "No other car involved":
-                steps.append("File a claim with your own insurer under collision or comprehensive coverage.")
+                steps.append("File with your own insurer (collision or comprehensive).")
             default:
-                steps.append("Report it to your own insurer; they'll investigate who was at fault.")
+                steps.append("Report it to your own insurer; they'll investigate fault.")
             }
             // Repair → done
-            steps.append("Get a repair estimate — the insurer may inspect the car or send you to a shop.")
-            steps.append("Choose a repair shop — you can usually pick your own, not only the insurer's.")
-            steps.append("Ask about a rental car while yours is in the shop, if your policy covers it.")
-            steps.append("Pay your deductible if one applies, then pick up the car and check the repairs.")
-            steps.append("Keep records: claim number, police report number, estimates, and any medical bills.")
+            steps.append("Get a repair estimate — the insurer may inspect the car.")
+            steps.append("Choose a repair shop — you can usually pick your own.")
+            steps.append("Ask about a rental car if your policy covers it.")
+            steps.append("Pay your deductible if any, then pick up and check the car.")
+            steps.append("Keep records: claim number, report number, estimates, medical bills.")
             return ExtractionResult(
                 title: "After a car accident",
                 documentType: "Car-accident guide",
                 category: .finance,
-                summary: "From the scene to a repaired car — what to do after an accident\(fault == "The other driver" ? " the other driver caused" : "").",
+                summary: "What to do after an accident, from the scene to a repaired car.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", accidentDetail),
-                notes: ["You don't always need the police — but a report helps if there's an injury, major damage, or a dispute.",
-                        fault == "The other driver"
-                            ? "Other driver at fault? You can claim against THEIR insurer; your own insurer can also handle it and recover the cost."
-                            : "Report it to your insurer promptly — even a minor accident is worth reporting.",
+                notes: ["A police report helps if there's an injury, major damage, or a dispute.",
+                        "Report it to your insurer promptly — even a minor accident.",
                         referenceNote],
                 confidence: 1)
         })
@@ -698,40 +695,39 @@ extension Guide {
             if urgency == "Emergency" {
                 let steps = [
                     "Call 911 or go to the nearest emergency room now — don't wait for an appointment.",
-                    "If you can, bring a photo ID and your insurance card — but don't delay care to find them.",
-                    "Tell them your symptoms, the medicines you take, and any allergies when you arrive.",
+                    "Bring a photo ID and insurance card if you can — but don't delay care to find them.",
+                    "Tell them your symptoms, medicines, and allergies when you arrive.",
                 ]
                 return ExtractionResult(
                     title: "Get emergency care",
                     documentType: "Appointment guide",
                     category: .medical,
-                    summary: "This is an emergency — get care right away, not through a regular appointment.",
+                    summary: "This is an emergency — get care right away.",
                     steps: steps,
                     detailedSteps: detailed(steps, state: "", doctorDetail),
                     notes: ["Emergency rooms must treat you regardless of insurance or ability to pay.",
-                            "Not sure if it's an emergency? Call the nurse line on your insurance card, or your doctor's after-hours line.",
                             referenceNote],
                     confidence: 1)
             }
 
             var steps: [String] = []
             if urgency.hasPrefix("Urgent") {
-                steps.append("If it can't wait but isn't life-threatening, go to an urgent care or walk-in clinic for same-day care.")
+                steps.append("Can't wait but not life-threatening? Go to an urgent care or walk-in clinic.")
             }
             if insured {
                 let on = insurer.isEmpty ? "" : " on \(insurer)"
-                steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (their website or the number on your card).")
+                steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (or call the number on your card).")
             } else {
-                steps.append("Find a community health center or sliding-scale clinic near you — they charge based on your income.")
+                steps.append("Find a community health center or sliding-scale clinic near you.")
             }
             steps.append(a["new"] == "New patient"
                 ? "Call or use the patient portal to book — new-patient slots can take weeks."
                 : "Call or use the patient portal to book your visit.")
             steps.append(insured ? "Confirm they take your insurance and ask what to bring."
                                  : "Ask what it will cost up front and what to bring.")
-            steps.append("Before the visit, write down your symptoms, medicines, allergies, and questions.")
-            steps.append(insured ? "Bring your insurance card and a photo ID to the appointment."
-                                 : "Bring a photo ID and any medical records you have.")
+            steps.append("Before the visit, note your symptoms, medicines, allergies, and questions.")
+            steps.append(insured ? "Bring your insurance card and a photo ID."
+                                 : "Bring a photo ID and any medical records.")
             return ExtractionResult(
                 title: "Book a \(kind) appointment",
                 documentType: "Appointment guide",
@@ -740,8 +736,8 @@ extension Guide {
                                  : "Find an affordable \(kind) and get ready for the visit.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: insurer, doctorDetail),
-                notes: insured ? ["In-network providers usually cost much less out of pocket.", referenceNote]
-                               : ["Community health centers charge on a sliding scale based on income — you can be seen without insurance.", referenceNote],
+                notes: insured ? ["In-network providers usually cost much less.", referenceNote]
+                               : ["Community health centers charge on a sliding scale — you can be seen without insurance.", referenceNote],
                 confidence: 1)
         })
 

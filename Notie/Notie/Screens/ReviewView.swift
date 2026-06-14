@@ -300,7 +300,7 @@ struct ReviewView: View {
                         .frame(width: 10, alignment: .leading).padding(.top, isEditing ? 8 : 0)
                     if isEditing {
                         TextField("Step", text: $draft.steps[i], axis: .vertical).font(.body14).foregroundStyle(Color.ink)
-                        Button { draft.steps.remove(at: i) } label: {
+                        Button { removeStep(i) } label: {
                             Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                         }.buttonStyle(.plain)
                     } else if stepDetail(i) != nil {
@@ -320,11 +320,24 @@ struct ReviewView: View {
                 }
             }
             if isEditing {
-                Button { draft.steps.append("") } label: {
+                Button { addStep() } label: {
                     Label("Add a step", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
                 }.buttonStyle(.plain).padding(.top, 4)
             }
         }
+    }
+
+    // Step edits must touch BOTH arrays: `steps` (text) and `detailedSteps` (which
+    // carries StepDetail). If they fall out of sync, mapSteps falls back to the
+    // ORIGINAL detailedSteps and deleted/added steps reappear. detailedSteps is
+    // empty for scans, so we only mirror when it's present (guides).
+    private func removeStep(_ i: Int) {
+        draft.steps.remove(at: i)
+        if draft.detailedSteps.indices.contains(i) { draft.detailedSteps.remove(at: i) }
+    }
+    private func addStep() {
+        draft.steps.append("")
+        if !draft.detailedSteps.isEmpty { draft.detailedSteps.append(ChecklistStep(text: "")) }
     }
 
     private var notesSection: some View {
@@ -401,7 +414,22 @@ struct ReviewView: View {
 
     private func addToInbox() {
         if !includeDue { draft.dueDate = nil }
-        draft.steps = draft.steps.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        // Drop blank steps, keeping each step's detail aligned by index so nothing
+        // the user removed comes back (and added/edited steps stick).
+        let keepDetail = !draft.detailedSteps.isEmpty && draft.detailedSteps.count == draft.steps.count
+        var steps: [String] = []
+        var detailed: [ChecklistStep] = []
+        for (i, raw) in draft.steps.enumerated() {
+            let text = raw.trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty else { continue }
+            steps.append(text)
+            if keepDetail {
+                var ds = draft.detailedSteps[i]; ds.text = text
+                detailed.append(ds)
+            }
+        }
+        draft.steps = steps
+        draft.detailedSteps = detailed   // empty for scans → mapSteps uses steps
         draft.notes = draft.notes.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         let item = ActionItem(from: draft, imageData: image?.jpegData(compressionQuality: 0.7), source: source)
         item.reminderLeadHours = leadHours
