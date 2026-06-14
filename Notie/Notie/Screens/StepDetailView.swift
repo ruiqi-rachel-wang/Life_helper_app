@@ -21,6 +21,14 @@ struct StepDetailView: View {
     }
     private var d: StepDetail { step.detail ?? StepDetail() }
 
+    // Jargon found anywhere in this step (title + explanation + checklist + needed),
+    // explained in plain English. Auto-detected — no per-guide authoring.
+    private var glossaryTerms: [GlossaryTerm] {
+        let text = ([step.text, d.explanation, d.script]
+                    + d.miniChecklist.map(\.text) + d.needed).joined(separator: "\n")
+        return Glossary.found(in: text)
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             Color.paper.ignoresSafeArea()
@@ -96,6 +104,17 @@ struct StepDetailView: View {
         if !d.script.isEmpty {
             section("WHAT TO SAY") {
                 Text(linkified(d.script)).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
+            }
+        }
+        if !glossaryTerms.isEmpty {
+            section("WHAT THESE MEAN") {
+                ForEach(glossaryTerms) { t in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(t.term).font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.ink)
+                        Text(t.plain).font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
         }
         if !d.links.isEmpty {
