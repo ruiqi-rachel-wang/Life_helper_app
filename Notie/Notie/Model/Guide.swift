@@ -428,7 +428,7 @@ extension Guide {
             default: // First-time
                 steps = [
                     "Check \(state) DMV requirements and book an appointment online.",
-                    "Gather proof of identity, residency, and your Social Security number.",
+                    "Gather proof of identity, lawful presence, residency, and your SSN (or your state's accepted alternative).",
                     "Study for and pass the written knowledge test.",
                     "Pass the road test, then pay the license fee.",
                 ]

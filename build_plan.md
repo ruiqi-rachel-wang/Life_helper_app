@@ -326,15 +326,21 @@ Goal: tap a guide → answer a few hardcoded questions → a tailored checklist 
 answers filled in) → the **same Review screen** scans use → Add to inbox (tagged
 "Guide"). A guide never opens a Detail directly.
 
-**Decisions (2026-06-13):**
-- **Deterministic structure + AI polish.** Questions pick a hardcoded branch and
-  fill answers into the steps via templates; then a best-effort GPT-4o-mini pass
-  rewords them naturally + adds situation-specific tips. AI never decides the
-  checklist shape, and if it fails/offline we fall back to the templated checklist.
+**Decisions (2026-06-13; updated 2026-06-14):**
+- **Deterministic structure + MINIMAL AI polish.** Questions pick a hardcoded branch
+  and fill answers into the steps via templates. A best-effort GPT-4o-mini pass then
+  lightly rewords — it only reorganizes/clarifies, must NOT invent new advice, can
+  only APPEND notes (never replace), and is rejected if it changes the step count.
+  AI never decides the checklist shape; offline → the templated checklist.
+- **Sensitive guides skip AI entirely.** Each guide carries a `risk` level; the
+  `.sensitive` ones (immigration, banking, medical, car accident) are built fully
+  on-device and never sent to the polish pass (and say so in their notes).
+- **Required answers, no assumed defaults.** Choice/state questions must be answered
+  before "Build my checklist" (we never seed the first option — assuming e.g. "no
+  injuries" was unsafe). Text questions stay optional.
 - **Framework + 7 guides this week:** Moving, Bank account, New job, Driver's
-  license, Green card / visa, Car accident, and Doctor's appointment. All seven
-  use the same deterministic-question → templated-checklist → optional AI-polish
-  pattern.
+  license, USCIS paperwork (renamed from "Green card / visa"), Car accident, and
+  Doctor's appointment.
 
 **Build:**
 1. **Reuse Review for prefilled content.** Refactor `ReviewView` to be
@@ -343,12 +349,15 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
    build→polish. Hide the photo/OCR UI when there's no image. One confirm screen
    for both (per the architecture).
 2. **Guide model + branching.** Expand `Guide` with `questions: [GuideQuestion]`
-   (single-select, hardcoded) and a pure `build(answers:) -> ExtractionResult`
-   (pick a base checklist, fill answers via templates like `{state}`/`{employer}`,
-   set title/category, optional due/repeat hints). Deterministic → unit-tested.
-3. **AI polish pass.** A `GuidePolisher` (reuses `OpenAIClient`/key) takes the base
-   result + answers → reworded steps + situation notes; best-effort with fallback.
-   Runs as a Review phase ("Personalizing…") using the existing loading UI.
+   (per-question `choice` / `text` / `state` kinds; hardcoded) and a pure
+   `build(answers:) -> ExtractionResult` (pick a base checklist, fill answers via
+   templates like `{state}`/`{employer}`, set title/category, optional due/repeat
+   hints). Deterministic → unit-tested. Also carries `officialSource`, `lastReviewed`,
+   and `risk` provenance metadata (stamped in `Guide.all`).
+3. **AI polish pass.** `OpenAIClient.polish(_:context:language:)` (reuses the key)
+   takes the base result + answers → lightly reworded steps + appended notes;
+   best-effort with fallback, and SKIPPED for `.sensitive` guides. Runs as a Review
+   phase ("Personalizing…") using the existing loading UI.
 4. **Questions screen.** Tap guide → a single scrollable form of its questions →
    Continue builds the base result and pushes Review (which runs the polish).
    Back/cancel saves nothing.
@@ -362,8 +371,16 @@ shows MILESTONES; tapping a step with detail opens a Step Detail sheet
 `ChecklistStep` gained an optional `StepDetail`; guides author it on heavy steps
 (e.g. Moving's "set up utilities/internet"); scans leave it nil. Rule: one level
 only (flat mini-checklist, no nesting). AI may reword but must not invent live
-facts (provider names/availability). Editable "fields to save" (provider/account
-#/install date) are a deliberate later follow-up.
+facts (provider names/availability).
+
+**Shipped 2026-06-14 (was deferred):**
+- **Editable "fields to save"** — `StepDetail.fields: [SavedField]`. Values editable
+  inline even in read mode; labels add/removable in edit mode; tolerant decoder so
+  older saved steps still load. Authored on car-accident claim, USCIS case status,
+  doctor booking, moving internet; users can add fields to any step.
+- **Plain-English glossary** — `Glossary` auto-detects jargon (I-9, ITIN, EAD,
+  N-400, deductible, in-network, etc.) in a step's own text and shows a "What these
+  mean" card. Applies to scanned docs too.
 
 **Done when:** all 7 guides can be answered → tailored checklist in Review → edit
 if needed → Add → saved in the Inbox tagged "Guide", survives force-quit, with
@@ -414,13 +431,21 @@ before handing the app to testers.
      file or local-only store.
    - Keep this lightweight; the launch metric is more important than a full
      analytics system.
-6. **Guides — follow-ups (deferred from Week 7, decided 2026-06-13)**
-   - **Editable "fields to save"** in Step Detail (provider / account # / install
-     date, etc.) — the deferred per-step structured fields.
+6. **Guides — follow-ups (updated 2026-06-14)**
+   - ~~Editable "fields to save"~~ — **DONE** (`SavedField`, shipped 2026-06-14).
+   - **Deeper source metadata** — `officialSource` is currently just a label string.
+     Make it a structured record: official **URL**, **jurisdiction** (US / per-state),
+     **risk**, and a real **last-reviewed date** per guide — so "super accurate" is
+     auditable, not just displayed.
+   - **Verify USCIS pages manually** — the canonical-looking USCIS URLs (uscis.gov/i-90,
+     /n-400, /i-765, /file-online, case-status) could NOT be reliably fetched by the
+     browser tool. Open each in a real browser and confirm before TestFlight.
    - **More step-detail breadth** — author detail on the remaining steps across
      all 7 guides (currently the heavy ones have it).
    - **Per-state appointment deep-links** — today the DMV link is each state's
      official homepage; add verified "book appointment" deep-links for big states.
+   - **UI tap-through tests** — Guides → answers → Review → Step Detail → Add →
+     Inbox. All current coverage is logic-level only.
    - Bilingual term toggle (separate future note) ties in here.
 
 **Done when:** recurring items regenerate correctly, done items can be reopened
