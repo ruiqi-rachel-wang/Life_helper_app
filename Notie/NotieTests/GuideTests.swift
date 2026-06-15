@@ -184,6 +184,27 @@ struct GuideTests {
         #expect(other.lowercased().contains("repair"))         // full arc → repair
     }
 
+    @Test func carAccidentHitAndRunUsesUninsuredMotorist() {
+        let steps = Guide.carAccident.build(["other": "Hit-and-run (they left)"]).steps.joined(separator: "\n").lowercased()
+        #expect(steps.contains("hit-and-run"))           // police report required
+        #expect(steps.contains("uninsured-motorist"))    // claim path
+    }
+
+    @Test func carAccidentTowAndLeftSceneBranches() {
+        let tow = Guide.carAccident.build(["drivable": "No — needs a tow"]).steps.joined(separator: "\n").lowercased()
+        #expect(tow.contains("tow"))
+        let later = Guide.carAccident.build(["when": "Earlier — I've left"]).steps.joined(separator: "\n").lowercased()
+        #expect(!later.contains("move to safety"))        // skips at-scene steps
+        #expect(later.contains("police report"))
+    }
+
+    @Test func carAccidentUninsuredAndNoFaultNotes() {
+        let r = Guide.carAccident.build(["other": "Yes", "fault": "The other driver"])
+        let notes = r.notes.joined(separator: "\n").lowercased()
+        #expect(notes.contains("uninsured-motorist"))     // other-driver-uninsured fallback
+        #expect(notes.contains("no-fault"))
+    }
+
     @Test func doctorWithInsurerNamesItButKeepsLinkOfficial() {
         let item = ActionItem(from: Guide.doctorAppointment.build(
             ["insurance": "Yes", "insurer": "Aetna", "new": "New patient", "kind": "dentist"]))

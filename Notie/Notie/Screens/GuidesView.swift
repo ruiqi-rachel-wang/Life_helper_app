@@ -178,6 +178,7 @@ struct GuideQuestionsView: View {
                     }
                     .padding(.horizontal, 8)
 
+                    if guide.risk == .sensitive { privacyBadge }
                     if let note = guide.emergencyNote { emergencyBanner(note) }
 
                     ForEach(guide.questions) { q in questionCard(q) }
@@ -196,6 +197,18 @@ struct GuideQuestionsView: View {
             }
         }
         .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+    }
+
+    // Small reassurance for sensitive topics — built on-device, never sent to AI.
+    private var privacyBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "lock.fill").font(.system(size: 10))
+            Text("Stays on your device").font(.eyebrow).tracking(0.4)
+        }
+        .foregroundStyle(Color.faded)
+        .padding(.horizontal, 10).padding(.vertical, 5)
+        .background(Capsule().fill(Color.bg))
+        .padding(.horizontal, 8)
     }
 
     // Emergency notice on the first page (e.g. "call 911"), above the questions —

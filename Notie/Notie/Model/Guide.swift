@@ -604,12 +604,24 @@ extension Guide {
         subtitle: "At the scene, police report, insurance claim",
         category: .finance,
         questions: [
+            GuideQuestion(id: "when", prompt: "When did it happen?",
+                          kind: .choice(["At the scene now", "Earlier — I've left"])),
             GuideQuestion(id: "injuries", prompt: "Was anyone hurt?", kind: .choice(["No", "Yes", "Not sure"])),
+            GuideQuestion(id: "other", prompt: "Was another driver involved?",
+                          kind: .choice(["Yes", "Hit-and-run (they left)", "No other car"])),
+            GuideQuestion(id: "drivable", prompt: "Is your car drivable?",
+                          kind: .choice(["Yes", "No — needs a tow"])),
             GuideQuestion(id: "fault", prompt: "Who was at fault?",
-                          kind: .choice(["The other driver", "Me", "Not sure / shared", "No other car involved"])),
+                          kind: .choice(["The other driver", "Me", "Not sure / shared"])),
         ],
         build: { a in
+            let atScene = a["when"] != "Earlier — I've left"
+            let other = val(a, "other", default: "Yes")
+            let hitRun = other == "Hit-and-run (they left)"
+            let noOther = other == "No other car"
+            let drivable = a["drivable"] != "No — needs a tow"
             let fault = val(a, "fault", default: "Not sure / shared")
+
             var steps: [String] = []
             // (911 lives on the first-page emergency banner, not in the steps.)
             if a["injuries"] == "Yes" {
@@ -617,30 +629,65 @@ extension Guide {
             } else if a["injuries"] == "Not sure" {
                 steps.append("Check everyone for injuries before moving on.")
             }
-            steps.append("Move to safety if you can, and turn on your hazard lights.")
-            steps.append("Call the police if anyone's hurt, damage is major, or your state requires it — note the report number.")
-            if fault != "No other car involved" {
-                steps.append("Exchange info and photograph everything: the other driver's license, plate, insurance, both cars, and the scene.")
+
+            // At the scene vs. after the fact
+            if atScene {
+                steps.append("Move to safety if you can, and turn on your hazard lights.")
+                if hitRun {
+                    steps.append("Call the police and file a report now — you'll need it for a hit-and-run claim. Note the report number.")
+                    steps.append("Write down all you can about the other car: make, color, plate, and direction it went; ask any witnesses.")
+                } else {
+                    steps.append("Call the police if anyone's hurt, damage is major, or your state requires it — note the report number.")
+                    if noOther {
+                        steps.append("Photograph the damage and scene, and note what happened.")
+                    } else {
+                        steps.append("Exchange info and photograph everything: the other driver's license, plate, insurance, both cars, and the scene.")
+                    }
+                }
+                if !drivable {
+                    steps.append("Car not drivable? Arrange a tow to a safe place or a repair shop.")
+                }
             } else {
-                steps.append("Photograph the damage and scene, and note what happened.")
+                steps.append("Write down what you remember and photograph the damage now.")
+                steps.append(hitRun
+                    ? "File a police report as soon as you can — it's required for a hit-and-run claim."
+                    : "File a police report if you haven't — especially with any injury or major damage.")
+                if !drivable {
+                    steps.append("If the car isn't drivable, arrange a tow to a repair shop.")
+                }
             }
-            // The claim — depends on who's responsible
-            switch fault {
-            case "The other driver":
-                steps.append("File with the at-fault driver's insurer (third-party claim) — or file with your own and let them recover the cost.")
-            case "Me":
-                steps.append("File a claim with your own insurer (collision coverage).")
-            case "No other car involved":
-                steps.append("File with your own insurer (collision or comprehensive).")
-            default:
-                steps.append("Report it to your own insurer; they'll investigate fault.")
+
+            // The claim — depends on who was involved / at fault
+            if hitRun {
+                steps.append("File a claim with your own insurer under uninsured-motorist or collision coverage.")
+            } else if noOther {
+                steps.append("File a claim with your own insurer (collision or comprehensive).")
+            } else {
+                switch fault {
+                case "The other driver":
+                    steps.append("File with the at-fault driver's insurer (third-party claim) — or file with your own and let them recover the cost.")
+                case "Me":
+                    steps.append("File a claim with your own insurer (collision coverage).")
+                default:
+                    steps.append("Report it to your own insurer; they'll investigate fault.")
+                }
             }
+
             // Repair → done
             steps.append("Get a repair estimate — the insurer may inspect the car.")
             steps.append("Choose a repair shop — you can usually pick your own.")
             steps.append("Ask about a rental car if your policy covers it.")
             steps.append("Pay your deductible if any, then pick up and check the car.")
             steps.append("Keep records: claim number, report number, estimates, medical bills.")
+
+            var notes: [String] = []
+            if !noOther && !hitRun {
+                notes.append("If the other driver is uninsured, your uninsured-motorist (UM) coverage can step in.")
+            }
+            notes.append("In a no-fault state, medical costs go through your own insurer (PIP), no matter who was at fault.")
+            notes.append("Report it to your insurer promptly — even a minor accident.")
+            notes.append(referenceNote)
+
             return ExtractionResult(
                 title: "After a car accident",
                 documentType: "Car-accident guide",
@@ -648,23 +695,22 @@ extension Guide {
                 summary: "What to do after an accident, from the scene to a repaired car.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", accidentDetail),
-                notes: ["A police report helps if there's an injury, major damage, or a dispute.",
-                        "Report it to your insurer promptly — even a minor accident.",
-                        referenceNote],
+                notes: notes,
                 confidence: 1)
         })
 
     private static func accidentDetail(_ text: String, _ s: String) -> StepDetail? {
-        if text.hasPrefix("Exchange info") || text.hasPrefix("Photograph the damage") {
+        if text.hasPrefix("Exchange info") || text.hasPrefix("Photograph the damage")
+            || text.hasPrefix("Write down") {
             return StepDetail(
-                explanation: "Gather everything at the scene — it's hard to get later.",
-                miniChecklist: ["Other driver's name, phone, license, and license plate.",
+                explanation: "Gather everything you can — it's hard to get later.",
+                miniChecklist: ["Other driver's name, phone, license, and license plate (or all you saw).",
                                 "Their insurance company and policy number.",
                                 "Photos of all vehicles, the damage, and the wider scene.",
                                 "Location, date/time, and weather.",
                                 "Names and phone numbers of any witnesses."])
         }
-        if text.hasPrefix("File the claim") || text.hasPrefix("File a claim") || text.hasPrefix("Report it to your own insurer") {
+        if (text.hasPrefix("File") || text.hasPrefix("Report")) && text.contains("insurer") {
             return StepDetail(
                 explanation: "Calling the insurer (yours or the at-fault driver's), have your details ready.",
                 miniChecklist: ["Your policy number — or the at-fault driver's insurer and policy number.",
