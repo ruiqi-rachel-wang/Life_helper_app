@@ -849,7 +849,7 @@ extension Guide {
             }
             steps.append("File for free if you qualify: IRS Free File online, or a VITA site for free in-person help.")
             steps.append("File by the deadline — usually April 15. File even if you can't pay; you can set up a payment plan.")
-            steps.append("After filing, track your refund with the IRS 'Where's My Refund?' tool.")
+            steps.append("After filing, if you're owed a refund, track it with the IRS 'Where's My Refund?' tool.")
             return ExtractionResult(
                 title: "File your taxes",
                 documentType: "Tax guide",
