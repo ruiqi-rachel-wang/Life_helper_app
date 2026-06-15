@@ -152,11 +152,14 @@ struct GuideQuestionsView: View {
     var onContinue: ([String: String]) -> Void
     @State private var answers: [String: String] = [:]
 
+    // Only the questions relevant to the answers so far (hides what doesn't matter).
+    private var visibleQuestions: [GuideQuestion] { guide.visibleQuestions(answers) }
+
     // Choice and state questions must be answered — we never assume a default,
     // because the wrong assumption (e.g. "no injuries") sends the wrong checklist.
-    // Text questions stay optional.
+    // Text questions stay optional. Only VISIBLE questions are required.
     private var missingRequired: Bool {
-        guide.questions.contains { q in
+        visibleQuestions.contains { q in
             switch q.kind {
             case .choice, .state: return answers[q.id] == nil
             case .text, .date: return false   // optional
@@ -181,7 +184,7 @@ struct GuideQuestionsView: View {
                     if guide.risk == .sensitive { privacyBadge }
                     if let note = guide.emergencyNote { emergencyBanner(note) }
 
-                    ForEach(guide.questions) { q in questionCard(q) }
+                    ForEach(visibleQuestions) { q in questionCard(q) }
 
                     Button { if !missingRequired { onContinue(answers) } } label: {
                         Text(missingRequired ? "Answer the questions above to continue" : "Build my checklist")

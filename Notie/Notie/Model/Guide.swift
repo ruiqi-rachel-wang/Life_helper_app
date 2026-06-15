@@ -15,11 +15,15 @@ import Foundation
 
 // One hardcoded question. `choice` = pick one option; `text` = free input;
 // `state` = pick a US state from a list (states are too many for pills).
-nonisolated struct GuideQuestion: Identifiable, Equatable {
+nonisolated struct GuideQuestion: Identifiable {
     enum Kind: Equatable { case choice([String]); case text(String); case state; case date }
     let id: String
     let prompt: String
     let kind: Kind
+    // Show this question only when the answers so far make it relevant — so we
+    // never ask what doesn't matter (e.g. "car registration?" on a renewal).
+    // nil = always shown.
+    var showIf: (([String: String]) -> Bool)? = nil
 }
 
 // A `.date` answer is stored in the answers dict as a time-interval string.
@@ -45,6 +49,11 @@ nonisolated struct Guide: Identifiable {
     // Deterministic: answers (questionID → chosen option / typed text / state) →
     // a tailored ExtractionResult (the AI polish is a separate pass).
     let build: ([String: String]) -> ExtractionResult
+
+    // The questions worth showing given the answers so far (hides irrelevant ones).
+    func visibleQuestions(_ answers: [String: String]) -> [GuideQuestion] {
+        questions.filter { $0.showIf?(answers) ?? true }
+    }
 
     // Provenance / safety metadata (review-team requested). lastReviewed is when a
     // human last checked this guide's facts against the official source.
@@ -274,7 +283,8 @@ extension Guide {
                           kind: .choice(["Renting", "Own my home", "Family / roommates"])),
             GuideQuestion(id: "scope", prompt: "Moving within the same state or to another state?",
                           kind: .choice(["Same state", "Another state"])),
-            GuideQuestion(id: "newState", prompt: "Which state are you moving to?", kind: .state),
+            GuideQuestion(id: "newState", prompt: "Which state are you moving to?", kind: .state,
+                          showIf: { $0["scope"] == "Another state" }),
             GuideQuestion(id: "knowAddress", prompt: "Do you know your new address yet?",
                           kind: .choice(["Yes", "Not yet"])),
             GuideQuestion(id: "car", prompt: "Do you have a car to update?",
@@ -352,7 +362,8 @@ extension Guide {
                           kind: .choice(["W-2 employee", "Contractor / 1099", "Internship", "Not sure"])),
             GuideQuestion(id: "employer", prompt: "What's the company's name?", kind: .text("Employer")),
             GuideQuestion(id: "work", prompt: "Where will you work?",
-                          kind: .choice(["In-person", "Remote", "Hybrid"])),
+                          kind: .choice(["In-person", "Remote", "Hybrid"]),
+                          showIf: { $0["type"] != "Contractor / 1099" }),
         ],
         build: { a in
             let type = val(a, "type", default: "W-2 employee")
@@ -411,7 +422,8 @@ extension Guide {
                                          "Replacement (lost/stolen)", "Out-of-state transfer"])),
             GuideQuestion(id: "state", prompt: "Which state are you in now?", kind: .state),
             GuideQuestion(id: "car", prompt: "Do you also have a car registration to update?",
-                          kind: .choice(["Yes", "No"])),
+                          kind: .choice(["Yes", "No"]),
+                          showIf: { ["First-time", "Address change", "Out-of-state transfer"].contains($0["task"] ?? "") }),
         ],
         build: { a in
             let task = val(a, "task", default: "First-time")
@@ -627,7 +639,8 @@ extension Guide {
             GuideQuestion(id: "drivable", prompt: "Is your car drivable?",
                           kind: .choice(["Yes", "No — needs a tow"])),
             GuideQuestion(id: "fault", prompt: "Who was at fault?",
-                          kind: .choice(["The other driver", "Me", "Not sure / shared"])),
+                          kind: .choice(["The other driver", "Me", "Not sure / shared"]),
+                          showIf: { $0["other"] == "Yes" }),
         ],
         build: { a in
             let atScene = a["when"] != "Earlier — I've left"
@@ -748,7 +761,8 @@ extension Guide {
         category: .medical,
         questions: [
             GuideQuestion(id: "insurance", prompt: "Do you have health insurance?", kind: .choice(["Yes", "No"])),
-            GuideQuestion(id: "insurer", prompt: "Which insurance plan? (optional)", kind: .text("e.g. Aetna, Blue Cross, Kaiser")),
+            GuideQuestion(id: "insurer", prompt: "Which insurance plan? (optional)", kind: .text("e.g. Aetna, Blue Cross, Kaiser"),
+                          showIf: { $0["insurance"] == "Yes" }),
             GuideQuestion(id: "new", prompt: "New patient or a return visit?", kind: .choice(["New patient", "Return visit"])),
             GuideQuestion(id: "kind", prompt: "What kind of doctor?", kind: .text("e.g. primary care, dentist")),
         ],

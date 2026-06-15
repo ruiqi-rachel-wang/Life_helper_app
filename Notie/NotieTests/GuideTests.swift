@@ -128,6 +128,24 @@ struct GuideTests {
         }
     }
 
+    @Test func questionsHideWhenIrrelevant() {
+        func visibleIDs(_ id: String, _ a: [String: String]) -> Set<String> {
+            Set(Guide.all.first { $0.id == id }!.visibleQuestions(a).map(\.id))
+        }
+        // License "car" only for tasks with a registration; not renewal/replacement.
+        #expect(visibleIDs("drivers_license", ["task": "First-time"]).contains("car"))
+        #expect(!visibleIDs("drivers_license", ["task": "Renewal"]).contains("car"))
+        // Moving "newState" only when moving to another state.
+        #expect(!visibleIDs("moving", ["scope": "Same state"]).contains("newState"))
+        #expect(visibleIDs("moving", ["scope": "Another state"]).contains("newState"))
+        // Car accident "fault" only when another driver was involved.
+        #expect(!visibleIDs("car_accident", ["other": "Hit-and-run (they left)"]).contains("fault"))
+        #expect(visibleIDs("car_accident", ["other": "Yes"]).contains("fault"))
+        // Doctor "insurer" only when insured; new job "work" hidden for contractors.
+        #expect(!visibleIDs("doctor_appointment", ["insurance": "No"]).contains("insurer"))
+        #expect(!visibleIDs("new_job", ["type": "Contractor / 1099"]).contains("work"))
+    }
+
     @Test func carAccidentIsAutoCategory() {
         #expect(Guide.all.first { $0.id == "car_accident" }?.category == .auto)
     }
