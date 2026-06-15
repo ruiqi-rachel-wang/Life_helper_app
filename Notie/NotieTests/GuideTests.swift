@@ -137,7 +137,8 @@ struct GuideTests {
     private func guide(_ id: String) -> Guide { Guide.all.first { $0.id == id }! }
 
     @Test func sensitiveTopicsAreFlaggedAsSensitive() {
-        for id in ["immigration", "bank_account", "doctor_appointment", "car_accident"] {
+        for id in ["immigration", "bank_account", "doctor_appointment", "car_accident",
+                   "taxes", "ssn_itin", "school_enrollment", "health_insurance"] {
             #expect(guide(id).risk == .sensitive)
         }
         #expect(guide("moving").risk == .general)

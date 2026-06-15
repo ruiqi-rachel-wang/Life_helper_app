@@ -879,7 +879,7 @@ extension Guide {
         }
         if text.hasPrefix("File for free") {
             return StepDetail(
-                explanation: "Most people can file their federal taxes for free.",
+                explanation: "Many people can file federally for free; eligibility depends on income and situation.",
                 links: [StepLink(label: "IRS Free File", url: "https://www.irs.gov/file-your-taxes-for-free"),
                         StepLink(label: "IRS — free in-person help (VITA)", url: "https://www.irs.gov/individuals/free-tax-return-preparation-for-qualifying-taxpayers")])
         }
@@ -939,7 +939,7 @@ extension Guide {
         }
         if text.hasPrefix("Apply for an SSN online") {
             return StepDetail(
-                explanation: "Your card arrives by mail in about 5–10 business days.",
+                explanation: "SSA mails your card after processing your application; timing can vary.",
                 links: [StepLink(label: "SSA — Social Security number & card", url: "https://www.ssa.gov/number-card")])
         }
         if text.hasPrefix("For an ITIN") {
@@ -979,7 +979,7 @@ extension Guide {
                 summary: "How to enroll your child in a U.S. public school — documents, residency, and language help.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", schoolDetail),
-                notes: ["Every child can enroll regardless of immigration status — schools can't ask for citizenship or your SSN.",
+                notes: ["Public schools generally can't deny enrollment based on immigration status. If asked for an SSN, ask whether it's optional or if another ID can be used.",
                         referenceNote],
                 confidence: 1)
         })
@@ -1019,10 +1019,10 @@ extension Guide {
                 steps.append("Enroll through your job during your new-hire window or open enrollment — compare premium, deductible, and whether your doctors are covered.")
             }
             if source == "On my own (Marketplace)" || source == "Not sure" {
-                steps.append("Apply on the official Marketplace at HealthCare.gov — open enrollment is Nov 1–Jan 15, or sooner with a qualifying life event (job loss, move, baby).")
+                steps.append("Apply at HealthCare.gov — it routes you to your state's Marketplace if it runs one. Open enrollment is usually Nov 1–Jan 15, or sooner with a qualifying life event (job loss, move, baby).")
             }
             if source == "Low income (Medicaid/CHIP)" || source == "Not sure" {
-                steps.append("Low income? Apply for Medicaid or CHIP any time of year — if you qualify, coverage can start right away.")
+                steps.append("Low income? Apply for Medicaid or CHIP any time of year — if approved, when coverage starts depends on your state.")
             }
             steps.append("Have your household size and income ready — that decides your options and any savings.")
             steps.append("After you enroll, save your plan name, member ID, and start date.")
@@ -1040,9 +1040,9 @@ extension Guide {
         })
 
     private static func healthInsuranceDetail(_ text: String, _ s: String) -> StepDetail? {
-        if text.hasPrefix("Apply on the official Marketplace") {
+        if text.hasPrefix("Apply at HealthCare.gov") {
             return StepDetail(
-                explanation: "HealthCare.gov is the official Marketplace — avoid look-alike sites.",
+                explanation: "HealthCare.gov is the official Marketplace — avoid look-alike sites. Some states run their own; it'll send you there if so.",
                 links: [StepLink(label: "HealthCare.gov — get ready to apply", url: "https://www.healthcare.gov/apply-and-enroll/get-ready-to-apply/")])
         }
         if text.hasPrefix("Low income?") {

@@ -339,9 +339,10 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
 - **Required answers, no assumed defaults.** Choice/state questions must be answered
   before "Build my checklist" (we never seed the first option — assuming e.g. "no
   injuries" was unsafe). Text questions stay optional.
-- **Framework + 7 guides this week:** Moving, Bank account, New job, Driver's
-  license, USCIS paperwork (renamed from "Green card / visa"), Car accident, and
-  Doctor's appointment.
+- **Framework + guides:** shipped with 7 this week, since expanded to **11**:
+  Moving, Bank account, Taxes, New job, SSN/ITIN, Driver's license, USCIS paperwork
+  (renamed from "Green card / visa"), School enrollment, Health insurance, Doctor's
+  appointment, and Car accident (now in the new `auto` category).
 
 **Build:**
 1. **Reuse Review for prefilled content.** Refactor `ReviewView` to be
@@ -362,9 +363,9 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
 4. **Questions screen.** Tap guide → a single scrollable form of its questions →
    Continue builds the base result and pushes Review (which runs the polish).
    Back/cancel saves nothing.
-5. **Author content** for all 7 launch guides (questions, branches, templated
+5. **Author content** for the launch guides (questions, branches, templated
    checklists, safety notes, official links where appropriate). Save items with
-   `source = .guide` (shows the guide tag).
+   `source = .guide` (shows the guide tag). Started at 7; now 11.
 
 **Step Detail (decided 2026-06-13, guides only for now):** the main checklist
 shows MILESTONES; tapping a step with detail opens a Step Detail sheet
@@ -383,7 +384,7 @@ facts (provider names/availability).
   N-400, deductible, in-network, etc.) in a step's own text and shows a "What these
   mean" card. Applies to scanned docs too.
 
-**Done when:** all 7 guides can be answered → tailored checklist in Review → edit
+**Done when:** every guide can be answered → tailored checklist in Review → edit
 if needed → Add → saved in the Inbox tagged "Guide", survives force-quit, with
 editable steps/reminders and tap-through Step Detail. AI-offline still produces
 the templated checklist.
@@ -442,7 +443,7 @@ before handing the app to testers.
      /n-400, /i-765, /file-online, case-status) could NOT be reliably fetched by the
      browser tool. Open each in a real browser and confirm before TestFlight.
    - **More step-detail breadth** — author detail on the remaining steps across
-     all 7 guides (currently the heavy ones have it).
+     all guides (currently the heavy ones have it).
    - **Per-state appointment deep-links** — today the DMV link is each state's
      official homepage; add verified "book appointment" deep-links for big states.
    - **UI tap-through tests** — Guides → answers → Review → Step Detail → Add →
