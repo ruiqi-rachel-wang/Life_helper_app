@@ -43,6 +43,7 @@ extension ItemCategory {
         case .government: return Color(hex: 0xC0532F)
         case .medical:    return Color(hex: 0x1F8A5B)
         case .finance:    return Color(hex: 0xa8651b)
+        case .auto:       return Color(hex: 0x4A7A8C)
         case .housing:    return Color(hex: 0x7a6a4a)
         case .work:       return Color(hex: 0x3B6E8F)
         case .personal:   return Color(hex: 0x7a6a4a)
@@ -57,6 +58,7 @@ extension ItemCategory {
         case .government: return "building.columns.fill"
         case .medical:    return "cross.fill"
         case .finance:    return "creditcard.fill"
+        case .auto:       return "car.fill"
         case .housing:    return "house.fill"
         case .work:       return "briefcase.fill"
         case .personal:   return "bell.fill"

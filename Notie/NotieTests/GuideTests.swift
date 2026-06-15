@@ -106,8 +106,30 @@ struct GuideTests {
 
     // MARK: new guides
 
-    @Test func allSevenGuidesPresent() {
-        #expect(Guide.all.count == 7)
+    @Test func allGuidesPresent() {
+        let ids = Set(Guide.all.map(\.id))
+        #expect(Guide.all.count == 11)
+        for id in ["taxes", "ssn_itin", "school_enrollment", "health_insurance"] {
+            #expect(ids.contains(id))
+        }
+    }
+
+    @Test func newGuidesLinkToOfficialSources() {
+        let cases: [(String, [String: String], String)] = [
+            ("taxes", [:], "irs.gov"),
+            ("ssn_itin", ["which": "SSN (I can work in the U.S.)"], "ssa.gov"),
+            ("health_insurance", ["source": "On my own (Marketplace)"], "healthcare.gov"),
+            ("school_enrollment", ["newcomer": "Yes — new to the U.S."], "ncela.ed.gov"),
+        ]
+        for (id, answers, host) in cases {
+            let item = ActionItem(from: Guide.all.first { $0.id == id }!.build(answers))
+            let urls = item.steps.flatMap { $0.detail?.links ?? [] }.map(\.url)
+            #expect(urls.contains { $0.contains(host) }, "\(id) should link \(host)")
+        }
+    }
+
+    @Test func carAccidentIsAutoCategory() {
+        #expect(Guide.all.first { $0.id == "car_accident" }?.category == .auto)
     }
 
     // MARK: provenance + AI-risk metadata

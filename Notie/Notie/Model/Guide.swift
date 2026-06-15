@@ -88,13 +88,17 @@ extension Guide {
     static let all: [Guide] = [
         moving.meta(source: "USPS (usps.com/move)"),
         bankAccount.meta(source: "Consumer Financial Protection Bureau (consumerfinance.gov)", risk: .sensitive),
+        taxes.meta(source: "IRS (irs.gov)", risk: .sensitive),
         newJob.meta(source: "USCIS Form I-9 (uscis.gov)"),
+        ssnItin.meta(source: "SSA (ssa.gov) / IRS (irs.gov)", risk: .sensitive),
         driversLicense.meta(),   // source varies by state DMV
         immigration.meta(source: "USCIS (uscis.gov)", risk: .sensitive),
-        carAccident.meta(risk: .sensitive,
-                         emergency: "If anyone is hurt or in danger, call 911 now."),
+        schoolEnrollment.meta(source: "U.S. Dept. of Education (ed.gov)", risk: .sensitive),
+        healthInsurance.meta(source: "HealthCare.gov", risk: .sensitive),
         doctorAppointment.meta(source: "HealthCare.gov", risk: .sensitive,
                                emergency: "If this is a medical emergency, call 911 or go to the ER. For urgent problems that can't wait, a walk-in urgent care may be faster than an appointment."),
+        carAccident.meta(risk: .sensitive,
+                         emergency: "If anyone is hurt or in danger, call 911 now."),
     ]
 
     private static func val(_ a: [String: String], _ key: String, default def: String) -> String {
@@ -613,7 +617,7 @@ extension Guide {
         id: "car_accident",
         title: "Car accident",
         subtitle: "At the scene, police report, insurance claim",
-        category: .finance,
+        category: .auto,
         questions: [
             GuideQuestion(id: "when", prompt: "When did it happen?",
                           kind: .choice(["At the scene now", "Earlier — I've left"])),
@@ -702,7 +706,7 @@ extension Guide {
             return ExtractionResult(
                 title: "After a car accident",
                 documentType: "Car-accident guide",
-                category: .finance,
+                category: .auto,
                 summary: "What to do after an accident, from the scene to a repaired car.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", accidentDetail),
@@ -817,6 +821,239 @@ extension Guide {
                                 "Allergies and your medical / family history.",
                                 "Your top questions, written down."],
                 links: [StepLink(label: "MedlinePlus — make the most of your visit", url: "https://medlineplus.gov/ency/patientinstructions/000860.htm")])
+        }
+        return nil
+    }
+
+    // MARK: Taxes
+    static let taxes = Guide(
+        id: "taxes",
+        title: "File your taxes",
+        subtitle: "W-2/1099, refund, deadline",
+        category: .finance,
+        questions: [
+            GuideQuestion(id: "income", prompt: "What income did you have?",
+                          kind: .choice(["A job (W-2)", "Self-employed / 1099", "Both", "Not sure"])),
+            GuideQuestion(id: "taxid", prompt: "Do you have an SSN or ITIN?",
+                          kind: .choice(["Yes", "No — I need an ITIN"])),
+        ],
+        build: { a in
+            let income = val(a, "income", default: "A job (W-2)")
+            let needsITIN = a["taxid"] == "No — I need an ITIN"
+            var steps = ["Gather your tax documents: W-2s, any 1099s, and last year's return if you have one."]
+            if needsITIN {
+                steps.append("No SSN or ITIN? Apply for an ITIN with IRS Form W-7 — you can file your return at the same time.")
+            }
+            if income == "Self-employed / 1099" || income == "Both" {
+                steps.append("Self-employed? Report your 1099 income and business expenses — you may owe quarterly estimated taxes.")
+            }
+            steps.append("File for free if you qualify: IRS Free File online, or a VITA site for free in-person help.")
+            steps.append("File by the deadline — usually April 15. File even if you can't pay; you can set up a payment plan.")
+            steps.append("After filing, track your refund with the IRS 'Where's My Refund?' tool.")
+            return ExtractionResult(
+                title: "File your taxes",
+                documentType: "Tax guide",
+                category: .finance,
+                summary: "How to file your U.S. taxes — free options, the deadline, and your refund.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", taxDetail),
+                notes: ["A refund means money back; owing means you pay — filing on time avoids penalties either way.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func taxDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Gather your tax documents") {
+            return StepDetail(
+                explanation: "Have your income forms ready before you start.",
+                miniChecklist: ["W-2 from each employer.",
+                                "1099 forms for contract or gig income.",
+                                "Your SSN or ITIN.",
+                                "Last year's return, if you have it.",
+                                "Bank info for direct deposit of any refund."])
+        }
+        if text.contains("Form W-7") {
+            return StepDetail(
+                explanation: "An ITIN is a tax ID for people who can't get an SSN. Apply with IRS Form W-7, usually filed with your return.",
+                links: [StepLink(label: "IRS — ITIN / Form W-7", url: "https://www.irs.gov/individuals/individual-taxpayer-identification-number")])
+        }
+        if text.hasPrefix("File for free") {
+            return StepDetail(
+                explanation: "Most people can file their federal taxes for free.",
+                links: [StepLink(label: "IRS Free File", url: "https://www.irs.gov/file-your-taxes-for-free"),
+                        StepLink(label: "IRS — free in-person help (VITA)", url: "https://www.irs.gov/individuals/free-tax-return-preparation-for-qualifying-taxpayers")])
+        }
+        if text.hasPrefix("After filing") {
+            return StepDetail(
+                explanation: "Refunds usually arrive within a few weeks of e-filing.",
+                links: [StepLink(label: "IRS — Where's My Refund?", url: "https://www.irs.gov/refunds")],
+                fields: [SavedField(label: "Date filed"), SavedField(label: "Refund amount")])
+        }
+        return nil
+    }
+
+    // MARK: SSN / ITIN
+    static let ssnItin = Guide(
+        id: "ssn_itin",
+        title: "Get an SSN or ITIN",
+        subtitle: "Social Security number or tax ID",
+        category: .government,
+        questions: [
+            GuideQuestion(id: "which", prompt: "Which do you need?",
+                          kind: .choice(["SSN (I can work in the U.S.)", "ITIN (I can't get an SSN)", "Not sure"])),
+        ],
+        build: { a in
+            let which = val(a, "which", default: "Not sure")
+            var steps: [String] = []
+            if which == "Not sure" {
+                steps.append("An SSN is for people authorized to work; an ITIN is a tax ID for those who can't get an SSN.")
+            }
+            if which != "ITIN (I can't get an SSN)" {
+                steps.append("For an SSN: gather proof of identity, age, and work-authorized immigration status.")
+                steps.append("Apply for an SSN online, then bring your documents to a Social Security office — it's free.")
+            }
+            if which != "SSN (I can work in the U.S.)" {
+                steps.append("For an ITIN: apply with IRS Form W-7, usually with your tax return. A VITA site can help for free.")
+            }
+            steps.append("Share your number only when truly required — a job, bank, or taxes — and keep it private.")
+            return ExtractionResult(
+                title: "Get an SSN or ITIN",
+                documentType: "ID guide",
+                category: .government,
+                summary: "How to get a Social Security number, or an ITIN if you can't get one.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", ssnItinDetail),
+                notes: ["Applying is free — never pay for the number itself.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func ssnItinDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("For an SSN: gather") {
+            return StepDetail(
+                explanation: "Bring originals — most documents can't be photocopies.",
+                miniChecklist: ["Proof of identity (passport or immigration document).",
+                                "Proof of work-authorized immigration status.",
+                                "Proof of age (birth certificate or passport)."],
+                links: [StepLink(label: "SSA — documents you'll need", url: "https://www.ssa.gov/ssnumber/ss5doc.htm")])
+        }
+        if text.hasPrefix("Apply for an SSN online") {
+            return StepDetail(
+                explanation: "Your card arrives by mail in about 5–10 business days.",
+                links: [StepLink(label: "SSA — Social Security number & card", url: "https://www.ssa.gov/number-card")])
+        }
+        if text.hasPrefix("For an ITIN") {
+            return StepDetail(
+                explanation: "An ITIN is only a tax ID — it isn't work authorization or a photo ID.",
+                links: [StepLink(label: "IRS — ITIN / Form W-7", url: "https://www.irs.gov/individuals/individual-taxpayer-identification-number"),
+                        StepLink(label: "IRS — free help (VITA)", url: "https://www.irs.gov/individuals/free-tax-return-preparation-for-qualifying-taxpayers")])
+        }
+        return nil
+    }
+
+    // MARK: School enrollment
+    static let schoolEnrollment = Guide(
+        id: "school_enrollment",
+        title: "Enroll your child in school",
+        subtitle: "Documents, residency, language help",
+        category: .government,
+        questions: [
+            GuideQuestion(id: "newcomer", prompt: "Is this your first U.S. school?",
+                          kind: .choice(["Yes — new to the U.S.", "No — transferring"])),
+        ],
+        build: { a in
+            let newcomer = a["newcomer"] != "No — transferring"
+            var steps = ["Find your assigned public school by your home address — it's set by where you live.",
+                         "Gather what you'll need: your child's birth certificate, proof of your address, and immunization records.",
+                         "Fill out the enrollment forms and the Home Language Survey."]
+            if newcomer {
+                steps.append("New to the U.S.? Ask about English-language (EL) support — schools must provide it.")
+            } else {
+                steps.append("Transferring? Ask the old school to send records (transcripts, and an IEP/504 plan if any).")
+            }
+            steps.append("Schedule any required health check or missing vaccines before the start date.")
+            return ExtractionResult(
+                title: "Enroll your child in school",
+                documentType: "School guide",
+                category: .government,
+                summary: "How to enroll your child in a U.S. public school — documents, residency, and language help.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", schoolDetail),
+                notes: ["Every child can enroll regardless of immigration status — schools can't ask for citizenship or your SSN.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func schoolDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Gather what you'll need") {
+            return StepDetail(
+                explanation: "Schools accept many documents for proof of address — a lease, a utility bill, or an affidavit.",
+                miniChecklist: ["Child's birth certificate (or passport).",
+                                "Proof of your address (lease or utility bill).",
+                                "Immunization / vaccination records.",
+                                "Any past school records."],
+                links: [StepLink(label: "CDC — vaccines for school", url: "https://www.cdc.gov/vaccines/")])
+        }
+        if text.hasPrefix("New to the U.S.?") {
+            return StepDetail(
+                explanation: "Public schools must offer English-language help and can't turn your child away.",
+                links: [StepLink(label: "U.S. Dept. of Education — English Learner Family Toolkit", url: "https://ncela.ed.gov/family-toolkit")])
+        }
+        return nil
+    }
+
+    // MARK: Health insurance
+    static let healthInsurance = Guide(
+        id: "health_insurance",
+        title: "Get health insurance",
+        subtitle: "Marketplace, Medicaid, or a job plan",
+        category: .medical,
+        questions: [
+            GuideQuestion(id: "source", prompt: "How might you get coverage?",
+                          kind: .choice(["Through a job", "On my own (Marketplace)", "Low income (Medicaid/CHIP)", "Not sure"])),
+        ],
+        build: { a in
+            let source = val(a, "source", default: "Not sure")
+            var steps: [String] = []
+            if source == "Through a job" {
+                steps.append("Enroll through your job during your new-hire window or open enrollment — compare premium, deductible, and whether your doctors are covered.")
+            }
+            if source == "On my own (Marketplace)" || source == "Not sure" {
+                steps.append("Apply on the official Marketplace at HealthCare.gov — open enrollment is Nov 1–Jan 15, or sooner with a qualifying life event (job loss, move, baby).")
+            }
+            if source == "Low income (Medicaid/CHIP)" || source == "Not sure" {
+                steps.append("Low income? Apply for Medicaid or CHIP any time of year — if you qualify, coverage can start right away.")
+            }
+            steps.append("Have your household size and income ready — that decides your options and any savings.")
+            steps.append("After you enroll, save your plan name, member ID, and start date.")
+            return ExtractionResult(
+                title: "Get health insurance",
+                documentType: "Health-insurance guide",
+                category: .medical,
+                summary: "How to get health coverage — through a job, the Marketplace, or Medicaid.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", healthInsuranceDetail),
+                notes: ["Marketplace plans often come with savings (subsidies) based on your income.",
+                        "No coverage yet? Community health centers see you on a sliding scale.",
+                        referenceNote],
+                confidence: 1)
+        })
+
+    private static func healthInsuranceDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Apply on the official Marketplace") {
+            return StepDetail(
+                explanation: "HealthCare.gov is the official Marketplace — avoid look-alike sites.",
+                links: [StepLink(label: "HealthCare.gov — get ready to apply", url: "https://www.healthcare.gov/apply-and-enroll/get-ready-to-apply/")])
+        }
+        if text.hasPrefix("Low income?") {
+            return StepDetail(
+                explanation: "Medicaid and CHIP are free or low-cost coverage for lower incomes (CHIP covers kids).",
+                links: [StepLink(label: "HealthCare.gov — Medicaid & CHIP", url: "https://www.healthcare.gov/medicaid-chip/")])
+        }
+        if text.hasPrefix("After you enroll") {
+            return StepDetail(
+                explanation: "Keep your plan details handy for doctor visits and pharmacies.",
+                fields: [SavedField(label: "Plan name"), SavedField(label: "Member ID"), SavedField(label: "Coverage start date")])
         }
         return nil
     }

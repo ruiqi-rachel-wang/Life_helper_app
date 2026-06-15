@@ -16,7 +16,7 @@ import SwiftData
 
 // Semantic category. Drives the icon/color in the view, not vice-versa.
 nonisolated enum ItemCategory: String, Codable, CaseIterable {
-    case utility, government, medical, finance, housing, work, personal, other
+    case utility, government, medical, finance, auto, housing, work, personal, other
 }
 
 // Where an item came from — drives the source tag (Scanned / guide / Custom).
