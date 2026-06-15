@@ -138,9 +138,6 @@ struct GuideTests {
         // Moving "newState" only when moving to another state.
         #expect(!visibleIDs("moving", ["scope": "Same state"]).contains("newState"))
         #expect(visibleIDs("moving", ["scope": "Another state"]).contains("newState"))
-        // Car accident "fault" only when another driver was involved.
-        #expect(!visibleIDs("car_accident", ["other": "Hit-and-run (they left)"]).contains("fault"))
-        #expect(visibleIDs("car_accident", ["other": "Yes"]).contains("fault"))
         // Doctor "insurer" only when insured; new job "work" hidden for contractors.
         #expect(!visibleIDs("doctor_appointment", ["insurance": "No"]).contains("insurer"))
         #expect(!visibleIDs("new_job", ["type": "Contractor / 1099"]).contains("work"))
@@ -208,8 +205,9 @@ struct GuideTests {
 
     @Test func immigrationCitizenshipUsesN400Link() {
         let item = ActionItem(from: Guide.immigration.build(["task": "Apply for citizenship"]))
-        let n400 = item.steps.first { $0.text.contains("N-400") }
-        #expect(n400?.detail?.links.contains { $0.url == "https://www.uscis.gov/n-400" } == true)
+        let n400 = item.steps.first { $0.detail?.links.contains { $0.url == "https://www.uscis.gov/n-400" } == true }
+        #expect(n400 != nil)
+        #expect(n400?.text.contains("File Form N-400") == true)
     }
 
     @Test func emergencyGuidesPut911OnTheBannerNotInSteps() {
@@ -234,18 +232,19 @@ struct GuideTests {
         }
     }
 
-    @Test func carAccidentClaimBranchesByFaultAndReachesRepair() {
-        let other = Guide.carAccident.build(["fault": "The other driver"]).steps.joined(separator: "\n")
-        #expect(other.contains("at-fault driver's insurer"))   // third-party path
-        let mine = Guide.carAccident.build(["fault": "Me"]).steps.joined(separator: "\n")
-        #expect(mine.contains("your own insurer"))
-        #expect(other.lowercased().contains("repair"))         // full arc → repair
-    }
-
     @Test func carAccidentHitAndRunUsesUninsuredMotorist() {
-        let steps = Guide.carAccident.build(["other": "Hit-and-run (they left)"]).steps.joined(separator: "\n").lowercased()
+        let steps = Guide.carAccident.build(["what": "Hit-and-run (they left)"]).steps.joined(separator: "\n").lowercased()
         #expect(steps.contains("hit-and-run"))           // police report required
         #expect(steps.contains("uninsured-motorist"))    // claim path
+    }
+
+    @Test func carAccidentClaimVariesByWhatHappened() {
+        let otherHit = Guide.carAccident.build(["what": "The other driver hit me"]).steps.joined(separator: "\n")
+        #expect(otherHit.contains("the other driver's insurer"))   // neutral wording, not "at-fault"
+        #expect(!otherHit.lowercased().contains("at-fault"))
+        let single = Guide.carAccident.build(["what": "Single-car accident"]).steps.joined(separator: "\n")
+        #expect(single.contains("your own insurer"))
+        #expect(otherHit.lowercased().contains("repair"))          // full arc → repair
     }
 
     @Test func carAccidentTowAndLeftSceneBranches() {

@@ -170,6 +170,21 @@ nonisolated struct OpenAIClient: Extractor {
         saying you couldn't read it, steps [], and confidence below 0.2. Never \
         invent a document.
 
+        Safety guardrails:
+        - Do NOT tell the reader they legally, medically, or tax-wise "must" do \
+          something unless the document itself says so — use "you may need to" or \
+          "check whether".
+        - Do NOT diagnose symptoms or give medical / legal / tax / immigration- \
+          eligibility advice beyond what the document states; for symptoms or an \
+          accident, point them to a doctor, urgent care, or 911 when appropriate.
+        - For immigration, tax, or legal documents, SUMMARIZE and ORGANIZE — do \
+          not interpret eligibility or outcomes the document doesn't state.
+        - Never put a full SSN, bank password/PIN, full card number, or A-number \
+          into any field — mask all but the last 4 (ordinary account / reference / \
+          confirmation numbers are fine to keep).
+        - If you are unsure what the document is, say so plainly and set a low \
+          confidence rather than guessing.
+
         Write summary and steps in \(language.promptName). Do not invent an amount \
         or a date that is not in the text.
         """

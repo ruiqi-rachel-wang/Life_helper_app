@@ -566,13 +566,15 @@ extension Guide {
             GuideQuestion(id: "task", prompt: "What do you need to do?",
                           kind: .choice(["Renew or replace green card", "Apply for citizenship",
                                          "Renew work permit (EAD)", "Check my case status"])),
+            GuideQuestion(id: "deadline", prompt: "Do you have a notice or deadline? (optional)", kind: .date),
         ],
         build: { a in
             let task = val(a, "task", default: "Renew or replace green card")
-            let steps: [String]
+            let deadline = GuideDate.decode(a["deadline"])
+            var steps: [String]
             switch task {
             case "Apply for citizenship":
-                steps = ["Confirm you're eligible — usually 5 years as a permanent resident (3 if married to a U.S. citizen).",
+                steps = ["Check the official USCIS N-400 eligibility page — many apply after 5 years as a permanent resident (3 in some marriage-based cases), but exceptions exist.",
                          "Create or sign in to your free USCIS online account.",
                          "File Form N-400, Application for Naturalization.",
                          "Pay the fee; go to a biometrics appointment if one is scheduled.",
@@ -594,9 +596,14 @@ extension Guide {
                          "Go to your biometrics appointment if USCIS schedules one.",
                          "Track your case online until the new card arrives."]
             }
+            // Common to every USCIS task
+            steps.append("Save copies or photos of every form, notice, and receipt you send or receive.")
+            steps.append("Add reminders for any biometrics, interview, RFE, or card-expiration dates.")
+            steps.append("If you get an RFE, NOID, or court notice, contact authorized legal help — don't rely on social media.")
             return ExtractionResult(
                 title: "USCIS paperwork — \(task.lowercased())",
                 documentType: "Immigration guide",
+                dueDate: deadline,
                 category: .government,
                 summary: "Steps to \(task.lowercased()) with USCIS.",
                 steps: steps,
@@ -641,27 +648,26 @@ extension Guide {
         questions: [
             GuideQuestion(id: "when", prompt: "When did it happen?",
                           kind: .choice(["At the scene now", "Earlier — I've left"])),
-            GuideQuestion(id: "injuries", prompt: "Was anyone hurt?", kind: .choice(["No", "Yes", "Not sure"])),
-            GuideQuestion(id: "other", prompt: "Was another driver involved?",
-                          kind: .choice(["Yes", "Hit-and-run (they left)", "No other car"])),
+            GuideQuestion(id: "injuries", prompt: "Do you feel any pain or injury?",
+                          kind: .choice(["No", "Yes", "Not sure"])),
+            GuideQuestion(id: "what", prompt: "What best describes what happened?",
+                          kind: .choice(["The other driver hit me", "I may have hit someone/something",
+                                         "Single-car accident", "Hit-and-run (they left)", "Not sure"])),
             GuideQuestion(id: "drivable", prompt: "Is your car drivable?",
                           kind: .choice(["Yes", "No — needs a tow"])),
-            GuideQuestion(id: "fault", prompt: "Who was at fault?",
-                          kind: .choice(["The other driver", "Me", "Not sure / shared"]),
-                          showIf: { $0["other"] == "Yes" }),
         ],
         build: { a in
             let atScene = a["when"] != "Earlier — I've left"
-            let other = val(a, "other", default: "Yes")
-            let hitRun = other == "Hit-and-run (they left)"
-            let noOther = other == "No other car"
+            let what = val(a, "what", default: "Not sure")
+            let hitRun = what == "Hit-and-run (they left)"
+            let singleCar = what == "Single-car accident"
+            let otherInvolved = !hitRun && !singleCar
             let drivable = a["drivable"] != "No — needs a tow"
-            let fault = val(a, "fault", default: "Not sure / shared")
 
             var steps: [String] = []
             // (911 lives on the first-page emergency banner, not in the steps.)
             if a["injuries"] == "Yes" {
-                steps.append("Get medical care even if injuries seem minor — some show up later.")
+                steps.append("Get medical care even if it seems minor — some injuries show up later.")
             } else if a["injuries"] == "Not sure" {
                 steps.append("Check everyone for injuries before moving on.")
             }
@@ -669,59 +675,55 @@ extension Guide {
             // At the scene vs. after the fact
             if atScene {
                 steps.append("Move to safety if you can, and turn on your hazard lights.")
+                steps.append("Don't argue about fault at the scene — collect the facts and let the police and insurers sort it out.")
                 if hitRun {
                     steps.append("Call the police and file a report now — you'll need it for a hit-and-run claim. Note the report number.")
                     steps.append("Write down all you can about the other car: make, color, plate, and direction it went; ask any witnesses.")
                 } else {
                     steps.append("Call the police if anyone's hurt, damage is major, or your state requires it — note the report number.")
-                    if noOther {
-                        steps.append("Photograph the damage and scene, and note what happened.")
-                    } else {
+                    if otherInvolved {
                         steps.append("Exchange info and photograph everything: the other driver's license, plate, insurance, both cars, and the scene.")
+                    } else {
+                        steps.append("Photograph the damage and scene, and note what happened.")
                     }
-                }
-                if !drivable {
-                    steps.append("Car not drivable? Arrange a tow to a safe place or a repair shop.")
                 }
             } else {
                 steps.append("Write down what you remember and photograph the damage now.")
                 steps.append(hitRun
                     ? "File a police report as soon as you can — it's required for a hit-and-run claim."
                     : "File a police report if you haven't — especially with any injury or major damage.")
-                if !drivable {
-                    steps.append("If the car isn't drivable, arrange a tow to a repair shop.")
-                }
+            }
+            if !drivable {
+                steps.append("If the car isn't drivable, arrange a tow — and save the tow company, location, and receipt.")
             }
 
-            // The claim — depends on who was involved / at fault
+            // The claim — by what happened, in neutral terms
             if hitRun {
-                steps.append("File a claim with your own insurer under uninsured-motorist or collision coverage.")
-            } else if noOther {
-                steps.append("File a claim with your own insurer (collision or comprehensive).")
+                steps.append("Start a claim with your own insurer under uninsured-motorist or collision coverage.")
+            } else if singleCar {
+                steps.append("Start a claim with your own insurer (collision or comprehensive).")
+            } else if what == "The other driver hit me" {
+                steps.append("Start a claim with the other driver's insurer, or with your own insurer (which can recover the cost).")
+            } else if what == "I may have hit someone/something" {
+                steps.append("Report it to your insurer — liability coverage handles the other party, collision your own car.")
             } else {
-                switch fault {
-                case "The other driver":
-                    steps.append("File with the at-fault driver's insurer (third-party claim) — or file with your own and let them recover the cost.")
-                case "Me":
-                    steps.append("File a claim with your own insurer (collision coverage).")
-                default:
-                    steps.append("Report it to your own insurer; they'll investigate fault.")
-                }
+                steps.append("Report it to your own insurer; the insurers will investigate what happened.")
             }
 
             // Repair → done
             steps.append("Get a repair estimate — the insurer may inspect the car.")
             steps.append("Choose a repair shop — you can usually pick your own.")
-            steps.append("Ask about a rental car if your policy covers it.")
+            steps.append("Ask your insurer whether your policy covers a rental car.")
             steps.append("Pay your deductible if any, then pick up and check the car.")
             steps.append("Keep records: claim number, report number, estimates, medical bills.")
 
             var notes: [String] = []
-            if !noOther && !hitRun {
+            if otherInvolved {
                 notes.append("If the other driver is uninsured, your uninsured-motorist (UM) coverage can step in.")
             }
             notes.append("In a no-fault state, medical costs go through your own insurer (PIP), no matter who was at fault.")
-            notes.append("Report it to your insurer promptly — even a minor accident.")
+            notes.append("If pain shows up hours or days later, see a doctor and save the records.")
+            notes.append("Driving a rental, leased, rideshare, or company car? Tell that owner or company too.")
             notes.append(referenceNote)
 
             return ExtractionResult(
@@ -746,7 +748,7 @@ extension Guide {
                                 "Location, date/time, and weather.",
                                 "Names and phone numbers of any witnesses."])
         }
-        if (text.hasPrefix("File") || text.hasPrefix("Report")) && text.contains("insurer") {
+        if (text.hasPrefix("Start a claim") || text.hasPrefix("File") || text.hasPrefix("Report")) && text.contains("insurer") {
             return StepDetail(
                 explanation: "Calling the insurer (yours or the at-fault driver's), have your details ready.",
                 miniChecklist: ["Your policy number — or the at-fault driver's insurer and policy number.",
@@ -796,9 +798,12 @@ extension Guide {
             steps.append(isNew
                 ? "Call or use the patient portal to book — new-patient slots can take weeks."
                 : "Call or use the patient portal to book your visit.")
+            steps.append("If you need an interpreter, ask for one when you book — it's free at most clinics.")
             if isNew {
-                steps.append(insured ? "Confirm they take your insurance and ask what to bring."
+                steps.append(insured ? "Confirm they take your insurance, and if it's a specialist, whether you need a referral."
                                      : "Ask what it will cost up front and what to bring.")
+            } else {
+                steps.append("Note why you're going back — new or worse symptoms, a refill, or test results.")
             }
             steps.append("Before the visit, note your symptoms, medicines, allergies, and questions.")
             if isNew {
@@ -815,8 +820,12 @@ extension Guide {
                     : "Book your \(kind) visit and get ready.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: insurer, doctorDetail),
-                notes: insured ? ["In-network providers usually cost much less.", referenceNote]
-                               : ["Community health centers charge on a sliding scale — you can be seen without insurance.", referenceNote],
+                notes: insured ? ["In-network providers usually cost much less.",
+                                  "Ask whether a telehealth (video) visit is an option — it can be faster.",
+                                  referenceNote]
+                               : ["Community health centers charge on a sliding scale — you can be seen without insurance.",
+                                  "Ask whether a telehealth (video) visit is an option — it can be faster.",
+                                  referenceNote],
                 confidence: 1)
         })
 
@@ -995,18 +1004,25 @@ extension Guide {
         questions: [
             GuideQuestion(id: "newcomer", prompt: "Is this your first U.S. school?",
                           kind: .choice(["Yes — new to the U.S.", "No — transferring"])),
+            GuideQuestion(id: "iep", prompt: "Does your child get special-education services (IEP/504)?",
+                          kind: .choice(["No", "Yes", "Not sure"])),
         ],
         build: { a in
             let newcomer = a["newcomer"] != "No — transferring"
             var steps = ["Find your assigned public school by your home address — it's set by where you live.",
                          "Gather what you'll need: your child's birth certificate, proof of your address, and immunization records.",
+                         "Ask the enrollment office for an interpreter if you need one.",
                          "Fill out the enrollment forms and the Home Language Survey."]
             if newcomer {
                 steps.append("New to the U.S.? Ask about English-language (EL) support — schools must provide it.")
             } else {
                 steps.append("Transferring? Ask the old school to send records (transcripts, and an IEP/504 plan if any).")
             }
-            steps.append("Schedule any required health check or missing vaccines before the start date.")
+            if a["iep"] == "Yes" {
+                steps.append("Bring your child's IEP/504 records and ask how their services will continue at the new school.")
+            }
+            steps.append("Ask about bus transportation, free/reduced meals, and after-school programs.")
+            steps.append("Schedule any required health check or missing vaccines, and ask what to do if records are incomplete or in another language.")
             return ExtractionResult(
                 title: "Enroll your child in school",
                 documentType: "School guide",
@@ -1046,20 +1062,30 @@ extension Guide {
         questions: [
             GuideQuestion(id: "source", prompt: "How might you get coverage?",
                           kind: .choice(["Through a job", "On my own (Marketplace)", "Low income (Medicaid/CHIP)", "Not sure"])),
+            GuideQuestion(id: "lifeEvent", prompt: "A recent change — lost coverage, moved, married, had a baby, or job change?",
+                          kind: .choice(["No", "Yes", "Not sure"])),
         ],
         build: { a in
             let source = val(a, "source", default: "Not sure")
+            let marketplace = source == "On my own (Marketplace)" || source == "Not sure"
             var steps: [String] = []
-            if source == "Through a job" {
-                steps.append("Enroll through your job during your new-hire window or open enrollment — compare premium, deductible, and whether your doctors are covered.")
+            if a["lifeEvent"] == "Yes" {
+                steps.append("A recent life change may open a Special Enrollment Period — you can sign up now, outside open enrollment.")
             }
-            if source == "On my own (Marketplace)" || source == "Not sure" {
-                steps.append("Apply at HealthCare.gov — it routes you to your state's Marketplace if it runs one. Open enrollment is usually Nov 1–Jan 15, or sooner with a qualifying life event (job loss, move, baby).")
+            if source == "Through a job" {
+                steps.append("Enroll through your job during your new-hire window or open enrollment.")
+            }
+            if marketplace {
+                steps.append("Apply at HealthCare.gov — it routes you to your state's Marketplace if it runs one. Open enrollment is usually Nov 1–Jan 15.")
             }
             if source == "Low income (Medicaid/CHIP)" || source == "Not sure" {
                 steps.append("Low income? Apply for Medicaid or CHIP any time of year — if approved, when coverage starts depends on your state.")
             }
             steps.append("Have your household size and income ready — that decides your options and any savings.")
+            steps.append("Compare plans on premium, deductible, copays, out-of-pocket max, your doctors, and your prescriptions.")
+            if marketplace {
+                steps.append("If you pick a Marketplace plan, pay the first premium — coverage doesn't start until you do.")
+            }
             steps.append("After you enroll, save your plan name, member ID, and start date.")
             return ExtractionResult(
                 title: "Get health insurance",
