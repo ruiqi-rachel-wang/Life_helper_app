@@ -40,6 +40,16 @@ struct GuideTests {
         #expect(steps.contains("once you have your new address"))
     }
 
+    @Test func movingMoveDateSetsDueDate() {
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let r = Guide.moving.build(["home": "Renting", "moveDate": GuideDate.encode(date)])
+        #expect(r.dueDate == date)
+        // The "set your move date as the reminder" note drops once a date is given.
+        #expect(!r.notes.contains { $0.contains("Set your move date as the reminder") })
+        // No date → no due date.
+        #expect(Guide.moving.build(["home": "Renting"]).dueDate == nil)
+    }
+
     @Test func movingHasNoVoterRegistrationStep() {
         let steps = Guide.moving.build(["home": "Renting", "scope": "Another state",
                                         "newState": "New York", "knowAddress": "Yes", "car": "Yes"])
@@ -123,6 +133,12 @@ struct GuideTests {
         let itin = item.steps.first { $0.text.contains("Form W-7") }
         #expect(itin != nil)
         #expect(itin?.detail?.links.contains { $0.url.contains("irs.gov") } == true)
+    }
+
+    @Test func bankCompareStepHasCFPBLink() {
+        let item = ActionItem(from: Guide.bankAccount.build(["ssn": "Yes", "type": "Checking"]))
+        let compare = item.steps.first { $0.text.hasPrefix("Compare banks") }
+        #expect(compare?.detail?.links.contains { $0.url.contains("consumerfinance.gov") } == true)
     }
 
     @Test func bankCoversDeniedAndNoAddressCases() {

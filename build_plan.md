@@ -185,7 +185,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 |---|---|
 | EN/中文/ES live toggle on Review | One language only, chosen in Settings, generated once |
 | Document history with search | Plain "Past items" list, no search |
-| 5 guides with AI customization | **Adaptive hybrid guides** (changed 2026-06-05, now in Phase 1): hardcoded questions + hardcoded base checklist, AI only fills in details. 5 starters + car accident. |
+| 5 guides with AI customization | **Adaptive hybrid guides** (changed 2026-06-05; shipped Week 7): hardcoded questions + hardcoded base checklist, light AI polish on non-sensitive guides only. 7 guides: moving, bank, new job, driver's license, USCIS paperwork, car accident, doctor's appointment. |
 | Recurring monthly + yearly hardcoded | Cadence read from the document by AI (any interval) |
 | Overdue follow-up daily up to 7 days | One overdue reminder the next morning |
 | Vision-AI fallback for bad OCR | No vision model. Re-shoot the photo. |

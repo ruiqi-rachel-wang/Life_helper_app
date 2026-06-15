@@ -16,10 +16,20 @@ import Foundation
 // One hardcoded question. `choice` = pick one option; `text` = free input;
 // `state` = pick a US state from a list (states are too many for pills).
 nonisolated struct GuideQuestion: Identifiable, Equatable {
-    enum Kind: Equatable { case choice([String]); case text(String); case state }
+    enum Kind: Equatable { case choice([String]); case text(String); case state; case date }
     let id: String
     let prompt: String
     let kind: Kind
+}
+
+// A `.date` answer is stored in the answers dict as a time-interval string.
+// These helpers keep encode/decode in one place.
+nonisolated enum GuideDate {
+    static func encode(_ d: Date) -> String { String(d.timeIntervalSinceReferenceDate) }
+    static func decode(_ s: String?) -> Date? {
+        guard let s, let t = Double(s) else { return nil }
+        return Date(timeIntervalSinceReferenceDate: t)
+    }
 }
 
 // How careful we are with a guide's topic. `.sensitive` (immigration, money,
@@ -265,6 +275,7 @@ extension Guide {
                           kind: .choice(["Yes", "Not yet"])),
             GuideQuestion(id: "car", prompt: "Do you have a car to update?",
                           kind: .choice(["Yes", "No"])),
+            GuideQuestion(id: "moveDate", prompt: "When's your move date? (optional)", kind: .date),
         ],
         build: { a in
             let home = val(a, "home", default: "Renting")
@@ -272,6 +283,7 @@ extension Guide {
             let newState = val(a, "newState", default: "your new state")
             let knowsAddress = a["knowAddress"] != "Not yet"
             let hasCar = a["car"] == "Yes"
+            let moveDate = GuideDate.decode(a["moveDate"])
 
             var steps: [String] = []
             if home == "Renting" {
@@ -311,16 +323,18 @@ extension Guide {
                 }
             }
 
+            var notes = ["USPS forwarding only moves your mail — update your bank, DMV, and employer separately."]
+            if moveDate == nil { notes.append("Set your move date as the reminder.") }
+            notes.append(referenceNote)
             return ExtractionResult(
                 title: "Moving checklist",
                 documentType: "Moving guide",
+                dueDate: moveDate,
                 category: .housing,
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
                 detailedSteps: detailed(steps, state: newState, movingDetail),
-                notes: ["USPS forwarding only moves your mail — update your bank, DMV, and employer separately.",
-                        "Set your move date as the reminder.",
-                        referenceNote],
+                notes: notes,
                 confidence: 1)
         })
 
@@ -508,7 +522,7 @@ extension Guide {
                 links: [StepLink(label: "IRS — ITIN / Form W-7",
                                  url: "https://www.irs.gov/individuals/individual-taxpayer-identification-number")])
         }
-        if text.hasPrefix("Compare a few banks") {
+        if text.hasPrefix("Compare banks") {
             return StepDetail(
                 explanation: "Look for low or no monthly fees and a branch/ATM network near you.",
                 miniChecklist: ["Monthly maintenance fee (and how to waive it).",

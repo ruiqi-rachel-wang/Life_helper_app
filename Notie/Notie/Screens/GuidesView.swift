@@ -159,7 +159,7 @@ struct GuideQuestionsView: View {
         guide.questions.contains { q in
             switch q.kind {
             case .choice, .state: return answers[q.id] == nil
-            case .text: return false
+            case .text, .date: return false   // optional
             }
         }
     }
@@ -271,6 +271,22 @@ struct GuideQuestionsView: View {
                     }
                     .padding(.horizontal, 12).padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.bg))
+                }
+            case .date:
+                // Optional: only sets an answer (and a due date) once turned on.
+                let isSet = answers[q.id] != nil
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle("Set a date", isOn: Binding(
+                        get: { isSet },
+                        set: { on in answers[q.id] = on ? GuideDate.encode(.now) : nil }))
+                        .font(.body14).tint(Color.ink)
+                    if isSet {
+                        DatePicker("", selection: Binding(
+                            get: { GuideDate.decode(answers[q.id]) ?? .now },
+                            set: { answers[q.id] = GuideDate.encode($0) }),
+                            displayedComponents: [.date])
+                            .labelsHidden().datePickerStyle(.compact)
+                    }
                 }
             }
         }
