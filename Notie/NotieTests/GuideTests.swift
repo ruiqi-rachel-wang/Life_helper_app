@@ -299,6 +299,17 @@ struct GuideTests {
         #expect(claim != nil)
     }
 
+    @Test func doctorReturnVisitSkipsFindAndBring() {
+        let newp = Guide.doctorAppointment.build(["insurance": "Yes", "new": "New patient", "kind": "dentist"]).steps.joined(separator: "\n")
+        #expect(newp.contains("in-network"))            // new patient: find a doctor
+        #expect(newp.contains("Bring your insurance card"))   // and bring card + ID
+
+        let ret = Guide.doctorAppointment.build(["insurance": "Yes", "new": "Return visit", "kind": "dentist"]).steps.joined(separator: "\n")
+        #expect(!ret.lowercased().contains("in-network"))     // return: no need to find one
+        #expect(!ret.contains("Bring your insurance card"))   // already on file
+        #expect(ret.contains("book your visit"))
+    }
+
     @Test func doctorBookingStepSavesAppointmentTime() {
         let item = ActionItem(from: Guide.doctorAppointment.build(["new": "New patient", "kind": "dentist"]))
         let book = item.steps.first { $0.detail?.fields.contains { $0.label.contains("Appointment") } == true }

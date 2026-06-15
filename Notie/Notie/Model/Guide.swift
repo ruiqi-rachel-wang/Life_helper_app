@@ -771,28 +771,40 @@ extension Guide {
             let insured = a["insurance"] != "No"
             let insurer = a["insurer"] ?? ""
 
+            let isNew = a["new"] == "New patient"
+
             // (Emergency / urgent-care guidance lives on the first-page banner.)
             var steps: [String] = []
-            if insured {
-                let on = insurer.isEmpty ? "" : " on \(insurer)"
-                steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (or call the number on your card).")
-            } else {
-                steps.append("Find a community health center or sliding-scale clinic near you.")
+            // A return visit already has a doctor and is on file — skip finding one
+            // and the bring-your-card/forms steps; just book and prep.
+            if isNew {
+                if insured {
+                    let on = insurer.isEmpty ? "" : " on \(insurer)"
+                    steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (or call the number on your card).")
+                } else {
+                    steps.append("Find a community health center or sliding-scale clinic near you.")
+                }
             }
-            steps.append(a["new"] == "New patient"
+            steps.append(isNew
                 ? "Call or use the patient portal to book — new-patient slots can take weeks."
                 : "Call or use the patient portal to book your visit.")
-            steps.append(insured ? "Confirm they take your insurance and ask what to bring."
-                                 : "Ask what it will cost up front and what to bring.")
+            if isNew {
+                steps.append(insured ? "Confirm they take your insurance and ask what to bring."
+                                     : "Ask what it will cost up front and what to bring.")
+            }
             steps.append("Before the visit, note your symptoms, medicines, allergies, and questions.")
-            steps.append(insured ? "Bring your insurance card and a photo ID."
-                                 : "Bring a photo ID and any medical records.")
+            if isNew {
+                steps.append(insured ? "Bring your insurance card and a photo ID, and arrive early for new-patient forms."
+                                     : "Bring a photo ID and any medical records, and arrive early for new-patient forms.")
+            }
             return ExtractionResult(
                 title: "Book a \(kind) appointment",
                 documentType: "Appointment guide",
                 category: .medical,
-                summary: insured ? "Find an in-network \(kind) and get ready for the visit."
-                                 : "Find an affordable \(kind) and get ready for the visit.",
+                summary: isNew
+                    ? (insured ? "Find an in-network \(kind) and get ready for the visit."
+                               : "Find an affordable \(kind) and get ready for the visit.")
+                    : "Book your \(kind) visit and get ready.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: insurer, doctorDetail),
                 notes: insured ? ["In-network providers usually cost much less.", referenceNote]
