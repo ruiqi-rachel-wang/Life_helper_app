@@ -474,8 +474,6 @@ extension Guide {
         questions: [
             GuideQuestion(id: "ssn", prompt: "Do you have a Social Security number (SSN)?",
                           kind: .choice(["Yes", "No — I'll use an ITIN", "Not sure"])),
-            GuideQuestion(id: "type", prompt: "Which account do you want?",
-                          kind: .choice(["Checking", "Savings", "Both"])),
         ],
         build: { a in
             let ssn = a["ssn"] ?? ""
@@ -497,7 +495,7 @@ extension Guide {
                 title: "Open a bank account",
                 documentType: "Banking guide",
                 category: .finance,
-                summary: "How to open a U.S. \((a["type"] ?? "bank").lowercased()) account — including without an SSN.",
+                summary: "How to open a U.S. bank account — including without an SSN.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", bankDetail),
                 notes: notes,
