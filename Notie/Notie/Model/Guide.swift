@@ -362,34 +362,40 @@ extension Guide {
                           kind: .choice(["W-2 employee", "Contractor / 1099", "Internship", "Not sure"])),
             GuideQuestion(id: "employer", prompt: "What's the company's name?", kind: .text("Employer")),
             GuideQuestion(id: "work", prompt: "Where will you work?",
-                          kind: .choice(["In-person", "Remote", "Hybrid"]),
+                          kind: .choice(["In-person", "Remote", "Hybrid", "Not sure"]),
                           showIf: { $0["type"] != "Contractor / 1099" }),
+            GuideQuestion(id: "startDate", prompt: "Start date? (optional)", kind: .date),
         ],
         build: { a in
             let type = val(a, "type", default: "W-2 employee")
             let employer = val(a, "employer", default: "your employer")
             let work = a["work"] ?? ""
             let isContractor = type == "Contractor / 1099"
+            let startDate = GuideDate.decode(a["startDate"])
 
             var steps = ["Save your offer letter and confirm your start date and first-day details."]
             if isContractor {
-                steps.append("Send \(employer) a W-9 (not I-9/W-4) with your payment and invoice details.")
+                steps.append("Confirm the contract scope, rate, payment schedule, and how to invoice.")
+                steps.append("Send \(employer) a W-9 (not I-9/W-4) with your payment details.")
                 steps.append("Set aside money for taxes — contractors usually pay quarterly.")
-                steps.append("Decide how you'll invoice and track payments.")
+                steps.append("Save the signed contract, and track your invoices and payment dates.")
             } else {
                 steps.append("Complete Form I-9 (work authorization) and Form W-4 (tax withholding) for \(employer).")
                 steps.append("Complete your state tax form, if any.")
                 steps.append("Set up direct deposit (voided check or bank details).")
-                steps.append("Finish emergency-contact info and any background check / onboarding.")
+                steps.append("Get access to the HR, payroll, and benefits portals, and a work email.")
+                steps.append("Finish any background check or drug screen if required.")
                 steps.append("Enroll in benefits (health, dental, retirement) before the deadline.")
                 if work == "Remote" || work == "Hybrid" {
-                    steps.append("Arrange your work equipment.")
+                    steps.append("Arrange your laptop/equipment shipment and remote access (VPN, accounts).")
+                } else {
+                    steps.append("Confirm your first-day schedule, work location, badge, and parking.")
                 }
                 steps.append("Check your first paycheck — pay rate, taxes, and direct deposit.")
             }
 
             var notes = ["I-9 verifies you can work in the U.S.; W-4 sets your tax withholding.",
-                         "Benefits enrollment usually closes ~30 days after you start.",
+                         "Benefits enrollment usually closes ~30 days after you start — add a reminder.",
                          "Submit your SSN, bank, and ID only through the official HR portal — never by email or text."]
             if type == "Not sure" {
                 notes.insert("Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.", at: 0)
@@ -397,11 +403,13 @@ extension Guide {
             if type == "Internship" {
                 notes.insert("Paid internships usually get a W-2; unpaid ones have no tax forms. Confirm which yours is with HR.", at: 0)
             }
+            if isContractor { notes.append("Contractors usually don't get employee benefits (health, paid leave).") }
             notes.append(referenceNote)
 
             return ExtractionResult(
                 title: "New job checklist",
                 documentType: "New-job guide",
+                dueDate: startDate,
                 category: .work,
                 summary: "What to set up when starting at \(employer)\(isContractor ? " as a contractor" : "") — paperwork, pay, and benefits.",
                 steps: steps,
@@ -495,13 +503,13 @@ extension Guide {
             let ssn = a["ssn"] ?? ""
             var steps = ["Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."]
             if ssn == "No — I'll use an ITIN" {
-                steps.append("No SSN? Apply for an ITIN (IRS Form W-7, ~7 weeks; 9–11 in tax season) — or ask banks first; some take a foreign passport.")
+                steps.append("No SSN? Call a few banks first and ask what they accept — an ITIN, foreign passport, or consular ID. Apply for an ITIN only if you actually need one.")
             } else if ssn == "Not sure" {
                 steps.append("Not sure? Check old tax forms or call the IRS — you may not need an SSN.")
             }
             steps.append("Compare banks/credit unions on fees, minimum balance, and ATMs — look for a no-fee, no-overdraft account.")
             steps.append("Open the account and make the opening deposit.")
-            steps.append("Set up online banking, direct deposit, and alerts; order your debit card.")
+            steps.append("Set up online banking, direct deposit, and alerts; order your debit card — and decline overdraft coverage unless you understand the fees.")
 
             var notes = ["Many banks accept an ITIN or foreign passport instead of an SSN — call ahead to confirm.",
                          "No proof of address? Ask what alternatives the bank accepts (an employer, school, or shelter letter often works).",
@@ -529,9 +537,9 @@ extension Guide {
                                 "Money for the opening deposit (often $25–$100)."],
                 needed: ["Originals, not photocopies"])
         }
-        if text.contains("Form W-7") {
+        if text.contains("Apply for an ITIN") {
             return StepDetail(
-                explanation: "An ITIN is a federal tax ID for people who can't get an SSN. It's for tax purposes — it isn't a general photo ID. Apply with IRS Form W-7.",
+                explanation: "An ITIN is a federal tax ID for people who can't get an SSN. It's for tax purposes — it isn't a general photo ID, and banks vary on accepting it. Apply with IRS Form W-7 only if you need one.",
                 links: [StepLink(label: "IRS — ITIN / Form W-7",
                                  url: "https://www.irs.gov/individuals/individual-taxpayer-identification-number")])
         }
@@ -854,33 +862,34 @@ extension Guide {
     // MARK: Taxes
     static let taxes = Guide(
         id: "taxes",
-        title: "File your taxes",
-        subtitle: "W-2/1099, refund, deadline",
+        title: "Prepare to file taxes",
+        subtitle: "Gather documents, free filing, deadline",
         category: .finance,
         questions: [
             GuideQuestion(id: "income", prompt: "What income did you have?",
                           kind: .choice(["A job (W-2)", "Self-employed / 1099", "Both", "Not sure"])),
             GuideQuestion(id: "taxid", prompt: "Do you have an SSN or ITIN?",
-                          kind: .choice(["Yes", "No — I need an ITIN"])),
+                          kind: .choice(["Yes", "No — I need an ITIN", "Not sure"])),
         ],
         build: { a in
             let income = val(a, "income", default: "A job (W-2)")
             let needsITIN = a["taxid"] == "No — I need an ITIN"
-            var steps = ["Gather your tax documents: W-2s, any 1099s, and last year's return if you have one."]
+            var steps = ["Gather your tax documents: W-2s, 1099s, any 1098-T (student) or 1095-A (Marketplace insurance), interest forms, and last year's return."]
             if needsITIN {
                 steps.append("No SSN or ITIN? Apply for an ITIN with IRS Form W-7 — you can file your return at the same time.")
             }
             if income == "Self-employed / 1099" || income == "Both" {
                 steps.append("Self-employed? Report your 1099 income and business expenses — you may owe quarterly estimated taxes.")
             }
+            steps.append("Check whether you also need a state return — and if you moved or worked in another state, check both.")
             steps.append("File for free if you qualify: IRS Free File online, or a VITA site for free in-person help.")
-            steps.append("File by the deadline — usually April 15. File even if you can't pay; you can set up a payment plan.")
-            steps.append("After filing, if you're owed a refund, track it with the IRS 'Where's My Refund?' tool.")
+            steps.append("File by the deadline — usually April 15. Can't make it? File an extension, but any tax owed is still due then.")
+            steps.append("After filing, save a copy of your return and confirmation; if you're owed a refund, track it with the IRS 'Where's My Refund?' tool.")
             return ExtractionResult(
-                title: "File your taxes",
+                title: "Prepare to file taxes",
                 documentType: "Tax guide",
                 category: .finance,
-                summary: "How to file your U.S. taxes — free options, the deadline, and your refund.",
+                summary: "How to get ready to file your U.S. taxes — documents, free options, and the deadline.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", taxDetail),
                 notes: ["A refund means money back; owing means you pay — filing on time avoids penalties either way.",

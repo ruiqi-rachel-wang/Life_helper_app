@@ -170,9 +170,10 @@ struct GuideTests {
     }
 
     @Test func bankNoSSNAddsITINStepWithIRSLink() {
-        let item = ActionItem(from: Guide.bankAccount.build(["ssn": "No — I'll use an ITIN", "type": "Checking"]))
-        let itin = item.steps.first { $0.text.contains("Form W-7") }
+        let item = ActionItem(from: Guide.bankAccount.build(["ssn": "No — I'll use an ITIN"]))
+        let itin = item.steps.first { $0.text.contains("Apply for an ITIN") }
         #expect(itin != nil)
+        #expect(itin?.text.contains("Call a few banks first") == true)   // advises checking before applying
         #expect(itin?.detail?.links.contains { $0.url.contains("irs.gov") } == true)
     }
 
