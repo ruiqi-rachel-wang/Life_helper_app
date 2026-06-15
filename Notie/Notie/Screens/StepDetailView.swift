@@ -101,9 +101,6 @@ struct StepDetailView: View {
                 ForEach(Array(d.needed.enumerated()), id: \.offset) { _, line in bullet(line) }
             }
         }
-        if !d.fields.isEmpty {
-            fieldsSection(editingLabels: false)
-        }
         if !d.script.isEmpty {
             section("WHAT TO SAY") {
                 Text(linkified(d.script)).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
@@ -148,7 +145,6 @@ struct StepDetailView: View {
         }
         editSubSteps(detail.miniChecklist)
         editList("WHAT YOU'LL NEED", detail.needed, placeholder: "Document or info")
-        fieldsSection(editingLabels: true)
         section("WHAT TO SAY") {
             TextField("Script / what to say…", text: detail.script, axis: .vertical)
                 .font(.body14).foregroundStyle(Color.ink)
@@ -199,40 +195,6 @@ struct StepDetailView: View {
             Button { items.wrappedValue.append("") } label: {
                 Label("Add", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
             }.buttonStyle(.plain).padding(.top, 2)
-        }
-    }
-
-    // Info the user fills in and keeps (claim #, receipt #, appointment time…).
-    // Values are always editable — even in read mode — since that's the point.
-    // In edit mode the labels become editable and rows can be added/removed.
-    private func fieldsSection(editingLabels: Bool) -> some View {
-        section("INFORMATION TO SAVE") {
-            ForEach(detail.fields.wrappedValue.indices, id: \.self) { i in
-                VStack(alignment: .leading, spacing: 5) {
-                    if editingLabels {
-                        HStack(alignment: .center, spacing: 8) {
-                            TextField("Label (e.g. Claim number)", text: detail.fields[i].label)
-                                .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
-                            Button { detail.fields.wrappedValue.remove(at: i) } label: {
-                                Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
-                            }.buttonStyle(.plain)
-                        }
-                    } else {
-                        Text(detail.fields.wrappedValue[i].label.uppercased())
-                            .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
-                    }
-                    TextField("Tap to fill in", text: detail.fields[i].value)
-                        .font(.body14).foregroundStyle(Color.ink)
-                        .padding(.horizontal, 10).padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
-                }
-                .padding(.bottom, 2)
-            }
-            if editingLabels {
-                Button { detail.fields.wrappedValue.append(SavedField(label: "")) } label: {
-                    Label("Add a field", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-                }.buttonStyle(.plain).padding(.top, 2)
-            }
         }
     }
 

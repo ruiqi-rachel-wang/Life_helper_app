@@ -34,7 +34,7 @@ struct DetailView: View {
                     navBar.padding(.horizontal, 22)
                     headCard
                     if !item.steps.isEmpty || isEditing { checklistCard }
-                    if !item.otherIDs.isEmpty || siteURLToShow != nil { detailsCard }
+                    if !item.otherIDs.isEmpty || siteURLToShow != nil || isEditing { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
                     if !item.notes.isEmpty || !item.note.isEmpty || isEditing { noteCard }
                     footer
@@ -98,13 +98,11 @@ struct DetailView: View {
                     Text("✓ COMPLETED").font(.eyebrow).tracking(0.6).foregroundStyle(Color.ok)
                 }
 
-                if item.amountText != nil || item.dueDate != nil || isEditing {
-                    HStack(spacing: 8) {
-                        if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
-                        if item.dueDate != nil || isEditing { dueChip }
-                    }
-                    .padding(.top, 2)
+                HStack(spacing: 8) {
+                    if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
+                    dueChip   // always shown; offers "Add date" when there's none
                 }
+                .padding(.top, 2)
             }
         }
     }
@@ -159,6 +157,12 @@ struct DetailView: View {
                     .font(.serifStat).tracking(-0.5)
                     .foregroundStyle(item.isOverdue ? Color.bad : Color.ink)
                     .minimumScaleFactor(0.5).lineLimit(2)
+            } else {
+                // No date yet (e.g. a guide task) — let the user add one in read mode.
+                Button { item.dueDate = startOfToday; isEditing = true } label: {
+                    Label("Add date", systemImage: "plus.circle").font(.subline).foregroundStyle(Color.accent)
+                }
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -340,13 +344,36 @@ struct DetailView: View {
 
     // MARK: details — IDs (claim/policy/confirmation)
 
+    // DETAILS — saved IDs / provider / claim #, etc. Values are editable inline
+    // (tap to fill, even in read mode); labels and add/remove appear in edit mode.
     private var detailsCard: some View {
         card {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("DETAILS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 ForEach(item.otherIDs.indices, id: \.self) { i in
-                    Text("\(item.otherIDs[i].label): \(item.otherIDs[i].value)")
-                        .font(.subline).foregroundStyle(Color.faded).textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: 5) {
+                        if isEditing {
+                            HStack(spacing: 8) {
+                                TextField("Label", text: $item.otherIDs[i].label)
+                                    .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                                Button { item.otherIDs.remove(at: i) } label: {
+                                    Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                                }.buttonStyle(.plain)
+                            }
+                        } else {
+                            Text(item.otherIDs[i].label.uppercased())
+                                .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                        }
+                        TextField("Tap to fill in", text: $item.otherIDs[i].value)
+                            .font(.body14).foregroundStyle(Color.ink)
+                            .padding(.horizontal, 10).padding(.vertical, 8)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
+                    }
+                }
+                if isEditing {
+                    Button { item.otherIDs.append(DocID(label: "", value: "")) } label: {
+                        Label("Add a detail", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+                    }.buttonStyle(.plain).padding(.top, 2)
                 }
                 if let site = siteURLToShow {
                     Link(destination: site) {

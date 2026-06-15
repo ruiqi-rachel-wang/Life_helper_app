@@ -184,7 +184,7 @@ struct ReviewView: View {
             card { documentHead }
             // Details (claim/policy/confirmation #) sit ABOVE steps — they're
             // what the user reaches for when a website/clerk asks.
-            if !combinedIDs.isEmpty || siteURLToShow != nil { card { detailsSection } }
+            if !combinedIDs.isEmpty || siteURLToShow != nil || isEditing { card { detailsSection } }
             if !draft.steps.isEmpty || isEditing { card { stepsSection } }
             if !draft.notes.isEmpty || isEditing { card { notesSection } }
             footer
@@ -364,12 +364,43 @@ struct ReviewView: View {
         }
     }
 
+    // DETAILS — saved IDs / provider / claim #, etc. Values editable inline (tap to
+    // fill); labels and add/remove appear in edit mode. The scanned primary
+    // reference number (if any) shows read-only above.
     private var detailsSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("DETAILS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-            ForEach(combinedIDs.indices, id: \.self) { i in
-                Text("\(combinedIDs[i].label): \(combinedIDs[i].value)")
-                    .font(.subline).foregroundStyle(Color.faded).textSelection(.enabled)
+            if let acct = draft.accountNumber, !acct.isEmpty,
+               !draft.otherIDs.contains(where: { $0.value == acct }) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("REFERENCE").font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                    Text(acct).font(.body14).foregroundStyle(Color.ink).textSelection(.enabled)
+                }
+            }
+            ForEach(draft.otherIDs.indices, id: \.self) { i in
+                VStack(alignment: .leading, spacing: 5) {
+                    if isEditing {
+                        HStack(spacing: 8) {
+                            TextField("Label", text: $draft.otherIDs[i].label)
+                                .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                            Button { draft.otherIDs.remove(at: i) } label: {
+                                Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                            }.buttonStyle(.plain)
+                        }
+                    } else {
+                        Text(draft.otherIDs[i].label.uppercased())
+                            .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                    }
+                    TextField("Tap to fill in", text: $draft.otherIDs[i].value)
+                        .font(.body14).foregroundStyle(Color.ink)
+                        .padding(.horizontal, 10).padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
+                }
+            }
+            if isEditing {
+                Button { draft.otherIDs.append(DocID(label: "", value: "")) } label: {
+                    Label("Add a detail", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+                }.buttonStyle(.plain).padding(.top, 2)
             }
             if let site = siteURLToShow {
                 Link(destination: site) {

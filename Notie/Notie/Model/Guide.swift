@@ -222,8 +222,7 @@ extension Guide {
             "Start or transfer electricity, gas, and water for the same date.",
             "Save your account number and confirmation after you sign up.",
         ],
-        needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"],
-        fields: [SavedField(label: "Internet install date"), SavedField(label: "Account number")])
+        needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"])
 
     private static func newJobDetail(_ text: String, _ state: String) -> StepDetail? {
         if text.hasPrefix("Complete Form I-9") { return i9Detail }
@@ -343,6 +342,8 @@ extension Guide {
                 title: "Moving checklist",
                 documentType: "Moving guide",
                 dueDate: moveDate,
+                otherIDs: [DocID(label: "Utility account #", value: ""),
+                           DocID(label: "Internet install date", value: "")],
                 category: .housing,
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
@@ -604,6 +605,7 @@ extension Guide {
                 title: "USCIS paperwork — \(task.lowercased())",
                 documentType: "Immigration guide",
                 dueDate: deadline,
+                otherIDs: [DocID(label: "Receipt number", value: "")],
                 category: .government,
                 summary: "Steps to \(task.lowercased()) with USCIS.",
                 steps: steps,
@@ -632,9 +634,8 @@ extension Guide {
         }
         if text.contains("case-status tool") || text.hasPrefix("Track your case") || text.contains("receipt number") {
             return StepDetail(
-                explanation: "Your receipt number (3 letters then numbers, e.g. IOE…) is on your I-797 receipt notice — save it here so it's easy to find.",
-                links: [StepLink(label: "USCIS — check case status", url: "https://egov.uscis.gov/casestatus/landing.do")],
-                fields: [SavedField(label: "Receipt number")])
+                explanation: "Your receipt number (3 letters then numbers, e.g. IOE…) is on your I-797 receipt notice — keep it in Details so it's easy to find.",
+                links: [StepLink(label: "USCIS — check case status", url: "https://egov.uscis.gov/casestatus/landing.do")])
         }
         return nil
     }
@@ -729,6 +730,9 @@ extension Guide {
             return ExtractionResult(
                 title: "After a car accident",
                 documentType: "Car-accident guide",
+                otherIDs: [DocID(label: "Claim number", value: ""),
+                           DocID(label: "Adjuster name & phone", value: ""),
+                           DocID(label: "Police report number", value: "")],
                 category: .auto,
                 summary: "What to do after an accident, from the scene to a repaired car.",
                 steps: steps,
@@ -755,10 +759,7 @@ extension Guide {
                                 "Date, location, and what happened.",
                                 "The police report number, if you have one.",
                                 "Your photos and the other driver's info.",
-                                "Ask about your deductible, a rental car, and the timeline."],
-                fields: [SavedField(label: "Claim number"),
-                         SavedField(label: "Adjuster name & phone"),
-                         SavedField(label: "Police report number")])
+                                "Ask about your deductible, a rental car, and the timeline."])
         }
         return nil
     }
@@ -813,6 +814,8 @@ extension Guide {
             return ExtractionResult(
                 title: "Book a \(kind) appointment",
                 documentType: "Appointment guide",
+                otherIDs: [DocID(label: "Provider name", value: ""),
+                           DocID(label: "Office phone", value: "")],
                 category: .medical,
                 summary: isNew
                     ? (insured ? "Find an in-network \(kind) and get ready for the visit."
@@ -848,13 +851,6 @@ extension Guide {
                                 "Call and ask if they're taking new patients.",
                                 "Ask what to bring to qualify for sliding-scale fees (often proof of income)."],
                 links: [StepLink(label: "HRSA — find a health center", url: "https://findahealthcenter.hrsa.gov")])
-        }
-        if text.hasPrefix("Call or use the patient portal to book") {
-            return StepDetail(
-                explanation: "Once it's booked, save the details so you don't lose them.",
-                fields: [SavedField(label: "Appointment date & time"),
-                         SavedField(label: "Provider name"),
-                         SavedField(label: "Office phone")])
         }
         if text.hasPrefix("Before the visit") {
             return StepDetail(
@@ -897,6 +893,8 @@ extension Guide {
             return ExtractionResult(
                 title: "Prepare to file taxes",
                 documentType: "Tax guide",
+                otherIDs: [DocID(label: "Date filed", value: ""),
+                           DocID(label: "Refund amount", value: "")],
                 category: .finance,
                 summary: "How to get ready to file your U.S. taxes — documents, free options, and the deadline.",
                 steps: steps,
@@ -930,8 +928,7 @@ extension Guide {
         if text.hasPrefix("After filing") {
             return StepDetail(
                 explanation: "Refunds usually arrive within a few weeks of e-filing.",
-                links: [StepLink(label: "IRS — Where's My Refund?", url: "https://www.irs.gov/refunds")],
-                fields: [SavedField(label: "Date filed"), SavedField(label: "Refund amount")])
+                links: [StepLink(label: "IRS — Where's My Refund?", url: "https://www.irs.gov/refunds")])
         }
         return nil
     }
@@ -1090,6 +1087,9 @@ extension Guide {
             return ExtractionResult(
                 title: "Get health insurance",
                 documentType: "Health-insurance guide",
+                otherIDs: [DocID(label: "Plan name", value: ""),
+                           DocID(label: "Member ID", value: ""),
+                           DocID(label: "Coverage start date", value: "")],
                 category: .medical,
                 summary: "How to get health coverage — through a job, the Marketplace, or Medicaid.",
                 steps: steps,
@@ -1110,11 +1110,6 @@ extension Guide {
             return StepDetail(
                 explanation: "Medicaid and CHIP are free or low-cost coverage for lower incomes (CHIP covers kids).",
                 links: [StepLink(label: "HealthCare.gov — Medicaid & CHIP", url: "https://www.healthcare.gov/medicaid-chip/")])
-        }
-        if text.hasPrefix("After you enroll") {
-            return StepDetail(
-                explanation: "Keep your plan details handy for doctor visits and pharmacies.",
-                fields: [SavedField(label: "Plan name"), SavedField(label: "Member ID"), SavedField(label: "Coverage start date")])
         }
         return nil
     }
