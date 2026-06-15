@@ -33,11 +33,18 @@ struct GuideTests {
         #expect(!steps.contains("landlord"))
     }
 
-    @Test func movingUnknownAddressUsesTemporaryForwarding() {
+    @Test func movingUnknownAddressDefersForwardingNoTempForward() {
         let steps = Guide.moving.build(["home": "Renting", "knowAddress": "Not yet"])
             .steps.joined(separator: "\n").lowercased()
-        #expect(steps.contains("temporary mail forwarding"))
-        #expect(!steps.contains("usps.com/move"))
+        #expect(!steps.contains("temporary mail forwarding"))      // removed per feedback
+        #expect(steps.contains("once you have your new address"))
+    }
+
+    @Test func movingHasNoVoterRegistrationStep() {
+        let steps = Guide.moving.build(["home": "Renting", "scope": "Another state",
+                                        "newState": "New York", "knowAddress": "Yes", "car": "Yes"])
+            .steps.joined(separator: "\n").lowercased()
+        #expect(!steps.contains("vote"))
     }
 
     // MARK: New job — W-2 vs contractor branch
@@ -147,23 +154,26 @@ struct GuideTests {
         #expect(n400?.detail?.links.contains { $0.url == "https://www.uscis.gov/n-400" } == true)
     }
 
-    @Test func carAccidentAlwaysLeadsWith911() {
-        // Safety step is unconditional now — even with "No" injuries selected.
-        for injuries in ["No", "Yes", "Not sure"] {
-            let steps = Guide.carAccident.build(["injuries": injuries]).steps
-            #expect(steps.first?.contains("911") == true)
+    @Test func emergencyGuidesPut911OnTheBannerNotInSteps() {
+        for id in ["car_accident", "doctor_appointment"] {
+            let g = Guide.all.first { $0.id == id }!
+            #expect(g.emergencyNote?.contains("911") == true)        // 911 is on the first page
+            // ...and never inside the checklist steps, for any answer combination.
+            let answers = id == "car_accident"
+                ? [["injuries": "No", "fault": "Me"], ["injuries": "Yes", "fault": "The other driver"], ["injuries": "Not sure", "fault": "Not sure / shared"]]
+                : [["new": "New patient", "kind": "dentist"], ["insurance": "No", "kind": "primary care"]]
+            for a in answers {
+                #expect(!g.build(a).steps.joined(separator: "\n").contains("911"))
+            }
         }
     }
 
-    @Test func doctorEmergencyRoutesTo911NotBooking() {
-        let steps = Guide.doctorAppointment.build(["urgency": "Emergency"]).steps.joined(separator: "\n")
-        #expect(steps.contains("911"))
-        #expect(!steps.lowercased().contains("provider directory"))   // skips the booking flow
-    }
-
-    @Test func doctorUrgentSuggestsUrgentCare() {
-        let steps = Guide.doctorAppointment.build(["urgency": "Urgent — need care soon"]).steps.joined(separator: "\n")
-        #expect(steps.lowercased().contains("urgent care"))
+    @Test func everyStateDMVLinkIsOfficial() {
+        for s in USStates.all {
+            let host = URL(string: Guide.dmvURL(s))?.host ?? ""
+            #expect(host.hasSuffix(".gov") || host.hasSuffix(".us"),
+                    "Non-official DMV link for \(s): \(Guide.dmvURL(s))")
+        }
     }
 
     @Test func carAccidentClaimBranchesByFaultAndReachesRepair() {

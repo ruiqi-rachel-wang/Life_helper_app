@@ -2,8 +2,9 @@
 //
 //  Adaptive life guides (Week 7). Each guide is HARDCODED and deterministic:
 //  a few questions whose answers pick/fill a base checklist. The structure is
-//  never decided by AI — only the optional polish pass (GuidePolisher) rewords
-//  the result. `build(answers:)` is pure → easy to unit-test.
+//  never decided by AI — only the optional polish pass (OpenAIClient.polish, and
+//  only for non-sensitive guides) rewords it. `build(answers:)` is pure → easy to
+//  unit-test.
 //
 //  UI-free: a guide carries an `ItemCategory` (the view derives color/symbol via
 //  ItemStyle), and `build` returns the shared `ExtractionResult`, so guides feed
@@ -40,6 +41,10 @@ nonisolated struct Guide: Identifiable {
     var officialSource: String? = nil       // primary official site (label form)
     var lastReviewed: String = "June 2026"
     var risk: GuideRisk = .general
+    // Shown as a prominent banner on the guide's FIRST page (the questions screen)
+    // — e.g. "call 911 if this is an emergency" — so urgent help never hides inside
+    // the checklist. nil for guides with no emergency dimension.
+    var emergencyNote: String? = nil
 }
 
 // US states + DC for the `.state` question kind.
@@ -61,10 +66,12 @@ nonisolated enum USStates {
 
 extension Guide {
     // Stamp provenance/risk onto a guide (returns a copy).
-    private func meta(source: String? = nil, risk: GuideRisk = .general) -> Guide {
+    private func meta(source: String? = nil, risk: GuideRisk = .general,
+                      emergency: String? = nil) -> Guide {
         var g = self
         g.officialSource = source
         g.risk = risk
+        g.emergencyNote = emergency
         return g
     }
 
@@ -74,8 +81,10 @@ extension Guide {
         newJob.meta(source: "USCIS Form I-9 (uscis.gov)"),
         driversLicense.meta(),   // source varies by state DMV
         immigration.meta(source: "USCIS (uscis.gov)", risk: .sensitive),
-        carAccident.meta(risk: .sensitive),
-        doctorAppointment.meta(source: "HealthCare.gov", risk: .sensitive),
+        carAccident.meta(risk: .sensitive,
+                         emergency: "If anyone is hurt or in danger, call 911 now."),
+        doctorAppointment.meta(source: "HealthCare.gov", risk: .sensitive,
+                               emergency: "If this is a medical emergency, call 911 or go to the ER. For urgent problems that can't wait, a walk-in urgent care may be faster than an appointment."),
     ]
 
     private static func val(_ a: [String: String], _ key: String, default def: String) -> String {
@@ -96,7 +105,7 @@ extension Guide {
 
     // Official (government) DMV/licensing site per state — agencies, not
     // businesses, so safe to link directly. Best-effort; verify periodically as
-    // agencies rename pages. Unknown → a web search (shouldn't happen; all 51 listed).
+    // agencies rename pages. Unknown → the official USA.gov DMV portal (all 51 listed).
     static func dmvURL(_ state: String) -> String {
         let map: [String: String] = [
             "Alabama": "https://www.alea.gov/dps/driver-license",
@@ -139,7 +148,7 @@ extension Guide {
             "Oregon": "https://www.oregon.gov/odot/dmv/",
             "Pennsylvania": "https://www.dmv.pa.gov",
             "Rhode Island": "https://dmv.ri.gov",
-            "South Carolina": "https://www.scdmvonline.com",
+            "South Carolina": "https://dmv.sc.gov",
             "South Dakota": "https://dps.sd.gov/driver-licensing",
             "Tennessee": "https://www.tn.gov/safety/driver-services.html",
             "Texas": "https://www.dps.texas.gov/section/driver-license",
@@ -271,7 +280,7 @@ extension Guide {
             if knowsAddress {
                 steps.append("Set up USPS mail forwarding at usps.com/move (~2 weeks ahead; small fee). Use the official site.")
             } else {
-                steps.append("Set up temporary mail forwarding until you have your new address.")
+                steps.append("Once you have your new address, set up USPS mail forwarding at usps.com/move.")
             }
             steps.append("Arrange the move — truck, container, or movers — and get boxes.")
             steps.append("Update your address with your bank, credit cards, and insurance.")
@@ -294,14 +303,12 @@ extension Guide {
                 if hasCar {
                     steps.append("Register your car and get new \(newState) plates, and update your car insurance.")
                 }
-                steps.append("Register to vote in \(newState).")
             } else {
                 if hasCar {
                     steps.append("Update your license/ID and car registration address at the DMV.")
                 } else {
                     steps.append("Update your license/ID address at the DMV.")
                 }
-                steps.append("Update your voter registration.")
             }
 
             return ExtractionResult(
@@ -461,7 +468,7 @@ extension Guide {
             let ssn = a["ssn"] ?? ""
             var steps = ["Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."]
             if ssn == "No — I'll use an ITIN" {
-                steps.append("No SSN? Apply for an ITIN (IRS Form W-7, ~7 weeks) — or ask banks first; some take a foreign passport.")
+                steps.append("No SSN? Apply for an ITIN (IRS Form W-7, ~7 weeks; 9–11 in tax season) — or ask banks first; some take a foreign passport.")
             } else if ssn == "Not sure" {
                 steps.append("Not sure? Check old tax forms or call the IRS — you may not need an SSN.")
             }
@@ -560,7 +567,7 @@ extension Guide {
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", immigrationDetail),
                 notes: ["Covers common USCIS filings only — it doesn't cover every visa type or situation.",
-                        "Immigration rules are complex — for anything unclear, get free legal aid or a USCIS-accredited rep.",
+                        "Immigration rules are complex — for anything unclear, use authorized legal help (a DOJ-recognized organization or accredited representative).",
                         "USCIS may extend your green card on the I-90 receipt notice — check the I-90 page.",
                         referenceNote],
                 confidence: 1)
@@ -604,10 +611,11 @@ extension Guide {
         build: { a in
             let fault = val(a, "fault", default: "Not sure / shared")
             var steps: [String] = []
-            // At the scene — safety first, always.
-            steps.append("Make sure everyone is safe — if anyone is hurt or in danger, call 911 now.")
+            // (911 lives on the first-page emergency banner, not in the steps.)
             if a["injuries"] == "Yes" {
                 steps.append("Get medical care even if injuries seem minor — some show up later.")
+            } else if a["injuries"] == "Not sure" {
+                steps.append("Check everyone for injuries before moving on.")
             }
             steps.append("Move to safety if you can, and turn on your hazard lights.")
             steps.append("Call the police if anyone's hurt, damage is major, or your state requires it — note the report number.")
@@ -678,8 +686,6 @@ extension Guide {
         subtitle: "Find an in-network doctor and what to bring",
         category: .medical,
         questions: [
-            GuideQuestion(id: "urgency", prompt: "How urgent is this?",
-                          kind: .choice(["Routine visit", "Urgent — need care soon", "Emergency"])),
             GuideQuestion(id: "insurance", prompt: "Do you have health insurance?", kind: .choice(["Yes", "No"])),
             GuideQuestion(id: "insurer", prompt: "Which insurance plan? (optional)", kind: .text("e.g. Aetna, Blue Cross, Kaiser")),
             GuideQuestion(id: "new", prompt: "New patient or a return visit?", kind: .choice(["New patient", "Return visit"])),
@@ -689,31 +695,9 @@ extension Guide {
             let kind = val(a, "kind", default: "doctor")
             let insured = a["insurance"] != "No"
             let insurer = a["insurer"] ?? ""
-            let urgency = a["urgency"] ?? "Routine visit"
 
-            // Emergency — skip the booking flow entirely, route to care now.
-            if urgency == "Emergency" {
-                let steps = [
-                    "Call 911 or go to the nearest emergency room now — don't wait for an appointment.",
-                    "Bring a photo ID and insurance card if you can — but don't delay care to find them.",
-                    "Tell them your symptoms, medicines, and allergies when you arrive.",
-                ]
-                return ExtractionResult(
-                    title: "Get emergency care",
-                    documentType: "Appointment guide",
-                    category: .medical,
-                    summary: "This is an emergency — get care right away.",
-                    steps: steps,
-                    detailedSteps: detailed(steps, state: "", doctorDetail),
-                    notes: ["Emergency rooms must treat you regardless of insurance or ability to pay.",
-                            referenceNote],
-                    confidence: 1)
-            }
-
+            // (Emergency / urgent-care guidance lives on the first-page banner.)
             var steps: [String] = []
-            if urgency.hasPrefix("Urgent") {
-                steps.append("Can't wait but not life-threatening? Go to an urgent care or walk-in clinic.")
-            }
             if insured {
                 let on = insurer.isEmpty ? "" : " on \(insurer)"
                 steps.append("Find an in-network \(kind) in your plan's provider directory\(on) (or call the number on your card).")

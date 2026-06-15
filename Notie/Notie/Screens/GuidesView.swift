@@ -178,6 +178,8 @@ struct GuideQuestionsView: View {
                     }
                     .padding(.horizontal, 8)
 
+                    if let note = guide.emergencyNote { emergencyBanner(note) }
+
                     ForEach(guide.questions) { q in questionCard(q) }
 
                     Button { if !missingRequired { onContinue(answers) } } label: {
@@ -194,6 +196,22 @@ struct GuideQuestionsView: View {
             }
         }
         .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+    }
+
+    // Emergency notice on the first page (e.g. "call 911"), above the questions —
+    // so urgent help is never buried inside the checklist.
+    private func emergencyBanner(_ note: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 16)).foregroundStyle(Color.bad)
+            Text(note).font(.body14).foregroundStyle(Color.ink).lineSpacing(2)
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.bad.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.bad.opacity(0.4), lineWidth: 1))
     }
 
     @ViewBuilder
