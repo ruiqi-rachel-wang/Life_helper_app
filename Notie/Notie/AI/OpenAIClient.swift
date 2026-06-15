@@ -401,9 +401,9 @@ extension OpenAIClient {
         let system = """
         You LIGHTLY polish a checklist for someone who may not read English well. \
         Make MINIMAL changes: keep each step's meaning, order, and any URLs; only \
-        fix wording for clarity. Do NOT add, remove, reorder, or merge steps. You \
-        may add 1-2 short tips in "notes". Reply ONLY as JSON \
-        {"steps":[...],"notes":[...]} in \(language.promptName).
+        fix wording for clarity. Do NOT add, remove, reorder, or merge steps, and \
+        do NOT add notes or tips. Reply ONLY as JSON {"steps":[...]} in \
+        \(language.promptName).
         """
         let user = "Situation: \(context)\nSteps:\n"
             + base.steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
@@ -441,16 +441,13 @@ extension OpenAIClient {
         }
         var out = base
         let steps = list("steps").map(ExtractionJSON.stripLeadingNumber)
-        let extraNotes = list("notes")
         // Only accept polished steps if the COUNT is unchanged — otherwise the
         // milestone↔detail alignment breaks and an authored (safety) step could
         // silently vanish. On any mismatch keep the deterministic steps.
+        // Notes are left exactly as authored — polish never adds its own.
         if steps.count == base.steps.count, !steps.contains(where: { $0.isEmpty }) {
             out.steps = steps
         }
-        // APPEND the model's notes to the authored ones (deduped) — never replace,
-        // so reference/safety/official-site warnings can't be dropped by polish.
-        for n in extraNotes where !out.notes.contains(n) { out.notes.append(n) }
         return out
     }
 }

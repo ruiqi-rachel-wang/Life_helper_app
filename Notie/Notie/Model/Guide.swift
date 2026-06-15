@@ -324,7 +324,6 @@ extension Guide {
             }
 
             var notes = ["USPS forwarding only moves your mail — update your bank, DMV, and employer separately."]
-            if moveDate == nil { notes.append("Set your move date as the reminder.") }
             notes.append(referenceNote)
             return ExtractionResult(
                 title: "Moving checklist",

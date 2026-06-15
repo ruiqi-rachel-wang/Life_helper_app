@@ -334,7 +334,8 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
   AI never decides the checklist shape; offline → the templated checklist.
 - **Sensitive guides skip AI entirely.** Each guide carries a `risk` level; the
   `.sensitive` ones (immigration, banking, medical, car accident) are built fully
-  on-device and never sent to the polish pass (and say so in their notes).
+  on-device and never sent to the polish pass (shown via a small "stays on your
+  device" badge on the questions page).
 - **Required answers, no assumed defaults.** Choice/state questions must be answered
   before "Build my checklist" (we never seed the first option — assuming e.g. "no
   injuries" was unsafe). Text questions stay optional.
@@ -355,7 +356,7 @@ answers filled in) → the **same Review screen** scans use → Add to inbox (ta
    hints). Deterministic → unit-tested. Also carries `officialSource`, `lastReviewed`,
    and `risk` provenance metadata (stamped in `Guide.all`).
 3. **AI polish pass.** `OpenAIClient.polish(_:context:language:)` (reuses the key)
-   takes the base result + answers → lightly reworded steps + appended notes;
+   takes the base result + answers → lightly reworded steps only (never adds notes);
    best-effort with fallback, and SKIPPED for `.sensitive` guides. Runs as a Review
    phase ("Personalizing…") using the existing loading UI.
 4. **Questions screen.** Tap guide → a single scrollable form of its questions →
