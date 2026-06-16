@@ -441,12 +441,23 @@ before handing the app to testers.
      locale, else the user's override). Threaded into the **scan** call
      (`CreateView` → `ExtractionService.extract(language:)`) and the **guide**
      call (`GuidesView` → `OpenAIClient.polish(language:)`). Picker shows each
-     language in its own script (English / 中文 / Español). UI chrome stays English.
+     language in its own script (English / 中文 / Español).
      Unit-tested; Profile screen visually verified in the simulator.
      *Known limit:* sensitive guides skip the polish pass, so they stay English
      even when another language is picked (they never reach the translating AI).
      The Profile language hint now says this out loud (QA fix 2026-06-15) so it
      isn't a surprise.
+   - **App UI now localized — CHANGED 2026-06-16 (was deferred):** Rachel pulled
+     full UI localization into scope. The app **chrome follows the iPhone's
+     language** (not the picker) via a String Catalog (`Localizable.xcstrings`,
+     en/zh-Hans/es): tabs, Inbox + urgency sections, screen titles/eyebrows,
+     buttons, empty/error states, privacy banner, notification text, recurrence &
+     category labels, and relative-date/overdue strings (plural-correct). Computed
+     labels use `String(localized:)`; section titles wrap in `LocalizedStringKey`.
+     The Profile picker still independently controls the **AI output** language.
+     *Remaining (follow-ups):* guide content (titles/subtitles/question prompts/
+     step text) is still English — large content; for general guides the AI polish
+     already translates the checklist steps. DEBUG strings intentionally untranslated.
    - **keep-original-scans toggle is real:** `@AppStorage("keepOriginalScans")`
      (default on); when off, `ReviewView` saves the item without the photo.
 4. **Polish states** — partly done (2026-06-15)
