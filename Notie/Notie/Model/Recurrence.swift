@@ -4,12 +4,9 @@
 //  (e.g. "due monthly", "renews annually") and puts it here — we do NOT
 //  hardcode "monthly" like the v3 spec did.
 //
-//  MINIMAL on purpose (Week 5). This enum exists now only so the shared
-//  `ExtractionResult` type is stable. It is NOT yet wired into `ActionItem`
-//  — that still uses `repeatsMonthly: Bool`. The real recurring behavior
-//  (creating the next cycle on Mark done, recurring-aware delete) and the
-//  migration of `ActionItem` onto this type both land in Week 7. Until
-//  then this is just a value the parser/LLM can produce and tests can check.
+//  Wired into `ActionItem.recurrence` in Week 8: marking a recurring item done
+//  spawns the next cycle (due date advanced by `nextDate(after:)`), and delete
+//  is recurring-aware ("just this one" vs "this and all future").
 //
 
 import Foundation
@@ -26,6 +23,16 @@ nonisolated enum Recurrence: Equatable, Codable {
         case .monthly:           return "Monthly"
         case .yearly:            return "Yearly"
         case .everyNDays(let n): return "Every \(n) day\(n == 1 ? "" : "s")"
+        }
+    }
+
+    // The next due date one cycle after `date`. Used when a recurring item is
+    // marked done (or skipped) to spawn the following occurrence.
+    func nextDate(after date: Date, calendar: Calendar = .current) -> Date? {
+        switch self {
+        case .monthly:           return calendar.date(byAdding: .month, value: 1, to: date)
+        case .yearly:            return calendar.date(byAdding: .year, value: 1, to: date)
+        case .everyNDays(let n): return calendar.date(byAdding: .day, value: n, to: date)
         }
     }
 }

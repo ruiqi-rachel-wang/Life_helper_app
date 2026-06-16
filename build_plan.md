@@ -23,8 +23,8 @@
 | 0 Setup · 1 Shell · 2 Persistence · 3 Notifications · 4 Camera+OCR | ✓ complete |
 | 5 Rule parser + OpenAI extraction | ✓ complete (2026-06-06) |
 | 6 Review spine (scan → AI → edit → Add) | ✓ complete (2026-06-10) — **the shippable moment** |
-| 7 Adaptive guides | ⏳ next |
-| 8 Recurring + release polish | pending |
+| 7 Adaptive guides | ✓ complete (2026-06-15) — 11 guides, Step Detail, saved fields, glossary |
+| 8 Recurring + release polish | ⏳ in progress — recurring tasks ✓ (2026-06-15); archive/reopen, Profile tab, polish, metrics next |
 | 9 TestFlight launch | pending |
 
 **Working end-to-end today:** scan/upload → on-device OCR (`VisionOCR`) → AI
@@ -394,12 +394,20 @@ the templated checklist.
 Goal: make completed tasks, recurrence, settings, and edge states feel coherent
 before handing the app to testers.
 
-1. **Recurring tasks**
-   - Wire `ExtractionResult.repeats` into `ActionItem` / `Recurrence`.
-   - On mark-done for a recurring item, create the next cycle from the cadence
-     read from the document or guide.
-   - Add recurring-aware delete: "delete this one" vs "this and future".
-   - Make reminder scheduling use the next generated due date.
+1. **Recurring tasks** — ✓ DONE (2026-06-15)
+   - `ActionItem.recurrence: Recurrence?` (replaced the old `repeatsMonthly` Bool);
+     `ExtractionResult.repeats` now carries straight onto the item. SwiftData
+     round-trip verified (the `everyNDays` associated value persists).
+   - `Recurrence.nextDate(after:)` + `ActionItem.makeNextOccurrence()` (pure):
+     advances the due date by the cadence, resets all step checks + status, resets
+     reminders to defaults, carries the rich detail over. Unit-tested.
+   - Mark-done (Detail **and** the notification "Mark done" action) spawns the next
+     cycle and schedules its reminders; the completed instance stays in Done.
+   - Recurring-aware delete: a live recurring item asks "Delete just this one"
+     (keeps the series going at the next date) vs "Delete this and all future"
+     (stops it). One-off / done items get the plain confirm.
+   - Detail shows a **REPEATS** row (read: the cadence; edit: a None/Monthly/Yearly
+     menu) so recurrence is settable by hand, not just from a scan.
 2. **Done archive + reopen**
    - Done items stay visible in a past/done area, with delete.
    - Add "Mark as not done" / Reopen from a done item's Detail; it should move

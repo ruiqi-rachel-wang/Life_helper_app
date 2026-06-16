@@ -75,7 +75,12 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
             predicate: #Predicate { $0.id == id })
         guard let item = try? context.fetch(descriptor).first else { return }
         item.status = .done
+        // A recurring item spawns its next cycle when completed from the banner,
+        // same as marking done in the app.
+        let next = item.makeNextOccurrence()
+        if let next { context.insert(next) }
         try? context.save()
         ReminderScheduler.shared.cancel(itemID: id)
+        if let next { ReminderScheduler.shared.reschedule(for: next) }
     }
 }

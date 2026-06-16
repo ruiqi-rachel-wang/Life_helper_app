@@ -233,6 +233,24 @@ struct ActionItemTests {
         #expect(f?.first?.value == "ABC123")
     }
 
+    @MainActor
+    @Test func recurrenceSurvivesSwiftDataRoundTrip() throws {
+        // Recurrence is a Codable enum with an associated value — make sure
+        // SwiftData actually persists and restores it.
+        let container = try ModelContainer(
+            for: ActionItem.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+
+        context.insert(ActionItem(title: "Rent", category: .housing,
+                                  dueDate: day(3), recurrence: .everyNDays(14)))
+        try context.save()
+
+        let loaded = try context.fetch(FetchDescriptor<ActionItem>()).first
+        #expect(loaded?.recurrence == .everyNDays(14))
+        #expect(loaded?.isRecurring == true)
+    }
+
     // MARK: ExtractionResult → ActionItem mapping (Week 6)
 
     @Test func buildsActionItemFromExtraction() {
@@ -258,7 +276,7 @@ struct ActionItemTests {
         #expect(item.summary == "Your monthly electricity bill.")
         #expect(item.steps.map(\.text) == ["Pay it", "Save the receipt"])
         #expect(item.notes == ["Autopay is off."])
-        #expect(item.repeatsMonthly)
+        #expect(item.recurrence == .monthly)
         #expect(item.source == .scanned)
         // primary accountNumber folded into otherIDs (deduped), first
         #expect(item.otherIDs.first == DocID(label: "Reference", value: "12-3456"))
@@ -267,5 +285,47 @@ struct ActionItemTests {
 
     @Test func extractionTitleFallsBackToSender() {
         #expect(ActionItem(from: ExtractionResult(sender: "GEICO")).title == "GEICO")
+    }
+
+    // MARK: recurrence (Week 8)
+
+    @Test func recurrenceNextDateAdvancesByCadence() {
+        let cal = Calendar.current
+        let base = cal.date(from: DateComponents(year: 2026, month: 1, day: 15))!
+        #expect(Recurrence.monthly.nextDate(after: base) ==
+                cal.date(from: DateComponents(year: 2026, month: 2, day: 15)))
+        #expect(Recurrence.yearly.nextDate(after: base) ==
+                cal.date(from: DateComponents(year: 2027, month: 1, day: 15)))
+        #expect(Recurrence.everyNDays(10).nextDate(after: base) ==
+                cal.date(from: DateComponents(year: 2026, month: 1, day: 25)))
+    }
+
+    @Test func nonRecurringHasNoNextOccurrence() {
+        let oneOff = ActionItem(title: "x", category: .other, dueDate: day(5))
+        #expect(!oneOff.isRecurring)
+        #expect(oneOff.makeNextOccurrence() == nil)
+        // Recurring but no due date → nothing to advance from.
+        #expect(ActionItem(title: "x", category: .other, recurrence: .monthly)
+            .makeNextOccurrence() == nil)
+    }
+
+    @Test func nextOccurrenceAdvancesDueResetsStepsAndStatus() {
+        let item = ActionItem(title: "Con Edison", category: .utility,
+                              amount: Decimal(string: "86.42"), dueDate: day(2),
+                              status: .inProgress,
+                              steps: [ChecklistStep(text: "Pay it", done: true),
+                                      ChecklistStep(text: "Save receipt", done: true)],
+                              recurrence: .monthly)
+        item.sender = "Con Edison"
+
+        let next = item.makeNextOccurrence()
+        #expect(next != nil)
+        #expect(next?.dueDate == Calendar.current.date(byAdding: .month, value: 1, to: day(2)))
+        #expect(next?.status == .todo)
+        #expect(next?.steps.allSatisfy { !$0.done } == true)        // checks reset
+        #expect(next?.steps.map(\.text) == ["Pay it", "Save receipt"])
+        #expect(next?.recurrence == .monthly)                       // series continues
+        #expect(next?.amount == Decimal(string: "86.42"))           // detail carries over
+        #expect(next?.sender == "Con Edison")
     }
 }

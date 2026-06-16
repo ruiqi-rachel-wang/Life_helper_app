@@ -138,7 +138,10 @@ final class ActionItem {
     @Attribute(.externalStorage) var imageData: Data?
     var status: WorkStatus = WorkStatus.todo
     var steps: [ChecklistStep] = []
-    var repeatsMonthly: Bool = false
+    // nil = a one-off. A cadence (monthly / yearly / every-N-days) read from the
+    // document or set by the user. Marking a recurring item done spawns the next
+    // cycle; see makeNextOccurrence().
+    var recurrence: Recurrence?
     var createdAt: Date = Date.now
 
     // Rich detail from AI extraction (Week 6). All optional with defaults, so
@@ -172,7 +175,7 @@ final class ActionItem {
          imageData: Data? = nil,
          status: WorkStatus = .todo,
          steps: [ChecklistStep] = [],
-         repeatsMonthly: Bool = false) {
+         recurrence: Recurrence? = nil) {
         self.title = title
         self.category = category
         self.amount = amount
@@ -182,12 +185,12 @@ final class ActionItem {
         self.imageData = imageData
         self.status = status
         self.steps = steps
-        self.repeatsMonthly = repeatsMonthly
+        self.recurrence = recurrence
     }
 
     // Build an item from an AI extraction (Week 6). Folds the primary
     // accountNumber into otherIDs (deduped) so the Detail page shows every
-    // identifier. repeats → repeatsMonthly for now (full Recurrence is Week 7).
+    // identifier. The AI-read cadence (`repeats`) carries straight onto the item.
     convenience init(from r: ExtractionResult,
                      imageData: Data? = nil,
                      source: ItemSource = .scanned) {
@@ -205,7 +208,7 @@ final class ActionItem {
             dueDate: r.dueDate,
             imageData: imageData,
             steps: Self.mapSteps(r),
-            repeatsMonthly: r.repeats == .monthly
+            recurrence: r.repeats
         )
         self.summary = r.summary ?? ""
         self.documentType = r.documentType ?? ""
@@ -252,6 +255,40 @@ final class ActionItem {
     }
 
     var doneCount: Int { steps.filter(\.done).count }
+
+    var isRecurring: Bool { recurrence != nil }
+
+    // The next cycle of a recurring item — a fresh copy with the due date
+    // advanced by the cadence, all steps unchecked, and reminders reset to
+    // defaults (the old custom times were tied to the old due date). Returns
+    // nil for one-off items or when there's no due date to advance from.
+    // Spawned when a recurring item is marked done (or skipped on delete).
+    func makeNextOccurrence(calendar: Calendar = .current) -> ActionItem? {
+        guard let recurrence, let due = dueDate,
+              let nextDue = recurrence.nextDate(after: due, calendar: calendar) else { return nil }
+
+        let freshSteps = steps.map { step -> ChecklistStep in
+            var detail = step.detail
+            if let mini = detail?.miniChecklist {
+                detail?.miniChecklist = mini.map { SubStep(text: $0.text) }
+            }
+            return ChecklistStep(text: step.text, done: false, detail: detail)
+        }
+        let next = ActionItem(title: title, category: category, amount: amount,
+                              currency: currency, dueDate: nextDue, note: note,
+                              status: .todo, steps: freshSteps, recurrence: recurrence)
+        next.summary = summary
+        next.documentType = documentType
+        next.sender = sender
+        next.senderShort = senderShort
+        next.dueHasTime = dueHasTime
+        next.siteURL = siteURL
+        next.otherIDs = otherIDs
+        next.notes = notes
+        next.source = source
+        next.reminderLeadHours = reminderLeadHours
+        return next
+    }
 
     // Timed events (dueHasTime): a heads-up the day before (9am) + a reminder
     // `reminderLeadHours` before the exact time. Plain dates: 3 days / 1 day /
@@ -340,7 +377,7 @@ extension ActionItem {
                         ChecklistStep(text: "Pay the balance before the due date."),
                         ChecklistStep(text: "Save the confirmation number."),
                        ],
-                       repeatsMonthly: true),
+                       recurrence: .monthly),
             ActionItem(title: "Call insurance — claim follow-up", category: .personal,
                        dueDate: day(21),
                        steps: [

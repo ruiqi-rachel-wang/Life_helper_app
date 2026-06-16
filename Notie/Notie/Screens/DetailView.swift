@@ -103,8 +103,38 @@ struct DetailView: View {
                     dueChip   // always shown; offers "Add date" when there's none
                 }
                 .padding(.top, 2)
+
+                if isEditing || item.recurrence != nil { repeatsRow }
             }
         }
+    }
+
+    // REPEATS — read mode shows the cadence; edit mode lets you set/clear it.
+    // A recurring item spawns its next cycle when marked done.
+    private var repeatsRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.faded)
+            Text("REPEATS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+            Spacer()
+            if isEditing {
+                Menu {
+                    Button("Doesn't repeat") { item.recurrence = nil }
+                    Button("Monthly") { item.recurrence = .monthly }
+                    Button("Yearly")  { item.recurrence = .yearly }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(item.recurrence?.label ?? "Doesn't repeat")
+                            .font(.subline).foregroundStyle(Color.accent)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 10, weight: .semibold)).foregroundStyle(Color.accent)
+                    }
+                }
+            } else if let r = item.recurrence {
+                Text(r.label).font(.subline).foregroundStyle(Color.ink)
+            }
+        }
+        .padding(.top, 2)
     }
 
     private var tagText: String {
@@ -454,15 +484,27 @@ struct DetailView: View {
                 .buttonStyle(.plain)
             }
         }
-        .confirmationDialog("Delete this task?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { deleteItem() }
+        .confirmationDialog(deleteDialogTitle, isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            if item.isRecurring && !isDone {
+                // A live recurring task: deleting just this one keeps the series
+                // going (spawns the next cycle); "this and all future" stops it.
+                Button("Delete just this one") { skipToNextAndDelete() }
+                Button("Delete this and all future", role: .destructive) { deleteItem() }
+            } else {
+                Button("Delete", role: .destructive) { deleteItem() }
+            }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    private var deleteDialogTitle: String {
+        item.isRecurring && !isDone ? "This is a repeating task" : "Delete this task?"
     }
 
     private func markDone() {
         item.status = .done
         ReminderScheduler.shared.cancel(itemID: item.id)
+        spawnNextOccurrence()
     }
 
     private func deleteItem() {
@@ -470,6 +512,19 @@ struct DetailView: View {
         ReminderScheduler.shared.cancel(itemID: item.id)
         if item.modelContext != nil { context.delete(item) }
         dismiss()
+    }
+
+    // Delete this occurrence but keep the series alive at its next date.
+    private func skipToNextAndDelete() {
+        spawnNextOccurrence()
+        deleteItem()
+    }
+
+    // Insert the next cycle of a recurring item and schedule its reminders.
+    private func spawnNextOccurrence() {
+        guard let next = item.makeNextOccurrence() else { return }
+        context.insert(next)
+        ReminderScheduler.shared.reschedule(for: next)
     }
 
     private var dueBinding: Binding<Date> {
