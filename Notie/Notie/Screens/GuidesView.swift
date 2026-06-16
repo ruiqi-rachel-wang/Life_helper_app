@@ -43,6 +43,7 @@ struct GuidesView: View {
                                     GuideCard(guide: guide)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityIdentifier("guide-\(guide.id)")   // stable hook for UI tests
                             }
                         }
                         .padding(.horizontal, 14)

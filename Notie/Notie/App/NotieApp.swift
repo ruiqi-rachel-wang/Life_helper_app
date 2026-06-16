@@ -30,7 +30,13 @@ struct NotieApp: App {
             RootTabView()
                 .environment(router)
                 .onAppear { notificationDelegate.attach(router: router) }
-                .task { await ReminderScheduler.shared.requestAuthorization() }
+                .task {
+                    // Skip the permission prompt under UI tests so it can't block
+                    // automation with a system alert.
+                    if !ProcessInfo.processInfo.arguments.contains("-uitest") {
+                        await ReminderScheduler.shared.requestAuthorization()
+                    }
+                }
         }
         .modelContainer(container)
     }

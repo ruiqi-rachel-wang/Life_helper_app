@@ -2,7 +2,13 @@
 //  NotieUITests.swift
 //  NotieUITests
 //
-//  Created by Ruiqi Wang on 5/29/26.
+//  Tap-through tests for the core navigation and the guide → Review → Add flow.
+//  These catch silent breakage in the screens/wiring that the logic unit tests
+//  can't see (the unit tests cover pure model logic; these drive the real UI).
+//
+//  The guide flow deliberately uses "taxes" — a SENSITIVE guide, so the AI
+//  polish pass is skipped and the checklist builds fully on-device. That keeps
+//  the test fast and deterministic (no network).
 //
 
 import XCTest
@@ -10,32 +16,63 @@ import XCTest
 final class NotieUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testTabsNavigate() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["-uitest"]   // skip the notification permission prompt
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        // Inbox is the launch tab.
+        XCTAssertTrue(app.staticTexts["Inbox"].waitForExistence(timeout: 5))
+
+        // Add → the picker hero.
+        app.tabBars.buttons["Add"].tap()
+        XCTAssertTrue(app.staticTexts["Scan a document"].waitForExistence(timeout: 3))
+
+        // Profile → the wired language picker.
+        app.tabBars.buttons["Profile"].tap()
+        XCTAssertTrue(app.staticTexts["EXPLAIN DOCUMENTS IN"].waitForExistence(timeout: 3))
+
+        // Guides → the library.
+        app.tabBars.buttons["Guides"].tap()
+        XCTAssertTrue(app.buttons["guide-taxes"].waitForExistence(timeout: 3))
+    }
+
+    @MainActor
+    func testGuideFlowAddsItemToInbox() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uitest"]   // skip the notification permission prompt
+        app.launch()
+
+        // Open the Taxes guide (sensitive → built on-device, no network).
+        app.tabBars.buttons["Guides"].tap()
+        let taxes = app.buttons["guide-taxes"]
+        XCTAssertTrue(taxes.waitForExistence(timeout: 5))
+        taxes.tap()
+
+        // Answer the two required choice questions (unique option labels).
+        app.buttons["A job (W-2)"].tap()
+        app.buttons["Yes"].tap()
+
+        // Build the checklist → the shared Review screen.
+        let build = app.buttons["Build my checklist"]
+        XCTAssertTrue(build.waitForExistence(timeout: 3))
+        build.tap()
+
+        // Review loaded; confirm into the inbox.
+        let add = app.buttons["Add to inbox"]
+        XCTAssertTrue(add.waitForExistence(timeout: 8))   // allow the brief build/loading phase
+        add.tap()
+
+        // Lands back in the Inbox with the new guide-tagged item.
+        XCTAssertTrue(app.staticTexts["Prepare to file taxes"].waitForExistence(timeout: 5))
     }
 
     @MainActor
     func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }

@@ -491,8 +491,12 @@ before handing the app to testers.
      all guides (currently the heavy ones have it).
    - **Per-state appointment deep-links** — today the DMV link is each state's
      official homepage; add verified "book appointment" deep-links for big states.
-   - **UI tap-through tests** — Guides → answers → Review → Step Detail → Add →
-     Inbox. All current coverage is logic-level only.
+   - **UI tap-through tests — ✓ DONE (2026-06-15).** `NotieUITests`: `testTabsNavigate`
+     (taps Add/Profile/Guides/Inbox, asserts each screen renders) and
+     `testGuideFlowAddsItemToInbox` (Taxes guide → answer → Build → Review → Add →
+     asserts the item lands in the Inbox). Uses a sensitive guide so it's
+     network-free/deterministic; a `-uitest` launch flag skips the notification
+     prompt so the system alert can't block automation. Both pass.
    - Bilingual term toggle (separate future note) ties in here.
 
 **Done when:** recurring items regenerate correctly, done items can be reopened
