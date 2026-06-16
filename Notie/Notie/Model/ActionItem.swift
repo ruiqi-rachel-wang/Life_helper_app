@@ -124,6 +124,15 @@ nonisolated struct ScheduledReminder: Identifiable {
     var exactTime: Bool = false
 }
 
+// A stored reminder: when to fire, plus an optional note shown in the
+// notification banner. An empty note → the scheduler computes a friendly body
+// ("Due in 3 days"); a non-empty note is shown verbatim ("Bring your passport").
+nonisolated struct ReminderItem: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var date: Date
+    var note: String = ""
+}
+
 @Model
 final class ActionItem {
     var id: UUID = UUID()
@@ -160,10 +169,11 @@ final class ActionItem {
     // How many hours before a TIMED event (dueHasTime) to remind — seeds the
     // default schedule (flight ~3h, appointment ~1h). Ignored for plain dates.
     var reminderLeadHours: Int = 2
-    // User-customized reminder fire-times. Empty + !customized = use the smart
-    // defaults (defaultReminderDates). Once the user edits, `customized` flips on
-    // and THIS list is authoritative (even if emptied = no reminders).
-    var reminders: [Date] = []
+    // User-customized reminders (fire-time + optional banner note). Empty +
+    // !customized = use the smart defaults (defaultReminders). Once the user
+    // edits, `customized` flips on and THIS list is authoritative (even if
+    // emptied = no reminders).
+    var reminders: [ReminderItem] = []
     var remindersCustomized: Bool = false
 
     init(title: String,
@@ -332,18 +342,20 @@ final class ActionItem {
         return out
     }
 
-    // The default reminder fire-times (day reminders resolved to 9am; timed
-    // reminders at their exact time). Used to seed the editable list.
-    func defaultReminderDates(now: Date = .now, calendar: Calendar = .current) -> [Date] {
-        reminderSchedule(now: now, calendar: calendar).compactMap {
-            $0.exactTime ? $0.date : calendar.date(bySettingHour: 9, minute: 0, second: 0, of: $0.date)
+    // The default reminders (day reminders resolved to 9am; timed reminders at
+    // their exact time). Notes are left empty so the scheduler computes a
+    // friendly body. Used to seed the editable list.
+    func defaultReminders(now: Date = .now, calendar: Calendar = .current) -> [ReminderItem] {
+        reminderSchedule(now: now, calendar: calendar).compactMap { r in
+            let fire = r.exactTime ? r.date : calendar.date(bySettingHour: 9, minute: 0, second: 0, of: r.date)
+            return fire.map { ReminderItem(date: $0) }
         }
     }
 
     // What actually gets scheduled/shown: the user's custom list once edited,
     // otherwise the smart defaults.
-    var effectiveReminders: [Date] {
-        remindersCustomized ? reminders : defaultReminderDates()
+    var effectiveReminders: [ReminderItem] {
+        remindersCustomized ? reminders : defaultReminders()
     }
 }
 

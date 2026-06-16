@@ -63,17 +63,20 @@ final class ReminderScheduler {
         guard item.status != .done else { return }
 
         let now = Date.now
-        for (index, fire) in item.effectiveReminders.enumerated() where fire > now {
+        for (index, reminder) in item.effectiveReminders.enumerated() where reminder.date > now {
             guard index < Self.maxReminders else { break }
             let content = UNMutableNotificationContent()
             content.title = item.title
-            content.body = body(fireDate: fire, due: item.dueDate)
+            // A user-written note shows verbatim; otherwise compute a friendly body.
+            content.body = reminder.note.isEmpty
+                ? body(fireDate: reminder.date, due: item.dueDate)
+                : reminder.note
             content.sound = .default
             content.categoryIdentifier = ReminderID.category
             content.userInfo = [ReminderID.itemKey: item.id.uuidString]
 
             let comps = Calendar.current.dateComponents(
-                [.year, .month, .day, .hour, .minute], from: fire)
+                [.year, .month, .day, .hour, .minute], from: reminder.date)
             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
             let id = "\(item.id.uuidString)|r\(index)"
             center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))

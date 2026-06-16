@@ -190,10 +190,12 @@ struct ActionItemTests {
     @Test func effectiveRemindersUseDefaultsThenCustom() {
         let item = ActionItem(title: "Bill", category: .utility, dueDate: day(10))
         #expect(item.effectiveReminders.count == 3)        // smart defaults (9am)
+        #expect(item.effectiveReminders.allSatisfy { $0.note.isEmpty })  // defaults carry no note
         let custom = day(7)
-        item.reminders = [custom]
+        item.reminders = [ReminderItem(date: custom, note: "Bring passport")]
         item.remindersCustomized = true
-        #expect(item.effectiveReminders == [custom])        // custom wins
+        #expect(item.effectiveReminders.map(\.date) == [custom])         // custom wins
+        #expect(item.effectiveReminders.first?.note == "Bring passport")
     }
 
     @Test func customizedEmptyMeansNoReminders() {
@@ -264,6 +266,23 @@ struct ActionItemTests {
         let loaded = try context.fetch(FetchDescriptor<ActionItem>()).first
         #expect(loaded?.recurrence == .everyNDays(14))
         #expect(loaded?.isRecurring == true)
+    }
+
+    @MainActor
+    @Test func reminderNoteSurvivesSwiftDataRoundTrip() throws {
+        let container = try ModelContainer(
+            for: ActionItem.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = container.mainContext
+
+        let item = ActionItem(title: "Flight", category: .personal, dueDate: day(3))
+        item.reminders = [ReminderItem(date: day(2), note: "Bring passport")]
+        item.remindersCustomized = true
+        context.insert(item)
+        try context.save()
+
+        let r = try context.fetch(FetchDescriptor<ActionItem>()).first?.reminders.first
+        #expect(r?.note == "Bring passport")
     }
 
     // MARK: ExtractionResult → ActionItem mapping (Week 6)

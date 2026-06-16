@@ -316,25 +316,38 @@ struct DetailView: View {
                 }
                 ForEach(reminders.indices, id: \.self) { i in
                     if isEditing {
-                        HStack(spacing: 8) {
-                            DatePicker("", selection: reminderBinding(i), displayedComponents: [.date, .hourAndMinute])
-                                .labelsHidden().datePickerStyle(.compact)
-                            Spacer()
-                            Button { deleteReminder(i) } label: {
-                                Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                        VStack(spacing: 6) {
+                            HStack(spacing: 8) {
+                                DatePicker("", selection: reminderDateBinding(i), displayedComponents: [.date, .hourAndMinute])
+                                    .labelsHidden().datePickerStyle(.compact)
+                                Spacer()
+                                Button { deleteReminder(i) } label: {
+                                    Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                            // Optional note shown in the notification banner.
+                            TextField("Note (optional) — shown in the alert", text: reminderNoteBinding(i))
+                                .font(.subline).foregroundStyle(Color.ink)
+                                .padding(.horizontal, 10).padding(.vertical, 7)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
                         }
                         .padding(.vertical, 6)
                     } else {
-                        let isPast = reminders[i] < .now
+                        let isPast = reminders[i].date < .now
                         HStack(spacing: 10) {
-                            Text(reminders[i].formatted(.dateTime.month(.abbreviated).day()))
+                            Text(reminders[i].date.formatted(.dateTime.month(.abbreviated).day()))
                                 .font(.eyebrow).tracking(0.4)
                                 .foregroundStyle(isPast ? Color.faint : Color.ink)
                                 .frame(width: 60, alignment: .leading)
-                            Text(reminders[i].formatted(.dateTime.hour().minute()))
-                                .font(.subline).foregroundStyle(isPast ? Color.faded : Color.ink)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(reminders[i].date.formatted(.dateTime.hour().minute()))
+                                    .font(.subline).foregroundStyle(isPast ? Color.faded : Color.ink)
+                                if !reminders[i].note.isEmpty {
+                                    Text(reminders[i].note)
+                                        .font(.subline).foregroundStyle(Color.faded).lineLimit(2)
+                                }
+                            }
                             Spacer()
                             Circle().fill(isPast ? Color.hairD : Color.accent).frame(width: 6, height: 6)
                         }
@@ -349,16 +362,24 @@ struct DetailView: View {
     // current smart defaults), after which `reminders` is authoritative.
     private func ensureRemindersCustomized() {
         if !item.remindersCustomized {
-            item.reminders = item.defaultReminderDates()
+            item.reminders = item.defaultReminders()
             item.remindersCustomized = true
         }
     }
-    private func reminderBinding(_ i: Int) -> Binding<Date> {
+    private func reminderDateBinding(_ i: Int) -> Binding<Date> {
         Binding(
-            get: { let r = item.effectiveReminders; return i < r.count ? r[i] : .now },
+            get: { let r = item.effectiveReminders; return i < r.count ? r[i].date : .now },
             set: { newValue in
                 ensureRemindersCustomized()
-                if item.reminders.indices.contains(i) { item.reminders[i] = newValue }
+                if item.reminders.indices.contains(i) { item.reminders[i].date = newValue }
+            })
+    }
+    private func reminderNoteBinding(_ i: Int) -> Binding<String> {
+        Binding(
+            get: { let r = item.effectiveReminders; return i < r.count ? r[i].note : "" },
+            set: { newValue in
+                ensureRemindersCustomized()
+                if item.reminders.indices.contains(i) { item.reminders[i].note = newValue }
             })
     }
     private func deleteReminder(_ i: Int) {
@@ -369,7 +390,8 @@ struct DetailView: View {
         ensureRemindersCustomized()
         let base = item.dueDate ?? Date()
         let dayBefore = Calendar.current.date(byAdding: .day, value: -1, to: base) ?? base
-        item.reminders.append(Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: dayBefore) ?? dayBefore)
+        let fire = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: dayBefore) ?? dayBefore
+        item.reminders.append(ReminderItem(date: fire))
     }
 
     // MARK: details — IDs (claim/policy/confirmation)

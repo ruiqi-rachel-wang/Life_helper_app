@@ -415,11 +415,12 @@ before handing the app to testers.
      (part-checked → in progress). Unit-tested. Delete stays final, no undo.
      *Edge case:* reopening a recurring item that already spawned its next cycle
      leaves both (distinguishable by due date) — acceptable; no parent-link yet.
-   - **Reminder notification text (decided 2026-06-13, later dev) — TODO:** each reminder
-     should carry a short custom title/note that shows in the notification (today
-     the body is auto-computed like "Due in 3 days"). Add an editable per-reminder
-     label so the banner is meaningful. (Guides default to NO reminders — they have
-     no due date — which is correct.)
+   - **Reminder notification text ✓ DONE (2026-06-15):** `reminders` is now a list
+     of `ReminderItem` (date + optional note) instead of bare `[Date]`. Each
+     reminder has an editable note on Detail; the scheduler shows the note verbatim
+     in the banner when set, else falls back to the auto body ("Due in 3 days").
+     Defaults carry no note. SwiftData round-trip verified. (Guides default to NO
+     reminders — no due date — which is correct.)
 3. **Profile tab (replaces Settings) — decided 2026-06-13**
    - Rename the 4th tab Settings → **Profile** (person icon). No accounts yet, but
      Profile is where future **account / family sharing / paid plan** features
@@ -477,17 +478,25 @@ hands.
      OpenAI `Authorization` header.
    - Remove the real key from `APIKeys.swift`.
    - Verify the shipped build contains only the Worker URL, not the OpenAI key.
-2. **Apple release setup**
+2. **SwiftData migration safety (surfaced 2026-06-15)**
+   - In dev, changing a stored property's TYPE (e.g. `reminders: [Date]` →
+     `[ReminderItem]`) is NOT a lightweight migration, so `try! ModelContainer`
+     hard-crashes at launch on an old store (we just erase the simulator). Before
+     real testers, either (a) freeze the schema, (b) add explicit `VersionedSchema`
+     + `MigrationPlan`, or (c) make the container init resilient (recreate the
+     store on failure). Decide before the first TestFlight build so a future schema
+     change doesn't crash testers' installed app.
+3. **Apple release setup**
    - Apply for Apple Developer Program if not already approved (1–3 days).
    - Create App Store Connect app record.
    - Add app icon, bundle/version/build numbers, privacy answers, and tester
      notes.
-3. **Archive + TestFlight**
+4. **Archive + TestFlight**
    - Xcode → Product → Archive → Distribute App → App Store Connect.
    - Wait for Apple processing / automated review.
    - Add 10 testers in App Store Connect → TestFlight tab.
    - Recruit testers from target audience (immigrants, ESL families).
-4. **Tester checklist**
+5. **Tester checklist**
    - Ask each tester to try: scan/upload, manual item, one guide, one reminder,
      mark done, reopen, delete.
    - Track the one launch metric: confirmed action items marked done before due
