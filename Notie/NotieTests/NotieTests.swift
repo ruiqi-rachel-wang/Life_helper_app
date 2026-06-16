@@ -332,6 +332,32 @@ struct ActionItemTests {
                 cal.date(from: DateComponents(year: 2027, month: 1, day: 15)))
         #expect(Recurrence.everyNDays(10).nextDate(after: base) ==
                 cal.date(from: DateComponents(year: 2026, month: 1, day: 25)))
+        // The added presets (weekly / biweekly / quarterly).
+        #expect(Recurrence.weekly.nextDate(after: base) ==
+                cal.date(byAdding: .day, value: 7, to: base))
+        #expect(Recurrence.biweekly.nextDate(after: base) ==
+                cal.date(byAdding: .day, value: 14, to: base))
+        #expect(Recurrence.quarterly.nextDate(after: base) ==
+                cal.date(from: DateComponents(year: 2026, month: 4, day: 15)))
+    }
+
+    @Test func utilityBillsDefaultToMonthly() {
+        #expect(ActionItem.defaultRecurrence(for: .utility) == .monthly)
+        #expect(ActionItem.defaultRecurrence(for: .government) == nil)
+        // Wired through init(from:): a utility scan with no stated cadence → monthly…
+        #expect(ActionItem(from: ExtractionResult(category: .utility)).recurrence == .monthly)
+        // …but a stated cadence wins over the default.
+        #expect(ActionItem(from: ExtractionResult(category: .utility, repeats: .yearly)).recurrence == .yearly)
+    }
+
+    @Test func redundantInSeriesKeepsOneActiveAndOneDone() {
+        let oldDone   = ActionItem(title: "old",  category: .utility, dueDate: day(-30), status: .done)
+        let newerDone = ActionItem(title: "new",  category: .utility, dueDate: day(-1),  status: .done)
+        let soonActive = ActionItem(title: "a1",  category: .utility, dueDate: day(5))
+        let farActive  = ActionItem(title: "a2",  category: .utility, dueDate: day(40))
+        let redundant = ActionItem.redundantInSeries([oldDone, newerDone, soonActive, farActive])
+        // Keeps the newest done + the soonest active; the other two are redundant.
+        #expect(Set(redundant.map(\.id)) == Set([oldDone.id, farActive.id]))
     }
 
     @Test func nonRecurringHasNoNextOccurrence() {

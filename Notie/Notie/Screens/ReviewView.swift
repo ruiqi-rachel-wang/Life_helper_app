@@ -27,7 +27,6 @@ struct ReviewView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
-    @AppStorage("keepOriginalScans") private var keepOriginalScans = true
 
     @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
@@ -217,6 +216,10 @@ struct ReviewView: View {
                 .padding(.top, 2)
             }
 
+            // Recurrence — visible/editable right here so a scanned bill's monthly
+            // cadence can be confirmed or changed before saving.
+            if isEditing || draft.repeats != nil { repeatsRow }
+
             // When the event has a specific time, let the user pick how far ahead
             // to be reminded (smart default by type).
             if draft.dueHasTime && (draft.dueDate != nil || isEditing) {
@@ -246,6 +249,35 @@ struct ReviewView: View {
                     .padding(.top, 2)
             }
         }
+    }
+
+    // REPEATS — read shows the cadence; edit offers the presets. Saved onto the
+    // item via ActionItem(from: draft).
+    private var repeatsRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.faded)
+            Text("REPEATS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+            Spacer()
+            if isEditing {
+                Menu {
+                    Button("Doesn't repeat") { draft.repeats = nil }
+                    ForEach(Recurrence.presets, id: \.self) { p in
+                        Button(p.label) { draft.repeats = p }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(draft.repeats?.label ?? "Doesn't repeat")
+                            .font(.subline).foregroundStyle(Color.accent)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 10, weight: .semibold)).foregroundStyle(Color.accent)
+                    }
+                }
+            } else if let r = draft.repeats {
+                Text(r.label).font(.subline).foregroundStyle(Color.ink)
+            }
+        }
+        .padding(.top, 2)
     }
 
     // Amount + Due chips, editable in place.
@@ -547,10 +579,9 @@ struct ReviewView: View {
             }
     }
 
-    // The scanned photo to store on the item — nil when the user turned off
-    // "Keep original scans" in Profile (saves storage / keeps it off-device).
+    // The scanned photo to store on the item.
     private var scanImageData: Data? {
-        keepOriginalScans ? image?.jpegData(compressionQuality: 0.7) : nil
+        image?.jpegData(compressionQuality: 0.7)
     }
 
     private func addSelected() {

@@ -16,9 +16,6 @@ import UserNotifications
 
 struct ProfileView: View {
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
-    // Whether the photo of a scanned document is kept on the saved item. Default
-    // on; turning it off saves storage and keeps the image off the device.
-    @AppStorage("keepOriginalScans") private var keepOriginalScans = true
     @State private var notifyStatus = "Checking…"
     #if DEBUG
     @State private var metrics = MetricsSummary()
@@ -160,41 +157,11 @@ struct ProfileView: View {
 
     private var settingsCard: some View {
         card {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("SETTINGS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-                    .padding(.bottom, 10)
-
-                Toggle(isOn: $keepOriginalScans) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Keep original scans").font(.body14).foregroundStyle(Color.ink)
-                        Text("Save the photo on the item").font(.subline).foregroundStyle(Color.faded)
-                    }
-                }
-                .tint(Color.ink)
-
-                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("NOTIFICATIONS").font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
-                    Text(notifyStatus).font(.subline).foregroundStyle(Color.ink)
-                }
-
-                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
-
-                HStack {
-                    Text("Version").font(.body14).foregroundStyle(Color.faded)
-                    Spacer()
-                    Text("\(appVersion) (\(appBuild))").font(.subline).foregroundStyle(Color.ink)
-                }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("NOTIFICATIONS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                Text(notifyStatus).font(.subline).foregroundStyle(Color.ink)
             }
         }
-    }
-
-    private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
-    }
-    private var appBuild: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
     }
 
     #if DEBUG

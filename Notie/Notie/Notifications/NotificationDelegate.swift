@@ -82,9 +82,24 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         // A recurring item spawns its next cycle when completed from the banner,
         // same as marking done in the app.
         let next = item.makeNextOccurrence()
-        if let next { context.insert(next) }
+        if let next {
+            item.seriesID = item.effectiveSeriesID   // link parent + new cycle
+            next.seriesID = item.effectiveSeriesID
+            context.insert(next)
+            pruneSeries(item.effectiveSeriesID, in: context)   // keep ≤1 active + ≤1 done
+        }
         try? context.save()
         ReminderScheduler.shared.cancel(itemID: id)
         if let next { ReminderScheduler.shared.reschedule(for: next) }
+    }
+
+    // Enforce at most one active + one done per recurring series.
+    private func pruneSeries(_ sid: UUID, in context: ModelContext) {
+        let descriptor = FetchDescriptor<ActionItem>(predicate: #Predicate { $0.seriesID == sid })
+        guard let members = try? context.fetch(descriptor) else { return }
+        for redundant in ActionItem.redundantInSeries(members) {
+            ReminderScheduler.shared.cancel(itemID: redundant.id)
+            context.delete(redundant)
+        }
     }
 }

@@ -120,8 +120,9 @@ struct DetailView: View {
             if isEditing {
                 Menu {
                     Button("Doesn't repeat") { item.recurrence = nil }
-                    Button("Monthly") { item.recurrence = .monthly }
-                    Button("Yearly")  { item.recurrence = .yearly }
+                    ForEach(Recurrence.presets, id: \.self) { preset in
+                        Button(preset.label) { item.recurrence = preset }
+                    }
                 } label: {
                     HStack(spacing: 4) {
                         Text(item.recurrence?.label ?? "Doesn't repeat")
@@ -562,7 +563,10 @@ struct DetailView: View {
         Metrics.record(.completed, itemID: item.id, onTime: item.doneOnTime())
         item.status = .done
         ReminderScheduler.shared.cancel(itemID: item.id)
-        spawnNextOccurrence()
+        if spawnNextOccurrence() != nil {
+            // Keep the series to one active + one done so cycles can't pile up.
+            pruneSeries(item.effectiveSeriesID)
+        }
     }
 
     private func deleteItem() {
@@ -572,17 +576,34 @@ struct DetailView: View {
         dismiss()
     }
 
-    // Delete this occurrence but keep the series alive at its next date.
+    // Delete this occurrence but keep the series alive at its next date. (No
+    // prune: we're about to delete the current one, leaving the spawn as the only
+    // active — pruning here would risk removing the wrong one.)
     private func skipToNextAndDelete() {
-        spawnNextOccurrence()
+        _ = spawnNextOccurrence()
         deleteItem()
     }
 
     // Insert the next cycle of a recurring item and schedule its reminders.
-    private func spawnNextOccurrence() {
-        guard let next = item.makeNextOccurrence() else { return }
+    // Stamps the series id so the parent and the new cycle are linked.
+    @discardableResult
+    private func spawnNextOccurrence() -> ActionItem? {
+        guard let next = item.makeNextOccurrence() else { return nil }
+        item.seriesID = item.effectiveSeriesID
         context.insert(next)
         ReminderScheduler.shared.reschedule(for: next)
+        return next
+    }
+
+    // Enforce at most one active + one done per recurring series, deleting the
+    // rest (and cancelling their reminders).
+    private func pruneSeries(_ sid: UUID) {
+        let descriptor = FetchDescriptor<ActionItem>(predicate: #Predicate { $0.seriesID == sid })
+        guard let members = try? context.fetch(descriptor) else { return }
+        for redundant in ActionItem.redundantInSeries(members) {
+            ReminderScheduler.shared.cancel(itemID: redundant.id)
+            context.delete(redundant)
+        }
     }
 
     private var dueBinding: Binding<Date> {

@@ -147,10 +147,13 @@ final class ActionItem {
     @Attribute(.externalStorage) var imageData: Data?
     var status: WorkStatus = WorkStatus.todo
     var steps: [ChecklistStep] = []
-    // nil = a one-off. A cadence (monthly / yearly / every-N-days) read from the
-    // document or set by the user. Marking a recurring item done spawns the next
-    // cycle; see makeNextOccurrence().
+    // nil = a one-off. A cadence read from the document or set by the user.
+    // Marking a recurring item done spawns the next cycle; see makeNextOccurrence().
     var recurrence: Recurrence?
+    // Shared across every occurrence of one recurring series, so we can keep the
+    // series tidy (at most one active + one done). nil = singleton/legacy; use
+    // `effectiveSeriesID`. Stamped the first time a cycle spawns.
+    var seriesID: UUID?
     var createdAt: Date = Date.now
 
     // Rich detail from AI extraction (Week 6). All optional with defaults, so
@@ -218,7 +221,7 @@ final class ActionItem {
             dueDate: r.dueDate,
             imageData: imageData,
             steps: Self.mapSteps(r),
-            recurrence: r.repeats
+            recurrence: r.repeats ?? Self.defaultRecurrence(for: r.category)
         )
         self.summary = r.summary ?? ""
         self.documentType = r.documentType ?? ""
@@ -277,6 +280,36 @@ final class ActionItem {
 
     var isRecurring: Bool { recurrence != nil }
 
+    // Every occurrence of one series shares this. Falls back to the item's own id
+    // for singletons / pre-seriesID items.
+    var effectiveSeriesID: UUID { seriesID ?? id }
+
+    // Some document types are reliably recurring even when the AI doesn't say so —
+    // a utility bill is monthly. Used as the recurrence default on scan; the user
+    // can still change it in Review.
+    static func defaultRecurrence(for category: ItemCategory?) -> Recurrence? {
+        category == .utility ? .monthly : nil
+    }
+
+    // Keep a recurring series tidy: at most ONE active (the soonest-due) and ONE
+    // done (the latest-due). Returns the *other* items in the series to delete.
+    // Pure → unit-tested. Called after a spawn (mark-done / skip).
+    static func redundantInSeries(_ items: [ActionItem]) -> [ActionItem] {
+        let far = Date.distantFuture
+        var keep = Set<UUID>()
+        // Active: keep the soonest due (nearest future); undated sort last.
+        if let active = items.filter({ $0.status != .done })
+            .min(by: { ($0.dueDate ?? far) < ($1.dueDate ?? far) }) {
+            keep.insert(active.id)
+        }
+        // Done: keep the newest due date.
+        if let done = items.filter({ $0.status == .done })
+            .max(by: { ($0.dueDate ?? .distantPast) < ($1.dueDate ?? .distantPast) }) {
+            keep.insert(done.id)
+        }
+        return items.filter { !keep.contains($0.id) }
+    }
+
     // The next cycle of a recurring item — a fresh copy with the due date
     // advanced by the cadence, all steps unchecked, and reminders reset to
     // defaults (the old custom times were tied to the old due date). Returns
@@ -306,6 +339,7 @@ final class ActionItem {
         next.notes = notes
         next.source = source
         next.reminderLeadHours = reminderLeadHours
+        next.seriesID = effectiveSeriesID   // child joins this series
         return next
     }
 
