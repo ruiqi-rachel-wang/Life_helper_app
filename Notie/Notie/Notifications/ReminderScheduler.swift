@@ -35,9 +35,9 @@ final class ReminderScheduler {
     // Remind me later buttons. Call once at launch.
     func registerCategories() {
         let markDone = UNNotificationAction(
-            identifier: ReminderID.markDone, title: "Mark done", options: [])
+            identifier: ReminderID.markDone, title: String(localized: "Mark done"), options: [])
         let remindLater = UNNotificationAction(
-            identifier: ReminderID.remindLater, title: "Remind me later", options: [])
+            identifier: ReminderID.remindLater, title: String(localized: "Remind me later"), options: [])
         let category = UNNotificationCategory(
             identifier: ReminderID.category,
             actions: [markDone, remindLater],
@@ -93,7 +93,7 @@ final class ReminderScheduler {
     func snooze(itemID: UUID, title: String) {
         let content = UNMutableNotificationContent()
         content.title = title
-        content.body = "Snoozed reminder"
+        content.body = String(localized: "Snoozed reminder")
         content.sound = .default
         content.categoryIdentifier = ReminderID.category
         content.userInfo = [ReminderID.itemKey: itemID.uuidString]
@@ -110,16 +110,16 @@ final class ReminderScheduler {
 
     // Friendly body computed from how far the fire date is before the due date.
     private func body(fireDate: Date, due: Date?, calendar: Calendar = .current) -> String {
-        guard let due else { return "Reminder" }
-        if fireDate >= due.addingTimeInterval(-90 * 60) { return "Starting soon" }
+        guard let due else { return String(localized: "Reminder") }
+        if fireDate >= due.addingTimeInterval(-90 * 60) { return String(localized: "Starting soon") }
         let days = calendar.dateComponents([.day],
             from: calendar.startOfDay(for: fireDate),
             to: calendar.startOfDay(for: due)).day ?? 0
         switch days {
-        case ..<0:  return "Overdue — still not done"
-        case 0:     return "Due today"
-        case 1:     return "Due tomorrow"
-        default:    return "Due in \(days) days"
+        case ..<0:  return String(localized: "Overdue — still not done")
+        case 0:     return String(localized: "Due today")
+        case 1:     return String(localized: "Due tomorrow")
+        default:    return String(localized: "Due in \(days) days")
         }
     }
 

@@ -1,6 +1,112 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "⚠ %lld DAYS OVERDUE" : {
+      "localizations" : {
+        "en" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DAY OVERDUE" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DAYS OVERDUE" } }
+        } } },
+        "es" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DÍA DE RETRASO" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DÍAS DE RETRASO" } }
+        } } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "⚠ 逾期 %lld 天" } }
+      }
+    },
+    "%lld days overdue" : {
+      "localizations" : {
+        "en" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld day overdue" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld days overdue" } }
+        } } },
+        "es" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld día de retraso" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld días de retraso" } }
+        } } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "逾期 %lld 天" } }
+      }
+    },
+    "Due in %lld days" : {
+      "localizations" : {
+        "en" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "Due in %lld day" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "Due in %lld days" } }
+        } } },
+        "es" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "Vence en %lld día" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "Vence en %lld días" } }
+        } } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 天后到期" } }
+      }
+    },
+    "Due today" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Vence hoy" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "今天到期" } }
+      }
+    },
+    "Due tomorrow" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Vence mañana" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "明天到期" } }
+      }
+    },
+    "in %lld days" : {
+      "localizations" : {
+        "en" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "in %lld day" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "in %lld days" } }
+        } } },
+        "es" : { "variations" : { "plural" : {
+          "one" : { "stringUnit" : { "state" : "translated", "value" : "en %lld día" } },
+          "other" : { "stringUnit" : { "state" : "translated", "value" : "en %lld días" } }
+        } } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 天后" } }
+      }
+    },
+    "Overdue — still not done" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Atrasado — aún sin hacer" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已逾期 — 尚未完成" } }
+      }
+    },
+    "overdue" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "atrasado" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已逾期" } }
+      }
+    },
+    "Remind me later" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recordar más tarde" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "稍后提醒" } }
+      }
+    },
+    "Reminder" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recordatorio" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "提醒" } }
+      }
+    },
+    "Snoozed reminder" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recordatorio pospuesto" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已延后的提醒" } }
+      }
+    },
+    "Starting soon" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Comienza pronto" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "即将开始" } }
+      }
+    },
+    "today" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "hoy" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "今天" } }
+      }
+    },
     "Auto" : {
       "localizations" : {
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Auto" } },

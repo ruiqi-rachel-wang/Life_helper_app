@@ -85,7 +85,7 @@ extension ActionItem {
         let days = Calendar.current.dateComponents(
             [.day], from: Calendar.current.startOfDay(for: due),
             to: Calendar.current.startOfDay(for: .now)).day ?? 0
-        return "⚠ \(days) DAY\(days == 1 ? "" : "S") OVERDUE"
+        return String(localized: "⚠ \(days) DAYS OVERDUE")
     }
 
     // The inbox subline: the meaningful facts only — amount (if any) + due date.
@@ -93,7 +93,7 @@ extension ActionItem {
     var inboxSubtitle: String {
         let tail: String
         if isOverdue {
-            tail = overdueText.map { _ in dueRelative } ?? "overdue"
+            tail = overdueText.map { _ in dueRelative } ?? String(localized: "overdue")
         } else {
             tail = dueText ?? ""
         }
@@ -106,8 +106,8 @@ extension ActionItem {
         let days = Calendar.current.dateComponents(
             [.day], from: Calendar.current.startOfDay(for: .now),
             to: Calendar.current.startOfDay(for: due)).day ?? 0
-        if days == 0 { return "today" }
-        if days > 0  { return "in \(days) day\(days == 1 ? "" : "s")" }
-        return "\(-days) day\(days == -1 ? "" : "s") overdue"
+        if days == 0 { return String(localized: "today") }
+        if days > 0  { return String(localized: "in \(days) days") }
+        return String(localized: "\(-days) days overdue")
     }
 }
