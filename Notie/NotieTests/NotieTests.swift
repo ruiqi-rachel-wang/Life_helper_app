@@ -388,3 +388,52 @@ struct ExplainLanguageTests {
         #expect(ExplainLanguage.spanish.displayName == "Español")
     }
 }
+
+// MARK: - Launch metric (Week 8 — item 5)
+
+struct MetricsTests {
+
+    private func day(_ offset: Int) -> Date {
+        Calendar.current.date(byAdding: .day, value: offset,
+                              to: Calendar.current.startOfDay(for: .now))!
+    }
+
+    @Test func summaryComputesRatesAndSourceBreakdown() {
+        let events: [MetricEvent] = [
+            .init(kind: .confirmed, date: .now, source: "scanned"),
+            .init(kind: .confirmed, date: .now, source: "guide"),
+            .init(kind: .confirmed, date: .now, source: "custom"),
+            .init(kind: .completed, date: .now, onTime: true),
+            .init(kind: .completed, date: .now, onTime: false),
+            .init(kind: .completed, date: .now, onTime: nil),   // no due date
+        ]
+        let s = MetricsSummary.from(events)
+        #expect(s.confirmed == 3)
+        #expect(s.completed == 3)
+        #expect(s.completedWithDue == 2)          // the nil-onTime one is excluded
+        #expect(s.completedOnTime == 1)
+        #expect(s.completionRate == 1.0)          // 3 completed / 3 confirmed
+        #expect(s.onTimeRate == 0.5)              // 1 on time / 2 with a due date
+        #expect(s.bySource == ["scanned": 1, "guide": 1, "custom": 1])
+    }
+
+    @Test func emptyLogIsAllZeroNoDivideByZero() {
+        let s = MetricsSummary.from([])
+        #expect(s.confirmed == 0 && s.completed == 0)
+        #expect(s.completionRate == 0 && s.onTimeRate == 0)
+    }
+
+    @Test func doneOnTimeComparesAgainstDueDate() {
+        // No due date → nothing to be on-time about.
+        #expect(ActionItem(title: "x", category: .other).doneOnTime() == nil)
+        // Day-based: due in the future → on time; due in the past → late.
+        #expect(ActionItem(title: "x", category: .other, dueDate: day(3)).doneOnTime() == true)
+        #expect(ActionItem(title: "x", category: .other, dueDate: day(-3)).doneOnTime() == false)
+        // Done ON the due day still counts as on time.
+        #expect(ActionItem(title: "x", category: .other, dueDate: day(0)).doneOnTime() == true)
+        // Timed event: compare to the exact moment.
+        let item = ActionItem(title: "x", category: .other, dueDate: .now.addingTimeInterval(3600))
+        item.dueHasTime = true
+        #expect(item.doneOnTime() == true)
+    }
+}

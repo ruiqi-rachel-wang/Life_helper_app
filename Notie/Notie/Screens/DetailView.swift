@@ -548,6 +548,7 @@ struct DetailView: View {
     }
 
     private func markDone() {
+        Metrics.record(.completed, onTime: item.doneOnTime())
         item.status = .done
         ReminderScheduler.shared.cancel(itemID: item.id)
         spawnNextOccurrence()

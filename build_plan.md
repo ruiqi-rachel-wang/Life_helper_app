@@ -455,11 +455,19 @@ before handing the app to testers.
      side of the bar lighter and read as unbalanced. Reverted to the stock flat
      `TabView` bar, and **reordered tabs to Inbox · Add · Guides · Profile** (Add
      moved to 2nd). Revisit a FAB only if a balancing 5th destination appears.
-5. **Local metrics**
-   - Log `action_item_confirmed` and `action_item_completed` to a local JSON
-     file or local-only store.
-   - Keep this lightweight; the launch metric is more important than a full
-     analytics system.
+5. **Local metrics** — local logging ✓ DONE (2026-06-15)
+   - `Metrics` logs `confirmed` (on every user save: scan / guide / manual, with
+     source) and `completed` (on mark-done, with on-time vs. late) to a local
+     JSON file (`Model/Metrics.swift`). `MetricsSummary.from` reduces it to the
+     completion rate + on-time rate + per-source breakdown (pure, unit-tested).
+   - Viewer: Profile → DEBUG panel shows the numbers + Export (ShareLink) + Reset.
+     Logging runs in all builds; only the viewer is DEBUG-gated.
+   - **OPEN — cross-tester roll-up:** local-only means each device only sees its
+     own numbers, and asking testers to Export is impractical. Apple gives crashes
+     + sessions via App Store Connect, but NOT custom events. Real aggregation
+     needs a privacy-first analytics SDK (e.g. TelemetryDeck — free, no PII) or a
+     small backend. This crosses the Phase-1 "no analytics dashboard" hard-NO, so
+     it's a conscious decision to make. (Pending Rachel's call 2026-06-15.)
 6. **Guides — follow-ups (updated 2026-06-14)**
    - ~~Editable "fields to save"~~ — **DONE** (`SavedField`, shipped 2026-06-14).
    - **Deeper source metadata** — `officialSource` is currently just a label string.

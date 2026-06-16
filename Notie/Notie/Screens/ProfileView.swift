@@ -20,6 +20,9 @@ struct ProfileView: View {
     // on; turning it off saves storage and keeps the image off the device.
     @AppStorage("keepOriginalScans") private var keepOriginalScans = true
     @State private var notifyStatus = "Checking…"
+    #if DEBUG
+    @State private var metrics = MetricsSummary()
+    #endif
 
     private var language: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
 
@@ -197,8 +200,11 @@ struct ProfileView: View {
     #if DEBUG
     // Kept separate from real settings so it never looks shippable.
     private var debugCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("DEBUG").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faint)
+
+            metricsPanel
+
             Button {
                 ReminderScheduler.shared.fireTestReminder()
             } label: {
@@ -213,7 +219,49 @@ struct ProfileView: View {
         }
         .padding(.horizontal, 4)
         .padding(.top, 8)
+        .onAppear { metrics = Metrics.summary() }
     }
+
+    // The local launch metric, computed from this device's event log.
+    private var metricsPanel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("LAUNCH METRIC · THIS DEVICE").font(.eyebrow).tracking(0.8).foregroundStyle(Color.faded)
+            metricRow("Confirmed", "\(metrics.confirmed)")
+            metricRow("Completed", "\(metrics.completed)  ·  \(pct(metrics.completionRate))")
+            metricRow("Done on time", "\(metrics.completedOnTime)/\(metrics.completedWithDue)  ·  \(pct(metrics.onTimeRate))")
+            if !metrics.bySource.isEmpty {
+                Text("Confirmed by: " + metrics.bySource.sorted { $0.key < $1.key }
+                        .map { "\($0.key) \($0.value)" }.joined(separator: " · "))
+                    .font(.subline).foregroundStyle(Color.faded)
+            }
+            HStack(spacing: 12) {
+                if let url = Metrics.exportURL() {
+                    ShareLink(item: url) {
+                        Label("Export", systemImage: "square.and.arrow.up").font(.subline).foregroundStyle(Color.accent)
+                    }
+                }
+                Spacer()
+                Button("Reset") { Metrics.reset(); metrics = Metrics.summary() }
+                    .font(.subline).foregroundStyle(Color.bad)
+            }
+            .padding(.top, 2)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hair, lineWidth: 1))
+    }
+
+    private func metricRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).font(.body14).foregroundStyle(Color.faded)
+            Spacer()
+            Text(value).font(.body14).foregroundStyle(Color.ink)
+        }
+    }
+
+    private func pct(_ r: Double) -> String { String(format: "%.0f%%", r * 100) }
     #endif
 
     // MARK: shared card shell (mirrors Detail/Review)

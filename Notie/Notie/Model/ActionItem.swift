@@ -266,6 +266,15 @@ final class ActionItem {
 
     var doneCount: Int { steps.filter(\.done).count }
 
+    // For metrics: completing now, was it on or before the due date? nil when
+    // there's no due date (nothing to be on-time about). Timed events compare to
+    // the exact time; plain dates compare day-to-day (done on the due day = OK).
+    func doneOnTime(now: Date = .now, calendar: Calendar = .current) -> Bool? {
+        guard let due = dueDate else { return nil }
+        return dueHasTime ? now <= due
+                          : calendar.startOfDay(for: now) <= calendar.startOfDay(for: due)
+    }
+
     var isRecurring: Bool { recurrence != nil }
 
     // The next cycle of a recurring item — a fresh copy with the due date
