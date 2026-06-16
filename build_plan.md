@@ -439,13 +439,21 @@ before handing the app to testers.
      even when another language is picked (they never reach the translating AI).
    - **keep-original-scans toggle is real:** `@AppStorage("keepOriginalScans")`
      (default on); when off, `ReviewView` saves the item without the photo.
-4. **Polish states**
-   - Empty states: no inbox, no done items, no guides result yet.
-   - Error states: OCR failed, garbled OCR, LLM down, no network, permission
-     denied.
-   - Privacy banner on Inbox: `LOCAL OCR · NO BANK LINK · NO AUTOPAY`.
-   - Custom raised ＋ tab button.
-   - App icon placeholder, even just serif "N" on cream.
+4. **Polish states** — partly done (2026-06-15)
+   - Empty states: Inbox "Nothing yet" ✓. (Guides always list; "no result yet"
+     is covered by Review's loading state.) Could still add a dedicated empty-Done
+     hint — minor.
+   - Error states: ✓ mostly — Review handles `.noText` ("couldn't read any text"),
+     `.failed` (analysis/LLM/network error message), and a low-confidence "retake"
+     state. Could make the offline case friendlier ("You're offline") — minor.
+   - Privacy banner on Inbox: ✓ already shipped (`PrivacyBanner`).
+   - **App icon placeholder ✓ DONE** — serif "N" on cream, opaque 1024² in
+     `AppIcon.appiconset` (generated; Times serif). Replace with New York-rendered
+     art later if desired.
+   - **Custom raised ＋ tab button — TODO (needs a decision):** we have 3
+     destinations + Add, which doesn't cleanly center a floating button, and
+     hiding a `TabView` bar on iOS 17 trades away per-tab state preservation.
+     Decide layout + approach (custom bar vs. TabView overlay) before building.
 5. **Local metrics**
    - Log `action_item_confirmed` and `action_item_completed` to a local JSON
      file or local-only store.
