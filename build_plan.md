@@ -462,12 +462,19 @@ before handing the app to testers.
      completion rate + on-time rate + per-source breakdown (pure, unit-tested).
    - Viewer: Profile → DEBUG panel shows the numbers + Export (ShareLink) + Reset.
      Logging runs in all builds; only the viewer is DEBUG-gated.
-   - **OPEN — cross-tester roll-up:** local-only means each device only sees its
-     own numbers, and asking testers to Export is impractical. Apple gives crashes
-     + sessions via App Store Connect, but NOT custom events. Real aggregation
-     needs a privacy-first analytics SDK (e.g. TelemetryDeck — free, no PII) or a
-     small backend. This crosses the Phase-1 "no analytics dashboard" hard-NO, so
-     it's a conscious decision to make. (Pending Rachel's call 2026-06-15.)
+   - **Cross-tester roll-up — DECIDED 2026-06-15: TelemetryDeck, added before
+     widening the beta.** Local-only shows each device only its own numbers, and
+     asking testers to Export is impractical. Apple gives crashes + sessions via
+     App Store Connect, but NOT custom events. Chose **TelemetryDeck** (privacy-
+     first, no PII, free tier) over Firebase to protect the privacy positioning
+     the ESL/immigrant audience depends on; Firebase only wins if Notie later goes
+     cross-platform (Android + accounts), and a backend can carry analytics then.
+     This consciously revisits the "no analytics dashboard" hard-NO.
+   - **Integration is a ~10-min add, no lock-in:** every event already flows
+     through the single `Metrics.record()` chokepoint — adding TelemetryDeck =
+     the Swift package + one forwarding line there + the app ID from Rachel's
+     (free) account. Not needed for the first ~10-person beta; local numbers
+     suffice to sanity-check the loop. Wire it up when widening testers.
 6. **Guides — follow-ups (updated 2026-06-14)**
    - ~~Editable "fields to save"~~ — **DONE** (`SavedField`, shipped 2026-06-14).
    - **Deeper source metadata** — `officialSource` is currently just a label string.
