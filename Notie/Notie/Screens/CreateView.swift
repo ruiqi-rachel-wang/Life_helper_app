@@ -439,7 +439,7 @@ private struct CreateForm: View {
             steps: cleanSteps
         )
         context.insert(item)
-        Metrics.record(.confirmed, source: ItemSource.custom.rawValue)
+        Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)
         ReminderScheduler.shared.reschedule(for: item)   // schedule reminders
         router.goToInbox()   // land on the Inbox so the new item is visible
         dismiss()

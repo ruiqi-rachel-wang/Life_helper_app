@@ -408,6 +408,14 @@ before handing the app to testers.
      (stops it). One-off / done items get the plain confirm.
    - Detail shows a **REPEATS** row (read: the cadence; edit: a None/Monthly/Yearly
      menu) so recurrence is settable by hand, not just from a scan.
+   - **QA fixes (2026-06-15):** mark-done is now idempotent (guards `status != .done`
+     on both the Detail and notification paths) so a stale delivered notification
+     can't double-complete / double-spawn. The "delete just this one vs. all future"
+     split is only offered when the item is recurring **and** dated (`canSplitRecurring`)
+     — a no-due-date recurring item can't advance, so it gets a plain delete instead
+     of a misleading split. *Deferred (post-launch):* the REPEATS menu still can't
+     re-pick an AI-read `everyNDays(n)` cadence (shows the label, edits only
+     None/Monthly/Yearly).
 2. **Done archive + reopen** — reopen ✓ DONE (2026-06-15)
    - Done items stay visible in a past/done area, with delete. ✓ (Inbox Done section)
    - **Reopen ✓** — a done item's Detail now shows "Mark as not done" (→ active,
@@ -437,6 +445,8 @@ before handing the app to testers.
      Unit-tested; Profile screen visually verified in the simulator.
      *Known limit:* sensitive guides skip the polish pass, so they stay English
      even when another language is picked (they never reach the translating AI).
+     The Profile language hint now says this out loud (QA fix 2026-06-15) so it
+     isn't a surprise.
    - **keep-original-scans toggle is real:** `@AppStorage("keepOriginalScans")`
      (default on); when off, `ReviewView` saves the item without the photo.
 4. **Polish states** — partly done (2026-06-15)
@@ -462,6 +472,11 @@ before handing the app to testers.
      completion rate + on-time rate + per-source breakdown (pure, unit-tested).
    - Viewer: Profile → DEBUG panel shows the numbers + Export (ShareLink) + Reset.
      Logging runs in all builds; only the viewer is DEBUG-gated.
+   - **QA fix (2026-06-15):** events carry an `itemID`, and `MetricsSummary.from`
+     runs the funnel **per confirmed item** — de-duping repeat completions (reopen →
+     re-done, stale notification taps) and ignoring completions of items that were
+     never confirmed (the seeded dev samples, which insert without a confirmed
+     event). So completion/on-time rates can't be inflated by samples or doubles.
    - **Cross-tester roll-up — DECIDED 2026-06-15: TelemetryDeck, added before
      widening the beta.** Local-only shows each device only its own numbers, and
      asking testers to Export is impractical. Apple gives crashes + sessions via
@@ -524,6 +539,12 @@ hands.
      + `MigrationPlan`, or (c) make the container init resilient (recreate the
      store on failure). Decide before the first TestFlight build so a future schema
      change doesn't crash testers' installed app.
+   - **Notification permission timing (QA finding 2026-06-15):** today the prompt
+     fires at launch (`NotieApp` `.task`, skipped under `-uitest`). A tester sees it
+     before understanding what reminders are, which can depress opt-in — and
+     reminders are the core of the launch metric. Move the request to a contextual
+     moment (e.g. first time a reminder is actually scheduled) before widening the
+     beta.
 3. **Apple release setup**
    - Apply for Apple Developer Program if not already approved (1–3 days).
    - Create App Store Connect app record.

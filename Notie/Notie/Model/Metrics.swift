@@ -19,6 +19,7 @@ nonisolated struct MetricEvent: Codable, Equatable {
     enum Kind: String, Codable { case confirmed, completed }
     var kind: Kind
     var date: Date
+    var itemID: UUID?       // which item — lets the summary de-dupe and match the funnel
     var source: String?     // scanned / guide / custom (on `confirmed`)
     var onTime: Bool?       // completed on/before the due date? nil if no due date
 }
@@ -37,20 +38,33 @@ nonisolated struct MetricsSummary: Equatable {
     // the "working vs. broken loop" number (>50% working, <30% broken).
     var onTimeRate: Double { completedWithDue == 0 ? 0 : Double(completedOnTime) / Double(completedWithDue) }
 
-    // Pure reducer — unit-tested without touching disk.
+    // Pure reducer — unit-tested without touching disk. The funnel is PER ITEM
+    // (keyed by itemID): of the items the user CONFIRMED, how many did they
+    // complete, and on time. Keying by id de-dupes repeat completions (reopen →
+    // re-done, stale notification taps) and ignores completions of items that
+    // were never confirmed — e.g. the seeded dev samples, which are inserted
+    // without a confirmed event. Id-less events (shouldn't occur) are skipped.
     static func from(_ events: [MetricEvent]) -> MetricsSummary {
-        var s = MetricsSummary()
+        var confirmedSource: [UUID: String] = [:]    // itemID → source, first confirm wins
+        var firstOnTime: [UUID: Bool?] = [:]         // itemID → onTime of the first completion
         for e in events {
+            guard let id = e.itemID else { continue }
             switch e.kind {
             case .confirmed:
-                s.confirmed += 1
-                if let src = e.source { s.bySource[src, default: 0] += 1 }
+                if confirmedSource[id] == nil { confirmedSource[id] = e.source ?? "other" }
             case .completed:
-                s.completed += 1
-                if let onTime = e.onTime {
-                    s.completedWithDue += 1
-                    if onTime { s.completedOnTime += 1 }
-                }
+                if !firstOnTime.keys.contains(id) { firstOnTime[id] = e.onTime }
+            }
+        }
+        var s = MetricsSummary()
+        s.confirmed = confirmedSource.count
+        for src in confirmedSource.values { s.bySource[src, default: 0] += 1 }
+        // Only completions of confirmed items count toward the funnel.
+        for (id, onTime) in firstOnTime where confirmedSource[id] != nil {
+            s.completed += 1
+            if let onTime {                          // had a due date
+                s.completedWithDue += 1
+                if onTime { s.completedOnTime += 1 }
             }
         }
         return s
@@ -68,8 +82,8 @@ nonisolated enum Metrics {
         return dir.appendingPathComponent("metrics.json")
     }()
 
-    static func record(_ kind: MetricEvent.Kind, source: String? = nil, onTime: Bool? = nil) {
-        let event = MetricEvent(kind: kind, date: .now, source: source, onTime: onTime)
+    static func record(_ kind: MetricEvent.Kind, itemID: UUID? = nil, source: String? = nil, onTime: Bool? = nil) {
+        let event = MetricEvent(kind: kind, date: .now, itemID: itemID, source: source, onTime: onTime)
         queue.async {
             var events = readFile()
             events.append(event)

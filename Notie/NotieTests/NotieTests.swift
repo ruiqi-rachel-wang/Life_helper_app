@@ -398,23 +398,36 @@ struct MetricsTests {
                               to: Calendar.current.startOfDay(for: .now))!
     }
 
-    @Test func summaryComputesRatesAndSourceBreakdown() {
+    @Test func summaryFunnelsByConfirmedItemAndDeDupes() {
+        let a = UUID(), b = UUID(), c = UUID(), sample = UUID()
         let events: [MetricEvent] = [
-            .init(kind: .confirmed, date: .now, source: "scanned"),
-            .init(kind: .confirmed, date: .now, source: "guide"),
-            .init(kind: .confirmed, date: .now, source: "custom"),
-            .init(kind: .completed, date: .now, onTime: true),
-            .init(kind: .completed, date: .now, onTime: false),
-            .init(kind: .completed, date: .now, onTime: nil),   // no due date
+            .init(kind: .confirmed, date: .now, itemID: a, source: "scanned"),
+            .init(kind: .confirmed, date: .now, itemID: b, source: "guide"),
+            .init(kind: .confirmed, date: .now, itemID: c, source: "custom"),  // confirmed, never completed
+            .init(kind: .completed, date: .now, itemID: a, onTime: true),
+            .init(kind: .completed, date: .now, itemID: a, onTime: true),      // duplicate (reopen/stale) → de-duped
+            .init(kind: .completed, date: .now, itemID: b, onTime: false),
+            .init(kind: .completed, date: .now, itemID: sample, onTime: true), // never confirmed (seeded sample) → ignored
         ]
         let s = MetricsSummary.from(events)
         #expect(s.confirmed == 3)
-        #expect(s.completed == 3)
-        #expect(s.completedWithDue == 2)          // the nil-onTime one is excluded
-        #expect(s.completedOnTime == 1)
-        #expect(s.completionRate == 1.0)          // 3 completed / 3 confirmed
-        #expect(s.onTimeRate == 0.5)              // 1 on time / 2 with a due date
+        #expect(s.completed == 2)                 // a + b; duplicate a de-duped, sample ignored
+        #expect(s.completedWithDue == 2)
+        #expect(s.completedOnTime == 1)           // only a was on time
+        #expect(s.completionRate == 2.0 / 3.0)
+        #expect(s.onTimeRate == 0.5)
         #expect(s.bySource == ["scanned": 1, "guide": 1, "custom": 1])
+    }
+
+    @Test func completionWithoutDueDateCountsButIsNotInOnTime() {
+        let a = UUID()
+        let s = MetricsSummary.from([
+            .init(kind: .confirmed, date: .now, itemID: a, source: "custom"),
+            .init(kind: .completed, date: .now, itemID: a, onTime: nil),   // no due date
+        ])
+        #expect(s.completed == 1)
+        #expect(s.completedWithDue == 0)
+        #expect(s.onTimeRate == 0)
     }
 
     @Test func emptyLogIsAllZeroNoDivideByZero() {

@@ -514,9 +514,10 @@ struct DetailView: View {
             }
         }
         .confirmationDialog(deleteDialogTitle, isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            if item.isRecurring && !isDone {
-                // A live recurring task: deleting just this one keeps the series
-                // going (spawns the next cycle); "this and all future" stops it.
+            if canSplitRecurring {
+                // A live recurring task with a due date: deleting just this one
+                // keeps the series going (spawns the next cycle); "this and all
+                // future" stops it.
                 Button("Delete just this one") { skipToNextAndDelete() }
                 Button("Delete this and all future", role: .destructive) { deleteItem() }
             } else {
@@ -525,6 +526,12 @@ struct DetailView: View {
             Button("Cancel", role: .cancel) {}
         }
     }
+
+    // The "this one vs. all future" choice only makes sense when a next cycle can
+    // actually be spawned — i.e. recurring AND dated. A recurring item with no due
+    // date can't advance (makeNextOccurrence returns nil), so "just this one"
+    // would silently end the series; offer a plain delete instead.
+    private var canSplitRecurring: Bool { item.isRecurring && item.dueDate != nil && !isDone }
 
     private var deleteButton: some View {
         Button(role: .destructive) { showDeleteConfirm = true } label: {
@@ -537,7 +544,7 @@ struct DetailView: View {
     }
 
     private var deleteDialogTitle: String {
-        item.isRecurring && !isDone ? "This is a repeating task" : "Delete this task?"
+        canSplitRecurring ? "This is a repeating task" : "Delete this task?"
     }
 
     // Reopen a done item: back to active (the Inbox re-buckets it by urgency /
@@ -548,7 +555,11 @@ struct DetailView: View {
     }
 
     private func markDone() {
-        Metrics.record(.completed, onTime: item.doneOnTime())
+        // Idempotent: an already-done item must not re-log a completion or spawn
+        // another next cycle (e.g. tapping a stale notification action after
+        // completing in the app).
+        guard item.status != .done else { return }
+        Metrics.record(.completed, itemID: item.id, onTime: item.doneOnTime())
         item.status = .done
         ReminderScheduler.shared.cancel(itemID: item.id)
         spawnNextOccurrence()

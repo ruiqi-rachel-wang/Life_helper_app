@@ -466,7 +466,7 @@ struct ReviewView: View {
         let item = ActionItem(from: draft, imageData: scanImageData, source: source)
         item.reminderLeadHours = leadHours
         context.insert(item)
-        Metrics.record(.confirmed, source: source.rawValue)
+        Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
         router.goToInbox()
         finish()
@@ -558,7 +558,7 @@ struct ReviewView: View {
         for i in items.indices where selected.contains(i) {
             let item = ActionItem(from: items[i], imageData: img, source: source)
             context.insert(item)
-            Metrics.record(.confirmed, source: source.rawValue)
+            Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
             ReminderScheduler.shared.reschedule(for: item)
         }
         router.goToInbox()

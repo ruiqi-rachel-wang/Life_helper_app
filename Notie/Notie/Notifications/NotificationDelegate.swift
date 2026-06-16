@@ -74,7 +74,10 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         let descriptor = FetchDescriptor<ActionItem>(
             predicate: #Predicate { $0.id == id })
         guard let item = try? context.fetch(descriptor).first else { return }
-        Metrics.record(.completed, onTime: item.doneOnTime())
+        // Idempotent: a stale delivered notification's "Mark done" must not
+        // re-complete an already-done item (double metric + duplicate next cycle).
+        guard item.status != .done else { return }
+        Metrics.record(.completed, itemID: id, onTime: item.doneOnTime())
         item.status = .done
         // A recurring item spawns its next cycle when completed from the banner,
         // same as marking done in the app.

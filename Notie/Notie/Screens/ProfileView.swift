@@ -117,7 +117,7 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("Defaults to your phone's language. Applies to new scans and guides — the app's own labels stay in English for now.")
+                Text("Defaults to your phone's language. Applies to new scans and most guides. A few sensitive guides (money, immigration, medical) stay in English and on your device. The app's own labels stay in English for now.")
                     .font(.subline).foregroundStyle(Color.faint)
                     .padding(.top, 10)
             }
