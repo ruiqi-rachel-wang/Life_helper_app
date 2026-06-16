@@ -450,10 +450,11 @@ before handing the app to testers.
    - **App icon placeholder ✓ DONE** — serif "N" on cream, opaque 1024² in
      `AppIcon.appiconset` (generated; Times serif). Replace with New York-rendered
      art later if desired.
-   - **Custom raised ＋ tab button — TODO (needs a decision):** we have 3
-     destinations + Add, which doesn't cleanly center a floating button, and
-     hiding a `TabView` bar on iOS 17 trades away per-tab state preservation.
-     Decide layout + approach (custom bar vs. TabView overlay) before building.
+   - **Custom raised ＋ tab button — TRIED & DROPPED (2026-06-15).** Built a
+     centered floating ＋ over a custom bar; with only 4 destinations it left one
+     side of the bar lighter and read as unbalanced. Reverted to the stock flat
+     `TabView` bar, and **reordered tabs to Inbox · Add · Guides · Profile** (Add
+     moved to 2nd). Revisit a FAB only if a balancing 5th destination appears.
 5. **Local metrics**
    - Log `action_item_confirmed` and `action_item_completed` to a local JSON
      file or local-only store.

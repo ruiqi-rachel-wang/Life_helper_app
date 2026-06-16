@@ -1,12 +1,12 @@
 //  RootTabView.swift
 //
 //  The tab-bar shell shown when the app launches. Holds the 4 main
-//  destinations (Inbox, Guides, Add, Profile); tapping a tab swaps
-//  which screen is shown above the bar.
+//  destinations (Inbox, Add, Guides, Profile); tapping a tab swaps which
+//  screen is shown above the bar.
 //
-//  Tab selection is driven by a shared AppRouter so screens can jump
-//  back to the Inbox after saving. The raised ＋ button from the design
-//  spec is a Week 7 polish item; right now "Add" is a regular tab.
+//  Tab selection is driven by a shared AppRouter so screens can jump back to
+//  the Inbox after saving. (A raised ＋ FAB was tried and dropped — a flat bar
+//  reads cleaner with our four destinations.)
 //
 
 import SwiftUI
@@ -22,13 +22,13 @@ struct RootTabView: View {
                 .tabItem { Label("Inbox", systemImage: "tray") }
                 .tag(AppRouter.Tab.inbox)
 
-            GuidesView()
-                .tabItem { Label("Guides", systemImage: "books.vertical") }
-                .tag(AppRouter.Tab.guides)
-
             CreateView()
                 .tabItem { Label("Add", systemImage: "plus.circle.fill") }
                 .tag(AppRouter.Tab.add)
+
+            GuidesView()
+                .tabItem { Label("Guides", systemImage: "books.vertical") }
+                .tag(AppRouter.Tab.guides)
 
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
