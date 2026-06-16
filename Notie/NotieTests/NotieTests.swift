@@ -115,6 +115,21 @@ struct ActionItemTests {
         #expect(b.activeCount == 0)
     }
 
+    @Test func reopeningMovesADoneItemBackToActive() {
+        // What reopen() does: flip status off .done. A part-checked item then
+        // re-buckets as in-progress and counts as active again.
+        let item = ActionItem(title: "x", category: .other,
+                              status: .done,
+                              steps: [ChecklistStep(text: "a", done: true),
+                                      ChecklistStep(text: "b")])
+        #expect([item].groupedForInbox().done.count == 1)
+        item.status = .todo
+        let b = [item].groupedForInbox()
+        #expect(b.done.isEmpty)
+        #expect(b.inProgress.count == 1)   // some steps checked → in progress
+        #expect(b.activeCount == 1)
+    }
+
     // MARK: SwiftData persistence (in-memory store)
 
     @MainActor

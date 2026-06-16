@@ -408,12 +408,14 @@ before handing the app to testers.
      (stops it). One-off / done items get the plain confirm.
    - Detail shows a **REPEATS** row (read: the cadence; edit: a None/Monthly/Yearly
      menu) so recurrence is settable by hand, not just from a scan.
-2. **Done archive + reopen**
-   - Done items stay visible in a past/done area, with delete.
-   - Add "Mark as not done" / Reopen from a done item's Detail; it should move
-     back to active and reschedule reminders.
-   - Keep delete final; no undo is required for delete.
-   - **Reminder notification text (decided 2026-06-13, later dev):** each reminder
+2. **Done archive + reopen** — reopen ✓ DONE (2026-06-15)
+   - Done items stay visible in a past/done area, with delete. ✓ (Inbox Done section)
+   - **Reopen ✓** — a done item's Detail now shows "Mark as not done" (→ active,
+     reminders rescheduled) above Delete. The Inbox re-buckets it by urgency
+     (part-checked → in progress). Unit-tested. Delete stays final, no undo.
+     *Edge case:* reopening a recurring item that already spawned its next cycle
+     leaves both (distinguishable by due date) — acceptable; no parent-link yet.
+   - **Reminder notification text (decided 2026-06-13, later dev) — TODO:** each reminder
      should carry a short custom title/note that shows in the notification (today
      the body is auto-computed like "Due in 3 days"). Add an editable per-reminder
      label so the banner is meaningful. (Guides default to NO reminders — they have

@@ -466,14 +466,21 @@ struct DetailView: View {
 
     private var footer: some View {
         Group {
-            if isEditing || isDone {
-                Button(role: .destructive) { showDeleteConfirm = true } label: {
-                    Text("Delete")
-                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.bad)
-                        .frame(maxWidth: .infinity).padding(.vertical, 13)
-                        .background(RoundedRectangle(cornerRadius: 12).stroke(Color.bad.opacity(0.4), lineWidth: 1))
+            if isDone {
+                // A completed item can be reopened (back to active, reminders
+                // rescheduled) or deleted. Delete stays final — no undo.
+                VStack(spacing: 10) {
+                    Button { reopen() } label: {
+                        Text("Mark as not done")
+                            .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.ink)
+                            .frame(maxWidth: .infinity).padding(.vertical, 13)
+                            .background(RoundedRectangle(cornerRadius: 12).stroke(Color.hairD, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    deleteButton
                 }
-                .buttonStyle(.plain)
+            } else if isEditing {
+                deleteButton
             } else {
                 Button { markDone() } label: {
                     Text("Mark done")
@@ -497,8 +504,25 @@ struct DetailView: View {
         }
     }
 
+    private var deleteButton: some View {
+        Button(role: .destructive) { showDeleteConfirm = true } label: {
+            Text("Delete")
+                .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.bad)
+                .frame(maxWidth: .infinity).padding(.vertical, 13)
+                .background(RoundedRectangle(cornerRadius: 12).stroke(Color.bad.opacity(0.4), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
     private var deleteDialogTitle: String {
         item.isRecurring && !isDone ? "This is a repeating task" : "Delete this task?"
+    }
+
+    // Reopen a done item: back to active (the Inbox re-buckets it by urgency /
+    // derived in-progress) and reschedule its still-future reminders.
+    private func reopen() {
+        item.status = .todo
+        ReminderScheduler.shared.reschedule(for: item)
     }
 
     private func markDone() {
