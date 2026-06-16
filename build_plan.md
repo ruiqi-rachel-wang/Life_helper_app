@@ -477,10 +477,13 @@ before handing the app to testers.
      suffice to sanity-check the loop. Wire it up when widening testers.
 6. **Guides — follow-ups (updated 2026-06-14)**
    - ~~Editable "fields to save"~~ — **DONE** (`SavedField`, shipped 2026-06-14).
-   - **Deeper source metadata** — `officialSource` is currently just a label string.
-     Make it a structured record: official **URL**, **jurisdiction** (US / per-state),
-     **risk**, and a real **last-reviewed date** per guide — so "super accurate" is
-     auditable, not just displayed.
+   - **Deeper source metadata — ✓ DONE (2026-06-15).** `GuideSource` (authority ·
+     domain · official URL · `Jurisdiction` federal/per-state · real `lastReviewed`
+     Date) replaces the free-text label; `risk` stays on `Guide` (it also drives
+     the AI-skip and applies to source-less guides). Stamped on all 11 guides with
+     stable root-domain URLs, and now **shown** as a tappable, dated citation
+     footer on the guide's questions screen. Unit-tested (every guide has an
+     https source; per-state guides flagged as such).
    - **Verify USCIS pages manually** — the canonical-looking USCIS URLs (uscis.gov/i-90,
      /n-400, /i-765, /file-online, case-status) could NOT be reliably fetched by the
      browser tool. Open each in a real browser and confirm before TestFlight.

@@ -40,6 +40,34 @@ nonisolated enum GuideDate {
 // medical, legal) NEVER goes to the AI polish pass — it stays on the device.
 nonisolated enum GuideRisk { case general, sensitive }
 
+// Whether a guide's facts come from one US-wide authority or vary by state.
+nonisolated enum Jurisdiction { case federal, perState }
+
+// An auditable citation for a guide's facts: which official body, the domain we
+// show the user, a link to open, federal-vs-per-state, and when a human last
+// checked it. Replaces the old free-text `officialSource` label so "accurate"
+// is verifiable, not just asserted.
+nonisolated struct GuideSource {
+    var authority: String          // "IRS", "USCIS", "USPS", "Your state's DMV"
+    var domain: String             // "irs.gov" — the short form shown to the user
+    var url: String                // full official URL to open (root domains: stable)
+    var jurisdiction: Jurisdiction
+    var lastReviewed: Date
+
+    // "IRS · irs.gov" (federal) / "Your state's DMV · varies by state" (per-state).
+    var label: String {
+        jurisdiction == .perState ? "\(authority) · varies by state" : "\(authority) · \(domain)"
+    }
+    var reviewedLabel: String {
+        "Reviewed " + lastReviewed.formatted(.dateTime.month(.abbreviated).year())
+    }
+
+    // No date literals in Swift — build the review date from year/month.
+    static func reviewed(_ year: Int, _ month: Int) -> Date {
+        Calendar.current.date(from: DateComponents(year: year, month: month, day: 1)) ?? .now
+    }
+}
+
 nonisolated struct Guide: Identifiable {
     let id: String
     let title: String
@@ -55,10 +83,10 @@ nonisolated struct Guide: Identifiable {
         questions.filter { $0.showIf?(answers) ?? true }
     }
 
-    // Provenance / safety metadata (review-team requested). lastReviewed is when a
-    // human last checked this guide's facts against the official source.
-    var officialSource: String? = nil       // primary official site (label form)
-    var lastReviewed: String = "June 2026"
+    // Provenance / safety metadata (review-team requested). `source` is the
+    // auditable official citation; `risk` stays on the Guide because it also
+    // drives the AI-skip and applies even to guides without one fixed source.
+    var source: GuideSource? = nil
     var risk: GuideRisk = .general
     // Shown as a prominent banner on the guide's FIRST page (the questions screen)
     // — e.g. "call 911 if this is an emergency" — so urgent help never hides inside
@@ -85,28 +113,41 @@ nonisolated enum USStates {
 
 extension Guide {
     // Stamp provenance/risk onto a guide (returns a copy).
-    private func meta(source: String? = nil, risk: GuideRisk = .general,
+    private func meta(source: GuideSource? = nil, risk: GuideRisk = .general,
                       emergency: String? = nil) -> Guide {
         var g = self
-        g.officialSource = source
+        g.source = source
         g.risk = risk
         g.emergencyNote = emergency
         return g
     }
 
+    // Reviewed June 2026 (when the guide content was authored). Root-domain URLs
+    // are used deliberately — they're stable. NOTE: deep USCIS links (i-90, n-400,
+    // i-765, case-status) could NOT be reliably fetched by the browser tool, so
+    // they must be opened + confirmed in a real browser before TestFlight; until
+    // then we cite the stable uscis.gov root. (See build plan, Week 8 item 6.)
+    private static let reviewed = GuideSource.reviewed(2026, 6)
+    private static func fed(_ authority: String, _ domain: String, _ url: String) -> GuideSource {
+        GuideSource(authority: authority, domain: domain, url: url, jurisdiction: .federal, lastReviewed: reviewed)
+    }
+    private static func perState(_ authority: String, _ url: String) -> GuideSource {
+        GuideSource(authority: authority, domain: "usa.gov", url: url, jurisdiction: .perState, lastReviewed: reviewed)
+    }
+
     static let all: [Guide] = [
-        moving.meta(source: "USPS (usps.com/move)"),
-        bankAccount.meta(source: "Consumer Financial Protection Bureau (consumerfinance.gov)", risk: .sensitive),
-        taxes.meta(source: "IRS (irs.gov)", risk: .sensitive),
-        newJob.meta(source: "USCIS Form I-9 (uscis.gov)"),
-        ssnItin.meta(source: "SSA (ssa.gov) / IRS (irs.gov)", risk: .sensitive),
-        driversLicense.meta(),   // source varies by state DMV
-        immigration.meta(source: "USCIS (uscis.gov)", risk: .sensitive),
-        schoolEnrollment.meta(source: "U.S. Dept. of Education (ed.gov)", risk: .sensitive),
-        healthInsurance.meta(source: "HealthCare.gov", risk: .sensitive),
-        doctorAppointment.meta(source: "HealthCare.gov", risk: .sensitive,
+        moving.meta(source: fed("USPS", "usps.com", "https://www.usps.com/move")),
+        bankAccount.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov"), risk: .sensitive),
+        taxes.meta(source: fed("IRS", "irs.gov", "https://www.irs.gov"), risk: .sensitive),
+        newJob.meta(source: fed("USCIS (Form I-9)", "uscis.gov", "https://www.uscis.gov/i-9")),
+        ssnItin.meta(source: fed("Social Security Administration", "ssa.gov", "https://www.ssa.gov"), risk: .sensitive),
+        driversLicense.meta(source: perState("Your state's DMV", "https://www.usa.gov/motor-vehicle-services")),
+        immigration.meta(source: fed("USCIS", "uscis.gov", "https://www.uscis.gov"), risk: .sensitive),
+        schoolEnrollment.meta(source: fed("U.S. Dept. of Education", "ed.gov", "https://www.ed.gov"), risk: .sensitive),
+        healthInsurance.meta(source: fed("HealthCare.gov", "healthcare.gov", "https://www.healthcare.gov"), risk: .sensitive),
+        doctorAppointment.meta(source: fed("HealthCare.gov", "healthcare.gov", "https://www.healthcare.gov"), risk: .sensitive,
                                emergency: "If this is a medical emergency, call 911 or go to the ER. For urgent problems that can't wait, a walk-in urgent care may be faster than an appointment."),
-        carAccident.meta(risk: .sensitive,
+        carAccident.meta(source: perState("Your state's DMV & your insurer", "https://www.usa.gov"), risk: .sensitive,
                          emergency: "If anyone is hurt or in danger, call 911 now."),
     ]
 

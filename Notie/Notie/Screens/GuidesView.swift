@@ -198,12 +198,38 @@ struct GuideQuestionsView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(missingRequired)
+
+                    sourceFooter
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal, 14).padding(.top, 24)
             }
         }
         .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+    }
+
+    // Auditable citation — which official body these steps come from, a tappable
+    // link, and when it was last reviewed. Visible provenance builds trust for an
+    // audience that's wary of bad/unofficial advice.
+    @ViewBuilder
+    private var sourceFooter: some View {
+        if let s = guide.source {
+            VStack(alignment: .leading, spacing: 6) {
+                Rectangle().fill(Color.hair).frame(height: 1)
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal").font(.system(size: 11)).foregroundStyle(Color.ok)
+                    if let url = URL(string: s.url) {
+                        Link(s.label, destination: url)
+                            .font(.eyebrow).tracking(0.3).foregroundStyle(Color.accent)
+                    } else {
+                        Text(s.label).font(.eyebrow).tracking(0.3).foregroundStyle(Color.faded)
+                    }
+                    Spacer()
+                    Text(s.reviewedLabel).font(.eyebrow).tracking(0.3).foregroundStyle(Color.faint)
+                }
+            }
+            .padding(.horizontal, 8).padding(.top, 8)
+        }
     }
 
     // Small reassurance for sensitive topics — built on-device, never sent to AI.

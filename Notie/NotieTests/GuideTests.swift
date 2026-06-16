@@ -160,10 +160,21 @@ struct GuideTests {
         #expect(guide("new_job").risk == .general)
     }
 
-    @Test func guidesCarryOfficialSourceAndReviewDate() {
-        #expect(guide("immigration").officialSource?.contains("uscis.gov") == true)
-        #expect(guide("moving").officialSource?.contains("usps") == true)
-        #expect(!guide("immigration").lastReviewed.isEmpty)
+    @Test func guidesCarryStructuredOfficialSource() {
+        let uscis = guide("immigration").source
+        #expect(uscis?.domain == "uscis.gov")
+        #expect(uscis?.jurisdiction == .federal)
+        #expect(guide("moving").source?.domain == "usps.com")
+        // A guide whose facts vary by state is marked per-state, not federal.
+        #expect(guide("drivers_license").source?.jurisdiction == .perState)
+    }
+
+    @Test func everyGuideHasAnAuditableHttpsSource() {
+        for g in Guide.all {
+            #expect(g.source != nil, "\(g.id) is missing a source citation")
+            #expect(g.source?.url.hasPrefix("https://") == true, "\(g.id) source url not https")
+            #expect(g.source?.domain.isEmpty == false, "\(g.id) source domain empty")
+        }
     }
 
     @Test func bankNoSSNAddsITINStepWithIRSLink() {
