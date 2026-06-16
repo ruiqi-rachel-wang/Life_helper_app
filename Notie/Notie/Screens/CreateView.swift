@@ -285,7 +285,7 @@ private struct CreateForm: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: category.symbol).font(.system(size: 13)).foregroundStyle(category.tint)
-                    Text(category.rawValue.capitalized).font(.body14).foregroundStyle(Color.ink)
+                    Text(category.displayName).font(.body14).foregroundStyle(Color.ink)
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Color.faint)
                 }
             }

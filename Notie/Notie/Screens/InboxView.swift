@@ -109,7 +109,10 @@ struct InboxView: View {
         if !rows.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(title)
+                    // Section titles are app strings passed in as a String, so wrap
+                    // in LocalizedStringKey to localize them (a plain Text(String)
+                    // would show them verbatim).
+                    Text(LocalizedStringKey(title))
                         .font(.serifSection)
                         .foregroundStyle(
                             muted ? Color.faded

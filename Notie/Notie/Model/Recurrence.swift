@@ -23,15 +23,15 @@ nonisolated enum Recurrence: Hashable, Codable {
     // The presets offered in the REPEATS menu (everyNDays is AI-only).
     static let presets: [Recurrence] = [.weekly, .biweekly, .monthly, .quarterly, .yearly]
 
-    // Plain-English label for display / debugging.
+    // Localized label for display (follows the device language via the catalog).
     var label: String {
         switch self {
-        case .weekly:            return "Weekly"
-        case .biweekly:          return "Every 2 weeks"
-        case .monthly:           return "Monthly"
-        case .quarterly:         return "Every 3 months"
-        case .yearly:            return "Yearly"
-        case .everyNDays(let n): return "Every \(n) day\(n == 1 ? "" : "s")"
+        case .weekly:            return String(localized: "Weekly")
+        case .biweekly:          return String(localized: "Every 2 weeks")
+        case .monthly:           return String(localized: "Monthly")
+        case .quarterly:         return String(localized: "Every 3 months")
+        case .yearly:            return String(localized: "Yearly")
+        case .everyNDays(let n): return String(localized: "Every \(n) days")
         }
     }
 

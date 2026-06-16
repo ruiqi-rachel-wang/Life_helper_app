@@ -136,7 +136,7 @@ private struct GuideCard: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(guide.title).font(.cardTitle).foregroundStyle(Color.ink).lineLimit(1)
                 Text(guide.subtitle).font(.subline).foregroundStyle(Color.faded).lineLimit(1)
-                Text(guide.category.rawValue.uppercased())
+                Text(guide.category.displayName.uppercased())
                     .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint).padding(.top, 4)
             }
             Spacer()
@@ -178,7 +178,7 @@ struct GuideQuestionsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(guide.category.rawValue.uppercased())
+                        Text(guide.category.displayName.uppercased())
                             .font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                         Text(guide.title).font(.serifModal).foregroundStyle(Color.ink)
                         Text("A few quick questions so Notie can tailor the checklist.")

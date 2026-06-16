@@ -139,7 +139,7 @@ struct DetailView: View {
     }
 
     private var tagText: String {
-        let type = item.documentType.isEmpty ? item.category.rawValue.capitalized : item.documentType
+        let type = item.documentType.isEmpty ? item.category.displayName : item.documentType
         let sender = item.sender.isEmpty ? nil : item.sender
         return [type, sender].compactMap { $0 }.joined(separator: " · ").uppercased()
     }

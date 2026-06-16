@@ -17,6 +17,21 @@ import SwiftData
 // Semantic category. Drives the icon/color in the view, not vice-versa.
 nonisolated enum ItemCategory: String, Codable, CaseIterable {
     case utility, government, medical, finance, auto, housing, work, personal, other
+
+    // Localized name shown in the tag (follows the device language via the catalog).
+    var displayName: String {
+        switch self {
+        case .utility:    return String(localized: "Utility")
+        case .government: return String(localized: "Government")
+        case .medical:    return String(localized: "Medical")
+        case .finance:    return String(localized: "Finance")
+        case .auto:       return String(localized: "Auto")
+        case .housing:    return String(localized: "Housing")
+        case .work:       return String(localized: "Work")
+        case .personal:   return String(localized: "Personal")
+        case .other:      return String(localized: "Other")
+        }
+    }
 }
 
 // Where an item came from — drives the source tag (Scanned / guide / Custom).
