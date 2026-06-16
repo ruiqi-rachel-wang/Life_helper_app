@@ -1,7 +1,7 @@
 //  RootTabView.swift
 //
 //  The tab-bar shell shown when the app launches. Holds the 4 main
-//  destinations (Inbox, Guides, Add, Settings); tapping a tab swaps
+//  destinations (Inbox, Guides, Add, Profile); tapping a tab swaps
 //  which screen is shown above the bar.
 //
 //  Tab selection is driven by a shared AppRouter so screens can jump
@@ -30,9 +30,9 @@ struct RootTabView: View {
                 .tabItem { Label("Add", systemImage: "plus.circle.fill") }
                 .tag(AppRouter.Tab.add)
 
-            SettingsView()
-                .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(AppRouter.Tab.settings)
+            ProfileView()
+                .tabItem { Label("Profile", systemImage: "person.crop.circle") }
+                .tag(AppRouter.Tab.profile)
         }
         .tint(Color.ink)
         .environment(router)

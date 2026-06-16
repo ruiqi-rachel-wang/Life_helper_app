@@ -27,6 +27,7 @@ struct ReviewView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
+    @AppStorage("keepOriginalScans") private var keepOriginalScans = true
 
     @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
@@ -462,7 +463,7 @@ struct ReviewView: View {
         draft.steps = steps
         draft.detailedSteps = detailed   // empty for scans → mapSteps uses steps
         draft.notes = draft.notes.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        let item = ActionItem(from: draft, imageData: image?.jpegData(compressionQuality: 0.7), source: source)
+        let item = ActionItem(from: draft, imageData: scanImageData, source: source)
         item.reminderLeadHours = leadHours
         context.insert(item)
         ReminderScheduler.shared.reschedule(for: item)
@@ -545,8 +546,14 @@ struct ReviewView: View {
             }
     }
 
+    // The scanned photo to store on the item — nil when the user turned off
+    // "Keep original scans" in Profile (saves storage / keeps it off-device).
+    private var scanImageData: Data? {
+        keepOriginalScans ? image?.jpegData(compressionQuality: 0.7) : nil
+    }
+
     private func addSelected() {
-        let img = image?.jpegData(compressionQuality: 0.7)
+        let img = scanImageData
         for i in items.indices where selected.contains(i) {
             let item = ActionItem(from: items[i], imageData: img, source: source)
             context.insert(item)

@@ -25,6 +25,7 @@ private struct ScanRoute: Identifiable, Hashable {
 }
 
 struct CreateView: View {
+    @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var cameraImage: UIImage?
@@ -69,11 +70,15 @@ struct CreateView: View {
             // After capture/pick, push the combined Review screen. The scan
             // `load` is OCR → AI extraction; Review handles the rest.
             .navigationDestination(item: $scanRoute) { route in
+                // Resolve the user's language once, here, so the async load
+                // closure captures a plain value (per the Profile picker).
+                let language = ExplainLanguage.resolve(stored: explainLanguageRaw)
                 ReviewView(
                     load: {
                         let ocr = await VisionOCR.recognizeText(in: route.image)
                         guard !ocr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
-                        return try await ExtractionService(extractor: OpenAIClient()).extract(from: ocr)
+                        return try await ExtractionService(extractor: OpenAIClient())
+                            .extract(from: ocr, language: language)
                     },
                     image: route.image,
                     source: .scanned,

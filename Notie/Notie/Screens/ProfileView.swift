@@ -1,0 +1,233 @@
+//  ProfileView.swift
+//
+//  The 4th tab (was "Settings"). A guest profile for now — no accounts yet —
+//  but this is where account / family sharing / paid-plan features will land,
+//  so they're scaffolded as "coming soon" rows.
+//
+//  The one piece that affects product behavior today is the LANGUAGE picker:
+//  it stores the user's choice and is threaded into the scan + guide AI calls
+//  (CreateView / GuidesView). It defaults to the device language but can be
+//  overridden — the ESL user may have an English phone yet prefer 中文. Only the
+//  AI's prose respects this; the app's own UI chrome stays English in Phase 1.
+//
+
+import SwiftUI
+import UserNotifications
+
+struct ProfileView: View {
+    @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
+    // Whether the photo of a scanned document is kept on the saved item. Default
+    // on; turning it off saves storage and keeps the image off the device.
+    @AppStorage("keepOriginalScans") private var keepOriginalScans = true
+    @State private var notifyStatus = "Checking…"
+
+    private var language: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.paper.ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    header
+                    profileCard
+                    languageCard       // top — the one wired control
+                    accountCard        // coming-soon scaffolding
+                    settingsCard
+                    #if DEBUG
+                    debugCard
+                    #endif
+                    Spacer(minLength: 40)
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 60)
+            }
+        }
+        .task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            switch settings.authorizationStatus {
+            case .authorized:    notifyStatus = "On — reminders will be delivered."
+            case .denied:        notifyStatus = "Off — enable in iOS Settings to get reminders."
+            case .notDetermined: notifyStatus = "Not yet asked."
+            case .provisional:   notifyStatus = "Quiet delivery."
+            case .ephemeral:     notifyStatus = "Temporary."
+            @unknown default:    notifyStatus = "Unknown."
+            }
+        }
+    }
+
+    // MARK: header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("ACCOUNT").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
+            Text("Profile").font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 2)
+    }
+
+    // MARK: guest profile header
+
+    private var profileCard: some View {
+        card {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle().fill(Color.bg)
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 22)).foregroundStyle(Color.faded)
+                }
+                .frame(width: 52, height: 52)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Guest").font(.cardTitle).foregroundStyle(Color.ink)
+                    Text("Saved on this device only").font(.subline).foregroundStyle(Color.faded)
+                }
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: language (the wired control)
+
+    private var languageCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("EXPLAIN DOCUMENTS IN").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                    .padding(.bottom, 10)
+
+                ForEach(Array(ExplainLanguage.allCases.enumerated()), id: \.element) { index, lang in
+                    if index != 0 { Rectangle().fill(Color.hairD).frame(height: 1) }
+                    Button { explainLanguageRaw = lang.rawValue } label: {
+                        HStack {
+                            Text(lang.displayName).font(.body14).foregroundStyle(Color.ink)
+                            Spacer()
+                            if lang == language {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.accent)
+                            }
+                        }
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Text("Defaults to your phone's language. Applies to new scans and guides — the app's own labels stay in English for now.")
+                    .font(.subline).foregroundStyle(Color.faint)
+                    .padding(.top, 10)
+            }
+        }
+    }
+
+    // MARK: account — coming soon
+
+    private var accountCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("ACCOUNT").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                    .padding(.bottom, 4)
+                comingSoonRow("Sign in", "person.badge.key", first: true)
+                comingSoonRow("Family sharing", "person.2")
+                comingSoonRow("Notie Plus", "sparkles")
+            }
+        }
+    }
+
+    private func comingSoonRow(_ title: String, _ symbol: String, first: Bool = false) -> some View {
+        VStack(spacing: 0) {
+            if !first { Rectangle().fill(Color.hairD).frame(height: 1) }
+            HStack(spacing: 12) {
+                Image(systemName: symbol)
+                    .font(.system(size: 15)).foregroundStyle(Color.faint)
+                    .frame(width: 22)
+                Text(title).font(.body14).foregroundStyle(Color.faded)
+                Spacer()
+                Text("SOON")
+                    .font(.eyebrow).tracking(0.8).foregroundStyle(Color.faded)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.bg))
+            }
+            .padding(.vertical, 12)
+        }
+    }
+
+    // MARK: settings
+
+    private var settingsCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("SETTINGS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                    .padding(.bottom, 10)
+
+                Toggle(isOn: $keepOriginalScans) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Keep original scans").font(.body14).foregroundStyle(Color.ink)
+                        Text("Save the photo on the item").font(.subline).foregroundStyle(Color.faded)
+                    }
+                }
+                .tint(Color.ink)
+
+                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("NOTIFICATIONS").font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
+                    Text(notifyStatus).font(.subline).foregroundStyle(Color.ink)
+                }
+
+                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
+
+                HStack {
+                    Text("Version").font(.body14).foregroundStyle(Color.faded)
+                    Spacer()
+                    Text("\(appVersion) (\(appBuild))").font(.subline).foregroundStyle(Color.ink)
+                }
+            }
+        }
+    }
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+    private var appBuild: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+    }
+
+    #if DEBUG
+    // Kept separate from real settings so it never looks shippable.
+    private var debugCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("DEBUG").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faint)
+            Button {
+                ReminderScheduler.shared.fireTestReminder()
+            } label: {
+                Text("Send a test reminder (5s)")
+                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.paper)
+                    .frame(maxWidth: .infinity).padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+            }
+            .buttonStyle(.plain)
+            Text("Lock the app to see the banner.")
+                .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faint)
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 8)
+    }
+    #endif
+
+    // MARK: shared card shell (mirrors Detail/Review)
+
+    private func card<C: View>(@ViewBuilder _ inner: () -> C) -> some View {
+        inner()
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.card)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
+}
+
+#Preview {
+    ProfileView()
+}

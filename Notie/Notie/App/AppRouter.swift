@@ -9,7 +9,7 @@ import SwiftUI
 
 @Observable
 final class AppRouter {
-    enum Tab: Hashable { case inbox, guides, add, settings }
+    enum Tab: Hashable { case inbox, guides, add, profile }
     var selectedTab: Tab = .inbox
 
     // Set when a notification is tapped — the Inbox opens this item's Detail.

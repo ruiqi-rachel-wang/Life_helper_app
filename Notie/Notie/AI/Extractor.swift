@@ -13,12 +13,15 @@
 
 import Foundation
 
-// Which language the AI writes its explanation/steps in. Defaults to English
-// in Week 5 (Settings is still a stub); the real Settings picker that drives
-// this — and defaults to device language — lands in Week 8. UI chrome stays
-// English; only the AI's prose respects this.
+// Which language the AI writes its explanation/steps in. Driven by the Profile
+// tab's language picker (Week 8), stored in @AppStorage(storageKey). Defaults to
+// the device language but is overridable. UI chrome stays English; only the AI's
+// prose (summary + steps) respects this.
 nonisolated enum ExplainLanguage: String, Codable, CaseIterable {
     case english, chinese, spanish
+
+    // @AppStorage key for the user's saved choice (empty = follow the device).
+    static let storageKey = "explainLanguage"
 
     // How we name the language TO the model in the prompt.
     var promptName: String {
@@ -27,6 +30,31 @@ nonisolated enum ExplainLanguage: String, Codable, CaseIterable {
         case .chinese: return "Simplified Chinese"
         case .spanish: return "Spanish"
         }
+    }
+
+    // The label shown in the picker — each language in its own script.
+    var displayName: String {
+        switch self {
+        case .english: return "English"
+        case .chinese: return "中文"
+        case .spanish: return "Español"
+        }
+    }
+
+    // Map the device locale onto one of our three supported languages. This is
+    // the default until the user picks explicitly.
+    static var deviceDefault: ExplainLanguage {
+        switch Locale.current.language.languageCode?.identifier {
+        case "zh": return .chinese
+        case "es": return .spanish
+        default:   return .english
+        }
+    }
+
+    // Resolve the stored preference: an empty or unrecognized raw value means
+    // "follow the device"; anything else is the user's explicit override.
+    static func resolve(stored: String) -> ExplainLanguage {
+        ExplainLanguage(rawValue: stored) ?? .deviceDefault
     }
 }
 

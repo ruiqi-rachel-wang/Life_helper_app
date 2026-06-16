@@ -24,7 +24,7 @@
 | 5 Rule parser + OpenAI extraction | ✓ complete (2026-06-06) |
 | 6 Review spine (scan → AI → edit → Add) | ✓ complete (2026-06-10) — **the shippable moment** |
 | 7 Adaptive guides | ✓ complete (2026-06-15) — 11 guides, Step Detail, saved fields, glossary |
-| 8 Recurring + release polish | ⏳ in progress — recurring tasks ✓ (2026-06-15); archive/reopen, Profile tab, polish, metrics next |
+| 8 Recurring + release polish | ⏳ in progress — recurring ✓, done-archive/reopen ✓, Profile tab + language wiring ✓ (2026-06-15); polish states, metrics, guide follow-ups next |
 | 9 TestFlight launch | pending |
 
 **Working end-to-end today:** scan/upload → on-device OCR (`VisionOCR`) → AI
@@ -421,17 +421,24 @@ before handing the app to testers.
      in the banner when set, else falls back to the auto body ("Due in 3 days").
      Defaults carry no note. SwiftData round-trip verified. (Guides default to NO
      reminders — no due date — which is correct.)
-3. **Profile tab (replaces Settings) — decided 2026-06-13**
-   - Rename the 4th tab Settings → **Profile** (person icon). No accounts yet, but
-     Profile is where future **account / family sharing / paid plan** features
-     land — scaffold those as "coming soon" rows now so the structure is ready.
-   - Layout: profile header (guest for now) · **Language** picker on top · then
-     **Settings** nested below (keep-original-scans toggle, version/build row,
-     DEBUG-only test reminder kept separate from release settings).
-   - **Language must be WIRED, not just shown:** store the choice (e.g.
-     `@AppStorage`), thread it into the scan + guide extraction calls (today they
-     default to English), default to device language but overridable (per the
-     Phase-1 decision). UI chrome stays English.
+3. **Profile tab (replaces Settings)** — ✓ DONE (2026-06-15)
+   - Tab renamed Settings → **Profile** (person icon); `AppRouter.Tab.settings`
+     → `.profile`; `SettingsView` → `ProfileView`.
+   - Layout: Guest profile header · **Language** picker on top · coming-soon
+     **Account** rows (Sign in / Family sharing / Notie Plus, "SOON" chips) ·
+     **Settings** (keep-original-scans toggle, notifications status, version/build)
+     · DEBUG test reminder kept in its own labeled block.
+   - **Language is WIRED:** `@AppStorage(ExplainLanguage.storageKey)`, resolved via
+     `ExplainLanguage.resolve(stored:)` (empty/unknown → `deviceDefault` from the
+     locale, else the user's override). Threaded into the **scan** call
+     (`CreateView` → `ExtractionService.extract(language:)`) and the **guide**
+     call (`GuidesView` → `OpenAIClient.polish(language:)`). Picker shows each
+     language in its own script (English / 中文 / Español). UI chrome stays English.
+     Unit-tested; Profile screen visually verified in the simulator.
+     *Known limit:* sensitive guides skip the polish pass, so they stay English
+     even when another language is picked (they never reach the translating AI).
+   - **keep-original-scans toggle is real:** `@AppStorage("keepOriginalScans")`
+     (default on); when off, `ReviewView` saves the item without the photo.
 4. **Polish states**
    - Empty states: no inbox, no done items, no guides result yet.
    - Error states: OCR failed, garbled OCR, LLM down, no network, permission

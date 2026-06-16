@@ -363,3 +363,28 @@ struct ActionItemTests {
         #expect(next?.sender == "Con Edison")
     }
 }
+
+// MARK: - Language preference (Week 8 — Profile picker)
+
+struct ExplainLanguageTests {
+
+    @Test func resolveUsesStoredOverride() {
+        #expect(ExplainLanguage.resolve(stored: "chinese") == .chinese)
+        #expect(ExplainLanguage.resolve(stored: "spanish") == .spanish)
+        #expect(ExplainLanguage.resolve(stored: "english") == .english)
+    }
+
+    @Test func resolveFallsBackToDeviceWhenEmptyOrUnknown() {
+        // Empty (never chosen) or a stale/garbage value → follow the device.
+        #expect(ExplainLanguage.resolve(stored: "") == .deviceDefault)
+        #expect(ExplainLanguage.resolve(stored: "klingon") == .deviceDefault)
+    }
+
+    @Test func promptAndDisplayNamesAreDistinct() {
+        // The model is told a clear English language name…
+        #expect(ExplainLanguage.chinese.promptName == "Simplified Chinese")
+        // …while the picker shows the language in its own script.
+        #expect(ExplainLanguage.chinese.displayName == "中文")
+        #expect(ExplainLanguage.spanish.displayName == "Español")
+    }
+}

@@ -17,6 +17,7 @@ nonisolated enum GuideRoute: Hashable {
 }
 
 struct GuidesView: View {
+    @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var selectedCategory: ItemCategory?   // nil = All
     @State private var path: [GuideRoute] = []
 
@@ -60,16 +61,19 @@ struct GuidesView: View {
                     }
                 case .review(let id, let answers):
                     if let g = Guide.all.first(where: { $0.id == id }) {
+                        let language = ExplainLanguage.resolve(stored: explainLanguageRaw)
                         ReviewView(
                             load: {
                                 var base = g.build(answers)
                                 base.confidence = 1   // deterministic checklist — always certain
                                 // Sensitive topics (immigration, money, medical, legal) stay on the
-                                // device — we never send them to the AI polish pass (quietly).
+                                // device — we never send them to the AI polish pass (quietly). Note:
+                                // these stay in English even when another language is picked, since
+                                // they never reach the (translating) polish pass.
                                 guard g.risk == .general else { return [base] }
                                 let context = "\(g.title). "
                                     + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
-                                return [await OpenAIClient().polish(base, context: context)]
+                                return [await OpenAIClient().polish(base, context: context, language: language)]
                             },
                             source: .guide,
                             loadingLabel: "Personalizing your checklist…",
