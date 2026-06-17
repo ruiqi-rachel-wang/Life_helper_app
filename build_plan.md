@@ -526,7 +526,7 @@ before handing the app to testers.
    - Bilingual term toggle (separate future note) ties in here.
 
 **Done when:** recurring items regenerate correctly, done items can be reopened
-or deleted, core empty/error states are visible, Settings has the launch controls,
+or deleted, core empty/error states are visible, Profile has the launch controls,
 and a release-style build has no obvious debug scaffolding in the main flow.
 
 ### Week 9: TestFlight launch

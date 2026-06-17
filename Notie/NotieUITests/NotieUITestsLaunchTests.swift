@@ -20,6 +20,7 @@ final class NotieUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["-uitest"]   // skip the notification prompt so it can't block automation
         app.launch()
 
         // Insert steps here to perform after app launch but before taking a screenshot,

@@ -109,7 +109,9 @@ struct GuidesView: View {
 
     private func chip(_ label: String, selected: Bool, _ tap: @escaping () -> Void) -> some View {
         Button(action: tap) {
-            Text(label).font(.eyebrow).tracking(0.4)
+            // Labels are app strings ("All" + capitalized category names that match
+            // catalog keys), so localize via LocalizedStringKey.
+            Text(LocalizedStringKey(label)).font(.eyebrow).tracking(0.4)
                 .foregroundStyle(selected ? Color.paper : Color.faded)
                 .padding(.horizontal, 11).padding(.vertical, 6)
                 .background(Capsule().fill(selected ? Color.ink : Color.clear))

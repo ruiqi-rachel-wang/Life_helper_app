@@ -74,7 +74,9 @@ final class NotieUITests: XCTestCase {
     @MainActor
     func testLaunchPerformance() throws {
         measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+            let app = XCUIApplication()
+            app.launchArguments = ["-uitest"]
+            app.launch()
         }
     }
 }

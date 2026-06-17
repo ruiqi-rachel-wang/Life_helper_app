@@ -8,7 +8,8 @@
 //  it stores the user's choice and is threaded into the scan + guide AI calls
 //  (CreateView / GuidesView). It defaults to the device language but can be
 //  overridden — the ESL user may have an English phone yet prefer 中文. Only the
-//  AI's prose respects this; the app's own UI chrome stays English in Phase 1.
+//  AI's prose respects this picker; the app's own UI chrome follows the iPhone's
+//  language separately (String Catalog), independent of this setting.
 //
 
 import SwiftUI
@@ -16,7 +17,7 @@ import UserNotifications
 
 struct ProfileView: View {
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
-    @State private var notifyStatus = "Checking…"
+    @State private var notifyStatus = String(localized: "Checking…")
     #if DEBUG
     @State private var metrics = MetricsSummary()
     #endif
@@ -46,12 +47,12 @@ struct ProfileView: View {
         .task {
             let settings = await UNUserNotificationCenter.current().notificationSettings()
             switch settings.authorizationStatus {
-            case .authorized:    notifyStatus = "On — reminders will be delivered."
-            case .denied:        notifyStatus = "Off — enable in iOS Settings to get reminders."
-            case .notDetermined: notifyStatus = "Not yet asked."
-            case .provisional:   notifyStatus = "Quiet delivery."
-            case .ephemeral:     notifyStatus = "Temporary."
-            @unknown default:    notifyStatus = "Unknown."
+            case .authorized:    notifyStatus = String(localized: "On — reminders will be delivered.")
+            case .denied:        notifyStatus = String(localized: "Off — enable in iOS Settings to get reminders.")
+            case .notDetermined: notifyStatus = String(localized: "Not yet asked.")
+            case .provisional:   notifyStatus = String(localized: "Quiet delivery.")
+            case .ephemeral:     notifyStatus = String(localized: "Temporary.")
+            @unknown default:    notifyStatus = String(localized: "Unknown.")
             }
         }
     }
@@ -114,7 +115,7 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("Defaults to your phone's language. Applies to new scans and most guides. A few sensitive guides (money, immigration, medical) stay in English and on your device. The app's own labels stay in English for now.")
+                Text("This sets the language Notie uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device.")
                     .font(.subline).foregroundStyle(Color.faint)
                     .padding(.top, 10)
             }

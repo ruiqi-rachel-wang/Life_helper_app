@@ -280,7 +280,7 @@ private struct CreateForm: View {
             Spacer()
             Menu {
                 ForEach(ItemCategory.allCases, id: \.self) { c in
-                    Button { category = c } label: { Label(c.rawValue.capitalized, systemImage: c.symbol) }
+                    Button { category = c } label: { Label(c.displayName, systemImage: c.symbol) }
                 }
             } label: {
                 HStack(spacing: 5) {

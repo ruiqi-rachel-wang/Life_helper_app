@@ -1,6 +1,61 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "All" : {
+      "comment" : "Guides category filter: show all",
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Todas" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "全部" } }
+      }
+    },
+    "Checking…" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Comprobando…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "检查中…" } }
+      }
+    },
+    "On — reminders will be delivered." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Activado — se enviarán recordatorios." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已开启 — 将发送提醒。" } }
+      }
+    },
+    "Off — enable in iOS Settings to get reminders." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Desactivado — actívalo en Ajustes de iOS para recibir recordatorios." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已关闭 — 请在 iOS 设置中开启以接收提醒。" } }
+      }
+    },
+    "Not yet asked." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún sin solicitar." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "尚未询问。" } }
+      }
+    },
+    "Quiet delivery." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Entrega silenciosa." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "静默推送。" } }
+      }
+    },
+    "Temporary." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Temporal." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "临时。" } }
+      }
+    },
+    "Unknown." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Desconocido." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知。" } }
+      }
+    },
+    "This sets the language Notie uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Esto define el idioma con que Notie explica tus documentos (por defecto, el de tu teléfono). La app en sí sigue el idioma de tu teléfono. Algunas guías sensibles —dinero, inmigración, médico— se quedan en inglés y en tu dispositivo." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "这里设置 Notie 解释你文件时使用的语言（默认与手机语言一致）。应用本身会跟随手机语言。少数敏感指南（财务、移民、医疗）会保留英文并仅存于你的设备。" } }
+      }
+    },
     "⚠ %lld DAYS OVERDUE" : {
       "localizations" : {
         "en" : { "variations" : { "plural" : {

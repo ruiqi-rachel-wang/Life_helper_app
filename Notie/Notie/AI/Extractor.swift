@@ -15,8 +15,9 @@ import Foundation
 
 // Which language the AI writes its explanation/steps in. Driven by the Profile
 // tab's language picker (Week 8), stored in @AppStorage(storageKey). Defaults to
-// the device language but is overridable. UI chrome stays English; only the AI's
-// prose (summary + steps) respects this.
+// the device language but is overridable. This controls only the AI's prose
+// (summary + steps); the app's UI chrome is localized separately via the device
+// language (String Catalog).
 nonisolated enum ExplainLanguage: String, Codable, CaseIterable {
     case english, chinese, spanish
 
