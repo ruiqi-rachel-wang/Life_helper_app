@@ -582,6 +582,53 @@ binary, and the first tester feedback loop is running.
 
 ---
 
+## Legal, privacy & business — before money or public launch
+
+> **Not legal/tax advice** — talk to a lawyer/accountant, especially for the
+> liability disclaimers (this app touches tax / immigration / insurance / medical /
+> legal matters). Added 2026-06-16 at Rachel's request.
+
+**You cannot charge during TestFlight** (beta is free), so none of this blocks the
+first 10-user beta. It matters before a **paid** or **public** App Store launch.
+
+### Required even for a FREE public/TestFlight release (we process personal data)
+- **Privacy Policy** (App Store requires a public URL). Must disclose: on-device OCR;
+  that document **text is sent to OpenAI** via the Cloudflare Worker for extraction;
+  what's stored (local only, no account); plus CCPA (California) / GDPR (EU) basics if
+  you have those users.
+- **App privacy "nutrition label"** in App Store Connect — declare data use (OpenAI
+  processing; any analytics like TelemetryDeck). Must be accurate.
+- **Liability disclaimers — the BIGGEST risk for Notie.** The app guides people on
+  taxes, immigration, insurance, medical bills, official notices. Add clear in-app +
+  Terms disclaimers: *"informational only — not legal/tax/immigration/financial/medical
+  advice; verify with official sources or a professional."* Wrong immigration advice can
+  genuinely harm a vulnerable user and expose you to liability. The sensitive-guide
+  on-device design helps, but disclaimers are still needed.
+- **AI-accuracy disclaimer** — "AI can make mistakes; double-check important details."
+
+### Before charging money (subscription / paid)
+- **Business entity** — an **LLC** separates personal liability (recommended given the
+  domain); ~$50–500/yr by state. Sole prop is simpler but gives no liability shield.
+- **Apple Paid Apps Agreement** in App Store Connect: accept it + add **banking & tax
+  info** (W-9 for US) to receive payouts.
+- **Use Apple In-App Purchase / subscriptions** for digital features — Apple takes 15%
+  (Small Business Program, under $1M/yr) to 30%. You may **not** use outside payment for
+  digital goods.
+- **Terms of Service / EULA** (Apple ships a standard EULA; a custom one is better here).
+- **Income tax** — app revenue is taxable; track OpenAI / Cloudflare / Apple fees as
+  business expenses.
+
+### Worth doing
+- **Trademark check** on "Notie" (USPTO) before investing in the name; consider registering.
+- **Security**: OpenAI key off-device (Week 9 Worker), per-IP rate-limit, never log PII.
+- **E&O / liability insurance** once there's real usage/revenue.
+- **COPPA** — not aimed at under-13s; keep it that way (no child accounts).
+
+**Practical order:** privacy policy + disclaimers → ship the free TestFlight/App Store →
+validate the one metric → **then** form the LLC + paid-apps setup when ready to charge.
+
+---
+
 ## After Week 9
 
 Run for 4 weeks. Watch the one metric:
