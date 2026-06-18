@@ -59,10 +59,18 @@ struct ActionItemTests {
         #expect(schedule.map(\.label) == ["3 days before", "1 day before", "Due day"])
     }
 
-    @Test func overdueItemAddsFollowUp() {
-        let schedule = ActionItem(title: "x", category: .other, dueDate: day(-2)).reminderSchedule()
-        #expect(schedule.count == 4)
-        #expect(schedule.last?.label == "Overdue follow-up")
+    @Test func overdueItemGetsDailyNudges() {
+        let item = ActionItem(title: "x", category: .other, dueDate: day(-2))
+        // The editable schedule is pre-due only now (no single follow-up).
+        #expect(!item.reminderSchedule().contains { $0.label == "Overdue follow-up" })
+        // Overdue → daily 9am nudges (capped at 14), each on a distinct day.
+        let nudges = item.overdueNudgeDates()
+        #expect(nudges.count == 14)
+        #expect(Set(nudges).count == 14)
+        #expect(nudges.allSatisfy { Calendar.current.component(.hour, from: $0) == 9 })
+        // Not overdue / done → none.
+        #expect(ActionItem(title: "x", category: .other, dueDate: day(5)).overdueNudgeDates().isEmpty)
+        #expect(ActionItem(title: "x", category: .other, dueDate: day(-2), status: .done).overdueNudgeDates().isEmpty)
     }
 
     @Test func reminderDatesAreOffsetFromDueDate() {
@@ -474,5 +482,37 @@ struct MetricsTests {
         let item = ActionItem(title: "x", category: .other, dueDate: .now.addingTimeInterval(3600))
         item.dueHasTime = true
         #expect(item.doneOnTime() == true)
+    }
+}
+
+// MARK: - Scan rate limit (10/day, 50/month)
+
+struct ScanQuotaTests {
+    private func freshDefaults() -> UserDefaults {
+        UserDefaults(suiteName: "test.\(UUID().uuidString)")!
+    }
+
+    @Test func blocksAtDailyLimitThenResetsNextDay() {
+        let d = freshDefaults()
+        let today = Date()
+        #expect(ScanQuota.canScan(now: today, d))
+        for _ in 0..<ScanQuota.perDay { ScanQuota.record(now: today, d) }
+        #expect(!ScanQuota.canScan(now: today, d))
+        #expect(ScanQuota.blockedReason(now: today, d) != nil)
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        #expect(ScanQuota.canScan(now: tomorrow, d))   // daily counter rolled over
+    }
+
+    @Test func blocksAtMonthlyLimitAcrossDays() {
+        let d = freshDefaults()
+        let cal = Calendar.current
+        var day = cal.date(from: DateComponents(year: 2026, month: 3, day: 1))!
+        // 5 scans/day for 10 days = 50 — under the daily cap each day, hits monthly.
+        for _ in 0..<10 {
+            for _ in 0..<5 { ScanQuota.record(now: day, d) }
+            day = cal.date(byAdding: .day, value: 1, to: day)!
+        }
+        #expect(ScanQuota.usedThisMonth(now: day, d) == ScanQuota.perMonth)
+        #expect(!ScanQuota.canScan(now: day, d))   // monthly cap blocks even on a fresh day
     }
 }

@@ -1,7 +1,23 @@
 # Notie iOS — Build Plan & Architecture
 
 > Canonical build reference. Living doc — update as decisions change.
-> Companion docs: the Phase 1 Spec (HTML render) and design prototype.
+> Companion docs: the Phase 1 Spec (HTML render), design prototype, and
+> **`future_features.md`** (deferred / post-TestFlight features — accounts &
+> family sharing, configurable reminder time, multi-page scan, onboarding, …).
+
+**Changed 2026-06-16:**
+- **AI model → `gpt-4o`** (was `gpt-4o-mini`): users need real reasoning — explain
+  *why* they got a notice, find the root cause, give conditional next steps — not
+  just field extraction. ~$0.003–0.006/scan, affordable because scans are now
+  rate-limited.
+- **Scan rate limit** (`ScanQuota`): 10/day, 50/month per device (local; a real
+  per-user limit comes with the Worker). Gated in the Add flow.
+- **Overdue → daily nudges**: an overdue item now reminds every morning (9am) until
+  done (`overdueNudgeDates`, scheduled separately from the editable list), instead
+  of a single follow-up.
+- **Extraction prompt reworked** for: lead-with-the-reason summaries, *actionable*
+  IDs (ticket/summons # over VIN/plate), specific action links *in the step*, and
+  root-cause + conditional steps (fix the cause AND handle the notice).
 
 ---
 

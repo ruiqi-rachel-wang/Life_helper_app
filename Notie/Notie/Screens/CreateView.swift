@@ -31,9 +31,17 @@ struct CreateView: View {
     @State private var cameraImage: UIImage?
     @State private var photoItem: PhotosPickerItem?
     @State private var scanRoute: ScanRoute?
+    @State private var quotaMessage: String?
 
     private var cameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
+
+    // Gate a scan on the rate limit; shows the limit message and returns false
+    // when the user is out of scans for the day/month.
+    private func allowScan() -> Bool {
+        if let reason = ScanQuota.blockedReason() { quotaMessage = reason; return false }
+        return true
     }
 
     var body: some View {
@@ -77,6 +85,7 @@ struct CreateView: View {
                     load: {
                         let ocr = await VisionOCR.recognizeText(in: route.image)
                         guard !ocr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
+                        ScanQuota.record()   // count only real AI extractions
                         return try await ExtractionService(extractor: OpenAIClient())
                             .extract(from: ocr, language: language)
                     },
@@ -86,23 +95,29 @@ struct CreateView: View {
             }
         }
         .onChange(of: cameraImage) { _, new in
-            if let new { scanRoute = ScanRoute(image: new); cameraImage = nil }
+            if let new, allowScan() { scanRoute = ScanRoute(image: new) }
+            cameraImage = nil
         }
         .onChange(of: photoItem) { _, item in
             Task {
                 if let data = try? await item?.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
+                   let image = UIImage(data: data), allowScan() {
                     scanRoute = ScanRoute(image: image)
                 }
                 photoItem = nil
             }
         }
+        .alert("Scan limit reached", isPresented: Binding(
+            get: { quotaMessage != nil }, set: { if !$0 { quotaMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(quotaMessage ?? "") }
     }
 
     // Big primary action: Scan a document → camera → OCR. With no camera
     // (Simulator), fall back to the photo picker so it still works.
     private var heroTile: some View {
         Button {
+            guard allowScan() else { return }
             if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
         } label: {
             HStack(alignment: .center, spacing: 14) {

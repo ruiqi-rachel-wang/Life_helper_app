@@ -50,8 +50,11 @@ final class ReminderScheduler {
     // count is always fully removed without an async fetch.
     private static let maxReminders = 32
 
+    private static let maxOverdueNudges = 14
+
     private func ids(for itemID: UUID) -> [String] {
         var ids = (0..<Self.maxReminders).map { "\(itemID.uuidString)|r\($0)" }
+        ids += (0..<Self.maxOverdueNudges).map { "\(itemID.uuidString)|od\($0)" }
         ids.append("\(itemID.uuidString)|snooze")
         return ids
     }
@@ -80,6 +83,21 @@ final class ReminderScheduler {
             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
             let id = "\(item.id.uuidString)|r\(index)"
             center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+        }
+
+        // Daily "every morning until it's done" nudges while overdue (on top of
+        // the planned reminders above; not part of the editable list).
+        for (index, fire) in item.overdueNudgeDates(now: now).enumerated() {
+            let content = UNMutableNotificationContent()
+            content.title = item.title
+            content.body = String(localized: "Overdue — still not done")
+            content.sound = .default
+            content.categoryIdentifier = ReminderID.category
+            content.userInfo = [ReminderID.itemKey: item.id.uuidString]
+            let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+            center.add(UNNotificationRequest(
+                identifier: "\(item.id.uuidString)|od\(index)", content: content, trigger: trigger))
         }
     }
 

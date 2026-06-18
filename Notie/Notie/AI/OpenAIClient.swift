@@ -1,8 +1,10 @@
 //  OpenAIClient.swift
 //
-//  The real Extractor: sends the OCR text to GPT-4o-mini and gets back a
-//  structured ExtractionResult. Cheap (~$0.0004/scan) because the task is
-//  plain extraction from clean text, not reasoning.
+//  The real Extractor: sends the OCR text to the model and gets back a
+//  structured ExtractionResult. Uses gpt-4o (not 4o-mini) because users need
+//  real REASONING — explain *why* they got this, find the root cause, and give
+//  conditional next steps — not just field extraction. ~$0.003–0.006/scan;
+//  affordable because scans are rate-limited (see ScanQuota: 10/day, 50/month).
 //
 //  WEEK 5: calls api.openai.com DIRECTLY with the dev key in APIKeys.swift.
 //  Safe because this only runs on the Simulator. Before TestFlight the URL +
@@ -18,7 +20,7 @@ import Foundation
 
 nonisolated struct OpenAIClient: Extractor {
     var apiKey: String = APIKeys.openAI
-    var model: String = "gpt-4o-mini"
+    var model: String = "gpt-4o"
     var endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
     var session: URLSession = .shared
 
@@ -116,23 +118,32 @@ nonisolated struct OpenAIClient: Extractor {
                           an email was SENT is NOT the due date. If the deadline is in words
                           (e.g. "within 90 days of the exam"), compute it and add "dueDate"
                           to lowConfidenceFields.
-          accountNumber : the PRIMARY account / reference / confirmation / violation number, or null
-          otherIDs      : ALL other identifiers the reader may need later, as an array of
-                          {"label","value"} objects (claim #, policy #, eTicket, member #,
-                          customer ID, …). Always capture claim and policy numbers. [] if none.
+          accountNumber : the ONE identifier the reader needs to ACT on this — to pay it,
+                          look it up, or dispute it. For a ticket / violation that is the
+                          ticket / summons / violation / notice number (often printed by a
+                          barcode), NOT the license plate or VIN. For a bill, the account
+                          number. Prefer the actionable id over a passive descriptor. null if none.
+          otherIDs      : other identifiers that genuinely help the reader act or follow up,
+                          as an array of {"label","value"} objects — claim #, case #,
+                          sticker / decal #, confirmation #, policy #, member #. Use a clear
+                          label. SKIP passive descriptors the reader won't act on (VIN,
+                          make/model, plate) UNLESS they're actually needed to pay/dispute.
+                          Always capture claim and policy numbers. [] if none.
           category      : EXACTLY one of these 8 lowercase words and NOTHING else:
                           utility, government, medical, finance, housing, work, personal, other.
                           Travel, flights, appointments, and personal errands are "personal".
                           Never invent a category like "travel" — use one of the 8.
-          summary       : in \(language.promptName). Say WHAT KIND of document this is and
-                          what it's about. Keep it AS SHORT AS POSSIBLE: for a self-
-                          explanatory document, ONE plain sentence with the key facts is
-                          enough — e.g. "This is a flight ticket from New York to Chicago,
-                          flight UA623, departing June 25 at 8:05 AM." Only add more
-                          explanation when there's a term or situation the reader likely
-                          won't understand (e.g. the insurance "storage facility" = the tow
-                          yard / body shop where their car is kept after the accident). Add
-                          understanding, do NOT just reword the text, and don't pad it.
+          summary       : in \(language.promptName). Say what this document is AND — when it
+                          is a penalty, notice, or a response to something — WHY they got it
+                          / what triggered it. Lead with the cause, not just the type:
+                          e.g. NOT "This is a parking ticket for $65" but "This is a $65
+                          parking ticket because the car's registration sticker had expired
+                          (NYS) — you were fined for driving/parking with an expired
+                          registration." For a self-explanatory document one plain sentence
+                          is enough (e.g. "A flight from New York to Chicago, UA623, departing
+                          June 25 at 8:05 AM"). Add more only for a term/situation the reader
+                          likely won't understand (e.g. insurance "storage facility" = the tow
+                          yard). Add understanding; do NOT just reword the text or pad it.
           steps         : the concrete, ORDERED actions to get this done, in
                           \(language.promptName). Be specific and operational, not vague — no
                           "pay it" / "contact them". When there is an ONLINE option, give it
@@ -140,9 +151,16 @@ nonisolated struct OpenAIClient: Extractor {
                           or check in at the airport counter"), then real next steps (e.g.
                           "arrive ~2 hours early", "go through security", "find your gate").
                           For a bill: "Go to <site> and log in", "open the bill", "pay and
-                          save the confirmation". If a step is a phone call or visit AND
-                          \(language.promptName) is not English, add a sub-step to ask for an
-                          interpreter in \(language.promptName). Use [] if nothing to do.
+                          save the confirmation". Put the SPECIFIC action link in the step
+                          that uses it — the direct pay / dispute / login / booking page (e.g.
+                          "Pay online at nyc.gov/payparkingticket"), NOT a generic homepage and
+                          NOT only in notes. Only include a URL you are confident is the real
+                          official one; otherwise write: search "<agency> pay <thing>". When a
+                          notice is a penalty for an underlying lapse, the steps must also fix
+                          the cause (see ROOT CAUSE below), in the right order. If a step is a
+                          phone call or visit AND \(language.promptName) is not English, add a
+                          sub-step to ask for an interpreter in \(language.promptName). Use []
+                          if nothing to do.
           notes         : short helpful side-info that is NOT an action — who to contact and
                           how, useful context, caveats, deadlines context. Phone numbers and
                           URLs welcome here. [] if none.
@@ -158,6 +176,17 @@ nonisolated struct OpenAIClient: Extractor {
         any phone number shown) to ask for a one-time waiver or refund of the fee. \
         For a statement with a minimum payment, add a note that paying only the \
         minimum (and the minimum amount) accrues interest at the stated APR.
+
+        ROOT CAUSE — when a notice is a PENALTY for an underlying lapse (a ticket for \
+        an expired registration sticker or inspection, a fine for a missed filing, a \
+        suspension for an unpaid bill), the steps must address BOTH the cause AND this \
+        notice, in the right order, with conditional ("if … then …") guidance when it \
+        helps. Example, a parking ticket because the registration sticker expired: \
+        1) "Renew the vehicle registration at the DMV (online if available) and print \
+        the temporary proof/receipt"; 2) "If you have already renewed, dispute this \
+        ticket online and attach the proof of renewal"; 3) "If you have not renewed or \
+        can't prove it, pay the fine before the deadline to avoid extra penalties and a \
+        possible boot or tow." Explain the fork — do not just say "pay it".
 
         For a flight or travel document, steps should include checking in (online \
         AND at the airport counter), arriving ~2 hours early, going through security, \

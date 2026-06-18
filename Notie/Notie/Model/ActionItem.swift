@@ -384,20 +384,30 @@ final class ActionItem {
             out.append(ScheduledReminder(date: d, label: "1 day before"))
         }
         out.append(ScheduledReminder(date: due, label: "Due day"))
-
-        // Overdue follow-up — computed against the passed `now` (not .now), and
-        // placed on the next 9am that's still in the future, so it isn't
-        // silently skipped when an overdue item is created/rescheduled after 9am.
-        let overdue = (status != .done)
-            && ((dueDate.map { $0 < calendar.startOfDay(for: now) }) ?? false)
-        if overdue {
-            let nineToday = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
-            let followUpDay = now < nineToday
-                ? calendar.startOfDay(for: now)                                       // today (9am still ahead)
-                : (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now)  // tomorrow
-            out.append(ScheduledReminder(date: followUpDay, label: "Overdue follow-up"))
-        }
         return out
+        // (Overdue handling is no longer a single follow-up in this editable list —
+        // it's daily nudges, see overdueNudgeDates, scheduled separately.)
+    }
+
+    // Daily 9am reminders while an item is overdue and not done — a behavioral
+    // nudge "every morning until it's done", kept OUT of the editable reminder
+    // list so it doesn't clutter the UI. The scheduler fires these on top of the
+    // planned reminders; capped at 14 days. Empty unless overdue.
+    func overdueNudgeDates(now: Date = .now, calendar: Calendar = .current) -> [Date] {
+        guard status != .done, let due = dueDate,
+              due < calendar.startOfDay(for: now) else { return [] }
+        let nineToday = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
+        let firstDay = now < nineToday
+            ? calendar.startOfDay(for: now)                                              // today (9am still ahead)
+            : (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now)
+        var dates: [Date] = []
+        for offset in 0..<14 {
+            if let day = calendar.date(byAdding: .day, value: offset, to: firstDay),
+               let fire = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day), fire > now {
+                dates.append(fire)
+            }
+        }
+        return dates
     }
 
     // The default reminders (day reminders resolved to 9am; timed reminders at

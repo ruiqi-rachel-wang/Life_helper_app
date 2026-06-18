@@ -1,880 +1,2471 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "All" : {
-      "comment" : "Guides category filter: show all",
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Todas" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "全部" } }
-      }
+    "" : {
+
     },
-    "Checking…" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Comprobando…" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "检查中…" } }
-      }
+    "%@ before" : {
+
     },
-    "On — reminders will be delivered." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Activado — se enviarán recordatorios." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已开启 — 将发送提醒。" } }
-      }
+    "%lld" : {
+
     },
-    "Off — enable in iOS Settings to get reminders." : {
+    "%lld active" : {
       "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Desactivado — actívalo en Ajustes de iOS para recibir recordatorios." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已关闭 — 请在 iOS 设置中开启以接收提醒。" } }
-      }
-    },
-    "Not yet asked." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún sin solicitar." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "尚未询问。" } }
-      }
-    },
-    "Quiet delivery." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Entrega silenciosa." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "静默推送。" } }
-      }
-    },
-    "Temporary." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Temporal." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "临时。" } }
-      }
-    },
-    "Unknown." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Desconocido." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知。" } }
-      }
-    },
-    "This sets the language Notie uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Esto define el idioma con que Notie explica tus documentos (por defecto, el de tu teléfono). La app en sí sigue el idioma de tu teléfono. Algunas guías sensibles —dinero, inmigración, médico— se quedan en inglés y en tu dispositivo." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "这里设置 Notie 解释你文件时使用的语言（默认与手机语言一致）。应用本身会跟随手机语言。少数敏感指南（财务、移民、医疗）会保留英文并仅存于你的设备。" } }
-      }
-    },
-    "⚠ %lld DAYS OVERDUE" : {
-      "localizations" : {
-        "en" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DAY OVERDUE" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DAYS OVERDUE" } }
-        } } },
-        "es" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DÍA DE RETRASO" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "⚠ %lld DÍAS DE RETRASO" } }
-        } } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "⚠ 逾期 %lld 天" } }
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld activas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 项待办"
+          }
+        }
       }
     },
     "%lld days overdue" : {
       "localizations" : {
-        "en" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld day overdue" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld days overdue" } }
-        } } },
-        "es" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld día de retraso" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld días de retraso" } }
-        } } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "逾期 %lld 天" } }
-      }
-    },
-    "Due in %lld days" : {
-      "localizations" : {
-        "en" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "Due in %lld day" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "Due in %lld days" } }
-        } } },
-        "es" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "Vence en %lld día" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "Vence en %lld días" } }
-        } } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 天后到期" } }
-      }
-    },
-    "Due today" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Vence hoy" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "今天到期" } }
-      }
-    },
-    "Due tomorrow" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Vence mañana" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "明天到期" } }
-      }
-    },
-    "in %lld days" : {
-      "localizations" : {
-        "en" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "in %lld day" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "in %lld days" } }
-        } } },
-        "es" : { "variations" : { "plural" : {
-          "one" : { "stringUnit" : { "state" : "translated", "value" : "en %lld día" } },
-          "other" : { "stringUnit" : { "state" : "translated", "value" : "en %lld días" } }
-        } } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 天后" } }
-      }
-    },
-    "Overdue — still not done" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Atrasado — aún sin hacer" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已逾期 — 尚未完成" } }
-      }
-    },
-    "overdue" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "atrasado" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已逾期" } }
-      }
-    },
-    "Remind me later" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recordar más tarde" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "稍后提醒" } }
-      }
-    },
-    "Reminder" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recordatorio" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "提醒" } }
-      }
-    },
-    "Snoozed reminder" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Recordatorio pospuesto" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已延后的提醒" } }
-      }
-    },
-    "Starting soon" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Comienza pronto" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "即将开始" } }
-      }
-    },
-    "today" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "hoy" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "今天" } }
-      }
-    },
-    "Auto" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Auto" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "汽车" } }
-      }
-    },
-    "Every %lld days" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cada %lld días" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每 %lld 天" } }
-      }
-    },
-    "Every 2 weeks" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cada 2 semanas" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每两周" } }
-      }
-    },
-    "Every 3 months" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cada 3 meses" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每三个月" } }
-      }
-    },
-    "Finance" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Finanzas" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "财务" } }
-      }
-    },
-    "Government" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Gobierno" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "政府" } }
-      }
-    },
-    "Housing" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Vivienda" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "住房" } }
-      }
-    },
-    "Medical" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Médico" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "医疗" } }
-      }
-    },
-    "Monthly" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Mensual" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每月" } }
-      }
-    },
-    "Other" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Otro" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "其他" } }
-      }
-    },
-    "Personal" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Personal" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "个人" } }
-      }
-    },
-    "Utility" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Servicios" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "水电煤" } }
-      }
-    },
-    "Weekly" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Semanal" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每周" } }
-      }
-    },
-    "Work" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Trabajo" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "工作" } }
-      }
-    },
-    "Yearly" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Anual" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每年" } }
-      }
-    },
-    "%lld active" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "%lld activas" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 项待办" } }
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day overdue"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days overdue"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld día de retraso"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld días de retraso"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "逾期 %lld 天"
+          }
+        }
       }
     },
     "%lld of %lld" : {
       "comment" : "steps done of total",
       "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld de %2$lld" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld / %2$lld" } }
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld / %2$lld"
+          }
+        }
       }
     },
     "%lld THINGS FOUND" : {
       "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "%lld ELEMENTOS" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "找到 %lld 项" } }
-      }
-    },
-    "ACCOUNT" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "CUENTA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "账户" } }
-      }
-    },
-    "ACTION" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "TAREA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "事项" } }
-      }
-    },
-    "ACTION STEPS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "PASOS A SEGUIR" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "操作步骤" } }
-      }
-    },
-    "Add" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加" } }
-      }
-    },
-    "Add %lld to inbox" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir %lld a la bandeja" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加 %lld 项到收件箱" } }
-      }
-    },
-    "Add a detail" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir un detalle" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加详情" } }
-      }
-    },
-    "Add a due date" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir fecha de vencimiento" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加截止日期" } }
-      }
-    },
-    "Add a link" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir un enlace" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加链接" } }
-      }
-    },
-    "Add a note" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir una nota" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加备注" } }
-      }
-    },
-    "Add a note…" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir una nota…" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加备注…" } }
-      }
-    },
-    "Add a photo" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir una foto" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加照片" } }
-      }
-    },
-    "Add a step" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir un paso" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加步骤" } }
-      }
-    },
-    "Add date" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir fecha" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加日期" } }
-      }
-    },
-    "Add to inbox" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Añadir a la bandeja" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "添加到收件箱" } }
-      }
-    },
-    "Answer the questions above to continue" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Responde las preguntas para continuar" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请回答上面的问题以继续" } }
-      }
-    },
-    "Back" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Atrás" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "返回" } }
-      }
-    },
-    "Build my checklist" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Crear mi lista" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "生成我的清单" } }
-      }
-    },
-    "Camera · OCR runs on device" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cámara · el OCR es en el dispositivo" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "相机 · 文字识别在本机完成" } }
-      }
-    },
-    "Cancel" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cancelar" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
-      }
-    },
-    "Category" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Categoría" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "类别" } }
-      }
-    },
-    "CHECKLIST" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "LISTA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "清单" } }
-      }
-    },
-    "Close" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cerrar" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关闭" } }
-      }
-    },
-    "Completed" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Completado" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已完成" } }
-      }
-    },
-    "Couldn't analyze this document.\n%@" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo analizar este documento.\n%@" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法分析此文件。\n%@" } }
-      }
-    },
-    "Couldn't read any text. Try a clearer, well-lit photo." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se pudo leer texto. Prueba una foto más clara y con buena luz." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未能识别任何文字。请在光线充足处重拍更清晰的照片。" } }
-      }
-    },
-    "Delete" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Eliminar" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除" } }
-      }
-    },
-    "Delete just this one" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Eliminar solo este" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仅删除这一个" } }
-      }
-    },
-    "Delete this and all future" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Eliminar este y los futuros" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除此项及以后全部" } }
-      }
-    },
-    "Delete this task?" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "¿Eliminar esta tarea?" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除这个任务？" } }
-      }
-    },
-    "DETAILS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "DETALLES" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "详情" } }
-      }
-    },
-    "Doesn't repeat" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "No se repite" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不重复" } }
-      }
-    },
-    "Done" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Hecho" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成" } }
-      }
-    },
-    "DUE" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "VENCE" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "截止" } }
-      }
-    },
-    "Edit" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Editar" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "编辑" } }
-      }
-    },
-    "EXPLAIN DOCUMENTS IN" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "EXPLICAR DOCUMENTOS EN" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "用以下语言解释文件" } }
-      }
-    },
-    "EXPLANATION" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "EXPLICACIÓN" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "说明" } }
-      }
-    },
-    "Go back" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Volver" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "返回" } }
-      }
-    },
-    "Guest" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Invitado" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "访客" } }
-      }
-    },
-    "Guides" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Guías" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "指南" } }
-      }
-    },
-    "Has due date" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Tiene fecha de vencimiento" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "有截止日期" } }
-      }
-    },
-    "Inbox" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Bandeja" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "收件箱" } }
-      }
-    },
-    "In progress" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "En curso" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "进行中" } }
-      }
-    },
-    "Due this week" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Vence esta semana" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本周到期" } }
-      }
-    },
-    "LIBRARY" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "BIBLIOTECA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "指南库" } }
-      }
-    },
-    "Life events come with a stack of paperwork. Pick a guide and Notie walks you through it." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Los trámites de la vida traen mucho papeleo. Elige una guía y Notie te acompaña paso a paso." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "人生大事总伴随成堆的文件。选择一个指南，Notie 一步步带你完成。" } }
-      }
-    },
-    "LINKS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "ENLACES" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "链接" } }
-      }
-    },
-    "LOCAL OCR · NO BANK LINK · NO AUTOPAY" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "OCR LOCAL · SIN BANCO · SIN PAGO AUTOMÁTICO" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本机识别 · 不连银行 · 不自动扣款" } }
-      }
-    },
-    "Label" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Etiqueta" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "标签" } }
-      }
-    },
-    "Mark as not done" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Marcar como no hecho" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "标记为未完成" } }
-      }
-    },
-    "Mark done" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Marcar hecho" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "标记完成" } }
-      }
-    },
-    "MOST COMMON" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "MÁS COMÚN" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最常用" } }
-      }
-    },
-    "Needs attention" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Requiere atención" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "需要处理" } }
-      }
-    },
-    "NEW ITEM" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "NUEVO" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新增" } }
-      }
-    },
-    "NEW TASK" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "NUEVA TAREA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新任务" } }
-      }
-    },
-    "No details yet. Tap Edit to add instructions." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún no hay detalles. Toca Editar para añadir instrucciones." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无详情。点按“编辑”添加说明。" } }
-      }
-    },
-    "No reminders — add one above." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Sin recordatorios — añade uno arriba." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "没有提醒 — 在上方添加一个。" } }
-      }
-    },
-    "No reminders." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Sin recordatorios." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "没有提醒。" } }
-      }
-    },
-    "Note" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nota" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "备注" } }
-      }
-    },
-    "Note (optional) — shown in the alert" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nota (opcional) — aparece en la alerta" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "备注（可选）— 会显示在提醒中" } }
-      }
-    },
-    "NOTE" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "NOTA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "备注" } }
-      }
-    },
-    "NOTES" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "NOTAS" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "备注" } }
-      }
-    },
-    "Nothing to do — off by default" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nada que hacer — desactivado por defecto" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无需操作 — 默认关闭" } }
-      }
-    },
-    "Nothing to do — this is just for your information." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nada que hacer — solo es información." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无需操作 — 仅供参考。" } }
-      }
-    },
-    "Nothing yet" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nada todavía" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "还没有内容" } }
-      }
-    },
-    "NOTIFICATIONS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "NOTIFICACIONES" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "通知" } }
-      }
-    },
-    "OPTIONAL" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "OPCIONAL" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可选" } }
-      }
-    },
-    "Profile" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Perfil" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "我的" } }
-      }
-    },
-    "REFERENCE" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "REFERENCIA" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "编号" } }
-      }
-    },
-    "REMIND" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "AVISAR" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "提醒" } }
-      }
-    },
-    "REMINDERS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "RECORDATORIOS" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "提醒" } }
-      }
-    },
-    "Remove due date" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Quitar fecha de vencimiento" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "移除截止日期" } }
-      }
-    },
-    "REPEATS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "SE REPITE" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重复" } }
-      }
-    },
-    "Retake photo" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Volver a tomar la foto" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重拍照片" } }
-      }
-    },
-    "REVIEW" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "REVISAR" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "确认" } }
-      }
-    },
-    "Saved on this device only" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Guardado solo en este dispositivo" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仅保存在本设备" } }
-      }
-    },
-    "Scan a document" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Escanear un documento" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "扫描文件" } }
-      }
-    },
-    "Select items to add" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Selecciona elementos para añadir" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择要添加的项目" } }
-      }
-    },
-    "Set a date" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Poner una fecha" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置日期" } }
-      }
-    },
-    "SOON" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "PRONTO" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "敬请期待" } }
-      }
-    },
-    "Specific time" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Hora específica" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "指定时间" } }
-      }
-    },
-    "Stays on your device" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Se queda en tu dispositivo" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仅保留在你的设备上" } }
-      }
-    },
-    "STEP" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "PASO" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "步骤" } }
-      }
-    },
-    "STEPS" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "PASOS" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "步骤" } }
-      }
-    },
-    "Step" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Paso" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "步骤" } }
-      }
-    },
-    "Summary" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Resumen" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "摘要" } }
-      }
-    },
-    "Tap to fill in" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Toca para rellenar" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "点按填写" } }
-      }
-    },
-    "Tap ＋ to scan a document or add a task." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Toca ＋ para escanear un documento o añadir una tarea." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "点按 ＋ 扫描文件或添加任务。" } }
-      }
-    },
-    "This is a repeating task" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Esta es una tarea que se repite" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "这是一个重复任务" } }
-      }
-    },
-    "This scan has several items. Pick which to add — you can edit each one afterward." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Este escaneo tiene varios elementos. Elige cuáles añadir — puedes editar cada uno después." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "这次扫描包含多个项目。选择要添加的项 — 之后可逐个编辑。" } }
-      }
-    },
-    "Title" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Título" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "标题" } }
-      }
-    },
-    "TITLE" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "TÍTULO" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "标题" } }
-      }
-    },
-    "Upcoming" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Próximas" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "即将到期" } }
-      }
-    },
-    "We couldn't read this clearly, so the details might be wrong. Try retaking the photo in better light." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "No pudimos leerlo con claridad, así que los datos podrían estar mal. Toma la foto de nuevo con mejor luz." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "我们没能清楚识别，详情可能有误。请在光线更好的地方重拍。" } }
-      }
-    },
-    "What needs doing?" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "¿Qué hay que hacer?" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "需要做什么？" } }
-      }
-    },
-    "WHAT THESE MEAN" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "QUÉ SIGNIFICAN" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "这些词的意思" } }
-      }
-    },
-    "WHAT TO SAY" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "QUÉ DECIR" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可以这样说" } }
-      }
-    },
-    "WHAT YOU'LL NEED" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "QUÉ NECESITARÁS" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "你需要准备" } }
-      }
-    },
-    "Your own note…" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Tu propia nota…" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "你的备注…" } }
-      }
-    },
-    "A few quick questions so Notie can tailor the checklist." : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Unas preguntas rápidas para que Notie ajuste la lista." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "回答几个小问题，Notie 就能为你定制清单。" } }
-      }
-    },
-    "✓ COMPLETED" : {
-      "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "✓ COMPLETADO" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "✓ 已完成" } }
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ELEMENTOS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找到 %lld 项"
+          }
+        }
+      }
+    },
+    "•" : {
+
+    },
+    "⚠ %lld DAYS OVERDUE" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "⚠ %lld DAY OVERDUE"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "⚠ %lld DAYS OVERDUE"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "⚠ %lld DÍA DE RETRASO"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "⚠ %lld DÍAS DE RETRASO"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠ 逾期 %lld 天"
+          }
+        }
       }
     },
     "⚠︎ couldn't read clearly — review before adding" : {
       "localizations" : {
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "⚠︎ no se leyó con claridad — revisa antes de añadir" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "⚠︎ 识别不清 — 添加前请核对" } }
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠︎ no se leyó con claridad — revisa antes de añadir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠︎ 识别不清 — 添加前请核对"
+          }
+        }
+      }
+    },
+    "✓ COMPLETED" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✓ COMPLETADO"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✓ 已完成"
+          }
+        }
+      }
+    },
+    "$" : {
+
+    },
+    "0.00" : {
+
+    },
+    "A few quick questions so Notie can tailor the checklist." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unas preguntas rápidas para que Notie ajuste la lista."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回答几个小问题，Notie 就能为你定制清单。"
+          }
+        }
+      }
+    },
+    "ACCOUNT" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUENTA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账户"
+          }
+        }
+      }
+    },
+    "ACTION" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TAREA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "事项"
+          }
+        }
+      }
+    },
+    "ACTION STEPS" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PASOS A SEGUIR"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作步骤"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加"
+          }
+        }
+      }
+    },
+    "Add %lld to inbox" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir %lld a la bandeja"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加 %lld 项到收件箱"
+          }
+        }
+      }
+    },
+    "Add a detail" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir un detalle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加详情"
+          }
+        }
+      }
+    },
+    "Add a due date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir fecha de vencimiento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加截止日期"
+          }
+        }
+      }
+    },
+    "Add a link" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir un enlace"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加链接"
+          }
+        }
+      }
+    },
+    "Add a note" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir una nota"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加备注"
+          }
+        }
+      }
+    },
+    "Add a note…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir una nota…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加备注…"
+          }
+        }
+      }
+    },
+    "Add a photo" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir una foto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加照片"
+          }
+        }
+      }
+    },
+    "Add a step" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir un paso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加步骤"
+          }
+        }
+      }
+    },
+    "Add a step (or leave empty for a reminder)" : {
+
+    },
+    "Add date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir fecha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加日期"
+          }
+        }
+      }
+    },
+    "Add to inbox" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir a la bandeja"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加到收件箱"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "好的" } }
+      }
+    },
+    "Scan limit reached" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Límite de escaneos alcanzado" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已达扫描上限" } }
+      }
+    },
+    "You've reached today's scan limit (%lld a day). Try again tomorrow." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Has alcanzado el límite de escaneos de hoy (%lld al día). Inténtalo mañana." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "你已达到今天的扫描上限（每天 %lld 次）。请明天再试。" } }
+      }
+    },
+    "You've reached this month's scan limit (%lld a month)." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Has alcanzado el límite de escaneos de este mes (%lld al mes)." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "你已达到本月的扫描上限（每月 %lld 次）。" } }
+      }
+    },
+    "All" : {
+      "comment" : "Guides category filter: show all",
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
+          }
+        }
+      }
+    },
+    "Answer the questions above to continue" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Responde las preguntas para continuar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请回答上面的问题以继续"
+          }
+        }
+      }
+    },
+    "Auto" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "汽车"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrás"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        }
+      }
+    },
+    "Build my checklist" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear mi lista"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生成我的清单"
+          }
+        }
+      }
+    },
+    "Camera · OCR runs on device" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cámara · el OCR es en el dispositivo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相机 · 文字识别在本机完成"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
+      }
+    },
+    "Category" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categoría"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "类别"
+          }
+        }
+      }
+    },
+    "Checking…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查中…"
+          }
+        }
+      }
+    },
+    "CHECKLIST" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LISTA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清单"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Completed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成"
+          }
+        }
+      }
+    },
+    "Couldn't analyze this document.\n%@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo analizar este documento.\n%@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法分析此文件。\n%@"
+          }
+        }
+      }
+    },
+    "Couldn't read any text. Try a clearer, well-lit photo." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer texto. Prueba una foto más clara y con buena luz."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未能识别任何文字。请在光线充足处重拍更清晰的照片。"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
+          }
+        }
+      }
+    },
+    "Delete just this one" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar solo este"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅删除这一个"
+          }
+        }
+      }
+    },
+    "Delete this and all future" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar este y los futuros"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除此项及以后全部"
+          }
+        }
+      }
+    },
+    "Delete this task?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar esta tarea?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这个任务？"
+          }
+        }
+      }
+    },
+    "DETAILS" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DETALLES"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "详情"
+          }
+        }
+      }
+    },
+    "Doesn't repeat" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se repite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不重复"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hecho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
+          }
+        }
+      }
+    },
+    "Double-check: %@" : {
+
+    },
+    "Due" : {
+
+    },
+    "DUE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VENCE"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "截止"
+          }
+        }
+      }
+    },
+    "Due in %lld days" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Due in %lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Due in %lld days"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vence en %lld día"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vence en %lld días"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 天后到期"
+          }
+        }
+      }
+    },
+    "Due this week" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vence esta semana"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周到期"
+          }
+        }
+      }
+    },
+    "Due today" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vence hoy"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天到期"
+          }
+        }
+      }
+    },
+    "Due tomorrow" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vence mañana"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天到期"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
+          }
+        }
+      }
+    },
+    "Every %lld days" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada %lld días"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每 %lld 天"
+          }
+        }
+      }
+    },
+    "Every 2 weeks" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada 2 semanas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每两周"
+          }
+        }
+      }
+    },
+    "Every 3 months" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada 3 meses"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每三个月"
+          }
+        }
+      }
+    },
+    "EXPLAIN DOCUMENTS IN" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXPLICAR DOCUMENTOS EN"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用以下语言解释文件"
+          }
+        }
+      }
+    },
+    "Explain this step…" : {
+
+    },
+    "EXPLANATION" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXPLICACIÓN"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说明"
+          }
+        }
+      }
+    },
+    "Finance" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finanzas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "财务"
+          }
+        }
+      }
+    },
+    "Go back" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        }
+      }
+    },
+    "Government" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gobierno"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "政府"
+          }
+        }
+      }
+    },
+    "Guest" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "访客"
+          }
+        }
+      }
+    },
+    "Guides" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guías"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指南"
+          }
+        }
+      }
+    },
+    "Has due date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiene fecha de vencimiento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有截止日期"
+          }
+        }
+      }
+    },
+    "Housing" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vivienda"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "住房"
+          }
+        }
+      }
+    },
+    "https://…" : {
+
+    },
+    "in %lld days" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "in %lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "in %lld days"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "en %lld día"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "en %lld días"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 天后"
+          }
+        }
+      }
+    },
+    "In progress" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En curso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "进行中"
+          }
+        }
+      }
+    },
+    "Inbox" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bandeja"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收件箱"
+          }
+        }
+      }
+    },
+    "Label" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标签"
+          }
+        }
+      }
+    },
+    "LIBRARY" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIBLIOTECA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指南库"
+          }
+        }
+      }
+    },
+    "Life events come with a stack of paperwork. Pick a guide and Notie walks you through it." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los trámites de la vida traen mucho papeleo. Elige una guía y Notie te acompaña paso a paso."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人生大事总伴随成堆的文件。选择一个指南，Notie 一步步带你完成。"
+          }
+        }
+      }
+    },
+    "LINKS" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ENLACES"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "链接"
+          }
+        }
+      }
+    },
+    "LOCAL OCR · NO BANK LINK · NO AUTOPAY" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OCR LOCAL · SIN BANCO · SIN PAGO AUTOMÁTICO"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本机识别 · 不连银行 · 不自动扣款"
+          }
+        }
+      }
+    },
+    "Mark as not done" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar como no hecho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标记为未完成"
+          }
+        }
+      }
+    },
+    "Mark done" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcar hecho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标记完成"
+          }
+        }
+      }
+    },
+    "Medical" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Médico"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "医疗"
+          }
+        }
+      }
+    },
+    "Monthly" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mensual"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月"
+          }
+        }
+      }
+    },
+    "MOST COMMON" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MÁS COMÚN"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最常用"
+          }
+        }
+      }
+    },
+    "Needs attention" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requiere atención"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要处理"
+          }
+        }
+      }
+    },
+    "NEW ITEM" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NUEVO"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增"
+          }
+        }
+      }
+    },
+    "NEW TASK" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NUEVA TAREA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新任务"
+          }
+        }
+      }
+    },
+    "No details yet. Tap Edit to add instructions." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay detalles. Toca Editar para añadir instrucciones."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无详情。点按“编辑”添加说明。"
+          }
+        }
+      }
+    },
+    "No reminders — add one above." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin recordatorios — añade uno arriba."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有提醒 — 在上方添加一个。"
+          }
+        }
+      }
+    },
+    "No reminders." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin recordatorios."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有提醒。"
+          }
+        }
+      }
+    },
+    "Not yet asked." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún sin solicitar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未询问。"
+          }
+        }
+      }
+    },
+    "Note" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备注"
+          }
+        }
+      }
+    },
+    "NOTE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备注"
+          }
+        }
+      }
+    },
+    "Note (optional) — shown in the alert" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota (opcional) — aparece en la alerta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备注（可选）— 会显示在提醒中"
+          }
+        }
+      }
+    },
+    "NOTES" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTAS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备注"
+          }
+        }
+      }
+    },
+    "Nothing to do — off by default" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada que hacer — desactivado por defecto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需操作 — 默认关闭"
+          }
+        }
+      }
+    },
+    "Nothing to do — this is just for your information." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada que hacer — solo es información."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需操作 — 仅供参考。"
+          }
+        }
+      }
+    },
+    "Nothing yet" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada todavía"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有内容"
+          }
+        }
+      }
+    },
+    "NOTIFICATIONS" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOTIFICACIONES"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知"
+          }
+        }
+      }
+    },
+    "Off — enable in iOS Settings to get reminders." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado — actívalo en Ajustes de iOS para recibir recordatorios."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已关闭 — 请在 iOS 设置中开启以接收提醒。"
+          }
+        }
+      }
+    },
+    "On — reminders will be delivered." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado — se enviarán recordatorios."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已开启 — 将发送提醒。"
+          }
+        }
+      }
+    },
+    "OPTIONAL" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OPCIONAL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可选"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
+          }
+        }
+      }
+    },
+    "overdue" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "atrasado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已逾期"
+          }
+        }
+      }
+    },
+    "Overdue — still not done" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrasado — aún sin hacer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已逾期 — 尚未完成"
+          }
+        }
+      }
+    },
+    "Personal" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的"
+          }
+        }
+      }
+    },
+    "Quiet delivery." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrega silenciosa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静默推送。"
+          }
+        }
+      }
+    },
+    "REFERENCE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REFERENCIA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编号"
+          }
+        }
+      }
+    },
+    "REMIND" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AVISAR"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        }
+      }
+    },
+    "Remind me later" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordar más tarde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍后提醒"
+          }
+        }
+      }
+    },
+    "Reminder" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        }
+      }
+    },
+    "REMINDERS" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RECORDATORIOS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        }
+      }
+    },
+    "Remove due date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar fecha de vencimiento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除截止日期"
+          }
+        }
+      }
+    },
+    "REPEATS" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SE REPITE"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重复"
+          }
+        }
+      }
+    },
+    "Retake photo" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a tomar la foto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重拍照片"
+          }
+        }
+      }
+    },
+    "REVIEW" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REVISAR"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认"
+          }
+        }
+      }
+    },
+    "Save to inbox" : {
+
+    },
+    "Saved on this device only" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado solo en este dispositivo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅保存在本设备"
+          }
+        }
+      }
+    },
+    "Scan a document" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanear un documento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扫描文件"
+          }
+        }
+      }
+    },
+    "Script / what to say…" : {
+
+    },
+    "Select items to add" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona elementos para añadir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择要添加的项目"
+          }
+        }
+      }
+    },
+    "Set a date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poner una fecha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置日期"
+          }
+        }
+      }
+    },
+    "Snoozed reminder" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorio pospuesto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已延后的提醒"
+          }
+        }
+      }
+    },
+    "SOON" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRONTO"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "敬请期待"
+          }
+        }
+      }
+    },
+    "Specific time" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora específica"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指定时间"
+          }
+        }
+      }
+    },
+    "Starting soon" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comienza pronto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即将开始"
+          }
+        }
+      }
+    },
+    "Stays on your device" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se queda en tu dispositivo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅保留在你的设备上"
+          }
+        }
+      }
+    },
+    "Step" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步骤"
+          }
+        }
+      }
+    },
+    "STEP" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PASO"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步骤"
+          }
+        }
+      }
+    },
+    "STEPS" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PASOS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步骤"
+          }
+        }
+      }
+    },
+    "Sub-step" : {
+
+    },
+    "Summary" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摘要"
+          }
+        }
+      }
+    },
+    "Tap ＋ to scan a document or add a task." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca ＋ para escanear un documento o añadir una tarea."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按 ＋ 扫描文件或添加任务。"
+          }
+        }
+      }
+    },
+    "Tap to fill in" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca para rellenar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按填写"
+          }
+        }
+      }
+    },
+    "Temporary." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temporal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "临时。"
+          }
+        }
+      }
+    },
+    "This is a repeating task" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta es una tarea que se repite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是一个重复任务"
+          }
+        }
+      }
+    },
+    "This scan has several items. Pick which to add — you can edit each one afterward." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este escaneo tiene varios elementos. Elige cuáles añadir — puedes editar cada uno después."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这次扫描包含多个项目。选择要添加的项 — 之后可逐个编辑。"
+          }
+        }
+      }
+    },
+    "This sets the language Notie uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto define el idioma con que Notie explica tus documentos (por defecto, el de tu teléfono). La app en sí sigue el idioma de tu teléfono. Algunas guías sensibles —dinero, inmigración, médico— se quedan en inglés y en tu dispositivo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里设置 Notie 解释你文件时使用的语言（默认与手机语言一致）。应用本身会跟随手机语言。少数敏感指南（财务、移民、医疗）会保留英文并仅存于你的设备。"
+          }
+        }
+      }
+    },
+    "Title" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Título"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标题"
+          }
+        }
+      }
+    },
+    "TITLE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TÍTULO"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标题"
+          }
+        }
+      }
+    },
+    "today" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hoy"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天"
+          }
+        }
+      }
+    },
+    "Unknown." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconocido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知。"
+          }
+        }
+      }
+    },
+    "Upcoming" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即将到期"
+          }
+        }
+      }
+    },
+    "Utility" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servicios"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "水电煤"
+          }
+        }
+      }
+    },
+    "We couldn't read this clearly, so the details might be wrong. Try retaking the photo in better light." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pudimos leerlo con claridad, así que los datos podrían estar mal. Toma la foto de nuevo con mejor luz."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我们没能清楚识别，详情可能有误。请在光线更好的地方重拍。"
+          }
+        }
+      }
+    },
+    "Website: %@" : {
+
+    },
+    "Weekly" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semanal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每周"
+          }
+        }
+      }
+    },
+    "What needs doing?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Qué hay que hacer?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要做什么？"
+          }
+        }
+      }
+    },
+    "WHAT THESE MEAN" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QUÉ SIGNIFICAN"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些词的意思"
+          }
+        }
+      }
+    },
+    "WHAT TO SAY" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QUÉ DECIR"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以这样说"
+          }
+        }
+      }
+    },
+    "WHAT YOU'LL NEED" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QUÉ NECESITARÁS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你需要准备"
+          }
+        }
+      }
+    },
+    "Work" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trabajo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作"
+          }
+        }
+      }
+    },
+    "Yearly" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anual"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年"
+          }
+        }
+      }
+    },
+    "Your own note…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu propia nota…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的备注…"
+          }
+        }
       }
     }
   },
