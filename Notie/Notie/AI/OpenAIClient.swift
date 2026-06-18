@@ -20,7 +20,8 @@ import Foundation
 
 nonisolated struct OpenAIClient: Extractor {
     var apiKey: String = APIKeys.openAI
-    var model: String = "gpt-4o"
+    var model: String = "gpt-4o"            // extraction — needs reasoning
+    var polishModel: String = "gpt-4o-mini" // guide polish — only light rewording, keep it cheap
     var endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
     var session: URLSession = .shared
 
@@ -452,7 +453,7 @@ extension OpenAIClient {
         let user = "Situation: \(context)\nSteps:\n"
             + base.steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
         let body = ChatRequest(
-            model: model, response_format: .init(type: "json_object"), temperature: 0.2,
+            model: polishModel, response_format: .init(type: "json_object"), temperature: 0.2,
             messages: [.init(role: "system", content: system), .init(role: "user", content: user)])
 
         guard let httpBody = try? JSONEncoder().encode(body) else { return base }
