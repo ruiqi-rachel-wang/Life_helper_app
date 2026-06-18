@@ -90,7 +90,14 @@ nonisolated struct OpenAIClient: Extractor {
         You read a single piece of mail, a bill, an email, or a screenshot that \
         has been OCR'd (so it may have typos and broken lines) and explain it in \
         plain words to someone who may not read English well and may have no idea \
-        what the document is.
+        what the document is. It could be ANYTHING — a bill, a ticket, a government \
+        or court letter, a medical or insurance notice, an appointment, a flight, a \
+        receipt, a school/immigration form, a subscription, a legal notice, etc.
+
+        The specific examples in these instructions (a parking ticket, a flight, an \
+        electricity bill) are ILLUSTRATIONS of the principles, NOT templates. First \
+        work out what THIS document actually is, then apply the principles to it. \
+        Never force an example's framing onto an unrelated document.
 
         Return ONLY a JSON object of the form {"items": [ ... ]}. MOST documents
         have exactly ONE item. Include SEVERAL items only when the document clearly
@@ -120,10 +127,12 @@ nonisolated struct OpenAIClient: Extractor {
                           (e.g. "within 90 days of the exam"), compute it and add "dueDate"
                           to lowConfidenceFields.
           accountNumber : the ONE identifier the reader needs to ACT on this — to pay it,
-                          look it up, or dispute it. For a ticket / violation that is the
-                          ticket / summons / violation / notice number (often printed by a
-                          barcode), NOT the license plate or VIN. For a bill, the account
-                          number. Prefer the actionable id over a passive descriptor. null if none.
+                          look it up, reference it on a call, or dispute it. Pick the
+                          actionable id for whatever the document is: a bill's account number,
+                          a ticket/summons number, a claim or case number, a confirmation /
+                          booking code, an application receipt number. Prefer it over a passive
+                          descriptor (e.g. on a ticket use the summons number, not the license
+                          plate or VIN). null if none.
           otherIDs      : other identifiers that genuinely help the reader act or follow up,
                           as an array of {"label","value"} objects — claim #, case #,
                           sticker / decal #, confirmation #, policy #, member #. Use a clear
@@ -134,17 +143,17 @@ nonisolated struct OpenAIClient: Extractor {
                           utility, government, medical, finance, housing, work, personal, other.
                           Travel, flights, appointments, and personal errands are "personal".
                           Never invent a category like "travel" — use one of the 8.
-          summary       : in \(language.promptName). Say what this document is AND — when it
-                          is a penalty, notice, or a response to something — WHY they got it
-                          / what triggered it. Lead with the cause, not just the type:
-                          e.g. NOT "This is a parking ticket for $65" but "This is a $65
-                          parking ticket because the car's registration sticker had expired
-                          (NYS) — you were fined for driving/parking with an expired
-                          registration." For a self-explanatory document one plain sentence
-                          is enough (e.g. "A flight from New York to Chicago, UA623, departing
+          summary       : in \(language.promptName). Say what this document is AND, when it is
+                          a penalty / notice / decision / response to something, WHY they got
+                          it or what triggered it — lead with the cause, not just the type.
+                          This applies to ANY type: a fine (what rule was broken), a claim
+                          denial (the stated reason), a fee (what it's for), a renewal/expiry
+                          notice (what's lapsing). One illustration: not "a parking ticket for
+                          $65" but "a $65 parking ticket because the registration sticker had
+                          expired." For a self-explanatory document one plain sentence is
+                          enough (e.g. "A flight from New York to Chicago, UA623, departing
                           June 25 at 8:05 AM"). Add more only for a term/situation the reader
-                          likely won't understand (e.g. insurance "storage facility" = the tow
-                          yard). Add understanding; do NOT just reword the text or pad it.
+                          likely won't understand. Add understanding; don't reword or pad.
           steps         : the concrete, ORDERED actions to get this done, in
                           \(language.promptName). Be specific and operational, not vague — no
                           "pay it" / "contact them". When there is an ONLINE option, give it
@@ -178,16 +187,17 @@ nonisolated struct OpenAIClient: Extractor {
         For a statement with a minimum payment, add a note that paying only the \
         minimum (and the minimum amount) accrues interest at the stated APR.
 
-        ROOT CAUSE — when a notice is a PENALTY for an underlying lapse (a ticket for \
-        an expired registration sticker or inspection, a fine for a missed filing, a \
-        suspension for an unpaid bill), the steps must address BOTH the cause AND this \
-        notice, in the right order, with conditional ("if … then …") guidance when it \
-        helps. Example, a parking ticket because the registration sticker expired: \
-        1) "Renew the vehicle registration at the DMV (online if available) and print \
-        the temporary proof/receipt"; 2) "If you have already renewed, dispute this \
-        ticket online and attach the proof of renewal"; 3) "If you have not renewed or \
-        can't prove it, pay the fine before the deadline to avoid extra penalties and a \
-        possible boot or tow." Explain the fork — do not just say "pay it".
+        ROOT CAUSE — when a document is a CONSEQUENCE of an underlying problem, the \
+        steps should address BOTH the cause AND this document, in a sensible order. \
+        This is a general principle across document types — e.g. a ticket for an \
+        expired registration → renew the registration AND handle the ticket; a late \
+        fee → pay AND set up autopay/reminders so it doesn't recur; a denied claim or \
+        application → fix the stated reason AND resubmit/appeal; a shut-off notice → \
+        pay AND confirm service is restored. Use conditional ("if … then …") steps \
+        ONLY when there is a genuine fork (e.g. "if you already renewed, dispute with \
+        proof; if not, pay before the deadline"). If the document has NO underlying \
+        cause (an ordinary bill, an appointment, a receipt, a flight), just give the \
+        normal steps — do NOT invent a cause or force a fork that isn't there.
 
         For a flight or travel document, steps should include checking in (online \
         AND at the airport counter), arriving ~2 hours early, going through security, \
