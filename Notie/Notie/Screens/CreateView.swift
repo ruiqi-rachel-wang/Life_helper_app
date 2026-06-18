@@ -15,21 +15,23 @@ import SwiftUI
 import SwiftData
 import PhotosUI
 
-// Wraps a captured/picked image so navigationDestination can push the
-// scan result once an image exists. Hashable by id (UIImage isn't Hashable).
+// Wraps the captured/picked image(s) — one document can be several pages (e.g.
+// the front and back of a notice). Hashable by id (UIImage isn't Hashable).
 private struct ScanRoute: Identifiable, Hashable {
     let id = UUID()
-    let image: UIImage
+    let images: [UIImage]
     static func == (a: ScanRoute, b: ScanRoute) -> Bool { a.id == b.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 struct CreateView: View {
+    static let maxPages = 5   // up to 5 photos per document (1 from the camera)
+
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var cameraImage: UIImage?
-    @State private var photoItem: PhotosPickerItem?
+    @State private var photoItems: [PhotosPickerItem] = []
     @State private var scanRoute: ScanRoute?
     @State private var quotaMessage: String?
 
@@ -73,38 +75,51 @@ struct CreateView: View {
             .fullScreenCover(isPresented: $showCamera) {
                 CameraPicker(image: $cameraImage).ignoresSafeArea()
             }
-            // Fallback when there's no camera (e.g. Simulator): pick a photo.
-            .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
-            // After capture/pick, push the combined Review screen. The scan
-            // `load` is OCR → AI extraction; Review handles the rest.
+            // Fallback when there's no camera (e.g. Simulator): pick up to 5 photos.
+            .photosPicker(isPresented: $showPhotoPicker, selection: $photoItems,
+                          maxSelectionCount: Self.maxPages, matching: .images)
+            // After capture/pick, push the combined Review screen. The scan `load`
+            // OCRs every page, joins the text, then runs AI extraction once.
             .navigationDestination(item: $scanRoute) { route in
                 // Resolve the user's language once, here, so the async load
                 // closure captures a plain value (per the Profile picker).
                 let language = ExplainLanguage.resolve(stored: explainLanguageRaw)
                 ReviewView(
                     load: {
-                        let ocr = await VisionOCR.recognizeText(in: route.image)
-                        guard !ocr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
-                        ScanQuota.record()   // count only real AI extractions
+                        var pages: [String] = []
+                        for image in route.images {
+                            let text = await VisionOCR.recognizeText(in: image)
+                            if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { pages.append(text) }
+                        }
+                        guard !pages.isEmpty else { return [] }
+                        // One document across pages — join so the model sees it all.
+                        let ocr = pages.enumerated()
+                            .map { pages.count > 1 ? "--- Page \($0.offset + 1) ---\n\($0.element)" : $0.element }
+                            .joined(separator: "\n\n")
+                        ScanQuota.record()   // one document = one scan, regardless of page count
                         return try await ExtractionService(extractor: OpenAIClient())
                             .extract(from: ocr, language: language)
                     },
-                    image: route.image,
+                    image: route.images.first,
+                    pageCount: route.images.count,
                     source: .scanned,
                     onClose: { scanRoute = nil })   // back to the Add screen
             }
         }
         .onChange(of: cameraImage) { _, new in
-            if let new, allowScan() { scanRoute = ScanRoute(image: new) }
+            if let new, allowScan() { scanRoute = ScanRoute(images: [new]) }
             cameraImage = nil
         }
-        .onChange(of: photoItem) { _, item in
+        .onChange(of: photoItems) { _, items in
+            guard !items.isEmpty else { return }
             Task {
-                if let data = try? await item?.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data), allowScan() {
-                    scanRoute = ScanRoute(image: image)
+                var images: [UIImage] = []
+                for item in items.prefix(Self.maxPages) {
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) { images.append(image) }
                 }
-                photoItem = nil
+                if !images.isEmpty, allowScan() { scanRoute = ScanRoute(images: images) }
+                photoItems = []
             }
         }
         .alert("Scan limit reached", isPresented: Binding(
@@ -152,7 +167,7 @@ struct CreateView: View {
     // Two smaller tiles: Upload from Photos (→ OCR), Create it yourself.
     private var secondaryRow: some View {
         HStack(spacing: 8) {
-            PhotosPicker(selection: $photoItem, matching: .images) {
+            PhotosPicker(selection: $photoItems, maxSelectionCount: Self.maxPages, matching: .images) {
                 SecondaryTile(symbol: "photo.on.rectangle.angled",
                               title: "Upload from Photos")
             }

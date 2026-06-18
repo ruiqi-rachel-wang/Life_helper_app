@@ -169,6 +169,9 @@ final class ActionItem {
     // series tidy (at most one active + one done). nil = singleton/legacy; use
     // `effectiveSeriesID`. Stamped the first time a cycle spawns.
     var seriesID: UUID?
+    // First-launch onboarding examples. They render normally but never schedule
+    // reminders (so a tutorial item can't nag the user) and aren't real user data.
+    var isExample: Bool = false
     var createdAt: Date = Date.now
 
     // Rich detail from AI extraction (Week 6). All optional with defaults, so
@@ -427,11 +430,13 @@ final class ActionItem {
     }
 }
 
-// MARK: - Sample data
-// TEMP (Week 2): seeded into the store once on first launch so a fresh
-// install isn't empty during testing. A real app would start empty +
-// onboard. `samples` returns NEW instances each call (don't share @Model
-// objects across contexts).
+// MARK: - Onboarding examples
+// Seeded once on first launch so a fresh install isn't empty and confusing.
+// Three items that double as a tutorial — one in each state (needs attention /
+// in progress / done) — and whose steps explain how the app works. Flagged
+// `isExample` so they never schedule reminders. `samples` returns NEW instances
+// each call (don't share @Model objects across contexts). Strings use
+// String(localized:) so the tutorial appears in the device language.
 
 extension ActionItem {
     private static func day(_ offset: Int) -> Date {
@@ -441,46 +446,31 @@ extension ActionItem {
     private static func usd(_ s: String) -> Decimal { Decimal(string: s) ?? .zero }
 
     static var samples: [ActionItem] {
-        [
-            ActionItem(title: "NYC parking ticket", category: .government,
-                       amount: usd("115.00"), dueDate: day(-2), status: .inProgress,
-                       steps: [
-                        ChecklistStep(text: "Decide: pay or contest.", done: true),
-                        ChecklistStep(text: "Open NYC Pay Tickets.", done: true),
-                        ChecklistStep(text: "Enter violation #1234567890."),
-                        ChecklistStep(text: "Pay the balance before the due date."),
-                       ]),
-            ActionItem(title: "Con Edison · electricity", category: .utility,
-                       amount: usd("86.42"), dueDate: day(16),
-                       steps: [
-                        ChecklistStep(text: "Open Con Edison and sign in."),
-                        ChecklistStep(text: "Pay the balance before the due date."),
-                        ChecklistStep(text: "Save the confirmation number."),
-                       ],
-                       recurrence: .monthly),
-            ActionItem(title: "Call insurance — claim follow-up", category: .personal,
-                       dueDate: day(21),
-                       steps: [
-                        ChecklistStep(text: "Find claim reference #CL-4421."),
-                        ChecklistStep(text: "Call 1-800-555-0140."),
-                        ChecklistStep(text: "Ask about the copay refund."),
-                       ]),
-            ActionItem(title: "Apartment move-out inspection", category: .housing,
-                       dueDate: day(29), status: .inProgress,
-                       steps: [
-                        ChecklistStep(text: "Patch nail holes.", done: true),
-                        ChecklistStep(text: "Deep-clean kitchen.", done: true),
-                        ChecklistStep(text: "Shampoo carpets.", done: true),
-                        ChecklistStep(text: "Return all keys.", done: true),
-                        ChecklistStep(text: "Take dated photos of each room."),
-                        ChecklistStep(text: "Email landlord the forwarding address."),
-                       ]),
-            ActionItem(title: "Sutter Health · clinic visit", category: .medical,
-                       amount: usd("214.00"), dueDate: day(33),
-                       steps: [
-                        ChecklistStep(text: "Review the itemized charges."),
-                        ChecklistStep(text: "Pay the balance or set up a plan."),
-                       ]),
-        ]
+        let welcome = ActionItem(
+            title: String(localized: "👋 Welcome to Notie"),
+            category: .personal, dueDate: day(-1),
+            steps: [
+                ChecklistStep(text: String(localized: "Notie turns a confusing bill or letter into simple steps like these.")),
+                ChecklistStep(text: String(localized: "Tap ＋ Add to scan a document — Notie explains it and what to do.")),
+                ChecklistStep(text: String(localized: "Tap a circle to check off a step as you finish it.")),
+            ])
+        let bill = ActionItem(
+            title: String(localized: "Example: an electric bill"),
+            category: .utility, amount: usd("42.00"), dueDate: day(18), status: .inProgress,
+            steps: [
+                ChecklistStep(text: String(localized: "Scanned bills show the amount and due date up top."), done: true),
+                ChecklistStep(text: String(localized: "Notie reminds you before it's due so you don't forget.")),
+                ChecklistStep(text: String(localized: "When you've paid, tap Mark done.")),
+            ])
+        let finished = ActionItem(
+            title: String(localized: "Example: a finished task"),
+            category: .personal, status: .done,
+            steps: [
+                ChecklistStep(text: String(localized: "Finished tasks move down here to Done."), done: true),
+                ChecklistStep(text: String(localized: "Open one to reopen it or delete it."), done: true),
+            ])
+        let items = [welcome, bill, finished]
+        items.forEach { $0.isExample = true }
+        return items
     }
 }

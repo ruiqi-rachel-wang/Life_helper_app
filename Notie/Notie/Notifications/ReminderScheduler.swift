@@ -64,6 +64,7 @@ final class ReminderScheduler {
     func reschedule(for item: ActionItem) {
         cancel(itemID: item.id)
         guard item.status != .done else { return }
+        guard !item.isExample else { return }   // onboarding examples never nag
 
         let now = Date.now
         for (index, reminder) in item.effectiveReminders.enumerated() where reminder.date > now {

@@ -368,6 +368,16 @@ struct ActionItemTests {
         #expect(Set(redundant.map(\.id)) == Set([oldDone.id, farActive.id]))
     }
 
+    @Test func onboardingSamplesCoverEachStateAndAreExamples() {
+        let s = ActionItem.samples
+        #expect(s.count == 3)
+        #expect(s.allSatisfy { $0.isExample })       // never schedule reminders
+        let b = s.groupedForInbox()
+        #expect(b.needsAttention.count == 1)          // overdue "welcome"
+        #expect(b.inProgress.count == 1)              // the example bill (steps started)
+        #expect(b.done.count == 1)                    // the finished example
+    }
+
     @Test func nonRecurringHasNoNextOccurrence() {
         let oneOff = ActionItem(title: "x", category: .other, dueDate: day(5))
         #expect(!oneOff.isRecurring)

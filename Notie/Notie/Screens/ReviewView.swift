@@ -17,7 +17,8 @@ import SwiftData
 struct ReviewView: View {
     // What produces the result(s): scan → OCR+extract, guide → build+polish.
     let load: () async throws -> [ExtractionResult]
-    var image: UIImage? = nil                 // shown for scans only
+    var image: UIImage? = nil                 // preview (first page) — scans only
+    var pageCount: Int = 1                     // total pages scanned (for the badge)
     var source: ItemSource = .scanned         // tags saved items
     var loadingLabel = "Reading your document…"
     // How to leave this screen. Guides/scans pass a closure that pops their
@@ -134,6 +135,16 @@ struct ReviewView: View {
                 .frame(maxWidth: .infinity, maxHeight: 160)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+                // Show how many pages were combined when it's more than one.
+                .overlay(alignment: .bottomTrailing) {
+                    if pageCount > 1 {
+                        Label("\(pageCount) pages", systemImage: "doc.on.doc")
+                            .font(.eyebrow).tracking(0.4).foregroundStyle(Color.paper)
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .background(Capsule().fill(Color.ink.opacity(0.75)))
+                            .padding(8)
+                    }
+                }
         }
     }
 

@@ -4,6 +4,79 @@
     "" : {
 
     },
+    "%lld pages" : {
+      "comment" : "Multi-page scan badge",
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "%lld páginas" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "%lld 页" } }
+      }
+    },
+    "👋 Welcome to Notie" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "👋 Bienvenido a Notie" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "👋 欢迎使用 Notie" } }
+      }
+    },
+    "Notie turns a confusing bill or letter into simple steps like these." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Notie convierte una factura o carta confusa en pasos simples como estos." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Notie 把看不懂的账单或信件变成像这样的简单步骤。" } }
+      }
+    },
+    "Tap ＋ Add to scan a document — Notie explains it and what to do." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Toca ＋ Añadir para escanear un documento: Notie lo explica y te dice qué hacer." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "点按 ＋ 添加 来扫描文件 — Notie 会解释它是什么以及该怎么做。" } }
+      }
+    },
+    "Tap a circle to check off a step as you finish it." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Toca un círculo para marcar un paso cuando lo termines." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成一步后，点按圆圈打勾。" } }
+      }
+    },
+    "Example: an electric bill" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Ejemplo: una factura de luz" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "示例：电费账单" } }
+      }
+    },
+    "Scanned bills show the amount and due date up top." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Las facturas escaneadas muestran el importe y la fecha de vencimiento arriba." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "扫描的账单会在顶部显示金额和截止日期。" } }
+      }
+    },
+    "Notie reminds you before it's due so you don't forget." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Notie te avisa antes del vencimiento para que no lo olvides." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Notie 会在到期前提醒你，免得忘记。" } }
+      }
+    },
+    "When you've paid, tap Mark done." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cuando pagues, toca Marcar hecho." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "付款后，点按“标记完成”。" } }
+      }
+    },
+    "Example: a finished task" : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Ejemplo: una tarea terminada" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "示例：已完成的任务" } }
+      }
+    },
+    "Finished tasks move down here to Done." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Las tareas terminadas se mueven aquí, a Hecho." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成的任务会移到下面的“完成”区。" } }
+      }
+    },
+    "Open one to reopen it or delete it." : {
+      "localizations" : {
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Abre una para reabrirla o eliminarla." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "打开任意一个可以重新打开或删除。" } }
+      }
+    },
     "%@ before" : {
 
     },

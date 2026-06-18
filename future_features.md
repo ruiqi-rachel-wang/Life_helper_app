@@ -25,18 +25,14 @@
      a specific time isn't already set on the item. A specific time on an item
      (e.g. a flight 3h before) still wins.
 
-## Scanning & input
-3. **Multi-page / multi-image scan** *(in near-term plan; may pull forward)*
-   - Accept up to **5 images** per document (1 from camera, up to 5 from Photos),
-     OCR all and combine — many notices are two-sided (the parking ticket's pay/
-     dispute instructions are on the **back**). This directly improves extraction
-     quality.
+## ~~Scanning & input~~ — DONE (2026-06-17)
+- ~~Multi-page scan~~ — **shipped**: up to 5 images/document (1 camera, 5 Photos),
+  OCR'd and combined; Review shows a page-count badge.
 
-## Onboarding & guidance
-4. **First-launch onboarding** *(in near-term plan; may pull forward)*
-   - Replace the seeded fake bills with 3 instructional example items (one overdue,
-     one in progress, one done) whose steps explain how the app works, so a fresh
-     install isn't empty or confusing.
+## ~~Onboarding~~ — DONE (2026-06-17)
+- ~~First-launch onboarding~~ — **shipped**: the seed is now 3 localized example
+  items (overdue / in progress / done) whose steps teach the app; flagged
+  `isExample` so they never schedule reminders.
 
 ## Localization & content
 5. **Picker-controlled UI language** — today the app chrome follows the *iPhone's*
