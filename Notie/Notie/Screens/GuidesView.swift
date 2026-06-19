@@ -22,7 +22,10 @@ struct GuidesView: View {
     @State private var path: [GuideRoute] = []
 
     private var chipCategories: [ItemCategory] {
-        Array(Set(Guide.all.map(\.category))).sorted { $0.rawValue < $1.rawValue }
+        // Follow ItemCategory's most-common-first order, keeping only the
+        // categories that actually have a guide.
+        let present = Set(Guide.all.map(\.category))
+        return ItemCategory.allCases.filter(present.contains)
     }
     private var visibleGuides: [Guide] {
         guard let selectedCategory else { return Guide.all }
@@ -89,7 +92,7 @@ struct GuidesView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("LIBRARY").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
             Text("Guides").font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
-            Text("Life events come with a stack of paperwork. Pick a guide and Notie walks you through it.")
+            Text("Life events come with a stack of paperwork. Pick a guide and Plaino walks you through it.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                 .padding(.top, 4).frame(maxWidth: 300, alignment: .leading)
         }
@@ -136,8 +139,10 @@ private struct GuideCard: View {
             .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(guide.title).font(.cardTitle).foregroundStyle(Color.ink).lineLimit(1)
-                Text(guide.subtitle).font(.subline).foregroundStyle(Color.faded).lineLimit(1)
+                // Guide title/subtitle are authored app strings → localize via the
+                // catalog (LocalizedStringKey), not shown verbatim.
+                Text(LocalizedStringKey(guide.title)).font(.cardTitle).foregroundStyle(Color.ink).lineLimit(1)
+                Text(LocalizedStringKey(guide.subtitle)).font(.subline).foregroundStyle(Color.faded).lineLimit(1)
                 Text(guide.category.displayName.uppercased())
                     .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint).padding(.top, 4)
             }
@@ -182,8 +187,8 @@ struct GuideQuestionsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(guide.category.displayName.uppercased())
                             .font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-                        Text(guide.title).font(.serifModal).foregroundStyle(Color.ink)
-                        Text("A few quick questions so Notie can tailor the checklist.")
+                        Text(LocalizedStringKey(guide.title)).font(.serifModal).foregroundStyle(Color.ink)
+                        Text("A few quick questions so Plaino can tailor the checklist.")
                             .font(.subline).foregroundStyle(Color.faded)
                     }
                     .padding(.horizontal, 8)
@@ -253,7 +258,7 @@ struct GuideQuestionsView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 16)).foregroundStyle(Color.bad)
-            Text(note).font(.body14).foregroundStyle(Color.ink).lineSpacing(2)
+            Text(LocalizedStringKey(note)).font(.body14).foregroundStyle(Color.ink).lineSpacing(2)
             Spacer(minLength: 0)
         }
         .padding(14)
@@ -266,7 +271,7 @@ struct GuideQuestionsView: View {
     @ViewBuilder
     private func questionCard(_ q: GuideQuestion) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(q.prompt).font(.cardTitle).foregroundStyle(Color.ink)
+            Text(LocalizedStringKey(q.prompt)).font(.cardTitle).foregroundStyle(Color.ink)
             switch q.kind {
             case .choice(let options):
                 VStack(spacing: 6) {
@@ -274,7 +279,7 @@ struct GuideQuestionsView: View {
                         let on = answers[q.id] == option
                         Button { answers[q.id] = option } label: {
                             HStack {
-                                Text(option).font(.body14).foregroundStyle(Color.ink)
+                                Text(LocalizedStringKey(option)).font(.body14).foregroundStyle(Color.ink)
                                 Spacer()
                                 if on { Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(Color.accent) }
                             }
@@ -287,7 +292,7 @@ struct GuideQuestionsView: View {
                     }
                 }
             case .text(let placeholder):
-                TextField(placeholder, text: Binding(
+                TextField(LocalizedStringKey(placeholder), text: Binding(
                     get: { answers[q.id] ?? "" },
                     set: { answers[q.id] = $0 }))
                     .font(.body14).foregroundStyle(Color.ink)

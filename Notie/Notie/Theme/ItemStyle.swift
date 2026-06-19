@@ -7,22 +7,65 @@
 //
 
 import SwiftUI
+import UIKit
+
+extension UIImage {
+    // Stack pages top-to-bottom into one image (width = the widest page) so a
+    // multi-page scan can be kept as a single stored photo. Returns nil only if
+    // the list is empty or the graphics context can't be created.
+    static func stackedVertically(_ images: [UIImage], gap: CGFloat = 8) -> UIImage? {
+        guard !images.isEmpty else { return nil }
+        let width = images.map(\.size.width).max() ?? 0
+        let height = images.map(\.size.height).reduce(0, +) + gap * CGFloat(images.count - 1)
+        guard width > 0, height > 0 else { return nil }
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1   // pages are already full-res; avoid a @3x blow-up
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
+        return renderer.image { _ in
+            var y: CGFloat = 0
+            for image in images {
+                let x = (width - image.size.width) / 2   // center narrower pages
+                image.draw(in: CGRect(origin: CGPoint(x: x, y: y), size: image.size))
+                y += image.size.height + gap
+            }
+        }
+    }
+}
 
 // Turn plain text into an AttributedString where URLs and phone numbers are
 // tappable links (phones become tel:). Shared so screens render links the same.
+//
+// Chinese/Japanese text has no spaces, so the system link detector can swallow
+// the words that follow a URL — "访问 nyc.gov/pay并登录" matched the whole
+// "nyc.gov/pay并登录" as one (broken) link. We trim each detected URL back to its
+// URL-safe ASCII prefix and rebuild a clean https URL so the link is valid and
+// stops at the address.
 nonisolated func linkified(_ string: String) -> AttributedString {
     var attr = AttributedString(string)
     let types: NSTextCheckingResult.CheckingType = [.link, .phoneNumber]
     guard let detector = try? NSDataDetector(types: types.rawValue) else { return attr }
     let ns = string as NSString
     for m in detector.matches(in: string, range: NSRange(location: 0, length: ns.length)) {
-        guard let sr = Range(m.range, in: string),
+        var range = m.range
+        let url: URL?
+        if m.resultType == .phoneNumber {
+            url = m.phoneNumber.flatMap { URL(string: "tel:" + $0.filter { $0.isNumber || $0 == "+" }) }
+        } else {
+            let matched = ns.substring(with: range)
+            // Keep only the leading run of URL-safe ASCII; drop trailing CJK etc.
+            let kept = matched.prefix { $0.isASCII && !$0.isWhitespace }
+            if kept.count != matched.count {
+                range = NSRange(location: range.location, length: (String(kept) as NSString).length)
+            }
+            let trimmed = String(kept)
+            url = trimmed.contains("://") ? URL(string: trimmed) : URL(string: "https://" + trimmed)
+        }
+        guard let url,
+              let sr = Range(range, in: string),
               let lo = AttributedString.Index(sr.lowerBound, within: attr),
               let hi = AttributedString.Index(sr.upperBound, within: attr) else { continue }
-        let url: URL? = (m.resultType == .phoneNumber)
-            ? m.phoneNumber.flatMap { URL(string: "tel:" + $0.filter { $0.isNumber || $0 == "+" }) }
-            : m.url
-        if let url { attr[lo..<hi].link = url; attr[lo..<hi].underlineStyle = .single }
+        attr[lo..<hi].link = url
+        attr[lo..<hi].underlineStyle = .single
     }
     return attr
 }

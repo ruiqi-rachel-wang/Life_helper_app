@@ -2,8 +2,8 @@
 //
 //  Wraps UNUserNotificationCenter — the iOS local-notification system.
 //  Turns an ActionItem's reminderSchedule() (3d before / 1d before / due
-//  day / overdue follow-up) into scheduled notifications, and cancels them
-//  when the item is done or deleted.
+//  day) into scheduled notifications, adds a repeating daily nudge once
+//  overdue, and cancels them when the item is done or deleted.
 //
 //  This is the platform layer: it's allowed to know about ActionItem, but
 //  the model stays free of UserNotifications. Notifications fire at 9am on
@@ -49,12 +49,13 @@ final class ReminderScheduler {
     // ("<uuid>|r0", "r1", …). cancel() clears a generous range so a variable
     // count is always fully removed without an async fetch.
     private static let maxReminders = 32
-
-    private static let maxOverdueNudges = 14
+    private static let legacyOverdueNudges = 14
 
     private func ids(for itemID: UUID) -> [String] {
         var ids = (0..<Self.maxReminders).map { "\(itemID.uuidString)|r\($0)" }
-        ids += (0..<Self.maxOverdueNudges).map { "\(itemID.uuidString)|od\($0)" }
+        // Remove requests created by the old 14-one-shot implementation too.
+        ids += (0..<Self.legacyOverdueNudges).map { "\(itemID.uuidString)|od\($0)" }
+        ids.append("\(itemID.uuidString)|odDaily")   // repeating overdue nudge
         ids.append("\(itemID.uuidString)|snooze")
         return ids
     }
@@ -86,19 +87,21 @@ final class ReminderScheduler {
             center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
         }
 
-        // Daily "every morning until it's done" nudges while overdue (on top of
-        // the planned reminders above; not part of the editable list).
-        for (index, fire) in item.overdueNudgeDates(now: now).enumerated() {
+        // One repeating 9am request keeps nudging every day until Mark done /
+        // Delete cancels it. Newly-overdue items are picked up when the app
+        // refreshes all schedules on launch or foreground.
+        if item.isOverdue {
             let content = UNMutableNotificationContent()
             content.title = item.title
             content.body = String(localized: "Overdue — still not done")
             content.sound = .default
             content.categoryIdentifier = ReminderID.category
             content.userInfo = [ReminderID.itemKey: item.id.uuidString]
-            let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
-            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+            let trigger = UNCalendarNotificationTrigger(
+                dateMatching: DateComponents(hour: 9, minute: 0),
+                repeats: true)
             center.add(UNNotificationRequest(
-                identifier: "\(item.id.uuidString)|od\(index)", content: content, trigger: trigger))
+                identifier: "\(item.id.uuidString)|odDaily", content: content, trigger: trigger))
         }
     }
 
@@ -123,10 +126,6 @@ final class ReminderScheduler {
 
     // MARK: helpers
 
-    private func at9am(_ day: Date, calendar: Calendar = .current) -> Date? {
-        calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day)
-    }
-
     // Friendly body computed from how far the fire date is before the due date.
     private func body(fireDate: Date, due: Date?, calendar: Calendar = .current) -> String {
         guard let due else { return String(localized: "Reminder") }
@@ -149,7 +148,7 @@ final class ReminderScheduler {
     func fireTestReminder() {
         let content = UNMutableNotificationContent()
         content.title = "Test reminder"
-        content.body = "This is what a Notie reminder looks like."
+        content.body = "This is what a Plaino reminder looks like."
         content.sound = .default
         content.categoryIdentifier = ReminderID.category
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)

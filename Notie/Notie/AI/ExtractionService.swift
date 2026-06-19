@@ -74,14 +74,30 @@ nonisolated struct ExtractionService {
         }
         if let c = hints.currency, out.amount != nil { out.currency = c }
 
-        // DUE DATE: the regex date wins for the DAY, but preserve the model's
-        // TIME when it lands on that same day (the regex only knows the date, not
-        // the 8:05 AM departure). Otherwise a regex date has no time.
+        // DUE DATE: the model decides WHICH date is the deadline (it reads the
+        // context — exam date vs. "submit within 90 days" vs. the date the email
+        // was sent); the regex only sharpens a printed date the model agrees with.
         if let parsedDue = hints.dueDate {
-            let modelHadSameDayTime = out.dueHasTime
-                && out.dueDate.map { Calendar.current.isDate($0, inSameDayAs: parsedDue) } == true
-            if !modelHadSameDayTime {
-                out.dueDate = parsedDue
+            if let modelDue = out.dueDate {
+                let sameDay = Calendar.current.isDate(modelDue, inSameDayAs: parsedDue)
+                if llm.lowConfidenceFields.contains("dueDate") {
+                    // The model COMPUTED the deadline (e.g. exam + 90 days). A raw
+                    // date the regex grabbed off the page is some OTHER date — keep
+                    // the model's computed deadline, just flag it for a quick check.
+                    lowConf.insert("dueDate")
+                } else if sameDay {
+                    // Same day → keep the model's value so a flight/appointment TIME
+                    // it found (8:05 AM) survives; the regex only knew the day.
+                } else {
+                    // A plainly-printed deadline the model didn't flag: the regex
+                    // digits are exact, so prefer them — but the model disagreed on
+                    // the day, so flag it.
+                    out.dueDate = parsedDue
+                    out.dueHasTime = false
+                    lowConf.insert("dueDate")
+                }
+            } else {
+                out.dueDate = parsedDue                    // model had none; use the printed date
                 out.dueHasTime = false
             }
         } else if out.dueDate != nil {

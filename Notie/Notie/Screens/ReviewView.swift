@@ -17,10 +17,14 @@ import SwiftData
 struct ReviewView: View {
     // What produces the result(s): scan → OCR+extract, guide → build+polish.
     let load: () async throws -> [ExtractionResult]
-    var image: UIImage? = nil                 // preview (first page) — scans only
-    var pageCount: Int = 1                     // total pages scanned (for the badge)
+    var images: [UIImage] = []                 // every scanned page (empty for guides)
+    var pageWarning: String? = nil             // e.g. "some pages couldn't be opened"
     var source: ItemSource = .scanned         // tags saved items
     var loadingLabel = "Reading your document…"
+
+    // Derived from the pages. Preview shows the first; the badge shows the count.
+    private var image: UIImage? { images.first }
+    private var pageCount: Int { images.count }
     // How to leave this screen. Guides/scans pass a closure that pops their
     // whole stack back to the tab's root; falls back to a one-level dismiss.
     var onClose: (() -> Void)? = nil
@@ -47,6 +51,11 @@ struct ReviewView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     header
                     photo.padding(.horizontal, 14).padding(.top, 8)
+                    if let pageWarning {
+                        Label(pageWarning, systemImage: "exclamationmark.triangle")
+                            .font(.subline).foregroundStyle(Color.warn)
+                            .padding(.horizontal, 18).padding(.top, 8)
+                    }
                     content.padding(.horizontal, 14).padding(.top, 14)
                     Spacer(minLength: 40)
                 }
@@ -155,20 +164,22 @@ struct ReviewView: View {
         switch phase {
         case .loading:  loadingCard(loadingLabel)
         case .readyMulti: multiList
-        case .noText:   messageCard("Couldn't read any text. Try a clearer, well-lit photo.", retake: true)
-        case .failed(let m): messageCard("Couldn't analyze this document.\n\(m)", retake: true)
+        case .noText:   messageCard(String(localized: "Couldn't read any text. Try a clearer, well-lit photo."), retake: true)
+        case .failed(let m): messageCard(String(localized: "Couldn't analyze this document.") + "\n" + m, retake: true)
         case .ready:
             if isUnreadable {
-                messageCard("We couldn't read this clearly, so the details might be wrong. Try retaking the photo in better light.", retake: true)
+                messageCard(String(localized: "We couldn't read this clearly, so the details might be wrong. Try retaking the photo in better light."), retake: true)
             } else {
                 resultCard
             }
         }
     }
 
+    // `label` arrives as a String (loadingLabel), so wrap in LocalizedStringKey
+    // to translate it rather than show it verbatim.
     private func loadingCard(_ label: String) -> some View {
         card {
-            HStack(spacing: 8) { ProgressView(); Text(label).font(.body14).foregroundStyle(Color.faded) }
+            HStack(spacing: 8) { ProgressView(); Text(LocalizedStringKey(label)).font(.body14).foregroundStyle(Color.faded) }
         }
     }
 
@@ -468,16 +479,21 @@ struct ReviewView: View {
 
     @ViewBuilder
     private var footer: some View {
-        if isNoAction {
-            VStack(spacing: 8) {
+        VStack(spacing: 10) {
+            if isNoAction {
                 Text("Nothing to do — this is just for your information.")
                     .font(.subline).foregroundStyle(Color.faded)
-                Button { finish() } label: {
-                    primaryLabel("Done")
-                }.buttonStyle(.plain)
+                Button { finish() } label: { primaryLabel("Done") }.buttonStyle(.plain)
+            } else {
+                Button { addToInbox() } label: { primaryLabel("Add to inbox") }.buttonStyle(.plain)
             }
-        } else {
-            Button { addToInbox() } label: { primaryLabel("Add to inbox") }.buttonStyle(.plain)
+            // Always-visible AI-accuracy disclaimer (legal/risk control): the result
+            // is AI-generated and can be wrong — tell the user to verify.
+            Text("AI-generated — double-check important details against the original and the official source.")
+                .font(.subline).foregroundStyle(Color.faint)
+                .multilineTextAlignment(.center).lineSpacing(2)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 2)
         }
     }
 
@@ -590,9 +606,13 @@ struct ReviewView: View {
             }
     }
 
-    // The scanned photo to store on the item.
+    // The scanned photo to store on the item. Stacks ALL pages into one tall
+    // image so a multi-page document keeps its back pages too (the old code kept
+    // only the first). Single-page documents store as-is.
     private var scanImageData: Data? {
-        image?.jpegData(compressionQuality: 0.7)
+        guard !images.isEmpty else { return nil }
+        let stored = images.count == 1 ? images[0] : UIImage.stackedVertically(images)
+        return stored?.jpegData(compressionQuality: 0.7)
     }
 
     private func addSelected() {
@@ -669,21 +689,6 @@ struct ReviewView: View {
             .stroke(flagged ? Color.accent : Color.clear, lineWidth: 1))
     }
 
-    // URLs + phone numbers → tappable links.
-    private func linked(_ string: String) -> AttributedString {
-        var attr = AttributedString(string)
-        let types: NSTextCheckingResult.CheckingType = [.link, .phoneNumber]
-        guard let detector = try? NSDataDetector(types: types.rawValue) else { return attr }
-        let ns = string as NSString
-        for m in detector.matches(in: string, range: NSRange(location: 0, length: ns.length)) {
-            guard let sr = Range(m.range, in: string),
-                  let lo = AttributedString.Index(sr.lowerBound, within: attr),
-                  let hi = AttributedString.Index(sr.upperBound, within: attr) else { continue }
-            let url: URL? = (m.resultType == .phoneNumber)
-                ? m.phoneNumber.flatMap { URL(string: "tel:" + $0.filter { $0.isNumber || $0 == "+" }) }
-                : m.url
-            if let url { attr[lo..<hi].link = url; attr[lo..<hi].underlineStyle = .single }
-        }
-        return attr
-    }
+    // URLs + phone numbers → tappable links (shared with Detail/StepDetail).
+    private func linked(_ string: String) -> AttributedString { linkified(string) }
 }

@@ -20,6 +20,7 @@ import PhotosUI
 private struct ScanRoute: Identifiable, Hashable {
     let id = UUID()
     let images: [UIImage]
+    var warning: String? = nil   // e.g. "some pages couldn't be opened"
     static func == (a: ScanRoute, b: ScanRoute) -> Bool { a.id == b.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
@@ -76,8 +77,10 @@ struct CreateView: View {
                 CameraPicker(image: $cameraImage).ignoresSafeArea()
             }
             // Fallback when there's no camera (e.g. Simulator): pick up to 5 photos.
+            // `.ordered` so the numbered pick order = page order (front first).
             .photosPicker(isPresented: $showPhotoPicker, selection: $photoItems,
-                          maxSelectionCount: Self.maxPages, matching: .images)
+                          maxSelectionCount: Self.maxPages, selectionBehavior: .ordered,
+                          matching: .images)
             // After capture/pick, push the combined Review screen. The scan `load`
             // OCRs every page, joins the text, then runs AI extraction once.
             .navigationDestination(item: $scanRoute) { route in
@@ -96,12 +99,15 @@ struct CreateView: View {
                         let ocr = pages.enumerated()
                             .map { pages.count > 1 ? "--- Page \($0.offset + 1) ---\n\($0.element)" : $0.element }
                             .joined(separator: "\n\n")
-                        ScanQuota.record()   // one document = one scan, regardless of page count
-                        return try await ExtractionService(extractor: OpenAIClient())
+                        // Charge a scan only AFTER the request succeeds — a network
+                        // or server failure shouldn't burn the user's daily quota.
+                        let results = try await ExtractionService(extractor: OpenAIClient())
                             .extract(from: ocr, language: language)
+                        ScanQuota.record()   // one document = one scan, regardless of page count
+                        return results
                     },
-                    image: route.images.first,
-                    pageCount: route.images.count,
+                    images: route.images,
+                    pageWarning: route.warning,
                     source: .scanned,
                     onClose: { scanRoute = nil })   // back to the Add screen
             }
@@ -113,12 +119,20 @@ struct CreateView: View {
         .onChange(of: photoItems) { _, items in
             guard !items.isEmpty else { return }
             Task {
+                let requested = min(items.count, Self.maxPages)
                 var images: [UIImage] = []
                 for item in items.prefix(Self.maxPages) {
                     if let data = try? await item.loadTransferable(type: Data.self),
                        let image = UIImage(data: data) { images.append(image) }
                 }
-                if !images.isEmpty, allowScan() { scanRoute = ScanRoute(images: images) }
+                // Tell the user when some pages didn't load instead of silently
+                // dropping them — they may think a page is included when it isn't.
+                let warning = images.count < requested
+                    ? String(localized: "Only \(images.count) of \(requested) photos could be opened — continuing with those.")
+                    : nil
+                if !images.isEmpty, allowScan() {
+                    scanRoute = ScanRoute(images: images, warning: warning)
+                }
                 photoItems = []
             }
         }
@@ -167,7 +181,8 @@ struct CreateView: View {
     // Two smaller tiles: Upload from Photos (→ OCR), Create it yourself.
     private var secondaryRow: some View {
         HStack(spacing: 8) {
-            PhotosPicker(selection: $photoItems, maxSelectionCount: Self.maxPages, matching: .images) {
+            PhotosPicker(selection: $photoItems, maxSelectionCount: Self.maxPages,
+                         selectionBehavior: .ordered, matching: .images) {
                 SecondaryTile(symbol: "photo.on.rectangle.angled",
                               title: "Upload from Photos")
             }
@@ -200,7 +215,9 @@ private struct SecondaryTile: View {
             }
             .frame(width: 32, height: 32)
 
-            Text(title)
+            // LocalizedStringKey so the passed-in literal ("Upload from Photos",
+            // "Create it yourself") is translated, not shown verbatim.
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 11.5, weight: .semibold))
                 .foregroundStyle(Color.ink)
                 .multilineTextAlignment(.center)

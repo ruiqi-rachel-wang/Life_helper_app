@@ -621,23 +621,8 @@ struct DetailView: View {
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 
-    // URLs + phone numbers → tappable links (same as Review).
-    private func linked(_ string: String) -> AttributedString {
-        var attr = AttributedString(string)
-        let types: NSTextCheckingResult.CheckingType = [.link, .phoneNumber]
-        guard let detector = try? NSDataDetector(types: types.rawValue) else { return attr }
-        let ns = string as NSString
-        for m in detector.matches(in: string, range: NSRange(location: 0, length: ns.length)) {
-            guard let sr = Range(m.range, in: string),
-                  let lo = AttributedString.Index(sr.lowerBound, within: attr),
-                  let hi = AttributedString.Index(sr.upperBound, within: attr) else { continue }
-            let url: URL? = (m.resultType == .phoneNumber)
-                ? m.phoneNumber.flatMap { URL(string: "tel:" + $0.filter { $0.isNumber || $0 == "+" }) }
-                : m.url
-            if let url { attr[lo..<hi].link = url; attr[lo..<hi].underlineStyle = .single }
-        }
-        return attr
-    }
+    // URLs + phone numbers → tappable links (shared with Review/StepDetail).
+    private func linked(_ string: String) -> AttributedString { linkified(string) }
 }
 
 #Preview {

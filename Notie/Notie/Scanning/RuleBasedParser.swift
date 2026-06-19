@@ -136,7 +136,7 @@ nonisolated struct RuleBasedParser {
         // "deadline" — that's the date that matters on a bill. Judged per
         // candidate so an unrelated first date isn't picked by accident.
         // Context words that mark a date as the actionable one. Beyond bills:
-        // real Notie docs are appointments, prescriptions, travel, deadlines —
+        // real Plaino docs are appointments, prescriptions, travel, deadlines —
         // so "expires", "appointment", "departure" etc. count too (learned from
         // the real Week-4 samples: a Costco Rx expiry, a GEICO appointment, a
         // flight departure are all "the date that matters").

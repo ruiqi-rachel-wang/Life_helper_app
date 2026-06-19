@@ -1,4 +1,4 @@
-//  Font+Notie.swift
+//  Font+Plaino.swift
 //
 //  Type scale tokens, mapping the spec's typography to Apple's system
 //  fonts (New York serif, SF Pro sans, SF Mono). Used via

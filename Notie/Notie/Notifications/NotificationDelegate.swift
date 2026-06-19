@@ -6,7 +6,7 @@
 //   • tapping the banner → open the app to that item (via AppRouter)
 //
 //  It needs the shared ModelContainer to mutate items and the AppRouter to
-//  route the UI; both are injected at launch by NotieApp.
+//  route the UI; both are injected at launch by PlainoApp.
 //
 
 import Foundation

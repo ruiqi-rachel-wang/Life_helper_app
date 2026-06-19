@@ -15,8 +15,12 @@ import Foundation
 import SwiftData
 
 // Semantic category. Drives the icon/color in the view, not vice-versa.
+// Ordered most-common → least-common for this app's audience. CaseIterable
+// drives the "Create it yourself" category menu and the Guides chips, so the
+// order shown to the user follows this list (rawValue strings are unchanged, so
+// stored items keep decoding).
 nonisolated enum ItemCategory: String, Codable, CaseIterable {
-    case utility, government, medical, finance, auto, housing, work, personal, other
+    case utility, finance, housing, medical, personal, government, auto, work, other
 
     // Localized name shown in the tag (follows the device language via the catalog).
     var displayName: String {
@@ -169,6 +173,10 @@ final class ActionItem {
     // series tidy (at most one active + one done). nil = singleton/legacy; use
     // `effectiveSeriesID`. Stamped the first time a cycle spawns.
     var seriesID: UUID?
+    // The day-of-month the series should land on (e.g. 31). Captured from the
+    // first occurrence's due date so month-based recurrence doesn't drift after a
+    // short month (see Recurrence.nextDate). nil = no anchor (use the due day).
+    var recurrenceAnchorDay: Int?
     // First-launch onboarding examples. They render normally but never schedule
     // reminders (so a tutorial item can't nag the user) and aren't real user data.
     var isExample: Bool = false
@@ -239,8 +247,12 @@ final class ActionItem {
             dueDate: r.dueDate,
             imageData: imageData,
             steps: Self.mapSteps(r),
-            recurrence: r.repeats ?? Self.defaultRecurrence(for: r.category)
+            recurrence: r.repeats
         )
+        // Anchor month-based series to the original due day so they don't drift.
+        if let due = r.dueDate, let rec = r.repeats, rec.isMonthBased {
+            self.recurrenceAnchorDay = Calendar.current.component(.day, from: due)
+        }
         self.summary = r.summary ?? ""
         self.documentType = r.documentType ?? ""
         self.sender = r.sender ?? ""
@@ -302,13 +314,6 @@ final class ActionItem {
     // for singletons / pre-seriesID items.
     var effectiveSeriesID: UUID { seriesID ?? id }
 
-    // Some document types are reliably recurring even when the AI doesn't say so —
-    // a utility bill is monthly. Used as the recurrence default on scan; the user
-    // can still change it in Review.
-    static func defaultRecurrence(for category: ItemCategory?) -> Recurrence? {
-        category == .utility ? .monthly : nil
-    }
-
     // Keep a recurring series tidy: at most ONE active (the soonest-due) and ONE
     // done (the latest-due). Returns the *other* items in the series to delete.
     // Pure → unit-tested. Called after a spawn (mark-done / skip).
@@ -333,9 +338,16 @@ final class ActionItem {
     // defaults (the old custom times were tied to the old due date). Returns
     // nil for one-off items or when there's no due date to advance from.
     // Spawned when a recurring item is marked done (or skipped on delete).
+    //
+    // Carries over only the STABLE facts (what the task is + how to do it): title,
+    // category, steps, sender, document type, site, saved IDs, cadence. It does
+    // NOT carry the period-specific facts — `amount`, `summary`, and `notes` — so
+    // next month's bill doesn't inherit "$42 · June electricity bill · pay by June
+    // 30". Those are filled in fresh when the user scans the new statement.
     func makeNextOccurrence(calendar: Calendar = .current) -> ActionItem? {
         guard let recurrence, let due = dueDate,
-              let nextDue = recurrence.nextDate(after: due, calendar: calendar) else { return nil }
+              let nextDue = recurrence.nextDate(
+                after: due, anchorDay: recurrenceAnchorDay, calendar: calendar) else { return nil }
 
         let freshSteps = steps.map { step -> ChecklistStep in
             var detail = step.detail
@@ -344,26 +356,27 @@ final class ActionItem {
             }
             return ChecklistStep(text: step.text, done: false, detail: detail)
         }
-        let next = ActionItem(title: title, category: category, amount: amount,
+        let next = ActionItem(title: title, category: category,
                               currency: currency, dueDate: nextDue, note: note,
                               status: .todo, steps: freshSteps, recurrence: recurrence)
-        next.summary = summary
+        // Stable identity/how-to facts carry over; period-specific ones do not.
         next.documentType = documentType
         next.sender = sender
         next.senderShort = senderShort
         next.dueHasTime = dueHasTime
         next.siteURL = siteURL
         next.otherIDs = otherIDs
-        next.notes = notes
         next.source = source
         next.reminderLeadHours = reminderLeadHours
+        next.recurrenceAnchorDay = recurrenceAnchorDay
         next.seriesID = effectiveSeriesID   // child joins this series
         return next
     }
 
     // Timed events (dueHasTime): a heads-up the day before (9am) + a reminder
     // `reminderLeadHours` before the exact time. Plain dates: 3 days / 1 day /
-    // due day (+ overdue follow-up).
+    // due day. Daily overdue nudges are scheduled separately by the platform
+    // scheduler and are intentionally absent from this editable list.
     func reminderSchedule(now: Date = .now,
                           calendar: Calendar = .current) -> [ScheduledReminder] {
         guard let due = dueDate else { return [] }
@@ -388,29 +401,6 @@ final class ActionItem {
         }
         out.append(ScheduledReminder(date: due, label: "Due day"))
         return out
-        // (Overdue handling is no longer a single follow-up in this editable list —
-        // it's daily nudges, see overdueNudgeDates, scheduled separately.)
-    }
-
-    // Daily 9am reminders while an item is overdue and not done — a behavioral
-    // nudge "every morning until it's done", kept OUT of the editable reminder
-    // list so it doesn't clutter the UI. The scheduler fires these on top of the
-    // planned reminders; capped at 14 days. Empty unless overdue.
-    func overdueNudgeDates(now: Date = .now, calendar: Calendar = .current) -> [Date] {
-        guard status != .done, let due = dueDate,
-              due < calendar.startOfDay(for: now) else { return [] }
-        let nineToday = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
-        let firstDay = now < nineToday
-            ? calendar.startOfDay(for: now)                                              // today (9am still ahead)
-            : (calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now)
-        var dates: [Date] = []
-        for offset in 0..<14 {
-            if let day = calendar.date(byAdding: .day, value: offset, to: firstDay),
-               let fire = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: day), fire > now {
-                dates.append(fire)
-            }
-        }
-        return dates
     }
 
     // The default reminders (day reminders resolved to 9am; timed reminders at
@@ -447,11 +437,11 @@ extension ActionItem {
 
     static var samples: [ActionItem] {
         let welcome = ActionItem(
-            title: String(localized: "👋 Welcome to Notie"),
+            title: String(localized: "👋 Welcome to Plaino"),
             category: .personal, dueDate: day(-1),
             steps: [
-                ChecklistStep(text: String(localized: "Notie turns a confusing bill or letter into simple steps like these.")),
-                ChecklistStep(text: String(localized: "Tap ＋ Add to scan a document — Notie explains it and what to do.")),
+                ChecklistStep(text: String(localized: "Plaino turns a confusing bill or letter into simple steps like these.")),
+                ChecklistStep(text: String(localized: "Tap ＋ Add to scan a document — Plaino explains it and what to do.")),
                 ChecklistStep(text: String(localized: "Tap a circle to check off a step as you finish it.")),
             ])
         let bill = ActionItem(
@@ -459,7 +449,7 @@ extension ActionItem {
             category: .utility, amount: usd("42.00"), dueDate: day(18), status: .inProgress,
             steps: [
                 ChecklistStep(text: String(localized: "Scanned bills show the amount and due date up top."), done: true),
-                ChecklistStep(text: String(localized: "Notie reminds you before it's due so you don't forget.")),
+                ChecklistStep(text: String(localized: "Plaino reminds you before it's due so you don't forget.")),
                 ChecklistStep(text: String(localized: "When you've paid, tap Mark done.")),
             ])
         let finished = ActionItem(

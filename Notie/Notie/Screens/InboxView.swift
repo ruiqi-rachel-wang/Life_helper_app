@@ -84,7 +84,7 @@ struct InboxView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(dateLabel)
                     .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
-                Text("Inbox")
+                Text("To-Do")
                     .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
             }
             Spacer()
@@ -169,7 +169,7 @@ private struct RowLink: View {
                 glyph: item.category.symbol,
                 color: item.category.tint,
                 title: item.title,
-                subtitle: done ? "Completed" : item.inboxSubtitle,
+                subtitle: done ? String(localized: "Completed") : item.inboxSubtitle,
                 isOverdue: item.isOverdue,
                 done: done
             )

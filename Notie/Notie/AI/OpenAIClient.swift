@@ -22,8 +22,27 @@ nonisolated struct OpenAIClient: Extractor {
     var apiKey: String = APIKeys.openAI
     var model: String = "gpt-4o"            // extraction — needs reasoning
     var polishModel: String = "gpt-4o-mini" // guide polish — only light rewording, keep it cheap
-    var endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
+    // The Worker when configured (no key on the phone), else OpenAI direct (dev).
+    var endpoint = BackendConfig.chatEndpoint
+    var usesWorker = BackendConfig.usesWorker
     var session: URLSession = .shared
+
+    // Build an authorized POST. When going through the Worker we send NO key —
+    // the Worker holds it; for the direct dev path we add the Bearer header.
+    private func request(body: Data) -> URLRequest {
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if !usesWorker { req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
+        req.httpBody = body
+        return req
+    }
+
+    // We can call the model if the Worker is configured (it holds the key) OR a
+    // real dev key is present for the direct path.
+    private var canCall: Bool {
+        usesWorker || (apiKey.hasPrefix("sk-") && !apiKey.contains("REPLACE"))
+    }
 
     enum ClientError: LocalizedError {
         case missingKey
@@ -44,11 +63,8 @@ nonisolated struct OpenAIClient: Extractor {
     func extract(text: String,
                  hints: RuleBasedParser.Hints,
                  language: ExplainLanguage) async throws -> [ExtractionResult] {
-        // Validate THIS client's key (injected or default), not a global — so an
-        // injected client / the future Worker swap behaves as the protocol implies.
-        guard apiKey.hasPrefix("sk-"), !apiKey.contains("REPLACE") else {
-            throw ClientError.missingKey
-        }
+        // Need either the Worker (holds the key) or a real dev key for the direct path.
+        guard canCall else { throw ClientError.missingKey }
 
         let body = ChatRequest(
             model: model,
@@ -60,12 +76,7 @@ nonisolated struct OpenAIClient: Extractor {
             ]
         )
 
-        var req = URLRequest(url: endpoint)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        req.httpBody = try JSONEncoder().encode(body)
-
+        let req = request(body: try JSONEncoder().encode(body))
         let (data, response) = try await session.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw ClientError.http(0, "") }
         guard (200..<300).contains(http.statusCode) else {
@@ -118,14 +129,20 @@ nonisolated struct OpenAIClient: Extractor {
                           policy/claim numbers) — those are NOT amounts.
           currency      : ISO 4217 like "USD", or null
           dueDate       : the SINGLE most important action date, or null. Use "YYYY-MM-DD"
-                          for a plain deadline; use "YYYY-MM-DDTHH:MM" (24-hour) when the
-                          event has a SPECIFIC TIME, like a flight departure or an
-                          appointment (e.g. "2026-06-25T08:05"). Not every doc is a bill —
-                          it may be a payment due date, appointment, flight departure,
-                          prescription/registration expiry, or submission deadline. The date
-                          an email was SENT is NOT the due date. If the deadline is in words
-                          (e.g. "within 90 days of the exam"), compute it and add "dueDate"
-                          to lowConfidenceFields.
+                          for a plain deadline. When the event has a SPECIFIC TIME (a flight
+                          departure, an appointment), use "YYYY-MM-DDTHH:MM" (24-hour). If
+                          that time happens at a PHYSICAL PLACE in a known timezone (a flight
+                          leaving New York, an in-person appointment in a city), APPEND that
+                          place's UTC offset so the reminder is correct even if the phone is
+                          in another timezone — e.g. an 8:05 AM departure from New York in
+                          June is "2026-06-25T08:05-04:00" (EDT). If you cannot determine the
+                          offset, omit it. Not every doc is a bill — it may be a payment due
+                          date, appointment, flight departure, prescription/registration
+                          expiry, or submission deadline. The date an email was SENT is NOT
+                          the due date. If the deadline is in WORDS (e.g. "within 90 days of
+                          the exam"), COMPUTE the actual calendar date, return THAT computed
+                          date (not the date it's measured from), and add "dueDate" to
+                          lowConfidenceFields.
           accountNumber : the ONE identifier the reader needs to ACT on this — to pay it,
                           look it up, reference it on a call, or dispute it. Pick the
                           actionable id for whatever the document is: a bill's account number,
@@ -139,10 +156,13 @@ nonisolated struct OpenAIClient: Extractor {
                           label. SKIP passive descriptors the reader won't act on (VIN,
                           make/model, plate) UNLESS they're actually needed to pay/dispute.
                           Always capture claim and policy numbers. [] if none.
-          category      : EXACTLY one of these 8 lowercase words and NOTHING else:
-                          utility, government, medical, finance, housing, work, personal, other.
+          category      : EXACTLY one of these 9 lowercase words and NOTHING else:
+                          utility, finance, housing, medical, personal, government, auto, work, other.
                           Travel, flights, appointments, and personal errands are "personal".
-                          Never invent a category like "travel" — use one of the 8.
+                          Use "auto" for anything about a VEHICLE — car registration/renewal,
+                          auto insurance, a vehicle repair or service invoice. Use "government"
+                          for tickets, fines, DMV/court letters, and tax/immigration notices.
+                          Never invent a category like "travel" or "insurance" — use one of the 9.
           summary       : in \(language.promptName). Say what this document is AND, when it is
                           a penalty / notice / decision / response to something, WHY they got
                           it or what triggered it — lead with the cause, not just the type.
@@ -154,9 +174,15 @@ nonisolated struct OpenAIClient: Extractor {
                           enough (e.g. "A flight from New York to Chicago, UA623, departing
                           June 25 at 8:05 AM"). Add more only for a term/situation the reader
                           likely won't understand. Add understanding; don't reword or pad.
-          steps         : the concrete, ORDERED actions to get this done, in
-                          \(language.promptName). Be specific and operational, not vague — no
-                          "pay it" / "contact them". When there is an ONLINE option, give it
+          steps         : the concrete, ORDERED actions to FULLY resolve this, in
+                          \(language.promptName). Think it all the way through to "done" and
+                          list EVERY real action — including the ones the document only hints
+                          at. Don't stop at the obvious payment. Example: a parking ticket for
+                          an EXPIRED REGISTRATION is not done when the fine is paid — the steps
+                          should pay the ticket AND renew the registration AND get/display the
+                          new sticker or tag (and, where offered, print a temporary proof) so
+                          the person isn't ticketed again tomorrow. Be specific and operational,
+                          not vague — no "pay it" / "contact them". When there is an ONLINE option, give it
                           as a step WITH the website/app (e.g. "Check in online at united.com,
                           or check in at the airport counter"), then real next steps (e.g.
                           "arrive ~2 hours early", "go through security", "find your gate").
@@ -175,7 +201,13 @@ nonisolated struct OpenAIClient: Extractor {
                           how, useful context, caveats, deadlines context. Phone numbers and
                           URLs welcome here. [] if none.
           siteURL       : a relevant URL if the document names one, else null
-          repeats       : one of "monthly", "yearly", "every:N" (N = days), or null for one-off — only if the document recurs
+          repeats       : one of "monthly", "yearly", "every:N" (N = days), or null. Set a
+                          cadence ONLY for a bill/charge that genuinely repeats on a schedule
+                          (a regular monthly utility or subscription → "monthly"; an annual
+                          renewal → "yearly"). Use null (one-off) for anything that does NOT
+                          recur — a final/closing bill, a shut-off or move-out notice, a
+                          deposit, a one-time repair invoice, a ticket, an appointment. Do
+                          NOT mark something monthly just because it's a utility.
           confidence    : your overall confidence 0.0-1.0
           lowConfidenceFields : array of field names you are unsure about
 
@@ -189,6 +221,9 @@ nonisolated struct OpenAIClient: Extractor {
 
         ROOT CAUSE — when a document is a CONSEQUENCE of an underlying problem, the \
         steps should address BOTH the cause AND this document, in a sensible order. \
+        Put the cause-fixing actions in `steps` (the checklist the user works \
+        through) — NEVER leave them only in `notes`. A note that says "you should \
+        also renew your registration" does not count; it must be an actual step. \
         This is a general principle across document types — e.g. a ticket for an \
         expired registration → renew the registration AND handle the ticket; a late \
         fee → pay AND set up autopay/reminders so it doesn't recur; a denied claim or \
@@ -390,6 +425,17 @@ nonisolated enum ExtractionJSON {
         guard let s, !s.isEmpty else { return (nil, false) }
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
+
+        // FIRST: a time WITH a UTC offset (e.g. "2026-06-25T08:05-04:00"). A flight
+        // departs at 8:05 in NEW YORK's time, not the phone's — the offset pins the
+        // correct absolute instant so the reminder fires right even on a Chicago
+        // phone. The format carries its own zone, so we don't set f.timeZone.
+        for fmt in ["yyyy-MM-dd'T'HH:mmZZZZZ", "yyyy-MM-dd'T'HH:mm:ssZZZZZ"] {
+            f.dateFormat = fmt
+            if let d = f.date(from: s) { return (d, true) }
+        }
+
+        // Otherwise a local time with no offset — interpret in the device timezone.
         f.timeZone = .current
         for fmt in ["yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd'T'HH:mm:ss"] {
             f.dateFormat = fmt
@@ -417,6 +463,8 @@ nonisolated enum ExtractionJSON {
             return .finance
         case "tax", "taxes", "dmv", "immigration", "court", "license", "ticket", "violation":
             return .government
+        case "car", "vehicle", "automobile", "auto insurance", "registration":
+            return .auto
         case "rent", "mortgage", "lease", "apartment":
             return .housing
         case "health", "dental", "pharmacy", "prescription", "clinic", "hospital":
@@ -451,7 +499,7 @@ extension OpenAIClient {
     func polish(_ base: ExtractionResult,
                 context: String,
                 language: ExplainLanguage = .english) async -> ExtractionResult {
-        guard apiKey.hasPrefix("sk-"), !apiKey.contains("REPLACE"), !base.steps.isEmpty else { return base }
+        guard canCall, !base.steps.isEmpty else { return base }
 
         let system = """
         You LIGHTLY polish a checklist for someone who may not read English well. \
@@ -467,11 +515,7 @@ extension OpenAIClient {
             messages: [.init(role: "system", content: system), .init(role: "user", content: user)])
 
         guard let httpBody = try? JSONEncoder().encode(body) else { return base }
-        var req = URLRequest(url: endpoint)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        req.httpBody = httpBody
+        let req = request(body: httpBody)
 
         guard let (data, resp) = try? await session.data(for: req),
               let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode),

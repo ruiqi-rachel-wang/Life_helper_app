@@ -1,4 +1,4 @@
-//  Color+Notie.swift
+//  Color+Plaino.swift
 //
 //  Extends SwiftUI's Color with all design tokens from the spec.
 //  Single source of truth — `Color.paper`, `Color.ink`, `Color.accent`

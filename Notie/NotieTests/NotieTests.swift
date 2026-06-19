@@ -59,18 +59,10 @@ struct ActionItemTests {
         #expect(schedule.map(\.label) == ["3 days before", "1 day before", "Due day"])
     }
 
-    @Test func overdueItemGetsDailyNudges() {
+    @Test func overdueNudgeIsNotPartOfEditableSchedule() {
         let item = ActionItem(title: "x", category: .other, dueDate: day(-2))
-        // The editable schedule is pre-due only now (no single follow-up).
+        #expect(item.isOverdue)
         #expect(!item.reminderSchedule().contains { $0.label == "Overdue follow-up" })
-        // Overdue → daily 9am nudges (capped at 14), each on a distinct day.
-        let nudges = item.overdueNudgeDates()
-        #expect(nudges.count == 14)
-        #expect(Set(nudges).count == 14)
-        #expect(nudges.allSatisfy { Calendar.current.component(.hour, from: $0) == 9 })
-        // Not overdue / done → none.
-        #expect(ActionItem(title: "x", category: .other, dueDate: day(5)).overdueNudgeDates().isEmpty)
-        #expect(ActionItem(title: "x", category: .other, dueDate: day(-2), status: .done).overdueNudgeDates().isEmpty)
     }
 
     @Test func reminderDatesAreOffsetFromDueDate() {
@@ -349,13 +341,42 @@ struct ActionItemTests {
                 cal.date(from: DateComponents(year: 2026, month: 4, day: 15)))
     }
 
-    @Test func utilityBillsDefaultToMonthly() {
-        #expect(ActionItem.defaultRecurrence(for: .utility) == .monthly)
-        #expect(ActionItem.defaultRecurrence(for: .government) == nil)
-        // Wired through init(from:): a utility scan with no stated cadence → monthly…
-        #expect(ActionItem(from: ExtractionResult(category: .utility)).recurrence == .monthly)
-        // …but a stated cadence wins over the default.
+    @Test func recurrenceFollowsTheDocumentNotTheCategory() {
+        // A utility scan no longer gets force-defaulted to monthly — a one-off
+        // utility doc (final bill, shut-off notice) stays one-off.
+        #expect(ActionItem(from: ExtractionResult(category: .utility)).recurrence == nil)
+        // A stated cadence is respected.
+        #expect(ActionItem(from: ExtractionResult(category: .utility, repeats: .monthly)).recurrence == .monthly)
         #expect(ActionItem(from: ExtractionResult(category: .utility, repeats: .yearly)).recurrence == .yearly)
+    }
+
+    @Test func monthlyRecurrenceDoesNotDriftAfterShortMonth() {
+        let cal = Calendar.current
+        let jan31 = cal.date(from: DateComponents(year: 2026, month: 1, day: 31))!
+        // With the original day (31) as the anchor, a short month clamps but the
+        // series snaps back to 31 the next month instead of permanently drifting.
+        let feb = Recurrence.monthly.nextDate(after: jan31, anchorDay: 31)!
+        #expect(cal.component(.day, from: feb) == 28)   // Feb 2026 has 28 days
+        let mar = Recurrence.monthly.nextDate(after: feb, anchorDay: 31)!
+        #expect(cal.component(.day, from: mar) == 31)   // NOT 28 — drift is fixed
+    }
+
+    @Test func nextOccurrenceDropsPeriodSpecificFacts() {
+        let r = ExtractionResult(
+            title: "Con Edison electricity bill", amount: Decimal(string: "42"),
+            dueDate: Calendar.current.date(from: DateComponents(year: 2026, month: 6, day: 30)),
+            category: .utility, summary: "June electricity bill — pay by June 30",
+            steps: ["Pay at coned.com"], notes: ["Late fee after June 30"], repeats: .monthly)
+        let item = ActionItem(from: r)
+        let next = item.makeNextOccurrence()!
+        // Stable facts carry over…
+        #expect(next.title == "Con Edison electricity bill")
+        #expect(next.steps.map(\.text) == ["Pay at coned.com"])
+        #expect(next.recurrence == .monthly)
+        // …but period-specific facts do NOT (no stale "June" / "$42").
+        #expect(next.amount == nil)
+        #expect(next.summary.isEmpty)
+        #expect(next.notes.isEmpty)
     }
 
     @Test func redundantInSeriesKeepsOneActiveAndOneDone() {
@@ -403,8 +424,8 @@ struct ActionItemTests {
         #expect(next?.steps.allSatisfy { !$0.done } == true)        // checks reset
         #expect(next?.steps.map(\.text) == ["Pay it", "Save receipt"])
         #expect(next?.recurrence == .monthly)                       // series continues
-        #expect(next?.amount == Decimal(string: "86.42"))           // detail carries over
-        #expect(next?.sender == "Con Edison")
+        #expect(next?.amount == nil)                                // period-specific → NOT copied
+        #expect(next?.sender == "Con Edison")                       // stable identity carries over
     }
 }
 

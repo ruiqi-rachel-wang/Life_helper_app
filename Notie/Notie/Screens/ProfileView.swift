@@ -14,10 +14,13 @@
 
 import SwiftUI
 import UserNotifications
+import UIKit
 
 struct ProfileView: View {
+    @Environment(\.openURL) private var openURL
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var notifyStatus = String(localized: "Checking…")
+    @State private var notifyOn = false
     #if DEBUG
     @State private var metrics = MetricsSummary()
     #endif
@@ -35,6 +38,7 @@ struct ProfileView: View {
                     languageCard       // top — the one wired control
                     accountCard        // coming-soon scaffolding
                     settingsCard
+                    legalCard          // privacy policy, terms, disclaimer, version
                     #if DEBUG
                     debugCard
                     #endif
@@ -46,6 +50,7 @@ struct ProfileView: View {
         }
         .task {
             let settings = await UNUserNotificationCenter.current().notificationSettings()
+            notifyOn = settings.authorizationStatus == .authorized
             switch settings.authorizationStatus {
             case .authorized:    notifyStatus = String(localized: "On — reminders will be delivered.")
             case .denied:        notifyStatus = String(localized: "Off — enable in iOS Settings to get reminders.")
@@ -115,7 +120,7 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("This sets the language Notie uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device.")
+                Text("This sets the language Plaino uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device.")
                     .font(.subline).foregroundStyle(Color.faint)
                     .padding(.top, 10)
             }
@@ -131,7 +136,7 @@ struct ProfileView: View {
                     .padding(.bottom, 4)
                 comingSoonRow("Sign in", "person.badge.key", first: true)
                 comingSoonRow("Family sharing", "person.2")
-                comingSoonRow("Notie Plus", "sparkles")
+                comingSoonRow("Plaino Plus", "sparkles")
             }
         }
     }
@@ -156,13 +161,82 @@ struct ProfileView: View {
 
     // MARK: settings
 
+    // Tapping opens the iOS Settings page for Plaino so the user can flip
+    // notifications on/off. We can't toggle that from inside the app — iOS only
+    // lets us deep-link to Settings.
     private var settingsCard: some View {
-        card {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("NOTIFICATIONS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-                Text(notifyStatus).font(.subline).foregroundStyle(Color.ink)
+        Button {
+            if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+        } label: {
+            card {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("NOTIFICATIONS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                        Text(notifyStatus).font(.subline).foregroundStyle(Color.ink)
+                        // Plaino depends on reminders — say so when they're off.
+                        if !notifyOn {
+                            Text("Reminders are how Plaino keeps you on top of deadlines — turn them on in Settings to get the most out of the app.")
+                                .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13)).foregroundStyle(Color.faint)
+                }
             }
         }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: about & legal
+
+    // Required for an App Store release (privacy policy URL) and the most important
+    // risk control for Plaino: a clear "informational only / AI can be wrong"
+    // disclaimer, always reachable. The documents live in the repo under `legal/`;
+    // the URLs come from LegalConfig.
+    private var legalCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("ABOUT & LEGAL").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                    .padding(.bottom, 4)
+                legalRow("Privacy Policy", "hand.raised", url: LegalConfig.privacyPolicyURL, first: true)
+                legalRow("Terms & Disclaimers", "doc.text", url: LegalConfig.termsURL)
+
+                Text("Plaino is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional.")
+                    .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
+                    .padding(.top, 10)
+
+                Text(versionText).font(.eyebrow).tracking(0.6).foregroundStyle(Color.faint)
+                    .padding(.top, 12)
+            }
+        }
+    }
+
+    private func legalRow(_ title: LocalizedStringKey, _ symbol: String, url: URL, first: Bool = false) -> some View {
+        VStack(spacing: 0) {
+            if !first { Rectangle().fill(Color.hairD).frame(height: 1) }
+            Button { openURL(url) } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: symbol)
+                        .font(.system(size: 15)).foregroundStyle(Color.faded)
+                        .frame(width: 22)
+                    Text(title).font(.body14).foregroundStyle(Color.ink)
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 12)).foregroundStyle(Color.faint)
+                }
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let v = info?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let b = info?["CFBundleVersion"] as? String ?? "1"
+        return "NOTIE \(v) (\(b))"
     }
 
     #if DEBUG

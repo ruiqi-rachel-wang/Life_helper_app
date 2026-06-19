@@ -1,4 +1,4 @@
-//  NotieApp.swift
+//  PlainoApp.swift
 //
 //  Entry point. Sets up the SwiftData store, the shared AppRouter, and the
 //  notification system (categories + a delegate that handles taps/actions),
@@ -10,7 +10,8 @@ import SwiftData
 import UserNotifications
 
 @main
-struct NotieApp: App {
+struct PlainoApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var router = AppRouter()
     private let container: ModelContainer
     private let notificationDelegate = NotificationDelegate()
@@ -57,13 +58,29 @@ struct NotieApp: App {
                 .environment(router)
                 .onAppear { notificationDelegate.attach(router: router) }
                 .task {
-                    // Skip the permission prompt under UI tests so it can't block
-                    // automation with a system alert.
-                    if !ProcessInfo.processInfo.arguments.contains("-uitest") {
-                        await ReminderScheduler.shared.requestAuthorization()
+                    // Notification permission is now requested through the
+                    // first-launch explainer (NotificationPrimerView via
+                    // RootTabView), not silently here.
+                    refreshAllReminders()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active {
+                        refreshAllReminders()
                     }
                 }
         }
         .modelContainer(container)
+    }
+
+    // Dates keep moving even when an item is untouched. Rebuild schedules on
+    // launch/foreground so an item that became overdue while the app was away
+    // starts its repeating daily nudge.
+    @MainActor
+    private func refreshAllReminders() {
+        let context = ModelContext(container)
+        guard let items = try? context.fetch(FetchDescriptor<ActionItem>()) else { return }
+        for item in items {
+            ReminderScheduler.shared.reschedule(for: item)
+        }
     }
 }
