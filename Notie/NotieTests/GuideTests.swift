@@ -57,6 +57,30 @@ struct GuideTests {
         #expect(!steps.contains("vote"))
     }
 
+    @Test func rentingCoversLeaseDepositUtilitiesInsurance() {
+        let r = Guide.rentingNewPlace.build(["signed": "Not yet"])
+        let steps = r.steps.joined(separator: "\n").lowercased()
+        #expect(r.category == .housing)
+        #expect(steps.contains("lease"))
+        #expect(steps.contains("deposit"))
+        #expect(steps.contains("renters insurance"))
+        #expect(r.detailedSteps.contains { $0.detail != nil })   // utility step has detail
+    }
+
+    @Test func buyingIsTheLongerPathWithClosingFlow() {
+        let buying = Guide.buyingHome.build(["stage": "Just starting"])
+        let moveOut = Guide.moving.build(["home": "Renting"])
+        #expect(buying.steps.count > moveOut.steps.count)         // buying needs many more steps
+        let s = buying.steps.joined(separator: "\n").lowercased()
+        #expect(s.contains("pre-approved"))
+        #expect(s.contains("inspection"))
+        #expect(s.contains("closing disclosure"))
+        #expect(s.contains("homeowners insurance"))
+        // "Closing soon" skips the early shopping steps.
+        let late = Guide.buyingHome.build(["stage": "Closing soon"]).steps.joined().lowercased()
+        #expect(!late.contains("pre-approved"))
+    }
+
     // MARK: New job — W-2 vs contractor branch
 
     @Test func newJobW2HasI9W4AndDirectDeposit() {
@@ -108,8 +132,9 @@ struct GuideTests {
 
     @Test func allGuidesPresent() {
         let ids = Set(Guide.all.map(\.id))
-        #expect(Guide.all.count == 11)
-        for id in ["taxes", "ssn_itin", "school_enrollment", "health_insurance"] {
+        #expect(Guide.all.count == 14)
+        for id in ["taxes", "ssn_itin", "school_enrollment", "health_insurance",
+                   "moving", "renting", "buying", "start_business"] {
             #expect(ids.contains(id))
         }
     }
@@ -120,6 +145,7 @@ struct GuideTests {
             ("ssn_itin", ["which": "SSN (I can work in the U.S.)"], "ssa.gov"),
             ("health_insurance", ["source": "On my own (Marketplace)"], "healthcare.gov"),
             ("school_enrollment", ["newcomer": "Yes — new to the U.S."], "ncela.ed.gov"),
+            ("start_business", [:], "sba.gov"),
         ]
         for (id, answers, host) in cases {
             let item = ActionItem(from: Guide.all.first { $0.id == id }!.build(answers))
@@ -153,7 +179,8 @@ struct GuideTests {
 
     @Test func sensitiveTopicsAreFlaggedAsSensitive() {
         for id in ["immigration", "bank_account", "doctor_appointment", "car_accident",
-                   "taxes", "ssn_itin", "school_enrollment", "health_insurance"] {
+                   "taxes", "ssn_itin", "school_enrollment", "health_insurance",
+                   "start_business"] {
             #expect(guide(id).risk == .sensitive)
         }
         #expect(guide("moving").risk == .general)
@@ -233,6 +260,37 @@ struct GuideTests {
                 #expect(!g.build(a).steps.joined(separator: "\n").contains("911"))
             }
         }
+    }
+
+    // MARK: Start a business — structure / goods / hiring branches
+
+    @Test func startBusinessLLCFilesWithStateAndGetsEIN() {
+        let item = ActionItem(from: Guide.startBusiness.build(
+            ["kind": "Online store (e-commerce)", "structure": "LLC", "employees": "No", "state": "Texas"]))
+        let steps = item.steps.map(\.text).joined(separator: "\n")
+        #expect(steps.contains("Form your LLC"))
+        #expect(steps.contains("Texas"))                              // state templated in
+        #expect(steps.lowercased().contains("sales-tax permit"))       // sells goods
+        #expect(!steps.lowercased().contains("hiring?"))              // no employees
+        let ein = item.steps.first { $0.text.hasPrefix("Get a free EIN") }
+        #expect(ein?.detail?.links.contains { $0.url.contains("irs.gov") } == true)
+    }
+
+    @Test func startBusinessSoleProprietorSkipsLLCFiling() {
+        let steps = Guide.startBusiness.build(
+            ["kind": "Freelance / solo service", "structure": "Just me (sole proprietor)", "state": "Ohio"])
+            .steps.joined(separator: "\n")
+        #expect(steps.contains("As a sole proprietor"))
+        #expect(!steps.contains("Form your LLC"))
+        #expect(!steps.lowercased().contains("sales-tax permit"))     // a service, no goods
+    }
+
+    @Test func startBusinessHiringAndRestaurantAddSteps() {
+        let steps = Guide.startBusiness.build(
+            ["kind": "Physical shop or restaurant", "structure": "LLC", "employees": "Yes", "state": "Utah"])
+            .steps.joined(separator: "\n")
+        #expect(steps.contains("Hiring?"))                            // employees branch
+        #expect(steps.lowercased().contains("health permit"))         // restaurant branch
     }
 
     @Test func everyStateDMVLinkIsOfficial() {

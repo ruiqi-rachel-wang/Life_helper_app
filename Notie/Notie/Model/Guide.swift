@@ -137,9 +137,12 @@ extension Guide {
 
     static let all: [Guide] = [
         moving.meta(source: fed("USPS", "usps.com", "https://www.usps.com/move")),
+        rentingNewPlace.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov/renting/")),
+        buyingHome.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov/owning-a-home/")),
         bankAccount.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov"), risk: .sensitive),
         taxes.meta(source: fed("IRS", "irs.gov", "https://www.irs.gov"), risk: .sensitive),
         newJob.meta(source: fed("USCIS (Form I-9)", "uscis.gov", "https://www.uscis.gov/i-9")),
+        startBusiness.meta(source: fed("U.S. Small Business Administration", "sba.gov", "https://www.sba.gov/business-guide"), risk: .sensitive),
         ssnItin.meta(source: fed("Social Security Administration", "ssa.gov", "https://www.ssa.gov"), risk: .sensitive),
         driversLicense.meta(source: perState("Your state's DMV", "https://www.usa.gov/motor-vehicle-services")),
         immigration.meta(source: fed("USCIS", "uscis.gov", "https://www.uscis.gov"), risk: .sensitive),
@@ -312,11 +315,11 @@ extension Guide {
         ],
         needed: ["Dependents' info (if adding)", "Beneficiary / bank details"])
 
-    // MARK: Moving
+    // MARK: Moving out (leaving your old place + change of address)
     static let moving = Guide(
         id: "moving",
-        title: "Moving",
-        subtitle: "Address change, utilities, license, car",
+        title: "Moving out",
+        subtitle: "Notice, deposit, mail, change of address",
         category: .housing,
         questions: [
             GuideQuestion(id: "home", prompt: "Where are you living now?",
@@ -389,6 +392,102 @@ extension Guide {
                 summary: "A step-by-step checklist for changing your address and moving\(another ? " to \(newState)" : "").",
                 steps: steps,
                 detailedSteps: detailed(steps, state: newState, movingDetail),
+                notes: notes,
+                confidence: 1)
+        })
+
+    // MARK: Renting a new place (settling into the new home)
+    private static func rentingDetail(_ text: String, _ state: String) -> StepDetail? {
+        text.contains("electricity, gas, water, and internet") ? internetDetail : nil
+    }
+    static let rentingNewPlace = Guide(
+        id: "renting",
+        title: "Renting a new place",
+        subtitle: "Lease, deposit, utilities, insurance",
+        category: .housing,
+        questions: [
+            GuideQuestion(id: "signed", prompt: "Have you signed the lease yet?",
+                          kind: .choice(["Yes", "Not yet"])),
+            GuideQuestion(id: "moveDate", prompt: "When's your move-in date? (optional)", kind: .date),
+        ],
+        build: { a in
+            let signed = a["signed"] == "Yes"
+            let moveDate = GuideDate.decode(a["moveDate"])
+
+            var steps: [String] = []
+            if !signed {
+                steps.append("Tour the unit and read the lease before signing — note the rent, lease length, deposit, who pays which utilities, and any pet or early-termination fees.")
+            }
+            steps.append("Pay the security deposit and first month's rent, and keep the receipts.")
+            steps.append("Photograph the unit's condition on move-in day — it protects your deposit when you leave.")
+            steps.append("Set up electricity, gas, water, and internet at the new place for your move-in date.")
+            steps.append("Get renters insurance — many leases require it, and it's inexpensive.")
+            steps.append("Set up how you'll pay rent (autopay or the tenant portal) and save the account details.")
+            steps.append("Get your keys, mailbox key, and building access, and learn the trash, parking, and laundry rules.")
+
+            var notes = ["A security deposit is usually about one month's rent; you should get it back (minus any damage) after you move out."]
+            notes.append(referenceNote)
+            return ExtractionResult(
+                title: "Renting checklist",
+                documentType: "Renting guide",
+                dueDate: moveDate,
+                otherIDs: [DocID(label: "Utility account #", value: ""),
+                           DocID(label: "Internet install date", value: "")],
+                category: .housing,
+                summary: "A step-by-step checklist for renting and moving into a new place.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: "", rentingDetail),
+                notes: notes,
+                confidence: 1)
+        })
+
+    // MARK: Buying a home (the longer path — pre-approval through closing)
+    static let buyingHome = Guide(
+        id: "buying",
+        title: "Buying a home",
+        subtitle: "Mortgage, inspection, closing, insurance",
+        category: .housing,
+        questions: [
+            GuideQuestion(id: "stage", prompt: "Where are you in the process?",
+                          kind: .choice(["Just starting", "Offer accepted", "Closing soon"])),
+            GuideQuestion(id: "closeDate", prompt: "Closing or move-in date? (optional)", kind: .date),
+        ],
+        build: { a in
+            let stage = val(a, "stage", default: "Just starting")
+            let closeDate = GuideDate.decode(a["closeDate"])
+
+            var steps: [String] = []
+            if stage == "Just starting" {
+                steps.append("Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).")
+                steps.append("Get pre-approved for a mortgage — compare rates and fees from a few lenders.")
+                steps.append("Find a real estate agent and start touring homes in your price range.")
+                steps.append("Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.")
+            }
+            if stage != "Closing soon" {
+                steps.append("Schedule a home inspection, review the report, and negotiate repairs or a price credit.")
+                steps.append("Let the lender order the appraisal, and finish your mortgage application (lock the rate, send documents, clear underwriting).")
+            }
+            steps.append("Buy homeowners insurance with a policy effective on the closing date — your lender requires it.")
+            steps.append("Have a title search done and buy title insurance, and set up your escrow account.")
+            steps.append("Review the Closing Disclosure about 3 days before closing and compare it to your original Loan Estimate.")
+            steps.append("Do a final walkthrough of the home shortly before closing.")
+            steps.append("Wire or bring a cashier's check for your down payment and closing costs, sign at closing, and get the keys.")
+            steps.append("After closing: set up utilities, change your address (USPS, bank, DMV), and file for any homestead or property-tax exemption.")
+
+            var notes = [
+                "Closing costs are usually about 2–5% of the price, on top of your down payment.",
+                "Don't open new credit cards or change jobs while your mortgage is in underwriting — it can delay or sink the loan.",
+            ]
+            notes.append(referenceNote)
+            return ExtractionResult(
+                title: "Home-buying checklist",
+                documentType: "Home-buying guide",
+                dueDate: closeDate,
+                otherIDs: [DocID(label: "Lender / loan #", value: ""),
+                           DocID(label: "Closing date", value: "")],
+                category: .housing,
+                summary: "A step-by-step checklist for buying a home, from pre-approval to closing.",
+                steps: steps,
                 notes: notes,
                 confidence: 1)
         })
@@ -1151,6 +1250,155 @@ extension Guide {
             return StepDetail(
                 explanation: "Medicaid and CHIP are free or low-cost coverage for lower incomes (CHIP covers kids).",
                 links: [StepLink(label: "HealthCare.gov — Medicaid & CHIP", url: "https://www.healthcare.gov/medicaid-chip/")])
+        }
+        return nil
+    }
+
+    // MARK: Start a business
+    // Branches on the TYPE of business (the "what kind" question), the legal
+    // structure, and whether you'll hire — which together change the registration,
+    // tax, license, and payroll steps. Sensitive (tax/legal), so no AI polish.
+    static let startBusiness = Guide(
+        id: "start_business",
+        title: "Start a business",
+        subtitle: "Structure, EIN, licenses, taxes",
+        category: .work,
+        questions: [
+            GuideQuestion(id: "kind", prompt: "What kind of business is it?",
+                          kind: .choice(["Freelance / solo service", "Online store (e-commerce)",
+                                         "Physical shop or restaurant", "Other / not sure"])),
+            GuideQuestion(id: "structure", prompt: "How do you want to set it up?",
+                          kind: .choice(["Just me (sole proprietor)", "LLC", "Not sure yet"])),
+            GuideQuestion(id: "employees", prompt: "Will you hire employees?",
+                          kind: .choice(["No", "Yes", "Not yet"])),
+            GuideQuestion(id: "state", prompt: "Which state will the business be in?", kind: .state),
+        ],
+        build: { a in
+            let kind = val(a, "kind", default: "Other / not sure")
+            let structure = val(a, "structure", default: "Not sure yet")
+            let state = val(a, "state", default: "your state")
+            let isLLC = structure == "LLC"
+            let isSoleProp = structure == "Just me (sole proprietor)"
+            let sellsGoods = kind == "Online store (e-commerce)" || kind == "Physical shop or restaurant"
+            let physical = kind == "Physical shop or restaurant"
+            let hiring = a["employees"] == "Yes" || a["employees"] == "Not yet"
+
+            var steps: [String] = []
+            steps.append("Write down your business idea, who your customers are, and how you'll make money — a one-page plan is enough to start.")
+            steps.append("Pick a business name and check it's free in \(state) and as a web domain.")
+
+            if isLLC {
+                steps.append("Form your LLC: file articles of organization with the \(state) Secretary of State and pay the filing fee.")
+            } else if isSoleProp {
+                steps.append("As a sole proprietor there's usually no state formation filing — but file a DBA (\"doing business as\") if you'll use a business name.")
+            } else {
+                steps.append("Choose your structure — sole proprietor (simplest) or LLC (separates your personal assets) — then register accordingly.")
+            }
+
+            steps.append("Get a free EIN from the IRS — needed to hire or to open a business bank account (most LLCs get one). Sole proprietors can use their SSN, but an EIN keeps it private.")
+            steps.append("Check which licenses and permits you need — federal, \(state), and city/county.")
+            if sellsGoods {
+                steps.append("Apply for a \(state) sales-tax permit so you can collect and send in sales tax.")
+            }
+            if physical {
+                steps.append("Get local permits for your location — a business license, zoning approval, and a health permit if you serve food.")
+            }
+            steps.append("Open a business bank account (and consider a business credit card) to keep business and personal money separate.")
+            steps.append("Set up bookkeeping from day one — track income and expenses in a spreadsheet or accounting app.")
+            steps.append("Understand your taxes — business income is taxed, and self-employed owners usually pay quarterly estimated taxes.")
+            if hiring {
+                steps.append("Hiring? Register for state payroll taxes, get workers' comp insurance, and set up payroll and a Form I-9 for each employee.")
+            }
+            steps.append("Get business insurance (general liability is common) — especially if you have customers, a location, or employees.")
+            steps.append("Save everything: your formation documents, EIN letter, licenses, and tax registrations.")
+
+            var notes: [String] = []
+            if isSoleProp {
+                notes.append("You can start earning as a sole proprietor right away, then form an LLC later as you grow.")
+            } else {
+                notes.append("An LLC separates your personal assets from the business; a sole proprietorship is simpler but offers no such protection.")
+            }
+            notes.append("An EIN is free at IRS.gov — never pay a third-party site for one.")
+            notes.append("State rules, fees, and license requirements vary — confirm the specifics with your \(state) Secretary of State.")
+            notes.append(referenceNote)
+
+            return ExtractionResult(
+                title: "Start a business",
+                documentType: "Business guide",
+                otherIDs: [DocID(label: "Business name", value: ""),
+                           DocID(label: "EIN", value: ""),
+                           DocID(label: "State registration #", value: "")],
+                category: .work,
+                summary: "A step-by-step checklist to start a business in \(state) — structure, EIN, licenses, and taxes.",
+                steps: steps,
+                detailedSteps: detailed(steps, state: state, startBusinessDetail),
+                notes: notes,
+                confidence: 1)
+        })
+
+    private static func startBusinessDetail(_ text: String, _ state: String) -> StepDetail? {
+        if text.contains("business idea") {
+            return StepDetail(
+                explanation: "A first plan can be one page — you can refine it later.",
+                miniChecklist: ["What you sell and who buys it.",
+                                "What you'll charge and your main costs.",
+                                "How customers will find you.",
+                                "What you need to launch (money, tools, space)."],
+                links: [StepLink(label: "SBA — write your business plan",
+                                 url: "https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan")])
+        }
+        if text.hasPrefix("Pick a business name") {
+            return StepDetail(
+                explanation: "Check the name isn't already taken before you commit to it.",
+                miniChecklist: ["Search your state's business registry.",
+                                "Check the federal trademark database.",
+                                "Check the web domain and social handles are free."],
+                links: [StepLink(label: "SBA — choose your business name",
+                                 url: "https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name")])
+        }
+        if text.hasPrefix("Form your LLC") || text.hasPrefix("Choose your structure")
+            || text.contains("As a sole proprietor there's usually no") {
+            return StepDetail(
+                explanation: "A sole proprietorship is simplest but doesn't separate your personal assets. An LLC costs a state fee but protects your personal assets if the business is sued or owes money.",
+                miniChecklist: ["Sole proprietor: no formation filing; you and the business are one.",
+                                "LLC: file with the state; separates personal and business assets.",
+                                "An accountant can help weigh the tax trade-offs."],
+                links: [StepLink(label: "SBA — choose a business structure",
+                                 url: "https://www.sba.gov/business-guide/launch-your-business/choose-business-structure")])
+        }
+        if text.hasPrefix("Get a free EIN") {
+            return StepDetail(
+                explanation: "An EIN is a free federal tax ID for your business. Apply directly on IRS.gov — third-party sites charge for what the IRS gives away free.",
+                links: [StepLink(label: "IRS — apply for an EIN (free)",
+                                 url: "https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online")])
+        }
+        if text.hasPrefix("Check which licenses") {
+            return StepDetail(
+                explanation: "Most businesses need at least one license or permit. What you need depends on what you do and where.",
+                miniChecklist: ["Federal licenses (only some industries).",
+                                "State licenses and your sales-tax permit.",
+                                "City/county business license and zoning.",
+                                "A health permit if you handle food."],
+                links: [StepLink(label: "SBA — apply for licenses & permits",
+                                 url: "https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits")])
+        }
+        if text.hasPrefix("Open a business bank account") {
+            return StepDetail(
+                explanation: "A separate business account keeps your bookkeeping clean and protects an LLC's liability shield. Bring your EIN and formation documents.",
+                links: [StepLink(label: "SBA — open a business bank account",
+                                 url: "https://www.sba.gov/business-guide/launch-your-business/open-business-bank-account")])
+        }
+        if text.hasPrefix("Understand your taxes") {
+            return StepDetail(
+                explanation: "Self-employed owners usually pay estimated taxes four times a year and cover self-employment (Social Security + Medicare) tax.",
+                links: [StepLink(label: "IRS — self-employed tax center",
+                                 url: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center")])
+        }
+        if text.hasPrefix("Hiring?") {
+            return StepDetail(
+                explanation: "Hiring adds payroll-tax registration, workers' comp, and verifying each worker's eligibility (Form I-9).",
+                links: [StepLink(label: "SBA — hire and manage employees",
+                                 url: "https://www.sba.gov/business-guide/manage-your-business/hire-manage-employees")])
         }
         return nil
     }
