@@ -1,0 +1,7 @@
+name = "cuevi-ai"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# The OpenAI key is NOT here — it's a secret set with:
+#   wrangler secret put OPENAI_API_KEY
+# (secrets never live in this file or in git)

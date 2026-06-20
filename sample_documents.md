@@ -1,4 +1,4 @@
-# Plaino — extraction tuning corpus
+# Cuevi — extraction tuning corpus
 
 Real OCR samples (Week 4) + a few standard bills/tax docs, each with the
 **ideal `ExtractionResult`**. Used to tune the OpenAI prompt and as gold data

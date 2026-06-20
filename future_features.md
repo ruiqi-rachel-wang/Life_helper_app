@@ -1,4 +1,4 @@
-# Plaino — Future Features (post-TestFlight)
+# Cuevi — Future Features (post-TestFlight)
 
 > Parking lot for features intentionally deferred out of the Phase-1 / first-
 > TestFlight scope in `build_plan.md`. Move things here when we decide "not now,
@@ -8,14 +8,14 @@
 
 ## Accounts, family & monetization
 1. **Family sharing / accounts** *(Rachel's #1 future ask)*
-   - The Profile tab scaffolds "Sign in / Family sharing / Plaino Plus" as
+   - The Profile tab scaffolds "Sign in / Family sharing / Cuevi Plus" as
      coming-soon rows. Build the real thing:
    - **Accounts** — sign-in so data isn't trapped on one device (needs a backend;
      until now everything is local-only by design).
    - **Family sharing** — the core differentiator: a daughter/son manages their
      parents' English mail without missing deadlines. Multiple profiles / shared
      inbox; per-person items; "handling this for Mom."
-   - **Paid plan ("Plaino Plus")** — subscription via Apple In-App Purchase (see
+   - **Paid plan ("Cuevi Plus")** — subscription via Apple In-App Purchase (see
      the legal/business section in `build_plan.md` before charging). Likely gates
      higher scan limits, family sharing, cloud sync.
 
@@ -51,7 +51,7 @@
 ## Product depth (Phase 2+)
 9. **Per-type Detail layouts** — a bill vs. a phone call vs. a checklist render
    differently (DetailView is already section/item-driven to allow this).
-10. **Free-text Q&A** — ask Plaino a question about a document (Phase 2 in the plan).
+10. **Free-text Q&A** — ask Cuevi a question about a document (Phase 2 in the plan).
 11. **More guides + adaptive depth** — broaden coverage and per-state deep links.
 12. **SwiftData VersionedSchema + MigrationPlan** — replace the dev-time resilient
     "wipe-and-recreate on failure" container with real migrations so updates never

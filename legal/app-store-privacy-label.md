@@ -1,13 +1,13 @@
-# App Store Privacy "Nutrition Label" — answers for Plaino
+# App Store Privacy "Nutrition Label" — answers for Cuevi
 
 > Fill this into **App Store Connect → your app → App Privacy**. These answers
-> match how Plaino works today (local-first, document text sent to OpenAI for
+> match how Cuevi works today (local-first, document text sent to OpenAI for
 > processing, no accounts, no analytics). Re-check before each submission — if you
 > later add analytics (e.g. TelemetryDeck) or accounts, you MUST update the label.
 
 ## Key nuance (don't get this wrong)
 Apple counts data as **"collected"** if it **leaves the device**, even if you don't
-store it on a server. Plaino sends document **text** to OpenAI to generate results,
+store it on a server. Cuevi sends document **text** to OpenAI to generate results,
 so you **do collect "User Content."** Answering "we don't collect any data" would
 be **inaccurate** and can get the app rejected. Answer "Yes, we collect data" and
 declare User Content as below.

@@ -1,18 +1,18 @@
-# Privacy Policy for Plaino
+# Privacy Policy for Cuevi
 
 **Effective date:** June 18, 2026
 **Last updated:** June 18, 2026
 
-> ⚠️ **Template — not legal advice.** This draft reflects how Plaino actually
+> ⚠️ **Template — not legal advice.** This draft reflects how Cuevi actually
 > handles data today, but you should have a lawyer review it before a paid or
-> public App Store launch, especially because Plaino touches tax, immigration,
+> public App Store launch, especially because Cuevi touches tax, immigration,
 > insurance, medical, and legal topics. Fill in every **[BRACKETED]** placeholder.
 
-Plaino ("Plaino", "we", "us") is an iOS app that helps you understand letters,
+Cuevi ("Cuevi", "we", "us") is an iOS app that helps you understand letters,
 bills, and official documents and turn them into reminders and checklists. This
 policy explains what data the app handles and what happens to it.
 
-The short version: **your documents and data stay on your device.** Plaino has no
+The short version: **your documents and data stay on your device.** Cuevi has no
 accounts, no sign-in, and no server database. The only time information leaves
 your phone is when the *text* of a document is sent for AI processing, described
 below.
@@ -21,9 +21,9 @@ below.
 
 ## 1. Who is responsible
 
-Plaino is operated by **Ruiqi Wang**, as a sole proprietor based in New York,
+Cuevi is operated as a sole proprietorship based in New York,
 United States.
-Questions about this policy: **ruiqiwang_rachel@outlook.com**.
+Questions about this policy: **support@cuevi.app**.
 
 (If a business entity such as an LLC is formed later, this section will be updated
 with its legal name and address.)
@@ -56,7 +56,7 @@ documents or items. Uninstalling the app removes this local data.
   Worker**) so that our API key is never embedded in the app. Cloudflare may
   briefly process your device's **IP address** to rate-limit abuse; it is not used
   to identify you and we do not store it.
-- OpenAI processes the text to return the result. Plaino does **not** store your
+- OpenAI processes the text to return the result. Cuevi does **not** store your
   document text on any server of ours. OpenAI's handling of API data is governed
   by OpenAI's own policies; per OpenAI's API terms, data submitted via the API is
   not used to train their models.
@@ -113,7 +113,7 @@ at the address above.
 
 ## 6. Children
 
-Plaino is **not directed to children under 13** and we do not knowingly collect
+Cuevi is **not directed to children under 13** and we do not knowingly collect
 data from them. (COPPA.)
 
 ---
@@ -139,4 +139,4 @@ changes will be reflected in the app.
 
 ## 9. Contact
 
-**Ruiqi Wang** — **ruiqiwang_rachel@outlook.com**
+**Cuevi Support** — **support@cuevi.app**
