@@ -11576,6 +11576,210 @@
           }
         }
       }
+    },
+    "Booking goes faster with your details ready — and ask for the soonest opening.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reservar es más rápido con tus datos listos; pide la cita más próxima."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备好你的信息预约会更快——并询问最早的空号。"
+          }
+        }
+      }
+    },
+    "Have your insurance info, the doctor's name, and your free times ready.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten listos tu seguro, el nombre del médico y tus horarios disponibles."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备好你的保险信息、医生姓名和你方便的时间。"
+          }
+        }
+      }
+    },
+    "Ask for the first available appointment, and the cancellation waitlist.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pide la primera cita disponible y la lista de espera por cancelaciones."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "询问最早可预约的时间，以及取消候补名单。"
+          }
+        }
+      }
+    },
+    "Say if it's urgent — they may fit you in sooner.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avisa si es urgente: puede que te atiendan antes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果情况紧急就说明——他们可能会更早安排。"
+          }
+        }
+      }
+    },
+    "Confirm the date, time, address, and what to bring.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirma la fecha, hora, dirección y qué llevar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认日期、时间、地址和需要携带的东西。"
+          }
+        }
+      }
+    },
+    "Save the appointment details and any confirmation number.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda los datos de la cita y cualquier número de confirmación."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存预约信息和任何确认号。"
+          }
+        }
+      }
+    },
+    "Arrive about 15 minutes early for any new-patient paperwork.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llega unos 15 minutos antes para el papeleo de paciente nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提前约 15 分钟到达，以便填写新患者表格。"
+          }
+        }
+      }
+    },
+    "Insurance card and a government photo ID.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta del seguro y una identificación oficial con foto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保险卡和政府签发的带照片身份证件。"
+          }
+        }
+      }
+    },
+    "A list of your medicines, doses, and allergies.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una lista de tus medicamentos, dosis y alergias."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的用药、剂量和过敏清单。"
+          }
+        }
+      }
+    },
+    "A referral, if your plan needs one for a specialist.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una remisión, si tu plan la exige para un especialista."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果你的保险看专科需要转诊，带上转诊单。"
+          }
+        }
+      }
+    },
+    "Your copay or a payment method.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu copago o un método de pago."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的自付额或一种付款方式。"
+          }
+        }
+      }
+    },
+    "Past records or test results, if relevant.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expedientes o resultados de pruebas anteriores, si aplica."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相关的既往病历或检查结果。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

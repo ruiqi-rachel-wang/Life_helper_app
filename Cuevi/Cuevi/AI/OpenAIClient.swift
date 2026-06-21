@@ -518,10 +518,15 @@ extension OpenAIClient {
         guard canCall, !base.steps.isEmpty else { return base }
 
         let system = """
-        You LIGHTLY polish a checklist for someone who may not read English well. \
-        Make MINIMAL changes: keep each step's meaning, order, and any URLs; only \
-        fix wording for clarity. Do NOT add, remove, reorder, or merge steps, and \
-        do NOT add notes or tips. Reply ONLY as JSON {"steps":[...]} in \
+        You rewrite a short checklist for someone who may not read English well, \
+        making each step clearer and MORE detailed and practical. For each step, \
+        spell out HOW and WHERE to do it and the concrete specifics that help them \
+        actually finish it (where to go, what to bring, what to click, what to save), \
+        in plain \(language.promptName). Keep the SAME checklist: the same NUMBER of \
+        steps, in the same order, each still about its original action. Do NOT add, \
+        remove, reorder, or merge steps; do NOT add new requirements, deadlines, fees, \
+        websites, or form numbers that aren't already in the step; do NOT invent facts. \
+        Keep any URLs exactly as given. Reply ONLY as JSON {"steps":[...]} in \
         \(language.promptName).
         """
         let user = "Situation: \(context)\nSteps:\n"

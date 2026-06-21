@@ -1043,6 +1043,24 @@ extension Guide {
                                 "Your top questions, written down."],
                 links: [StepLink(label: "MedlinePlus — make the most of your visit", url: "https://medlineplus.gov/ency/patientinstructions/000860.htm")])
         }
+        if text.hasPrefix("Call or use the patient portal") {
+            return StepDetail(
+                explanation: "Booking goes faster with your details ready — and ask for the soonest opening.",
+                miniChecklist: ["Have your insurance info, the doctor's name, and your free times ready.",
+                                "Ask for the first available appointment, and the cancellation waitlist.",
+                                "Say if it's urgent — they may fit you in sooner.",
+                                "Confirm the date, time, address, and what to bring.",
+                                "Save the appointment details and any confirmation number."])
+        }
+        if text.hasPrefix("Bring your insurance card") || text.hasPrefix("Bring a photo ID") {
+            return StepDetail(
+                explanation: "Arrive about 15 minutes early for any new-patient paperwork.",
+                miniChecklist: ["Insurance card and a government photo ID.",
+                                "A list of your medicines, doses, and allergies.",
+                                "A referral, if your plan needs one for a specialist.",
+                                "Your copay or a payment method.",
+                                "Past records or test results, if relevant."])
+        }
         return nil
     }
 
