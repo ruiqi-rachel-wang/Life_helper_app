@@ -34,8 +34,10 @@ with its legal name and address.)
 
 ### Stays entirely on your device
 - **Your documents, photos, and scans.** Photos you take or upload are read by
-  on-device text recognition (Apple Vision OCR). The photo and the recognized
-  text are stored **locally on your device only**, attached to the item you save.
+  on-device text recognition (Apple Vision OCR), and the photo and recognized text
+  are stored locally on your device, attached to the item you save. **Note:** when
+  you scan, that recognized text is ALSO sent to OpenAI to generate the summary and
+  steps (see the next section) — so a scanned document's text is not local-only.
 - **Items you create** — titles, amounts, due dates, steps, saved fields, notes,
   and reminders — are stored locally on your device using Apple's on-device
   database (SwiftData).
@@ -45,26 +47,29 @@ with its legal name and address.)
 We do **not** have a server that stores any of the above. We cannot see your
 documents or items. Uninstalling the app removes this local data.
 
-### Text sent off the device for AI processing
-- When you scan or upload a document, or build certain non-sensitive guides, the
-  **recognized text** of that document is sent to **OpenAI** to generate a plain-
-  language summary, action steps, and (for guides) lightly reworded checklist text.
-- We send only the **document text** and your chosen explanation language. We do
-  **not** send your name, an account ID, or a device identifier (there is no
-  account).
-- The request is routed through a privacy proxy we operate (a **Cloudflare
-  Worker**) so that our API key is never embedded in the app. Cloudflare may
-  briefly process your device's **IP address** to rate-limit abuse; it is not used
-  to identify you and we do not store it.
-- OpenAI processes the text to return the result. Cuevi does **not** store your
-  document text on any server of ours. OpenAI's handling of API data is governed
-  by OpenAI's own policies; per OpenAI's API terms, data submitted via the API is
-  not used to train their models.
+### What is sent to OpenAI when you scan
+- When you **scan or upload a document**, the app recognizes its text on-device and
+  then sends that **full recognized text to OpenAI** to generate the summary and
+  steps. **This text can include sensitive personal information** — whatever appears
+  on the document, such as health, financial, tax, or immigration details, your
+  name, and account, policy, or case numbers. If you'd rather not send a document's
+  text, use **manual entry** instead of scanning.
+- We don't attach a separate account or device identifier (the app has no account),
+  but the document's text is sent as-is, so any personal details on it are included.
+- For **non-sensitive guides**, the built checklist is sent to OpenAI to reword and
+  translate it. **Sensitive guides** (below) are never sent.
+- The request goes through a **Cloudflare Worker** we run, so our OpenAI key isn't in
+  the app. Cloudflare may briefly process your device's IP address; we don't store it.
+- OpenAI processes the text and returns the result; Cuevi keeps no server-side copy.
+  Per OpenAI's API policy, API data is **not used to train their models**, but OpenAI
+  may **retain it for up to ~30 days** for abuse monitoring.
 
-### Sensitive topics never leave your device
-Guides we classify as **sensitive** — money/banking, taxes, immigration (USCIS),
-medical, and similar — are generated **entirely on your device** and are **never
-sent to OpenAI**. These show a "stays on your device" badge in the app.
+### Sensitive GUIDES are generated on your device
+The built-in **guides** we classify as sensitive — money/banking, taxes, immigration
+(USCIS), medical, and similar — are generated **entirely on your device** and are
+**never sent to OpenAI** (they show a "stays on your device" badge). This applies to
+those guides only; it does **not** apply to **scanning**, where the recognized text is
+sent to OpenAI as described above, however sensitive the document is.
 
 ### We do NOT
 - We do **not** sell or rent your data.
@@ -79,7 +84,7 @@ sent to OpenAI**. These show a "stays on your device" badge in the app.
 
 | Provider | What they process | Why |
 |---|---|---|
-| **OpenAI** | The text of documents you scan/upload (non-sensitive only) | To generate summaries and action steps |
+| **OpenAI** | The full recognized text of any document you scan/upload (may include sensitive personal info), plus non-sensitive guide checklists. May be retained ~30 days for abuse monitoring; not used for training. | To generate the summary, steps, and translations |
 | **Cloudflare** | Your IP address, transiently | To proxy the AI request and rate-limit abuse |
 | **Apple** | Local storage, on-device OCR, local notifications | Standard iOS app functionality (on your device) |
 

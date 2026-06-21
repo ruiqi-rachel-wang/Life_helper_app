@@ -23,6 +23,14 @@ nonisolated enum BackendConfig {
     // Leave nil to keep calling OpenAI directly with the dev key (simulator only).
     static let workerURL: URL? = URL(string: "https://cuevi-ai.ruiqiwang.workers.dev")
 
+    // Optional shared secret sent to the Worker as `X-Cuevi-Token`. Set the SAME
+    // value as a Worker secret: `wrangler secret put PROXY_TOKEN`. NOTE: anything
+    // shipped in the app is extractable and this repo is public, so treat this as a
+    // casual-abuse deterrent — NOT real security. The real $/volume ceilings are the
+    // Worker's max_tokens cap + model allow-list, a Cloudflare rate-limit rule on the
+    // route, and your OpenAI spending cap.
+    static let proxyToken = ""
+
     // True once the Worker is configured — the app then sends no key of its own.
     static var usesWorker: Bool { workerURL != nil }
 

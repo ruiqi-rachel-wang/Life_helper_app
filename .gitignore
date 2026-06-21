@@ -30,7 +30,8 @@ Packages/
 .env
 *.env
 secrets.plist
-APIKeys.swift
+# (APIKeys.swift no longer holds a secret — it reads OPENAI_API_KEY from the
+#  environment at runtime, so it is committed and a clean checkout compiles.)
 *.key
 *.pub
 *.pem

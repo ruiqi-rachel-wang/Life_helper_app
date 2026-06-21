@@ -33,7 +33,14 @@ nonisolated struct OpenAIClient: Extractor {
         var req = URLRequest(url: endpoint)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if !usesWorker { req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
+        if usesWorker {
+            // No OpenAI key on the phone; send the optional shared-secret if configured.
+            if !BackendConfig.proxyToken.isEmpty {
+                req.setValue(BackendConfig.proxyToken, forHTTPHeaderField: "X-Cuevi-Token")
+            }
+        } else {
+            req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
         req.httpBody = body
         return req
     }
@@ -70,6 +77,7 @@ nonisolated struct OpenAIClient: Extractor {
             model: model,
             response_format: .init(type: "json_object"),
             temperature: 0.2,
+            max_tokens: 2000,
             messages: [
                 .init(role: "system", content: Self.systemPrompt(language: language)),
                 .init(role: "user", content: Self.userPrompt(text: text, hints: hints)),
@@ -304,6 +312,7 @@ private nonisolated struct ChatRequest: Encodable {
     let model: String
     let response_format: ResponseFormat
     let temperature: Double
+    let max_tokens: Int
     let messages: [Message]
 }
 
@@ -532,7 +541,7 @@ extension OpenAIClient {
         let user = "Situation: \(context)\nSteps:\n"
             + base.steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
         let body = ChatRequest(
-            model: polishModel, response_format: .init(type: "json_object"), temperature: 0.2,
+            model: polishModel, response_format: .init(type: "json_object"), temperature: 0.2, max_tokens: 800,
             messages: [.init(role: "system", content: system), .init(role: "user", content: user)])
 
         guard let httpBody = try? JSONEncoder().encode(body) else { return base }
