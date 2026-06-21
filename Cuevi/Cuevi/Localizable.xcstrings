@@ -11083,6 +11083,414 @@
           }
         }
       }
+    },
+    "Pre-approval shows sellers you're serious and sets your real budget. Compare a few lenders in the same short window — rate-shopping that way barely affects your credit.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La preaprobación demuestra a los vendedores que vas en serio y fija tu presupuesto real. Compara varios prestamistas en un mismo período corto: así, comparar tasas apenas afecta tu crédito."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预批能向卖家表明你是认真的，并确定你真正的预算。在同一小段时间内比较几家贷款机构——这样比价几乎不影响你的信用分。"
+          }
+        }
+      }
+    },
+    "Gather pay stubs, W-2s or 1099s, and 2 years of tax returns.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reúne nóminas, W-2 o 1099, y 2 años de declaraciones de impuestos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备工资单、W-2 或 1099，以及两年的报税表。"
+          }
+        }
+      }
+    },
+    "Get recent bank and asset statements.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consigue estados de cuenta bancarios y de activos recientes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备近期的银行和资产对账单。"
+          }
+        }
+      }
+    },
+    "Ask each lender for a Loan Estimate and compare the APR and fees, not just the rate.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pide a cada prestamista un Loan Estimate y compara la APR y las comisiones, no solo la tasa."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向每家贷款机构索取贷款估算单（Loan Estimate），比较年化利率（APR）和费用，而不只是利率。"
+          }
+        }
+      }
+    },
+    "Get the pre-approval letter in writing.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtén la carta de preaprobación por escrito."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拿到书面的预批函。"
+          }
+        }
+      }
+    },
+    "CFPB — owning a home": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: comprar y tener vivienda"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——购房与拥有住房"
+          }
+        }
+      }
+    },
+    "An inspection finds problems before you're locked in. Go if you can, and use the report to negotiate repairs or a credit.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una inspección detecta problemas antes de comprometerte. Ve si puedes y usa el informe para negociar reparaciones o un crédito."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验房能在你被锁定之前发现问题。尽量到场，并用报告去协商维修或价格抵扣。"
+          }
+        }
+      }
+    },
+    "Hire a licensed home inspector.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contrata un inspector de viviendas con licencia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聘请有执照的验房师。"
+          }
+        }
+      }
+    },
+    "Attend and ask questions.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asiste y haz preguntas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "到场并提问。"
+          }
+        }
+      }
+    },
+    "Read the whole report — roof, foundation, plumbing, electrical, HVAC.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lee todo el informe: techo, cimientos, plomería, electricidad, climatización."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通读整份报告——屋顶、地基、管道、电气、暖通空调。"
+          }
+        }
+      }
+    },
+    "Add tests if relevant (radon, pests, sewer line).": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade pruebas si aplica (radón, plagas, línea de alcantarillado)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如有需要，增加检测（氡、虫害、下水管道）。"
+          }
+        }
+      }
+    },
+    "Negotiate repairs or a price credit before removing the inspection contingency.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Negocia reparaciones o un crédito antes de retirar la contingencia de inspección."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在解除验房附加条件之前，协商维修或价格抵扣。"
+          }
+        }
+      }
+    },
+    "By law you get the Closing Disclosure at least 3 business days before closing. Compare it line-by-line to your Loan Estimate and question anything that jumped.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por ley recibes el Closing Disclosure al menos 3 días hábiles antes del cierre. Compáralo línea por línea con tu Loan Estimate y cuestiona lo que haya subido."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按法律规定，过户至少 3 个工作日前你会收到《成交披露》（Closing Disclosure）。逐行与你的贷款估算单比较，对任何上涨的项目提出疑问。"
+          }
+        }
+      }
+    },
+    "Check the loan amount, interest rate, and monthly payment.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa el monto del préstamo, la tasa de interés y el pago mensual."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核对贷款金额、利率和每月还款额。"
+          }
+        }
+      }
+    },
+    "Compare the closing costs to your Loan Estimate.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compara los costos de cierre con tu Loan Estimate."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把过户费用与你的贷款估算单比较。"
+          }
+        }
+      }
+    },
+    "Confirm your name and the property address are correct.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirma que tu nombre y la dirección de la propiedad sean correctos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认你的姓名和房产地址无误。"
+          }
+        }
+      }
+    },
+    "Ask the lender about any new or higher fees.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pregunta al prestamista por cualquier comisión nueva o más alta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就任何新增或上涨的费用询问贷款机构。"
+          }
+        }
+      }
+    },
+    "CFPB — Closing Disclosure explainer": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: explicación del Closing Disclosure"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——《成交披露》说明"
+          }
+        }
+      }
+    },
+    "Wire fraud is common at closing — scammers email fake wiring instructions. ALWAYS confirm the wire details by calling the title/escrow company at a number you look up yourself, never one from an email.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El fraude por transferencia es común en el cierre: los estafadores envían instrucciones de pago falsas por correo. SIEMPRE confirma los datos llamando a la compañía de títulos/plica a un número que busques tú, nunca uno de un correo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "过户时电汇诈骗很常见——骗子会发邮件给你假的汇款指示。务必通过你自己查到的电话致电产权／托管公司核实汇款信息，绝不要用邮件里的号码。"
+          }
+        }
+      }
+    },
+    "Call the title company to verify wire instructions before sending.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llama a la compañía de títulos para verificar las instrucciones antes de enviar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "汇款前致电产权公司核实汇款指示。"
+          }
+        }
+      }
+    },
+    "Never trust wiring changes that arrive by email.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nunca confíes en cambios de transferencia que lleguen por correo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "绝不要相信通过邮件发来的汇款信息变更。"
+          }
+        }
+      }
+    },
+    "Bring a government photo ID to closing.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lleva una identificación oficial con foto al cierre."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "过户时带上政府签发的带照片身份证件。"
+          }
+        }
+      }
+    },
+    "After wiring, call to confirm the money arrived.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Después de transferir, llama para confirmar que el dinero llegó."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "汇款后致电确认款项已到账。"
+          }
+        }
+      }
+    },
+    "CFPB — mortgage closing scams": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: estafas en el cierre hipotecario"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——房贷过户诈骗"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

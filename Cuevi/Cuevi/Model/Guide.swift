@@ -488,9 +488,50 @@ extension Guide {
                 category: .housing,
                 summary: "A step-by-step checklist for buying a home, from pre-approval to closing.",
                 steps: steps,
+                detailedSteps: detailed(steps, state: "", buyingDetail),
                 notes: notes,
                 confidence: 1)
         })
+
+    private static func buyingDetail(_ text: String, _ s: String) -> StepDetail? {
+        if text.hasPrefix("Get pre-approved") {
+            return StepDetail(
+                explanation: "Pre-approval shows sellers you're serious and sets your real budget. Compare a few lenders in the same short window — rate-shopping that way barely affects your credit.",
+                miniChecklist: ["Gather pay stubs, W-2s or 1099s, and 2 years of tax returns.",
+                                "Get recent bank and asset statements.",
+                                "Ask each lender for a Loan Estimate and compare the APR and fees, not just the rate.",
+                                "Get the pre-approval letter in writing."],
+                links: [StepLink(label: "CFPB — owning a home", url: "https://www.consumerfinance.gov/owning-a-home/")])
+        }
+        if text.hasPrefix("Schedule a home inspection") {
+            return StepDetail(
+                explanation: "An inspection finds problems before you're locked in. Go if you can, and use the report to negotiate repairs or a credit.",
+                miniChecklist: ["Hire a licensed home inspector.",
+                                "Attend and ask questions.",
+                                "Read the whole report — roof, foundation, plumbing, electrical, HVAC.",
+                                "Add tests if relevant (radon, pests, sewer line).",
+                                "Negotiate repairs or a price credit before removing the inspection contingency."])
+        }
+        if text.hasPrefix("Review the Closing Disclosure") {
+            return StepDetail(
+                explanation: "By law you get the Closing Disclosure at least 3 business days before closing. Compare it line-by-line to your Loan Estimate and question anything that jumped.",
+                miniChecklist: ["Check the loan amount, interest rate, and monthly payment.",
+                                "Compare the closing costs to your Loan Estimate.",
+                                "Confirm your name and the property address are correct.",
+                                "Ask the lender about any new or higher fees."],
+                links: [StepLink(label: "CFPB — Closing Disclosure explainer", url: "https://www.consumerfinance.gov/owning-a-home/closing-disclosure/")])
+        }
+        if text.hasPrefix("Wire or bring a cashier's check") {
+            return StepDetail(
+                explanation: "Wire fraud is common at closing — scammers email fake wiring instructions. ALWAYS confirm the wire details by calling the title/escrow company at a number you look up yourself, never one from an email.",
+                miniChecklist: ["Call the title company to verify wire instructions before sending.",
+                                "Never trust wiring changes that arrive by email.",
+                                "Bring a government photo ID to closing.",
+                                "After wiring, call to confirm the money arrived."],
+                links: [StepLink(label: "CFPB — mortgage closing scams", url: "https://www.consumerfinance.gov/about-us/blog/mortgage-closing-scams-how-protect-yourself/")])
+        }
+        return nil
+    }
 
     // MARK: New job
     static let newJob = Guide(
