@@ -74,7 +74,7 @@ final class ReminderScheduler {
             content.title = item.title
             // A user-written note shows verbatim; otherwise compute a friendly body.
             content.body = reminder.note.isEmpty
-                ? body(fireDate: reminder.date, due: item.dueDate)
+                ? body(fireDate: reminder.date, due: item.dueDate, hasTime: item.dueHasTime)
                 : reminder.note
             content.sound = .default
             content.categoryIdentifier = ReminderID.category
@@ -127,9 +127,11 @@ final class ReminderScheduler {
     // MARK: helpers
 
     // Friendly body computed from how far the fire date is before the due date.
-    private func body(fireDate: Date, due: Date?, calendar: Calendar = .current) -> String {
+    private func body(fireDate: Date, due: Date?, hasTime: Bool, calendar: Calendar = .current) -> String {
         guard let due else { return String(localized: "Reminder") }
-        if fireDate >= due.addingTimeInterval(-90 * 60) { return String(localized: "Starting soon") }
+        // "Starting soon" only fits a timed event near its exact time — a plain
+        // due-day reminder should read "Due today", not "Starting soon".
+        if hasTime, fireDate >= due.addingTimeInterval(-90 * 60) { return String(localized: "Starting soon") }
         let days = calendar.dateComponents([.day],
             from: calendar.startOfDay(for: fireDate),
             to: calendar.startOfDay(for: due)).day ?? 0

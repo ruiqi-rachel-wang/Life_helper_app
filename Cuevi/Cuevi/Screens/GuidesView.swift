@@ -76,12 +76,12 @@ struct GuidesView: View {
                                 // they never reach the (translating) polish pass.
                                 // Sensitive guides skip the AI; translate their authored
                                 // content on-device via the String Catalog instead.
-                                guard g.risk == .general else { return [base.localized()] }
+                                guard g.risk == .general else { return [base.localized(language)] }
                                 let context = "\(g.title). "
                                     + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
                                 // Polish (AI) translates the STEPS; .localized() then
                                 // translates the static summary/notes/detail on-device.
-                                return [await OpenAIClient().polish(base, context: context, language: language).localized()]
+                                return [await OpenAIClient().polish(base, context: context, language: language).localized(language)]
                             },
                             source: .guide,
                             loadingLabel: "Personalizing your checklist…",

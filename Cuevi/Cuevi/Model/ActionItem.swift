@@ -294,7 +294,10 @@ final class ActionItem {
 
     var isOverdue: Bool {
         guard status != .done, let due = dueDate else { return false }
-        return due < Calendar.current.startOfDay(for: .now)
+        // Timed events are overdue once the exact time passes (even later the same
+        // day); plain due-dates compare day-to-day (overdue the day AFTER).
+        let cal = Calendar.current
+        return dueHasTime ? due < .now : due < cal.startOfDay(for: .now)
     }
 
     var doneCount: Int { steps.filter(\.done).count }

@@ -104,7 +104,10 @@ nonisolated struct ExtractionService {
             lowConf.insert("dueDate")                     // only the model found a date
         }
 
-        if let n = hints.accountNumber { out.accountNumber = n }
+        // Prefer the MODEL's actionable id (it's prompted to pick the one you act on —
+        // e.g. a ticket's summons number over the plate). Use the regex hint only as a
+        // fallback when the model didn't return one.
+        if (out.accountNumber ?? "").isEmpty, let n = hints.accountNumber { out.accountNumber = n }
 
         out.lowConfidenceFields = lowConf
         return out

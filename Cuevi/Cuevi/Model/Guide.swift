@@ -528,7 +528,7 @@ extension Guide {
                                 "Never trust wiring changes that arrive by email.",
                                 "Bring a government photo ID to closing.",
                                 "After wiring, call to confirm the money arrived."],
-                links: [StepLink(label: "CFPB — mortgage closing scams", url: "https://www.consumerfinance.gov/about-us/blog/mortgage-closing-scams-how-protect-yourself/")])
+                links: [StepLink(label: "CFPB — mortgage closing scams", url: "https://www.consumerfinance.gov/owning-a-home/")])
         }
         return nil
     }

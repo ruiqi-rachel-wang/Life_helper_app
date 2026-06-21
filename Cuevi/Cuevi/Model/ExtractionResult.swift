@@ -103,9 +103,14 @@ nonisolated struct ExtractionResult: Equatable {
     // code and never goes to the AI (translating) polish pass — this gives them an
     // on-device translation with no network and no privacy cost. Interpolated
     // strings (e.g. a state name spliced in) won't have a catalog key and stay as-is.
-    func localized() -> ExtractionResult {
+    func localized(_ language: ExplainLanguage) -> ExtractionResult {
+        // Look up in the PICKED language's bundle (not the phone locale), so the
+        // explanation-language picker controls guide content. Falls back to the main
+        // bundle (development English) if that .lproj isn't present.
+        let bundle = Bundle.main.path(forResource: language.lprojCode, ofType: "lproj")
+            .flatMap(Bundle.init(path:)) ?? .main
         func t(_ s: String) -> String {
-            s.isEmpty ? s : Bundle.main.localizedString(forKey: s, value: s, table: nil)
+            s.isEmpty ? s : bundle.localizedString(forKey: s, value: s, table: nil)
         }
         var r = self
         r.title = title.map(t)

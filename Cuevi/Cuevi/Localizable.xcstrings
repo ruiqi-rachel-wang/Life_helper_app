@@ -11780,6 +11780,23 @@
           }
         }
       }
+    },
+    "Off — tap to turn on reminders.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivado: toca para activar los recordatorios."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已关闭——点按以开启提醒。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

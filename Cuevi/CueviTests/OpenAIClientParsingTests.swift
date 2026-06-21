@@ -106,9 +106,10 @@ struct OpenAIClientParsingTests {
         #expect(r?.dueHasTime == false)
     }
 
-    // #4: the client validates its OWN injected key, not a global.
+    // #4: in DIRECT mode (no Worker), the client validates its OWN injected key
+    // and refuses to call with a placeholder — never hitting the network.
     @Test func clientWithPlaceholderKeyThrowsMissingKey() async {
-        let client = OpenAIClient(apiKey: "sk-REPLACE-WITH-YOUR-OPENAI-KEY")
+        let client = OpenAIClient(apiKey: "sk-REPLACE-WITH-YOUR-OPENAI-KEY", usesWorker: false)
         await #expect(throws: OpenAIClient.ClientError.self) {
             _ = try await client.extract(text: "hello",
                                          hints: RuleBasedParser.Hints(),

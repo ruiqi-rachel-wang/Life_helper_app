@@ -10,20 +10,37 @@ import SwiftUI
 import UIKit
 
 extension UIImage {
+    // Downscale so the longest side is ≤ maxDimension (keeps memory bounded).
+    func downscaled(maxDimension: CGFloat) -> UIImage {
+        let longest = max(size.width, size.height)
+        guard longest > maxDimension, longest > 0 else { return self }
+        let ratio = maxDimension / longest
+        let newSize = CGSize(width: (size.width * ratio).rounded(),
+                             height: (size.height * ratio).rounded())
+        let format = UIGraphicsImageRendererFormat.default(); format.scale = 1
+        return UIGraphicsImageRenderer(size: newSize, format: format).image { _ in
+            draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+
     // Stack pages top-to-bottom into one image (width = the widest page) so a
-    // multi-page scan can be kept as a single stored photo. Returns nil only if
-    // the list is empty or the graphics context can't be created.
-    static func stackedVertically(_ images: [UIImage], gap: CGFloat = 8) -> UIImage? {
+    // multi-page scan can be kept as a single stored photo. Each page is FIRST
+    // downscaled — otherwise five full-res (~12 MP) photos build a multi-hundred-MB
+    // bitmap that can crash on memory. Returns nil only if the list is empty or the
+    // graphics context can't be created.
+    static func stackedVertically(_ images: [UIImage], gap: CGFloat = 8,
+                                  maxPageDimension: CGFloat = 1500) -> UIImage? {
         guard !images.isEmpty else { return nil }
-        let width = images.map(\.size.width).max() ?? 0
-        let height = images.map(\.size.height).reduce(0, +) + gap * CGFloat(images.count - 1)
+        let pages = images.map { $0.downscaled(maxDimension: maxPageDimension) }
+        let width = pages.map(\.size.width).max() ?? 0
+        let height = pages.map(\.size.height).reduce(0, +) + gap * CGFloat(pages.count - 1)
         guard width > 0, height > 0 else { return nil }
         let format = UIGraphicsImageRendererFormat.default()
-        format.scale = 1   // pages are already full-res; avoid a @3x blow-up
+        format.scale = 1
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
         return renderer.image { _ in
             var y: CGFloat = 0
-            for image in images {
+            for image in pages {
                 let x = (width - image.size.width) / 2   // center narrower pages
                 image.draw(in: CGRect(origin: CGPoint(x: x, y: y), size: image.size))
                 y += image.size.height + gap

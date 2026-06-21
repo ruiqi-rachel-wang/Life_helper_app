@@ -21,6 +21,7 @@ struct ProfileView: View {
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var notifyStatus = String(localized: "Checking…")
     @State private var notifyOn = false
+    @State private var notifyUndetermined = false   // never asked → row can request
     @State private var legalDoc: LegalDoc?
 
     // Which legal document the in-app sheet is showing.
@@ -52,18 +53,7 @@ struct ProfileView: View {
                 .padding(.top, 60)
             }
         }
-        .task {
-            let settings = await UNUserNotificationCenter.current().notificationSettings()
-            notifyOn = settings.authorizationStatus == .authorized
-            switch settings.authorizationStatus {
-            case .authorized:    notifyStatus = String(localized: "On — reminders will be delivered.")
-            case .denied:        notifyStatus = String(localized: "Off — enable in iOS Settings to get reminders.")
-            case .notDetermined: notifyStatus = String(localized: "Not yet asked.")
-            case .provisional:   notifyStatus = String(localized: "Quiet delivery.")
-            case .ephemeral:     notifyStatus = String(localized: "Temporary.")
-            @unknown default:    notifyStatus = String(localized: "Unknown.")
-            }
-        }
+        .task { await refreshNotify() }
         .sheet(item: $legalDoc) { doc in
             switch doc {
             case .privacy: LegalDocumentView(title: "Privacy Policy", markdown: LegalContent.privacyPolicy)
@@ -171,12 +161,30 @@ struct ProfileView: View {
 
     // MARK: settings
 
-    // Tapping opens the iOS Settings page for Cuevi so the user can flip
-    // notifications on/off. We can't toggle that from inside the app — iOS only
-    // lets us deep-link to Settings.
+    private func refreshNotify() async {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        notifyOn = status == .authorized
+        notifyUndetermined = status == .notDetermined
+        switch status {
+        case .authorized:    notifyStatus = String(localized: "On — reminders will be delivered.")
+        case .denied:        notifyStatus = String(localized: "Off — enable in iOS Settings to get reminders.")
+        case .notDetermined: notifyStatus = String(localized: "Off — tap to turn on reminders.")
+        case .provisional:   notifyStatus = String(localized: "Quiet delivery.")
+        case .ephemeral:     notifyStatus = String(localized: "Temporary.")
+        @unknown default:    notifyStatus = String(localized: "Unknown.")
+        }
+    }
+
+    // If we've never asked iOS yet (e.g. the user tapped "Not now" on the primer),
+    // tapping REQUESTS permission (shows the system prompt). Once decided, iOS only
+    // lets us deep-link to Settings, so we do that instead.
     private var settingsCard: some View {
         Button {
-            if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            if notifyUndetermined {
+                Task { await ReminderScheduler.shared.requestAuthorization(); await refreshNotify() }
+            } else if let url = URL(string: UIApplication.openSettingsURLString) {
+                openURL(url)
+            }
         } label: {
             card {
                 HStack(spacing: 12) {
@@ -247,7 +255,7 @@ struct ProfileView: View {
         let info = Bundle.main.infoDictionary
         let v = info?["CFBundleShortVersionString"] as? String ?? "1.0"
         let b = info?["CFBundleVersion"] as? String ?? "1"
-        return "PLAINO \(v) (\(b))"
+        return "CUEVI \(v) (\(b))"
     }
 
     #if DEBUG

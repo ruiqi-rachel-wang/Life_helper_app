@@ -33,6 +33,15 @@ nonisolated enum ExplainLanguage: String, Codable, CaseIterable {
         }
     }
 
+    // The .lproj resource name for on-device String-Catalog lookups (guide content).
+    var lprojCode: String {
+        switch self {
+        case .english: return "en"
+        case .chinese: return "zh-Hans"
+        case .spanish: return "es"
+        }
+    }
+
     // The label shown in the picker — each language in its own script.
     var displayName: String {
         switch self {
