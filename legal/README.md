@@ -34,8 +34,10 @@ the App Store URL:
 `https://github.com/ruiqi-rachel-wang/Life_helper_app/blob/main/legal/privacy-policy.md`
 *(This only works once these files are committed and pushed.)*
 
-## Wire the links into the app
-The in-app **Profile → About & Legal** rows and the App Store fields read from
-[`Cuevi/Cuevi/App/LegalConfig.swift`](../Cuevi/Cuevi/App/LegalConfig.swift) (the
-Xcode project folder is still named `Cuevi` internally — see the build plan). Update
-the two URLs there if you switch to GitHub Pages (or your own domain) later.
+## How the app shows these
+The in-app **Profile → About & Legal** screens render this text directly (not a web
+link): the privacy policy and terms are embedded in
+[`Cuevi/Cuevi/App/LegalContent.swift`](../Cuevi/Cuevi/App/LegalContent.swift) and shown
+by `LegalDocumentView`. Keep `LegalContent.swift` in sync with these `.md` files (it's
+generated from them). For the App Store **privacy-policy URL** field, host
+`privacy-policy.md` (see above) and use that link.

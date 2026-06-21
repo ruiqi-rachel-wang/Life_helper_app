@@ -6,6 +6,25 @@
 > family sharing, configurable reminder time, …). NOTE: multi-page scan and
 > first-launch onboarding are now BUILT (2026-06-18), despite older "deferred" notes.
 
+**Changed 2026-06-21 (external-review blocker fixes):**
+- **Security:** the OpenAI key is no longer compiled into the app — `APIKeys` reads
+  `OPENAI_API_KEY` from the environment at runtime (empty in Release; the Worker holds
+  the key). Verified 0 `sk-` strings in the binary. The Worker now caps `max_tokens`
+  on every request, restricts the path, and supports an optional `PROXY_TOKEN`; the app
+  sends `max_tokens` + the token. **Rachel's actions before TestFlight:** rotate the
+  OpenAI key (it was in earlier builds), update the Worker secret, add a Cloudflare
+  rate-limit rule, and set up the `support@cuevi.app` inbox.
+- **Privacy policy corrected:** scanning sends the FULL recognized text (which may
+  include sensitive health/financial/immigration/name/account info) to OpenAI; removed
+  the false "non-sensitive only / names not sent / local-only" claims; noted OpenAI's
+  ~30-day abuse-log retention. On-device rule applies to GUIDES only.
+- **Correctness:** guide content now follows the explanation-language picker; the Profile
+  notifications row requests permission if never asked; the model's actionable id (summons
+  #) is kept over the regex hint; multi-page scans downscale pages (no memory crash);
+  timed events go overdue on time and a due-day reminder reads "Due today".
+- **Status now:** 14 guides; real C+tag app icon (replaced the placeholder); legal shown
+  in-app via `LegalContent` + `LegalDocumentView` (the old `LegalConfig` was deleted).
+
 **Changed 2026-06-19 (renamed to Cuevi — FULL rename):**
 - **The whole project is now "Cuevi"** (history: Notie → briefly Plaino → Cuevi). Unlike
   the earlier Plaino pass, this rename is COMPLETE, including the internal Xcode labels:
@@ -261,7 +280,7 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 |---|---|
 | EN/中文/ES live toggle on Review | One language only, chosen in Settings, generated once |
 | Document history with search | Plain "Past items" list, no search |
-| 5 guides with AI customization | **Adaptive hybrid guides** (changed 2026-06-05; shipped Week 7, expanded after): hardcoded questions + base checklist, light AI polish on non-sensitive guides only. **11 guides**: moving, bank, taxes, new job, SSN/ITIN, driver's license, USCIS paperwork, school enrollment, health insurance, doctor's appointment, car accident. New `auto` category for car accident. |
+| 5 guides with AI customization | **Adaptive hybrid guides** (changed 2026-06-05; shipped Week 7, expanded after): hardcoded questions + base checklist, light AI polish on non-sensitive guides only. **14 guides** (now): moving, renting, buying a home, bank, taxes, new job, SSN/ITIN, driver's license, USCIS paperwork, school enrollment, health insurance, doctor's appointment, car accident, start a business. New `auto` category for car accident. |
 | Recurring monthly + yearly hardcoded | Cadence read from the document by AI (any interval) |
 | Overdue follow-up daily up to 7 days | One overdue reminder the next morning |
 | Vision-AI fallback for bad OCR | No vision model. Re-shoot the photo. |
@@ -547,7 +566,7 @@ before handing the app to testers.
      `.failed` (analysis/LLM/network error message), and a low-confidence "retake"
      state. Could make the offline case friendlier ("You're offline") — minor.
    - Privacy banner on Inbox: ✓ already shipped (`PrivacyBanner`).
-   - **App icon placeholder ✓ DONE** — serif "N" on cream, opaque 1024² in
+   - **App icon ✓ DONE** — real C + terracotta-tag mark on cream, opaque 1024² in
      `AppIcon.appiconset` (generated; Times serif). Replace with New York-rendered
      art later if desired.
    - **Custom raised ＋ tab button — TRIED & DROPPED (2026-06-15).** Built a
@@ -585,7 +604,7 @@ before handing the app to testers.
    - **Deeper source metadata — ✓ DONE (2026-06-15).** `GuideSource` (authority ·
      domain · official URL · `Jurisdiction` federal/per-state · real `lastReviewed`
      Date) replaces the free-text label; `risk` stays on `Guide` (it also drives
-     the AI-skip and applies to source-less guides). Stamped on all 11 guides with
+     the AI-skip and applies to source-less guides). Stamped on all 14 guides with
      stable root-domain URLs, and now **shown** as a tappable, dated citation
      footer on the guide's questions screen. Unit-tested (every guide has an
      https source; per-state guides flagged as such).
@@ -681,7 +700,7 @@ first 10-user beta. It matters before a **paid** or **public** App Store launch.
   staying on-device, local-only storage / no account, and CCPA/GDPR basics. **TODO
   before submit:** fill placeholders (`[YOUR NAME OR BUSINESS NAME]`), confirm the
   contact email, and **host it** for a public URL (GitHub Pages steps in
-  `legal/README.md`). In-app links live in `LegalConfig.swift` → Profile → About & Legal.
+  `legal/README.md`). In-app legal is rendered by `LegalContent` + `LegalDocumentView` (Profile → About & Legal).
 - **App privacy "nutrition label"** — ✓ ANSWERS PREPARED (`legal/app-store-privacy-label.md`).
   Key call: text leaving the device = "data collected," so we declare **User Content
   (Photos + Other), App Functionality, Not linked, No tracking**; everything else Not
@@ -860,7 +879,7 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 - **Spec (v3)**: `Phase 1 Spec.html` — canonical, read in browser
 - **Design prototype**: `index.html` in design folder — interactive canvas, ＋ picker is tweakable
 - **Handoff README**: original `README.md` from design package — the spec scope-down rules
-- **Legal/privacy**: `legal/` — privacy policy, terms + disclaimers, App Store privacy-label answers, hosting steps (drafted 2026-06-18; in-app links via `LegalConfig.swift`)
+- **Legal/privacy**: `legal/` — privacy policy, terms + disclaimers, App Store privacy-label answers, hosting steps (drafted 2026-06-18; shown in-app via `LegalContent`/`LegalDocumentView`)
 
 ---
 
@@ -868,7 +887,7 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 
 - [x] Final product name — **Cuevi** (chosen 2026-06-19; sole proprietor: Ruiqi Wang, New York)
 - [ ] Launch language default (EN / 中文 / ES) — Settings picker is Week 8
-- [ ] App icon direction (serif "N" placeholder is fine for v1)
+- [x] App icon — the C + terracotta-tag mark (installed 2026-06-20)
 - [ ] Domain name (optional, ~$12/year — for a landing page later)
 
 ---
