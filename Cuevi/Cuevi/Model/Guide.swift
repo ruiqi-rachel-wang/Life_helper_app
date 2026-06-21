@@ -961,7 +961,7 @@ extension Guide {
         build: { a in
             let insured = a["insurance"] != "No"
             let insurer = a["insurer"] ?? ""
-
+            let kindAnswer = (a["kind"] ?? "").trimmingCharacters(in: .whitespaces)
             let isNew = a["new"] == "New patient"
 
             // (Emergency / urgent-care guidance lives on the first-page banner.)
@@ -991,10 +991,13 @@ extension Guide {
                                      : "Bring a photo ID and any medical records, and arrive early for new-patient forms.")
             }
             return ExtractionResult(
-                title: "Book a doctor's appointment",
+                title: kindAnswer.isEmpty ? String(localized: "Book a doctor's appointment")
+                                          : String(localized: "Book a \(kindAnswer) appointment"),
                 documentType: "Appointment guide",
-                otherIDs: [DocID(label: "Provider name", value: ""),
-                           DocID(label: "Office phone", value: "")],
+                otherIDs: [kindAnswer.isEmpty ? nil : DocID(label: "Type of doctor", value: kindAnswer),
+                           (insured && !insurer.isEmpty) ? DocID(label: "Insurance plan", value: insurer) : nil,
+                           DocID(label: "Provider name", value: ""),
+                           DocID(label: "Office phone", value: "")].compactMap { $0 },
                 category: .medical,
                 summary: isNew
                     ? (insured ? "Find an in-network doctor and get ready for the visit."
@@ -1364,9 +1367,10 @@ extension Guide {
             return ExtractionResult(
                 title: "Start a business",
                 documentType: "Business guide",
-                otherIDs: [DocID(label: "Business name", value: ""),
+                otherIDs: [(a["state"]?.isEmpty == false) ? DocID(label: "Business state", value: a["state"]!) : nil,
+                           DocID(label: "Business name", value: ""),
                            DocID(label: "EIN", value: ""),
-                           DocID(label: "State registration #", value: "")],
+                           DocID(label: "State registration #", value: "")].compactMap { $0 },
                 category: .work,
                 summary: "A step-by-step checklist to start a business — structure, EIN, licenses, and taxes.",
                 steps: steps,

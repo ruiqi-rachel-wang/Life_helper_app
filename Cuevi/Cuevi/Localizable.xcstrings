@@ -11508,6 +11508,74 @@
           }
         }
       }
+    },
+    "Type of doctor": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipo de médico"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "医生类型"
+          }
+        }
+      }
+    },
+    "Insurance plan": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan de seguro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保险计划"
+          }
+        }
+      }
+    },
+    "Business state": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado del negocio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公司所在州"
+          }
+        }
+      }
+    },
+    "Book a %@ appointment": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reservar una cita de %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预约看%@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
