@@ -22,7 +22,7 @@ final class CueviUITests: XCTestCase {
     @MainActor
     func testTabsNavigate() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-uitest"]   // skip the notification permission prompt
+        app.launchArguments = ["-uitest", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]   // skip the notif prompt; force English so selectors are language-independent
         app.launch()
 
         // Inbox is the launch tab.
@@ -44,7 +44,7 @@ final class CueviUITests: XCTestCase {
     @MainActor
     func testGuideFlowAddsItemToInbox() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-uitest"]   // skip the notification permission prompt
+        app.launchArguments = ["-uitest", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]   // skip the notif prompt; force English so selectors are language-independent
         app.launch()
 
         // Open the Taxes guide (sensitive → built on-device, no network).
@@ -75,7 +75,7 @@ final class CueviUITests: XCTestCase {
     func testLaunchPerformance() throws {
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             let app = XCUIApplication()
-            app.launchArguments = ["-uitest"]
+            app.launchArguments = ["-uitest", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
             app.launch()
         }
     }
