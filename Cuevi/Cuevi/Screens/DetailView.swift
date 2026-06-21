@@ -144,7 +144,7 @@ struct DetailView: View {
         return [type, sender].compactMap { $0 }.joined(separator: " · ").uppercased()
     }
 
-    private func chipBox(_ label: String, _ value: String, tone: Color) -> some View {
+    private func chipBox(_ label: LocalizedStringKey, _ value: String, tone: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             Text(value).font(.serifStat).tracking(-0.5).foregroundStyle(tone)

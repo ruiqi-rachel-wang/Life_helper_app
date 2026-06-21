@@ -676,7 +676,7 @@ struct ReviewView: View {
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 
-    private func chipBox<C: View>(_ label: String, flagged: Bool, @ViewBuilder _ value: () -> C) -> some View {
+    private func chipBox<C: View>(_ label: LocalizedStringKey, flagged: Bool, @ViewBuilder _ value: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             value()

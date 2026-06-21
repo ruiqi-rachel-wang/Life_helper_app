@@ -120,7 +120,8 @@ nonisolated struct OpenAIClient: Extractor {
                           illustrations): "Con Edison electricity bill", "Flight to Chicago",
                           "Neurology appointment". Translate the title like the summary —
                           never leave it in the document's original language.
-          documentType  : short label, e.g. "Utility bill", "Parking ticket"
+          documentType  : short label IN \(language.promptName) (English examples here only):
+                          "Utility bill", "Parking ticket". (sender stays the org's real name.)
           sender        : the organization that sent it, e.g. "Con Edison"
           senderShort   : a 1-2 word short form for a chip
           amount        : the amount owed as a STRING like "86.42" (no symbol), or null
@@ -150,17 +151,21 @@ nonisolated struct OpenAIClient: Extractor {
                           actionable id for whatever the document is: a bill's account number,
                           a ticket/summons number, a claim or case number, a confirmation /
                           booking code, an application receipt number. Prefer it over a passive
-                          descriptor (e.g. on a ticket use the summons number, not the license
-                          plate or VIN). null if none.
+                          descriptor (e.g. on a ticket use the SUMMONS / ticket number you pay
+                          with — NOT the violation code like "4-08(j)(3)" (the rule cited), and
+                          not the license plate or VIN). null if none.
           otherIDs      : other identifiers that genuinely help the reader act or follow up,
                           as an array of {"label","value"} objects — claim #, case #,
-                          sticker / decal #, confirmation #, policy #, member #. Use a clear
-                          label. SKIP passive descriptors the reader won't act on (VIN,
-                          make/model, plate) UNLESS they're actually needed to pay/dispute.
-                          Always capture claim and policy numbers. For ANY ticket, citation,
-                          fine, or court/agency notice, ALWAYS capture the violation / summons /
-                          citation / case / docket number (label it clearly) — it's how the
-                          reader pays or disputes, so it must never be missing. [] if none.
+                          sticker / decal #, confirmation #, policy #, member #. Write each
+                          LABEL in \(language.promptName) (keep universal abbreviations like
+                          VIN, EIN, SSN, ITIN as-is). SKIP passive descriptors the reader won't
+                          act on (VIN, make/model, plate) UNLESS they're actually needed to
+                          pay/dispute. Always capture claim and policy numbers. For ANY ticket,
+                          citation, fine, or court/agency notice, ALWAYS capture the SUMMONS /
+                          TICKET number — the unique number used to PAY or DISPUTE (often 8–10
+                          digits). That is NOT the violation code/section (e.g. "4-08(j)(3)",
+                          the rule cited); if both appear, the summons number is the key id and
+                          you may add the violation code as a separate labeled entry. [] if none.
           category      : EXACTLY one of these 9 lowercase words and NOTHING else:
                           utility, finance, housing, medical, personal, government, auto, work, other.
                           Travel, flights, appointments, and personal errands are "personal".
@@ -190,7 +195,10 @@ nonisolated struct OpenAIClient: Extractor {
                           not vague — no "pay it" / "contact them". Err toward MORE, smaller,
                           concrete steps rather than a few broad ones: break a big action into
                           its real sub-steps (what to gather, where to go, what to do, what to
-                          save). When there is an ONLINE option, give it
+                          save), and explain HOW and WHERE to do each one (the exact site,
+                          office, or method) — e.g. not "renew the registration" but "Renew your
+                          vehicle registration at your state DMV (online or in person), then put
+                          the new sticker on the windshield." When there is an ONLINE option, give it
                           as a step WITH the website/app (e.g. "Check in online at united.com,
                           or check in at the airport counter"), then real next steps (e.g.
                           "arrive ~2 hours early", "go through security", "find your gate").
