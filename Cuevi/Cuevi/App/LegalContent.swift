@@ -39,10 +39,12 @@ with its legal name and address.)
 
 ### Stays entirely on your device
 - **Your documents, photos, and scans.** Photos you take or upload are read by
-  on-device text recognition (Apple Vision OCR), and the photo and recognized text
-  are stored locally on your device, attached to the item you save. **Note:** when
-  you scan, that recognized text is ALSO sent to OpenAI to generate the summary and
-  steps (see the next section) — so a scanned document's text is not local-only.
+  on-device text recognition (Apple Vision OCR). The **photo** and the **extracted
+  details** (the item we create — title, amount, due date, steps, saved fields,
+  notes) are stored locally on your device. The raw recognized text itself is **not
+  kept** by the app — but when you scan, it **is sent to OpenAI** to produce the
+  summary and steps (see the next section), so a scanned document's text does leave
+  your device.
 - **Items you create** — titles, amounts, due dates, steps, saved fields, notes,
   and reminders — are stored locally on your device using Apple's on-device
   database (SwiftData).
@@ -90,7 +92,7 @@ sent to OpenAI as described above, however sensitive the document is.
 | Provider | What they process | Why |
 |---|---|---|
 | **OpenAI** | The full recognized text of any document you scan/upload (may include sensitive personal info), plus non-sensitive guide checklists. May be retained ~30 days for abuse monitoring; not used for training. | To generate the summary, steps, and translations |
-| **Cloudflare** | Your IP address, transiently | To proxy the AI request and rate-limit abuse |
+| **Cloudflare** | Your IP address, transiently | To proxy the AI request so the OpenAI key isn't in the app |
 | **Apple** | Local storage, on-device OCR, local notifications | Standard iOS app functionality (on your device) |
 
 We are not responsible for these providers' own practices; please review their
@@ -132,8 +134,8 @@ data from them. (COPPA.)
 
 - Our AI key is held server-side in the Cloudflare Worker and is **not** shipped
   inside the app.
-- Requests are rate-limited to deter abuse.
-- Your documents are stored within the app's protected on-device storage.
+- The app limits how many scans you can run (per day and per month).
+- Your photos and saved items are stored in the app's protected on-device storage.
 - No method of transmission or storage is 100% secure, but we minimize risk by
   keeping data on-device and sending the least amount of text necessary.
 

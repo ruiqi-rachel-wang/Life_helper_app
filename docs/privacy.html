@@ -1,0 +1,141 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuevi — Privacy Policy</title>
+<style>body{max-width:760px;margin:2rem auto;padding:0 1rem;font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;color:#29261b;background:#f7f5f1}h1{font-size:1.9rem}h2{margin-top:1.8rem}code{background:#eee;padding:.1em .3em;border-radius:3px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4em .6em;text-align:left;vertical-align:top}a{color:#b14a2a}hr{border:none;border-top:1px solid #ddd;margin:1.5rem 0}</style></head><body>
+<h1>Privacy Policy for Cuevi</h1>
+<p><strong>Effective date:</strong> June 18, 2026</p>
+<p><strong>Last updated:</strong> June 18, 2026</p>
+<p>Cuevi (&quot;Cuevi&quot;, &quot;we&quot;, &quot;us&quot;) is an iOS app that helps you understand letters,</p>
+<p>bills, and official documents and turn them into reminders and checklists. This</p>
+<p>policy explains what data the app handles and what happens to it.</p>
+<p>The short version: <strong>your documents and data stay on your device.</strong> Cuevi has no</p>
+<p>accounts, no sign-in, and no server database. The only time information leaves</p>
+<p>your phone is when the *text* of a document is sent for AI processing, described</p>
+<p>below.</p>
+<hr>
+<h2>1. Who is responsible</h2>
+<p>Cuevi is operated as a sole proprietorship based in New York,</p>
+<p>United States.</p>
+<p>Questions about this policy: <strong>support@cuevi.app</strong>.</p>
+<p>(If a business entity such as an LLC is formed later, this section will be updated</p>
+<p>with its legal name and address.)</p>
+<hr>
+<h2>2. What we collect and process</h2>
+<h3>Stays entirely on your device</h3>
+<ul>
+<li><strong>Your documents, photos, and scans.</strong> Photos you take or upload are read by</li>
+</ul>
+<p>on-device text recognition (Apple Vision OCR). The <strong>photo</strong> and the **extracted</p>
+<p>details** (the item we create — title, amount, due date, steps, saved fields,</p>
+<p>notes) are stored locally on your device. The raw recognized text itself is **not</p>
+<p>kept<strong> by the app — but when you scan, it </strong>is sent to OpenAI** to produce the</p>
+<p>summary and steps (see the next section), so a scanned document&#x27;s text does leave</p>
+<p>your device.</p>
+<ul>
+<li><strong>Items you create</strong> — titles, amounts, due dates, steps, saved fields, notes,</li>
+</ul>
+<p>and reminders — are stored locally on your device using Apple&#x27;s on-device</p>
+<p>database (SwiftData).</p>
+<ul>
+<li><strong>Reminders/notifications</strong> are scheduled locally by iOS. We do not see them.</li>
+<li><strong>Your settings</strong> (such as your chosen explanation language) are stored locally.</li>
+</ul>
+<p>We do <strong>not</strong> have a server that stores any of the above. We cannot see your</p>
+<p>documents or items. Uninstalling the app removes this local data.</p>
+<h3>What is sent to OpenAI when you scan</h3>
+<ul>
+<li>When you <strong>scan or upload a document</strong>, the app recognizes its text on-device and</li>
+</ul>
+<p>then sends that <strong>full recognized text to OpenAI</strong> to generate the summary and</p>
+<p>steps. <strong>This text can include sensitive personal information</strong> — whatever appears</p>
+<p>on the document, such as health, financial, tax, or immigration details, your</p>
+<p>name, and account, policy, or case numbers. If you&#x27;d rather not send a document&#x27;s</p>
+<p>text, use <strong>manual entry</strong> instead of scanning.</p>
+<ul>
+<li>We don&#x27;t attach a separate account or device identifier (the app has no account),</li>
+</ul>
+<p>but the document&#x27;s text is sent as-is, so any personal details on it are included.</p>
+<ul>
+<li>For <strong>non-sensitive guides</strong>, the built checklist is sent to OpenAI to reword and</li>
+</ul>
+<p>translate it. <strong>Sensitive guides</strong> (below) are never sent.</p>
+<ul>
+<li>The request goes through a <strong>Cloudflare Worker</strong> we run, so our OpenAI key isn&#x27;t in</li>
+</ul>
+<p>the app. Cloudflare may briefly process your device&#x27;s IP address; we don&#x27;t store it.</p>
+<ul>
+<li>OpenAI processes the text and returns the result; Cuevi keeps no server-side copy.</li>
+</ul>
+<p>Per OpenAI&#x27;s API policy, API data is <strong>not used to train their models</strong>, but OpenAI</p>
+<p>may <strong>retain it for up to ~30 days</strong> for abuse monitoring.</p>
+<h3>Sensitive GUIDES are generated on your device</h3>
+<p>The built-in <strong>guides</strong> we classify as sensitive — money/banking, taxes, immigration</p>
+<p>(USCIS), medical, and similar — are generated <strong>entirely on your device</strong> and are</p>
+<p><strong>never sent to OpenAI</strong> (they show a &quot;stays on your device&quot; badge). This applies to</p>
+<p>those guides only; it does <strong>not</strong> apply to <strong>scanning</strong>, where the recognized text is</p>
+<p>sent to OpenAI as described above, however sensitive the document is.</p>
+<h3>We do NOT</h3>
+<ul>
+<li>We do <strong>not</strong> sell or rent your data.</li>
+<li>We do <strong>not</strong> use your data for advertising.</li>
+<li>We do <strong>not</strong> link your bank, process payments, or use autopay.</li>
+<li>We do <strong>not</strong> currently use any third-party analytics or tracking. *(If we add</li>
+</ul>
+<p>privacy-first, no-PII analytics in the future, we will update this policy first.)*</p>
+<hr>
+<h2>3. Third parties that may process data</h2>
+<table>
+<tr><td>Provider</td><td>What they process</td><td>Why</td></tr>
+<tr><td><strong>OpenAI</strong></td><td>The full recognized text of any document you scan/upload (may include sensitive personal info), plus non-sensitive guide checklists. May be retained ~30 days for abuse monitoring; not used for training.</td><td>To generate the summary, steps, and translations</td></tr>
+<tr><td><strong>Cloudflare</strong></td><td>Your IP address, transiently</td><td>To proxy the AI request so the OpenAI key isn&#x27;t in the app</td></tr>
+<tr><td><strong>Apple</strong></td><td>Local storage, on-device OCR, local notifications</td><td>Standard iOS app functionality (on your device)</td></tr>
+</table>
+<p>We are not responsible for these providers&#x27; own practices; please review their</p>
+<p>privacy policies (OpenAI, Cloudflare, Apple).</p>
+<hr>
+<h2>4. Data retention</h2>
+<ul>
+<li><strong>On-device data</strong> stays until you delete the item or uninstall the app. You are</li>
+</ul>
+<p>in control.</p>
+<ul>
+<li><strong>AI requests</strong> are processed in transit and returned; we keep no server copy.</li>
+</ul>
+<p>OpenAI&#x27;s retention of API data is governed by their policy.</p>
+<hr>
+<h2>5. Your choices and rights</h2>
+<p>Because your data lives on your device and we hold no server copy:</p>
+<ul>
+<li><strong>Delete anytime</strong> — delete an item, or uninstall the app, to remove your data.</li>
+<li><strong>Don&#x27;t want text sent to OpenAI?</strong> Use the manual-entry option instead of</li>
+</ul>
+<p>scanning, or use the on-device sensitive guides.</p>
+<p><strong>California (CCPA) and EU/UK (GDPR):</strong> we do not maintain personal data on our</p>
+<p>servers, so there is no server-side profile to access, port, or delete — you</p>
+<p>already control it on your device. For any questions about your rights, email us</p>
+<p>at the address above.</p>
+<hr>
+<h2>6. Children</h2>
+<p>Cuevi is <strong>not directed to children under 13</strong> and we do not knowingly collect</p>
+<p>data from them. (COPPA.)</p>
+<hr>
+<h2>7. Security</h2>
+<ul>
+<li>Our AI key is held server-side in the Cloudflare Worker and is <strong>not</strong> shipped</li>
+</ul>
+<p>inside the app.</p>
+<ul>
+<li>The app limits how many scans you can run (per day and per month).</li>
+<li>Your photos and saved items are stored in the app&#x27;s protected on-device storage.</li>
+<li>No method of transmission or storage is 100% secure, but we minimize risk by</li>
+</ul>
+<p>keeping data on-device and sending the least amount of text necessary.</p>
+<hr>
+<h2>8. Changes to this policy</h2>
+<p>We may update this policy as the app evolves (for example, if we add accounts,</p>
+<p>sync, or analytics). We will revise the &quot;Last updated&quot; date above, and material</p>
+<p>changes will be reflected in the app.</p>
+<hr>
+<h2>9. Contact</h2>
+<p><strong>Cuevi Support</strong> — <strong>support@cuevi.app</strong></p>
+</body></html>

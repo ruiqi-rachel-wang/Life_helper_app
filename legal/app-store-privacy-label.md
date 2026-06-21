@@ -29,15 +29,26 @@ declare User Content as below.
   - Used for tracking? **No.**
   - Purpose: **App Functionality.**
 
-> Note: the photo itself is stored on-device; what is transmitted to OpenAI is the
-> recognized **text**. Declaring both Photos and Other User Content under App
-> Functionality is the conservative, accurate choice.
+> Note: the photo is stored on-device; what is transmitted to OpenAI is the
+> recognized **text**, which OpenAI may retain ~30 days. Declaring Photos + Other
+> User Content under App Functionality is the baseline.
 
-### Everything else → **Not collected**
+> ⚠️ **Needs a closer look before you submit.** A scanned document's text can contain
+> **Financial Info** (bank/tax statements), **Health & Fitness** (medical bills/notes),
+> **Contact Info** (names, addresses), and other **Sensitive Info** (e.g. immigration),
+> and that text is sent **off-device** to OpenAI. Apple asks you to declare data your
+> app *collects* by the data's nature, not just the field you ask for — so "Other User
+> Content" alone may understate it. Before submitting, decide (ideally with Apple's
+> data-type definitions or a professional) whether to ALSO declare **Financial Info**,
+> **Health & Fitness**, **Contact Info**, and/or **Sensitive Info** — each as
+> *App Functionality, Not linked, No tracking*. Being over-inclusive here is safer than
+> under-declaring.
+
+### Everything else → **Not collected** (BUT see the warning above re: scanned content)
 Unless/until you add them, answer **No / Not Collected** for:
-- Contact Info (name, email, phone, address)
-- Health & Fitness
-- Financial Info (you do not link banks or process payments)
+- Contact Info (name, email, phone, address) — *unless the scan warning above applies*
+- Health & Fitness — *unless the scan warning above applies*
+- Financial Info (you do not link banks or process payments) — *but scans can contain it; see above*
 - Location
 - Identifiers (no user ID, device ID, or advertising ID)
 - Usage Data (no analytics yet)
