@@ -19,9 +19,9 @@ import Foundation
 
 nonisolated enum BackendConfig {
     // TODO (Rachel): after `wrangler deploy`, paste your Worker URL here, e.g.
-    //   static let workerURL: URL? = URL(string: "https://plaino-ai.<you>.workers.dev")
+    //   static let workerURL: URL? = URL(string: "https://cuevi-ai.<you>.workers.dev")
     // Leave nil to keep calling OpenAI directly with the dev key (simulator only).
-    static let workerURL: URL? = nil
+    static let workerURL: URL? = URL(string: "https://cuevi-ai.ruiqiwang.workers.dev")
 
     // True once the Worker is configured — the app then sends no key of its own.
     static var usesWorker: Bool { workerURL != nil }

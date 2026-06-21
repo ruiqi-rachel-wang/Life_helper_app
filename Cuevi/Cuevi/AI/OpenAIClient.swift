@@ -115,9 +115,11 @@ nonisolated struct OpenAIClient: Extractor {
         lists separate things — e.g. multiple appointments, multiple bills, or two
         different deadlines — one object per thing; do not split a single task.
         Each item in "items" has these keys (use null when unknown):
-          title         : a SHORT headline for a list row (≤ ~5 words), e.g.
-                          "Con Edison electricity bill", "Flight to Chicago",
-                          "Neurology appointment"
+          title         : a SHORT headline for a list row (≤ ~5 words), written in
+                          \(language.promptName) (the English examples here are only
+                          illustrations): "Con Edison electricity bill", "Flight to Chicago",
+                          "Neurology appointment". Translate the title like the summary —
+                          never leave it in the document's original language.
           documentType  : short label, e.g. "Utility bill", "Parking ticket"
           sender        : the organization that sent it, e.g. "Con Edison"
           senderShort   : a 1-2 word short form for a chip
@@ -155,7 +157,10 @@ nonisolated struct OpenAIClient: Extractor {
                           sticker / decal #, confirmation #, policy #, member #. Use a clear
                           label. SKIP passive descriptors the reader won't act on (VIN,
                           make/model, plate) UNLESS they're actually needed to pay/dispute.
-                          Always capture claim and policy numbers. [] if none.
+                          Always capture claim and policy numbers. For ANY ticket, citation,
+                          fine, or court/agency notice, ALWAYS capture the violation / summons /
+                          citation / case / docket number (label it clearly) — it's how the
+                          reader pays or disputes, so it must never be missing. [] if none.
           category      : EXACTLY one of these 9 lowercase words and NOTHING else:
                           utility, finance, housing, medical, personal, government, auto, work, other.
                           Travel, flights, appointments, and personal errands are "personal".
@@ -182,7 +187,10 @@ nonisolated struct OpenAIClient: Extractor {
                           should pay the ticket AND renew the registration AND get/display the
                           new sticker or tag (and, where offered, print a temporary proof) so
                           the person isn't ticketed again tomorrow. Be specific and operational,
-                          not vague — no "pay it" / "contact them". When there is an ONLINE option, give it
+                          not vague — no "pay it" / "contact them". Err toward MORE, smaller,
+                          concrete steps rather than a few broad ones: break a big action into
+                          its real sub-steps (what to gather, where to go, what to do, what to
+                          save). When there is an ONLINE option, give it
                           as a step WITH the website/app (e.g. "Check in online at united.com,
                           or check in at the airport counter"), then real next steps (e.g.
                           "arrive ~2 hours early", "go through security", "find your gate").
