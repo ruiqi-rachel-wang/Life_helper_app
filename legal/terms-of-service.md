@@ -105,4 +105,4 @@ to conflict-of-laws rules.
 
 ## 13. Contact
 
-**Cuevi Support** — **support@cuevi.app**
+**Cuevi Support** — **support.cuevi@gmail.com**

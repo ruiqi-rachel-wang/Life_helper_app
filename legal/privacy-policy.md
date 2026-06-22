@@ -23,7 +23,7 @@ below.
 
 Cuevi is operated as a sole proprietorship based in New York,
 United States.
-Questions about this policy: **support@cuevi.app**.
+Questions about this policy: **support.cuevi@gmail.com**.
 
 (If a business entity such as an LLC is formed later, this section will be updated
 with its legal name and address.)
@@ -146,4 +146,4 @@ changes will be reflected in the app.
 
 ## 9. Contact
 
-**Cuevi Support** — **support@cuevi.app**
+**Cuevi Support** — **support.cuevi@gmail.com**

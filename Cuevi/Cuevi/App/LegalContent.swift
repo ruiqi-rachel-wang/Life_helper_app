@@ -21,7 +21,7 @@ The short version: **your documents and data stay on your device.** Cuevi has no
 
 ## 1. Who is responsible
 
-Cuevi is operated as a sole proprietorship based in New York, United States. Questions about this policy: **support@cuevi.app**.
+Cuevi is operated as a sole proprietorship based in New York, United States. Questions about this policy: **support.cuevi@gmail.com**.
 
 (If a business entity such as an LLC is formed later, this section will be updated with its legal name and address.)
 
@@ -107,7 +107,7 @@ We may update this policy as the app evolves (for example, if we add accounts, s
 
 ## 9. Contact
 
-**Cuevi Support** — **support@cuevi.app**
+**Cuevi Support** — **support.cuevi@gmail.com**
 
 """#
 
@@ -178,7 +178,7 @@ These Terms are governed by the laws of **New York, United States**, without reg
 
 ## 13. Contact
 
-**Cuevi Support** — **support@cuevi.app**
+**Cuevi Support** — **support.cuevi@gmail.com**
 
 """#
 }

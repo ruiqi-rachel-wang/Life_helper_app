@@ -13,7 +13,7 @@
   on every request, restricts the path, and supports an optional `PROXY_TOKEN`; the app
   sends `max_tokens` + the token. **Rachel's actions before TestFlight:** rotate the
   OpenAI key (it was in earlier builds), update the Worker secret, add a Cloudflare
-  rate-limit rule, and set up the `support@cuevi.app` inbox.
+  rate-limit rule, and set up the `support.cuevi@gmail.com` inbox.
 - **Privacy policy corrected:** scanning sends the FULL recognized text (which may
   include sensitive health/financial/immigration/name/account info) to OpenAI; removed
   the false "non-sensitive only / names not sent / local-only" claims; noted OpenAI's
@@ -40,7 +40,7 @@
   PNG at `Cuevi/Cuevi/Assets.xcassets/AppIcon.appiconset/icon-1024.png`. (The generator
   script was removed.)
 - **Legal depersonalized + in-app**: no personal name/email; contact is a placeholder role
-  address `support@cuevi.app` (set up a real inbox before publishing). Privacy/Terms now
+  address `support.cuevi@gmail.com` (set up a real inbox before publishing). Privacy/Terms now
   render **in-app** (`LegalContent` + `LegalDocumentView`); the unused `LegalConfig` was deleted.
 - **Guide content localization (started):** sensitive guides translate on-device via the
   String Catalog (`ExtractionResult.localized()`), no AI. Done: **bank account, taxes**.

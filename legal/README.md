@@ -16,7 +16,7 @@ Drafts of everything Cuevi needs for a **free** TestFlight / App Store release.
 The documents are completed for the current setup:
 - **Responsible party:** sole proprietor, New York, United States (add your legal name or LLC before a public launch — keep it off the public doc if you prefer).
 - **Governing law:** New York, United States (Terms §12).
-- **Contact:** `support@cuevi.app` (placeholder role address — set up a dedicated inbox; not a personal email).
+- **Contact:** `support.cuevi@gmail.com` (placeholder role address — set up a dedicated inbox; not a personal email).
 
 If you form an LLC or move states later, update the responsible-party and
 governing-law sections in both documents.
