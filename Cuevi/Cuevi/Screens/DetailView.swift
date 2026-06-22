@@ -98,11 +98,21 @@ struct DetailView: View {
                     Text("✓ COMPLETED").font(.eyebrow).tracking(0.6).foregroundStyle(Color.ok)
                 }
 
-                HStack(spacing: 8) {
-                    if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
-                    dueChip   // always shown; offers "Add date" when there's none
+                // Read mode: amount + due side by side. Edit mode: stacked, so the
+                // date picker gets full width instead of a cramped half-column.
+                if isEditing {
+                    VStack(spacing: 8) {
+                        if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
+                        dueChip
+                    }
+                    .padding(.top, 2)
+                } else {
+                    HStack(spacing: 8) {
+                        if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
+                        dueChip   // always shown; offers "Add date" when there's none
+                    }
+                    .padding(.top, 2)
                 }
-                .padding(.top, 2)
 
                 if isEditing || item.recurrence != nil { repeatsRow }
             }
@@ -234,15 +244,10 @@ struct DetailView: View {
                         HStack(alignment: .top, spacing: 10) {
                             Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
                                 .buttonStyle(.plain)
-                            // Tapping the text opens the step's detail, but only
-                            // when there IS detail — a plain step stays full-color
-                            // (a disabled Button would gray it out).
-                            if step.hasDetail {
-                                Button { detailStep = step } label: { stepText(step, chevron: true) }
-                                    .buttonStyle(.plain)
-                            } else {
-                                stepText(step, chevron: false)
-                            }
+                            // Every step opens its detail sheet — even a plain one — so
+                            // there's always a way to add a sub-checklist / what-you'll-need.
+                            Button { detailStep = step } label: { stepText(step, chevron: true) }
+                                .buttonStyle(.plain)
                         }
                         .padding(.vertical, 8)
                         .overlay(alignment: .top) { divider(above: step) }

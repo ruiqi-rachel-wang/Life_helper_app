@@ -37,6 +37,7 @@ nonisolated struct ExtractionResult: Equatable {
                                        // (a flight/appointment), not just a day —
                                        // drives time-based reminders (Week 6)
     var accountNumber: String?         // the primary identifier
+    var accountLabel: String?          // what that id is called on the doc (e.g. "Confirmation code")
     var otherIDs: [DocID]              // any additional identifiers
     var category: ItemCategory?        // utility / government / medical…
     var summary: String?               // what KIND of doc this is + plain context
@@ -59,6 +60,7 @@ nonisolated struct ExtractionResult: Equatable {
          dueDate: Date? = nil,
          dueHasTime: Bool = false,
          accountNumber: String? = nil,
+         accountLabel: String? = nil,
          otherIDs: [DocID] = [],
          category: ItemCategory? = nil,
          summary: String? = nil,
@@ -78,6 +80,7 @@ nonisolated struct ExtractionResult: Equatable {
         self.dueDate = dueDate
         self.dueHasTime = dueHasTime
         self.accountNumber = accountNumber
+        self.accountLabel = accountLabel
         self.otherIDs = otherIDs
         self.category = category
         self.summary = summary

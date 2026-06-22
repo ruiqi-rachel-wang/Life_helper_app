@@ -231,11 +231,16 @@ struct ReviewView: View {
             // Show a chip only when there's a value (or while editing, so the
             // user can add one). No empty "—" boxes.
             if draft.amount != nil || draft.dueDate != nil || isEditing {
-                HStack(spacing: 8) {
-                    if draft.amount != nil || isEditing { amountChip }
-                    if draft.dueDate != nil || isEditing { dueChip }
+                // Stacked while editing so the date picker gets full width.
+                if isEditing {
+                    VStack(spacing: 8) { amountChip; dueChip }.padding(.top, 2)
+                } else {
+                    HStack(spacing: 8) {
+                        if draft.amount != nil { amountChip }
+                        if draft.dueDate != nil { dueChip }
+                    }
+                    .padding(.top, 2)
                 }
-                .padding(.top, 2)
             }
 
             // Recurrence — visible/editable right here so a scanned bill's monthly
@@ -643,7 +648,8 @@ struct ReviewView: View {
     private var combinedIDs: [DocID] {
         var list = draft.otherIDs
         if let acct = draft.accountNumber, !acct.isEmpty, !list.contains(where: { $0.value == acct }) {
-            list.insert(DocID(label: "Reference", value: acct), at: 0)
+            let label = draft.accountLabel?.trimmingCharacters(in: .whitespaces)
+            list.insert(DocID(label: (label?.isEmpty == false ? label! : "Reference"), value: acct), at: 0)
         }
         return list
     }

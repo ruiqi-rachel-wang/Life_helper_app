@@ -683,8 +683,16 @@ extension Guide {
         ],
         build: { a in
             let ssn = a["ssn"] ?? ""
-            var steps = ["Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."]
-            if ssn == "No — I'll use an ITIN" {
+            let hasSSN = ssn == "Yes"
+            let useITIN = ssn == "No — I'll use an ITIN"
+            // First step reflects the answer — don't mention ITIN when they have an SSN.
+            let firstStep = hasSSN
+                ? "Gather your documents: a government photo ID, proof of address, and your Social Security number (SSN)."
+                : useITIN
+                ? "Gather your documents: a government photo ID, proof of address, and your ITIN (apply for one first if you don't have it yet)."
+                : "Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."
+            var steps = [firstStep]
+            if useITIN {
                 steps.append("No SSN? Call a few banks first and ask what they accept — an ITIN, foreign passport, or consular ID. Apply for an ITIN only if you actually need one.")
             } else if ssn == "Not sure" {
                 steps.append("Not sure? Check old tax forms or call the IRS — you may not need an SSN.")
@@ -693,10 +701,13 @@ extension Guide {
             steps.append("Open the account and make the opening deposit.")
             steps.append("Set up online banking, direct deposit, and alerts; order your debit card — and decline overdraft coverage unless you understand the fees.")
 
-            var notes = ["Many banks accept an ITIN or foreign passport instead of an SSN — call ahead to confirm.",
-                         "No proof of address? Ask what alternatives the bank accepts (an employer, school, or shelter letter often works).",
-                         "Turned down before? Ask about a 'second-chance' account and check your ChexSystems report for errors.",
-                         referenceNote]
+            var notes: [String] = []
+            if !hasSSN {
+                notes.append("Many banks accept an ITIN or foreign passport instead of an SSN — call ahead to confirm.")
+            }
+            notes.append("No proof of address? Ask what alternatives the bank accepts (an employer, school, or shelter letter often works).")
+            notes.append("Turned down before? Ask about a 'second-chance' account and check your ChexSystems report for errors.")
+            notes.append(referenceNote)
             return ExtractionResult(
                 title: "Open a bank account",
                 documentType: "Banking guide",

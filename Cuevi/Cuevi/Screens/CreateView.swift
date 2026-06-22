@@ -246,6 +246,7 @@ private struct CreateForm: View {
     @State private var includeDue = false
     @State private var dueDate = Calendar.current.startOfDay(for: .now)
     @State private var steps: [ChecklistStep] = []
+    @State private var amount = ""
     @State private var note = ""
     @State private var photoItem: PhotosPickerItem?
     @State private var imageData: Data?
@@ -265,6 +266,9 @@ private struct CreateForm: View {
                         .padding(.horizontal, 14)
                         .padding(.top, 18)
                     categoryCard
+                        .padding(.horizontal, 14)
+                        .padding(.top, 14)
+                    amountCard
                         .padding(.horizontal, 14)
                         .padding(.top, 14)
                     dueCard
@@ -335,6 +339,27 @@ private struct CreateForm: View {
                     Text(category.displayName).font(.body14).foregroundStyle(Color.ink)
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Color.faint)
                 }
+            }
+        }
+        .padding(16)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
+
+    // MARK: amount (optional)
+
+    private var amountCard: some View {
+        HStack {
+            Text("Amount").font(.system(size: 14)).foregroundStyle(Color.ink)
+            Spacer()
+            HStack(spacing: 2) {
+                Text("$").font(.body14).foregroundStyle(Color.faded)
+                TextField("0.00", text: $amount)
+                    .keyboardType(.decimalPad)
+                    .font(.body14).foregroundStyle(Color.ink)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 120)
             }
         }
         .padding(16)
@@ -485,6 +510,9 @@ private struct CreateForm: View {
             imageData: imageData,
             steps: cleanSteps
         )
+        if let amt = Decimal(string: amount.filter { $0.isNumber || $0 == "." }), amt > 0 {
+            item.amount = amt
+        }
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)
         ReminderScheduler.shared.reschedule(for: item)   // schedule reminders

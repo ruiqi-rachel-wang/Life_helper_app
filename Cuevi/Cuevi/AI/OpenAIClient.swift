@@ -146,7 +146,9 @@ nonisolated struct OpenAIClient: Extractor {
                           leaving New York, an in-person appointment in a city), APPEND that
                           place's UTC offset so the reminder is correct even if the phone is
                           in another timezone — e.g. an 8:05 AM departure from New York in
-                          June is "2026-06-25T08:05-04:00" (EDT). If you cannot determine the
+                          June is "2026-06-25T08:05-04:00" (EDT). Keep the clock time EXACTLY as
+                          printed for that place and only append its offset — never pre-convert
+                          the time to another timezone yourself. If you cannot determine the
                           offset, omit it. Not every doc is a bill — it may be a payment due
                           date, appointment, flight departure, prescription/registration
                           expiry, or submission deadline. The date an email was SENT is NOT
@@ -166,6 +168,12 @@ nonisolated struct OpenAIClient: Extractor {
                           descriptor (e.g. on a ticket use the SUMMONS / ticket number you pay
                           with — NOT the violation code like "4-08(j)(3)" (the rule cited), and
                           not the license plate or VIN). null if none.
+          accountLabel  : what accountNumber is CALLED on the document, in \(language.promptName)
+                          — e.g. "Confirmation code", "Account number", "Summons number", "Case
+                          number", "Policy number". This is the heading shown next to it, so name
+                          it for what it actually is (a flight/hotel/order confirmation or booking
+                          code is a "Confirmation code", NOT a generic "Reference"). null if
+                          accountNumber is null.
           otherIDs      : other identifiers that genuinely help the reader act or follow up,
                           as an array of {"label","value"} objects — claim #, case #,
                           sticker / decal #, confirmation #, policy #, member #. Write each
@@ -416,6 +424,7 @@ nonisolated enum ExtractionJSON {
             dueDate: due.date,
             dueHasTime: due.hasTime,
             accountNumber: str("accountNumber"),
+            accountLabel: str("accountLabel"),
             otherIDs: otherIDs,
             category: normalizedCategory(categoryRaw),
             summary: str("summary"),

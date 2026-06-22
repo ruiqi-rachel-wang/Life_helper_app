@@ -236,7 +236,8 @@ final class ActionItem {
         var ids = r.otherIDs
         if let acct = r.accountNumber, !acct.isEmpty,
            !ids.contains(where: { $0.value == acct }) {
-            ids.insert(DocID(label: "Reference", value: acct), at: 0)
+            let label = r.accountLabel?.trimmingCharacters(in: .whitespaces)
+            ids.insert(DocID(label: (label?.isEmpty == false ? label! : "Reference"), value: acct), at: 0)
         }
         let cleanTitle = r.title?.trimmingCharacters(in: .whitespacesAndNewlines)
         self.init(

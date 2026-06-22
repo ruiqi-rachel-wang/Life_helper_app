@@ -71,9 +71,6 @@ struct StepDetailView: View {
 
     @ViewBuilder
     private var reader: some View {
-        if !d.explanation.isEmpty {
-            Text(d.explanation).font(.body14).foregroundStyle(Color.ink).lineSpacing(2).padding(.horizontal, 4)
-        }
         if !d.miniChecklist.isEmpty {
             section("CHECKLIST") {
                 ForEach(detail.miniChecklist.indices, id: \.self) { i in
@@ -101,11 +98,6 @@ struct StepDetailView: View {
                 ForEach(Array(d.needed.enumerated()), id: \.offset) { _, line in bullet(line) }
             }
         }
-        if !d.script.isEmpty {
-            section("WHAT TO SAY") {
-                Text(linkified(d.script)).font(.body14).foregroundStyle(Color.ink).tint(Color.accent)
-            }
-        }
         if !glossaryTerms.isEmpty {
             section("WHAT THESE MEAN") {
                 ForEach(glossaryTerms) { t in
@@ -114,18 +106,6 @@ struct StepDetailView: View {
                         Text(t.plain).font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-        if !d.links.isEmpty {
-            section("LINKS") {
-                ForEach(Array(d.links.enumerated()), id: \.offset) { _, link in
-                    if let url = URL(string: link.url) {
-                        Link(destination: url) {
-                            Label(link.label.isEmpty ? (url.host() ?? link.url) : link.label, systemImage: "safari")
-                                .font(.body14).foregroundStyle(Color.accent)
-                        }
-                    }
                 }
             }
         }
@@ -139,17 +119,8 @@ struct StepDetailView: View {
 
     @ViewBuilder
     private var editor: some View {
-        section("EXPLANATION") {
-            TextField("Explain this step…", text: detail.explanation, axis: .vertical)
-                .font(.body14).foregroundStyle(Color.ink)
-        }
         editSubSteps(detail.miniChecklist)
-        editList("WHAT YOU'LL NEED", detail.needed, placeholder: "Document or info")
-        section("WHAT TO SAY") {
-            TextField("Script / what to say…", text: detail.script, axis: .vertical)
-                .font(.body14).foregroundStyle(Color.ink)
-        }
-        editLinks(detail.links)
+        editList("WHAT YOU'LL NEED", detail.needed, placeholder: "e.g. ID, account number, a form")
     }
 
     // When every sub-step is checked, the parent milestone is done too.
@@ -170,7 +141,7 @@ struct StepDetailView: View {
         section("CHECKLIST") {
             ForEach(items.wrappedValue.indices, id: \.self) { i in
                 HStack(alignment: .top, spacing: 8) {
-                    TextField("Sub-step", text: items[i].text, axis: .vertical).font(.body14).foregroundStyle(Color.ink)
+                    TextField("Add a small to-do", text: items[i].text, axis: .vertical).font(.body14).foregroundStyle(Color.ink)
                     Button { items.wrappedValue.remove(at: i) } label: {
                         Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                     }.buttonStyle(.plain)
@@ -194,26 +165,6 @@ struct StepDetailView: View {
             }
             Button { items.wrappedValue.append("") } label: {
                 Label("Add", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-            }.buttonStyle(.plain).padding(.top, 2)
-        }
-    }
-
-    private func editLinks(_ links: Binding<[StepLink]>) -> some View {
-        section("LINKS") {
-            ForEach(links.wrappedValue.indices, id: \.self) { i in
-                HStack(alignment: .top, spacing: 8) {
-                    VStack(spacing: 6) {
-                        TextField("Label", text: links[i].label).font(.body14).foregroundStyle(Color.ink)
-                        TextField("https://…", text: links[i].url).font(.subline).foregroundStyle(Color.faded)
-                            .textInputAutocapitalization(.never)
-                    }
-                    Button { links.wrappedValue.remove(at: i) } label: {
-                        Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
-                    }.buttonStyle(.plain)
-                }
-            }
-            Button { links.wrappedValue.append(StepLink(label: "", url: "")) } label: {
-                Label("Add a link", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
             }.buttonStyle(.plain).padding(.top, 2)
         }
     }
