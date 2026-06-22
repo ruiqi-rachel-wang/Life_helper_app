@@ -153,7 +153,11 @@ nonisolated struct OpenAIClient: Extractor {
                           the due date. If the deadline is in WORDS (e.g. "within 90 days of
                           the exam"), COMPUTE the actual calendar date, return THAT computed
                           date (not the date it's measured from), and add "dueDate" to
-                          lowConfidenceFields.
+                          lowConfidenceFields. YEAR: documents often omit or abbreviate the
+                          year — pick the year that makes the date make sense relative to TODAY
+                          (given in the user message); for an upcoming deadline/appointment use
+                          the current or next future year, and NEVER return a past year (e.g.
+                          2023) for an action still to be done.
           accountNumber : the ONE identifier the reader needs to ACT on this — to pay it,
                           look it up, reference it on a call, or dispute it. Pick the
                           actionable id for whatever the document is: a bill's account number,
@@ -299,8 +303,9 @@ nonisolated struct OpenAIClient: Extractor {
         }
         if let n = hints.accountNumber { known += "\n- accountNumber (regex-detected): \(n)" }
 
+        let tf = DateFormatter(); tf.dateFormat = "yyyy-MM-dd"; tf.locale = Locale(identifier: "en_US_POSIX"); tf.timeZone = .current
         let knownBlock = known.isEmpty ? "" : "\n\nFields already detected by exact rules (prefer these):\(known)"
-        return "OCR TEXT:\n\"\"\"\n\(text)\n\"\"\"\(knownBlock)"
+        return "Today's date is \(tf.string(from: Date())) (use it to resolve missing or ambiguous years).\n\nOCR TEXT:\n\"\"\"\n\(text)\n\"\"\"\(knownBlock)"
     }
 }
 
