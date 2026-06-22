@@ -305,11 +305,7 @@ struct ReviewView: View {
     private var amountChip: some View {
         chipBox("AMOUNT", flagged: draft.lowConfidenceFields.contains("amount")) {
             if isEditing {
-                HStack(spacing: 2) {
-                    Text("$").font(.subline).foregroundStyle(Color.faded)
-                    TextField("0.00", text: amountText).keyboardType(.decimalPad)
-                        .font(.serifStat).foregroundStyle(Color.ink)
-                }
+                AmountInput(amount: $draft.amount)
             } else if let amount = draft.amount {
                 Text(amount.formatted(.currency(code: draft.currency ?? "USD")))
                     .font(.serifStat).foregroundStyle(Color.ink)
@@ -660,10 +656,6 @@ struct ReviewView: View {
     }
     private func bindBool(_ key: WritableKeyPath<ExtractionResult, Bool>) -> Binding<Bool> {
         Binding(get: { draft[keyPath: key] }, set: { draft[keyPath: key] = $0 })
-    }
-    private var amountText: Binding<String> {
-        Binding(get: { draft.amount.map { ($0 as NSDecimalNumber).stringValue } ?? "" },
-                set: { draft.amount = Decimal(string: $0) })
     }
     private var dueDateBinding: Binding<Date> {
         Binding(get: { draft.dueDate ?? .now }, set: { draft.dueDate = $0 })

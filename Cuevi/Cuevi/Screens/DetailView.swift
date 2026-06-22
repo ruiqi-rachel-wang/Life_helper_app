@@ -102,13 +102,13 @@ struct DetailView: View {
                 // date picker gets full width instead of a cramped half-column.
                 if isEditing {
                     VStack(spacing: 8) {
-                        if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
+                        amountChip   // editable now — add or fix the amount on a saved item
                         dueChip
                     }
                     .padding(.top, 2)
                 } else {
                     HStack(spacing: 8) {
-                        if let amount = item.amountText { chipBox("AMOUNT", amount, tone: Color.ink) }
+                        if item.amount != nil { amountChip }
                         dueChip   // always shown; offers "Add date" when there's none
                     }
                     .padding(.top, 2)
@@ -154,11 +154,15 @@ struct DetailView: View {
         return [type, sender].compactMap { $0 }.joined(separator: " · ").uppercased()
     }
 
-    private func chipBox(_ label: LocalizedStringKey, _ value: String, tone: Color) -> some View {
+    private var amountChip: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-            Text(value).font(.serifStat).tracking(-0.5).foregroundStyle(tone)
-                .minimumScaleFactor(0.5).lineLimit(2)
+            Text("AMOUNT").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+            if isEditing {
+                AmountInput(amount: $item.amount)
+            } else if let amount = item.amountText {
+                Text(amount).font(.serifStat).tracking(-0.5).foregroundStyle(Color.ink)
+                    .minimumScaleFactor(0.5).lineLimit(2)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
