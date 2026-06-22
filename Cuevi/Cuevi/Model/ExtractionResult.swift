@@ -50,6 +50,11 @@ nonisolated struct ExtractionResult: Equatable {
     var repeats: Recurrence?           // nil = one-off; AI reads cadence from doc
     var confidence: Double             // 0–1 overall
     var lowConfidenceFields: Set<String>   // field names the user should double-check
+    // Editable reminder list while reviewing (parallels ActionItem.reminders), so the
+    // Review and Detail edit screens share one editor. Empty + not customized → the
+    // saved item uses smart defaults.
+    var reminders: [ReminderItem] = []
+    var remindersCustomized: Bool = false
 
     init(title: String? = nil,
          documentType: String? = nil,
@@ -70,7 +75,9 @@ nonisolated struct ExtractionResult: Equatable {
          siteURL: URL? = nil,
          repeats: Recurrence? = nil,
          confidence: Double = 0,
-         lowConfidenceFields: Set<String> = []) {
+         lowConfidenceFields: Set<String> = [],
+         reminders: [ReminderItem] = [],
+         remindersCustomized: Bool = false) {
         self.title = title
         self.documentType = documentType
         self.sender = sender
@@ -91,6 +98,8 @@ nonisolated struct ExtractionResult: Equatable {
         self.repeats = repeats
         self.confidence = confidence
         self.lowConfidenceFields = lowConfidenceFields
+        self.reminders = reminders
+        self.remindersCustomized = remindersCustomized
     }
 
     // An empty result — used when OCR produced nothing, so we never call the

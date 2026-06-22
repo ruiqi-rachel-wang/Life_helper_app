@@ -383,6 +383,15 @@ final class ActionItem {
     // scheduler and are intentionally absent from this editable list.
     func reminderSchedule(now: Date = .now,
                           calendar: Calendar = .current) -> [ScheduledReminder] {
+        Self.reminderSchedule(dueDate: dueDate, dueHasTime: dueHasTime,
+                              leadHours: reminderLeadHours, now: now, calendar: calendar)
+    }
+
+    // Static so the pre-save Review draft can compute the SAME smart defaults
+    // without an ActionItem instance — both edit screens share this.
+    static func reminderSchedule(dueDate: Date?, dueHasTime: Bool, leadHours: Int,
+                                 now: Date = .now,
+                                 calendar: Calendar = .current) -> [ScheduledReminder] {
         guard let due = dueDate else { return [] }
 
         if dueHasTime {
@@ -390,7 +399,7 @@ final class ActionItem {
             if let dayBefore = calendar.date(byAdding: .day, value: -1, to: due) {
                 timed.append(ScheduledReminder(date: calendar.startOfDay(for: dayBefore), label: "Day before"))
             }
-            if let hoursBefore = calendar.date(byAdding: .hour, value: -reminderLeadHours, to: due) {
+            if let hoursBefore = calendar.date(byAdding: .hour, value: -leadHours, to: due) {
                 timed.append(ScheduledReminder(date: hoursBefore, label: "Hours before", exactTime: true))
             }
             return timed
@@ -411,7 +420,15 @@ final class ActionItem {
     // their exact time). Notes are left empty so the scheduler computes a
     // friendly body. Used to seed the editable list.
     func defaultReminders(now: Date = .now, calendar: Calendar = .current) -> [ReminderItem] {
-        reminderSchedule(now: now, calendar: calendar).compactMap { r in
+        Self.defaultReminders(dueDate: dueDate, dueHasTime: dueHasTime,
+                              leadHours: reminderLeadHours, now: now, calendar: calendar)
+    }
+
+    static func defaultReminders(dueDate: Date?, dueHasTime: Bool, leadHours: Int,
+                                 now: Date = .now,
+                                 calendar: Calendar = .current) -> [ReminderItem] {
+        reminderSchedule(dueDate: dueDate, dueHasTime: dueHasTime, leadHours: leadHours,
+                         now: now, calendar: calendar).compactMap { r in
             let fire = r.exactTime ? r.date : calendar.date(bySettingHour: 9, minute: 0, second: 0, of: r.date)
             return fire.map { ReminderItem(date: $0) }
         }

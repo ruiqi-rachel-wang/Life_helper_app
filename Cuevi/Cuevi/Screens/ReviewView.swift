@@ -247,24 +247,18 @@ struct ReviewView: View {
             // cadence can be confirmed or changed before saving.
             if isEditing || draft.repeats != nil { repeatsRow }
 
-            // When the event has a specific time, let the user pick how far ahead
-            // to be reminded (smart default by type).
-            if draft.dueHasTime && (draft.dueDate != nil || isEditing) {
-                HStack(spacing: 6) {
-                    Text("REMIND").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-                    Menu {
-                        ForEach(ActionItem.leadOptions, id: \.self) { h in
-                            Button(ActionItem.leadLabel(h)) { leadHours = h }
-                        }
-                    } label: {
-                        HStack(spacing: 3) {
-                            Text("\(ActionItem.leadLabel(leadHours)) before")
-                            Image(systemName: "chevron.down").font(.system(size: 9))
-                        }
-                        .font(.subline).foregroundStyle(Color.accent)
-                    }
+            // Reminders — the SAME editor as the Detail page (shared component), so you
+            // can add / remove / retime here too, instead of silently getting defaults.
+            if draft.dueDate != nil {
+                card {
+                    RemindersEditor(reminders: $draft.reminders,
+                                    customized: $draft.remindersCustomized,
+                                    defaults: ActionItem.defaultReminders(dueDate: draft.dueDate,
+                                                                          dueHasTime: draft.dueHasTime,
+                                                                          leadHours: leadHours),
+                                    dueDate: draft.dueDate,
+                                    isEditing: isEditing)
                 }
-                .padding(.top, 2)
             }
 
             // Fields the AI was unsure about beyond amount/due (which already get
@@ -529,6 +523,10 @@ struct ReviewView: View {
         draft.notes = draft.notes.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         let item = ActionItem(from: draft, imageData: scanImageData, source: source)
         item.reminderLeadHours = leadHours
+        if draft.remindersCustomized {        // user edited the list in Review → carry it over
+            item.reminders = draft.reminders
+            item.remindersCustomized = true
+        }
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
