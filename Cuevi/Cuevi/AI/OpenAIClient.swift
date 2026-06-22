@@ -149,7 +149,12 @@ nonisolated struct OpenAIClient: Extractor {
                           June is "2026-06-25T08:05-04:00" (EDT). Keep the clock time EXACTLY as
                           printed for that place and only append its offset — never pre-convert
                           the time to another timezone yourself. If you cannot determine the
-                          offset, omit it. Not every doc is a bill — it may be a payment due
+                          offset, omit it. If the doc shows the SAME event in TWO timezones
+                          (common in calendar invites/emails — e.g. "9:30am EDT" and also
+                          "8:30 AM"), use the time already in the READER's timezone (given in the
+                          user message) and DON'T append an offset — it is already local. Only
+                          append an offset when the time is given solely in a place's own
+                          timezone that differs from the reader's. Not every doc is a bill — it may be a payment due
                           date, appointment, flight departure, prescription/registration
                           expiry, or submission deadline. The date an email was SENT is NOT
                           the due date. If the deadline is in WORDS (e.g. "within 90 days of
@@ -312,8 +317,11 @@ nonisolated struct OpenAIClient: Extractor {
         if let n = hints.accountNumber { known += "\n- accountNumber (regex-detected): \(n)" }
 
         let tf = DateFormatter(); tf.dateFormat = "yyyy-MM-dd"; tf.locale = Locale(identifier: "en_US_POSIX"); tf.timeZone = .current
+        let tz = TimeZone.current
+        let secs = tz.secondsFromGMT()
+        let off = String(format: "%@%02d:%02d", secs < 0 ? "-" : "+", abs(secs) / 3600, abs(secs) % 3600 / 60)
         let knownBlock = known.isEmpty ? "" : "\n\nFields already detected by exact rules (prefer these):\(known)"
-        return "Today's date is \(tf.string(from: Date())) (use it to resolve missing or ambiguous years).\n\nOCR TEXT:\n\"\"\"\n\(text)\n\"\"\"\(knownBlock)"
+        return "Today's date is \(tf.string(from: Date())) (use it to resolve missing or ambiguous years). The reader is in timezone \(tz.identifier) (UTC\(off) right now).\n\nOCR TEXT:\n\"\"\"\n\(text)\n\"\"\"\(knownBlock)"
     }
 }
 
