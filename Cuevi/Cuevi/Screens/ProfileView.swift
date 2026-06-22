@@ -120,7 +120,7 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("This sets the language Cuevi uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device.")
+                Text("This sets the language Cuevi uses to explain your documents and guides (it defaults to your phone's language). The app's own buttons and labels follow your phone's language. Sensitive guides — money, immigration, medical — are translated on your device, without sending anything to AI.")
                     .font(.subline).foregroundStyle(Color.faint)
                     .padding(.top, 10)
             }

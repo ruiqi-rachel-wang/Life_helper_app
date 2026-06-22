@@ -19,50 +19,37 @@ declare User Content as below.
 
 ## 2. Data types to declare
 
-### User Content
-- **Photos or Videos** — *Collected.*
-  - Linked to the user's identity? **No** (there is no account/identifier).
-  - Used for tracking? **No.**
-  - Purpose: **App Functionality.**
-- **Other User Content** (the recognized text of the documents) — *Collected.*
-  - Linked to identity? **No.**
-  - Used for tracking? **No.**
-  - Purpose: **App Functionality.**
+**Recommended declaration** (accurate + deliberately over-inclusive). Because a scanned
+document's recognized text is sent off-device to OpenAI and can contain almost anything,
+declare each of these as **Collected · purpose: App Functionality · NOT linked to
+identity · NOT used for tracking**:
 
-> Note: the photo is stored on-device; what is transmitted to OpenAI is the
-> recognized **text**, which OpenAI may retain ~30 days. Declaring Photos + Other
-> User Content under App Functionality is the baseline.
+- **Other User Content** — the recognized text of scanned documents.
+- **Contact Info** — documents often show names, addresses, phone numbers.
+- **Health & Fitness** — e.g. medical bills or appointment notes.
+- **Financial Info** — e.g. bank, tax, or billing statements.
+- **Sensitive Info** — e.g. immigration or legal documents.
 
-> ⚠️ **Needs a closer look before you submit.** A scanned document's text can contain
-> **Financial Info** (bank/tax statements), **Health & Fitness** (medical bills/notes),
-> **Contact Info** (names, addresses), and other **Sensitive Info** (e.g. immigration),
-> and that text is sent **off-device** to OpenAI. Apple asks you to declare data your
-> app *collects* by the data's nature, not just the field you ask for — so "Other User
-> Content" alone may understate it. Before submitting, decide (ideally with Apple's
-> data-type definitions or a professional) whether to ALSO declare **Financial Info**,
-> **Health & Fitness**, **Contact Info**, and/or **Sensitive Info** — each as
-> *App Functionality, Not linked, No tracking*. Being over-inclusive here is safer than
-> under-declaring.
+> Why declare so much: Apple judges collection by the data's *nature*, not the field you
+> ask for. OCR text can include all of the above and it **leaves the device** (OpenAI may
+> retain it ~30 days), so over-declaring is the safe, accurate choice. A privacy
+> professional can narrow this later if appropriate.
 
-### Everything else → **Not collected** (BUT see the warning above re: scanned content)
-Unless/until you add them, answer **No / Not Collected** for:
-- Contact Info (name, email, phone, address) — *unless the scan warning above applies*
-- Health & Fitness — *unless the scan warning above applies*
-- Financial Info (you do not link banks or process payments) — *but scans can contain it; see above*
-- Location
-- Identifiers (no user ID, device ID, or advertising ID)
-- Usage Data (no analytics yet)
-- Diagnostics (no crash/analytics SDK yet)
-- Purchases, Browsing History, Search History, Sensitive Info, Contacts
+### NOT collected
+- **Photos or Videos** — the photo is read on-device (OCR) and **stays on the device**;
+  only the recognized *text* is sent out. So Photos are **Not Collected**.
+- **Location, Identifiers, Usage Data, Diagnostics, Purchases, Browsing/Search History,
+  Contacts** — none collected (no analytics, no accounts, no ad IDs).
 
 ## 3. Tracking
 **"Does this app track users?"** → **No.** (No cross-app/cross-site tracking, no
 ad identifiers, no data shared with data brokers.)
 
 ## 4. Privacy Policy URL (required field)
-Enter your hosted Privacy Policy URL (see `legal/README.md` for hosting). Until you
-enable a nicer page, the GitHub-hosted Markdown URL is acceptable:
-`https://github.com/ruiqi-rachel-wang/Life_helper_app/blob/main/legal/privacy-policy.md`
+Use the live, free, public Cloudflare Pages URL:
+`https://cuevi-legal.pages.dev/privacy.html`
+(Verify it loads in a **private/incognito** browser window — i.e. anonymously — before
+you submit. Terms: `https://cuevi-legal.pages.dev/terms.html`.)
 
 ---
 

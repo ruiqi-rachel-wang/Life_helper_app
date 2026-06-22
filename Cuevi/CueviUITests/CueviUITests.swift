@@ -25,8 +25,8 @@ final class CueviUITests: XCTestCase {
         app.launchArguments = ["-uitest", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]   // skip the notif prompt; force English so selectors are language-independent
         app.launch()
 
-        // Inbox is the launch tab.
-        XCTAssertTrue(app.staticTexts["Inbox"].waitForExistence(timeout: 5))
+        // To-Do is the launch tab.
+        XCTAssertTrue(app.staticTexts["To-Do"].waitForExistence(timeout: 5))
 
         // Add → the picker hero.
         app.tabBars.buttons["Add"].tap()

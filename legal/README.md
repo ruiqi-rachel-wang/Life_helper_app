@@ -21,18 +21,15 @@ The documents are completed for the current setup:
 If you form an LLC or move states later, update the responsible-party and
 governing-law sections in both documents.
 
-## Hosting (you need a public URL for the App Store)
-**Easiest — GitHub Pages (free):**
-1. Push these files to GitHub (they live in this repo under `legal/`).
-2. On GitHub: **Settings → Pages → Build from branch → `main` → `/ (root)`** → Save.
-3. After it builds, your policy is at:
-   `https://ruiqi-rachel-wang.github.io/Life_helper_app/legal/privacy-policy.md`
-   (GitHub renders Markdown to a web page.)
+## Hosting (live now — Cloudflare Pages, free)
+These docs are deployed to **https://cuevi-legal.pages.dev/** (`privacy.html`, `terms.html`).
+GitHub Pages is **not** used: this repo is private, and GitHub Pages needs a paid plan for
+private repos (and raw GitHub file URLs aren't public).
 
-**Or, with zero setup:** the GitHub file URL itself is already public and works as
-the App Store URL:
-`https://github.com/ruiqi-rachel-wang/Life_helper_app/blob/main/legal/privacy-policy.md`
-*(This only works once these files are committed and pushed.)*
+To re-publish after editing the policy: regenerate the HTML in `docs/` (the generator
+lives in the project history), then from the repo root run
+`npx wrangler@3 pages deploy docs --project-name=cuevi-legal --branch=main`.
+Verify the URL loads in a **private/incognito** window (anonymously) before submitting.
 
 ## How the app shows these
 The in-app **Profile → About & Legal** screens render this text directly (not a web
