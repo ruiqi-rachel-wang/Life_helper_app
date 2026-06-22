@@ -265,18 +265,6 @@ struct ProfileView: View {
             Text("DEBUG").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faint)
 
             metricsPanel
-
-            Button {
-                ReminderScheduler.shared.fireTestReminder()
-            } label: {
-                Text("Send a test reminder (5s)")
-                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color.paper)
-                    .frame(maxWidth: .infinity).padding(.vertical, 13)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
-            }
-            .buttonStyle(.plain)
-            Text("Lock the app to see the banner.")
-                .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faint)
         }
         .padding(.horizontal, 4)
         .padding(.top, 8)

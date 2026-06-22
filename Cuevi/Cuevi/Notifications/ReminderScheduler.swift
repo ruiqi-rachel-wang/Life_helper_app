@@ -142,20 +142,4 @@ final class ReminderScheduler {
         default:    return String(localized: "Due in \(days) days")
         }
     }
-
-    #if DEBUG
-    // Dev-only: fire a sample reminder a few seconds out so banner delivery
-    // can be tested without waiting for a real due date. This notification has
-    // no itemID, so action routing must be tested with a real scheduled item.
-    func fireTestReminder() {
-        let content = UNMutableNotificationContent()
-        content.title = "Test reminder"
-        content.body = "This is what a Cuevi reminder looks like."
-        content.sound = .default
-        content.categoryIdentifier = ReminderID.category
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        center.add(UNNotificationRequest(
-            identifier: "test-reminder", content: content, trigger: trigger))
-    }
-    #endif
 }
