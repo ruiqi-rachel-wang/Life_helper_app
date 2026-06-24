@@ -19,6 +19,7 @@ import UIKit
 struct ProfileView: View {
     @Environment(\.openURL) private var openURL
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
+    @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
     @State private var notifyStatus = String(localized: "Checking…")
     @State private var notifyOn = false
     @State private var notifyUndetermined = false   // never asked → row can request
@@ -43,6 +44,7 @@ struct ProfileView: View {
                     languageCard       // top — the one wired control
                     accountCard        // coming-soon scaffolding
                     settingsCard
+                    privacyCard        // anonymous usage-data opt-out
                     legalCard          // privacy policy, terms, disclaimer, version
                     #if DEBUG
                     debugCard
@@ -204,6 +206,27 @@ struct ProfileView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: privacy — anonymous usage data
+
+    // Discloses + lets the user turn off the anonymous usage stats that Metrics
+    // uploads (the toggle writes Metrics.shareUsageKey, which flush() respects).
+    // Default ON; non-PII by design — see the Privacy Policy for the full wording.
+    private var privacyCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("PRIVACY").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                    .padding(.bottom, 10)
+                Toggle(isOn: $shareUsage) {
+                    Text("Share anonymous usage data").font(.body14).foregroundStyle(Color.ink)
+                }
+                .tint(Color.accent)
+                Text("Sends anonymous, non-identifying stats about which features you use — for example, items you add and complete — so we can improve Cuevi. Never your documents, photos, or any text from your items. Turn this off anytime.")
+                    .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
+                    .padding(.top, 10)
+            }
+        }
     }
 
     // MARK: about & legal

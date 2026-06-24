@@ -38,4 +38,10 @@ nonisolated enum BackendConfig {
     static var chatEndpoint: URL {
         workerURL ?? URL(string: "https://api.openai.com/v1/chat/completions")!
     }
+
+    // Where anonymous metrics go: the Worker's /events route, or nil when no Worker
+    // is set (simulator dev) — then metrics stay local and nothing uploads.
+    static var eventsEndpoint: URL? {
+        workerURL?.appendingPathComponent("events")
+    }
 }

@@ -1,9 +1,10 @@
 # App Store Privacy "Nutrition Label" — answers for Cuevi
 
 > Fill this into **App Store Connect → your app → App Privacy**. These answers
-> match how Cuevi works today (local-first, document text sent to OpenAI for
-> processing, no accounts, no analytics). Re-check before each submission — if you
-> later add analytics (e.g. TelemetryDeck) or accounts, you MUST update the label.
+> match how Cuevi works today (local-first; document text sent to OpenAI for
+> processing; no accounts; plus anonymous, non-identifying first-party usage stats).
+> Re-check before each submission — if you later add accounts or a third-party
+> analytics SDK, you MUST update the label.
 
 ## Key nuance (don't get this wrong)
 Apple counts data as **"collected"** if it **leaves the device**, even if you don't
@@ -35,11 +36,26 @@ identity · NOT used for tracking**:
 > retain it ~30 days), so over-declaring is the safe, accurate choice. A privacy
 > professional can narrow this later if appropriate.
 
+### Also collected — anonymous usage statistics (first-party)
+Cuevi sends anonymous, non-identifying usage events to our own backend (a Cloudflare
+database) to measure whether the app helps. Declare:
+
+- **Usage Data → Product Interaction** — Collected · purpose **Analytics** + App
+  Functionality · **NOT linked** to identity · **NOT used for tracking**. (Events like
+  "item added" / "item completed," with a source and an on-time flag.)
+- **Identifiers → User ID** — Collected · purpose Analytics + App Functionality · **NOT
+  linked** to identity · **NOT used for tracking**. (A random per-install UUID generated
+  on the device — not your Apple ID, account, or the advertising identifier, and never
+  linked to who you are.)
+
+Both are **first-party only**: no third-party analytics SDK, no advertising, no data
+brokers, no cross-app tracking. The user can turn this off in **Profile → Privacy**.
+
 ### NOT collected
 - **Photos or Videos** — the photo is read on-device (OCR) and **stays on the device**;
   only the recognized *text* is sent out. So Photos are **Not Collected**.
-- **Location, Identifiers, Usage Data, Diagnostics, Purchases, Browsing/Search History,
-  Contacts** — none collected (no analytics, no accounts, no ad IDs).
+- **Location, Diagnostics, Purchases, Browsing/Search History, Contacts** — none
+  collected (no third-party analytics, no accounts, no ad IDs).
 
 ## 3. Tracking
 **"Does this app track users?"** → **No.** (No cross-app/cross-site tracking, no
@@ -54,8 +70,10 @@ you submit. Terms: `https://cuevi-legal.pages.dev/terms.html`.)
 ---
 
 ## When you change the app, revisit this:
-- **Add TelemetryDeck / any analytics** → declare **Diagnostics** and/or **Usage
-  Data** (Analytics purpose), still "Not linked" / "No tracking" if it stays PII-free.
+- **Already added (2026-06-23): our own anonymous usage stats** → declared **Usage
+  Data** (Product Interaction) + **Identifiers** (User ID), Analytics purpose, Not
+  linked / No tracking. If you add a **third-party** analytics SDK later, re-confirm its
+  data types and whether it does any tracking.
 - **Add accounts / sign-in** → declare **Contact Info** and **Identifiers**, and
   many items may become **Linked to the user**.
 - **Add cloud sync** → revisit retention and linkage answers.

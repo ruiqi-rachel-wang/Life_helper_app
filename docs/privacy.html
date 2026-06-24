@@ -3,9 +3,9 @@
 <title>Cuevi — Privacy Policy</title>
 <style>body{max-width:760px;margin:2rem auto;padding:0 1rem;font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;color:#29261b;background:#f7f5f1}h1{font-size:1.9rem}h2{margin-top:1.8rem}code{background:#eee;padding:.1em .3em;border-radius:3px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4em .6em;text-align:left;vertical-align:top}a{color:#b14a2a}hr{border:none;border-top:1px solid #ddd;margin:1.5rem 0}</style></head><body>
 <h1>Privacy Policy for Cuevi</h1>
-<p><strong>Effective date:</strong> June 18, 2026 <strong>Last updated:</strong> June 18, 2026</p>
+<p><strong>Effective date:</strong> June 18, 2026 <strong>Last updated:</strong> June 23, 2026</p>
 <p>Cuevi (&quot;Cuevi&quot;, &quot;we&quot;, &quot;us&quot;) is an iOS app that helps you understand letters, bills, and official documents and turn them into reminders and checklists. This policy explains what data the app handles and what happens to it.</p>
-<p>The short version: <strong>your documents and data stay on your device.</strong> Cuevi has no accounts, no sign-in, and no server database. The only time information leaves your phone is when the *text* of a document is sent for AI processing, described below.</p>
+<p>The short version: <strong>your documents and data stay on your device.</strong> Cuevi has no accounts and no sign-in. Two things leave your phone, both described below: (1) the <em>text</em> of a document you scan is sent for AI processing, and (2) <strong>anonymous, non-identifying usage statistics</strong> — which features you use, never your content — are sent to a backend we run, so we can improve the app. You can turn off (2) anytime in the app.</p>
 <hr>
 <h2>1. Who is responsible</h2>
 <p>Cuevi is operated as a sole proprietorship based in New York, United States. Questions about this policy: <strong>support.cuevi@gmail.com</strong>.</p>
@@ -30,19 +30,27 @@
 </ul>
 <h3>Sensitive GUIDES are generated on your device</h3>
 <p>The built-in <strong>guides</strong> we classify as sensitive — money/banking, taxes, immigration (USCIS), medical, and similar — are generated <strong>entirely on your device</strong> and are <strong>never sent to OpenAI</strong> (they show a &quot;stays on your device&quot; badge). This applies to those guides only; it does <strong>not</strong> apply to <strong>scanning</strong>, where the recognized text is sent to OpenAI as described above, however sensitive the document is.</p>
+<h3>Anonymous usage statistics (sent to a backend we run)</h3>
+<p>To understand whether Cuevi actually helps — for example, of the items you add, how many you come back and complete — the app sends a small amount of <strong>anonymous, non-identifying</strong> usage data to a backend we operate (a Cloudflare database):</p>
+<ul>
+<li><strong>What happened, not what&#x27;s in it:</strong> that an item was <em>added</em> (and whether from a scan, a guide, or manual entry), or <em>completed</em> (and whether on time).</li>
+<li>A random <strong>install identifier</strong> created on your device, plus the app version and the time of the event. This labels an app installation — it is <strong>not</strong> your name, email, account, or Apple ID, and we cannot use it to identify you.</li>
+<li>It <strong>never</strong> includes your documents, photos, titles, amounts, due dates, notes, or any text from your items.</li>
+</ul>
+<p>This is <strong>first-party</strong> data, used only to improve Cuevi. It is <strong>not</strong> advertising, is <strong>not</strong> sold or shared, and is <strong>not</strong> used to track you across other apps or websites. You can turn it off anytime under <strong>Profile → Privacy → Share anonymous usage data</strong>.</p>
 <h3>We do NOT</h3>
 <ul>
 <li>We do <strong>not</strong> sell or rent your data.</li>
 <li>We do <strong>not</strong> use your data for advertising.</li>
 <li>We do <strong>not</strong> link your bank, process payments, or use autopay.</li>
-<li>We do <strong>not</strong> currently use any third-party analytics or tracking. *(If we add privacy-first, no-PII analytics in the future, we will update this policy first.)*</li>
+<li>We do <strong>not</strong> use third-party analytics SDKs, advertising, or cross-app tracking. <em>(We do collect our own anonymous, non-identifying usage statistics, described above; you can turn them off in Profile.)</em></li>
 </ul>
 <hr>
 <h2>3. Third parties that may process data</h2>
 <table>
 <tr><td>Provider</td><td>What they process</td><td>Why</td></tr>
 <tr><td><strong>OpenAI</strong></td><td>The full recognized text of any document you scan/upload (may include sensitive personal info), plus non-sensitive guide checklists. May be retained ~30 days for abuse monitoring; not used for training.</td><td>To generate the summary, steps, and translations</td></tr>
-<tr><td><strong>Cloudflare</strong></td><td>Your IP address, transiently</td><td>To proxy the AI request so the OpenAI key isn&#x27;t in the app</td></tr>
+<tr><td><strong>Cloudflare</strong></td><td>Your IP address (transiently, when proxying the AI request); and the anonymous usage statistics we store (feature used, random install id, app version, timestamp — never your content)</td><td>To proxy the AI request without shipping the OpenAI key, and to store anonymous usage stats so we can improve the app</td></tr>
 <tr><td><strong>Apple</strong></td><td>Local storage, on-device OCR, local notifications</td><td>Standard iOS app functionality (on your device)</td></tr>
 </table>
 <p>We are not responsible for these providers&#x27; own practices; please review their privacy policies (OpenAI, Cloudflare, Apple).</p>
@@ -51,6 +59,7 @@
 <ul>
 <li><strong>On-device data</strong> stays until you delete the item or uninstall the app. You are in control.</li>
 <li><strong>AI requests</strong> are processed in transit and returned; we keep no server copy. OpenAI&#x27;s retention of API data is governed by their policy.</li>
+<li><strong>Anonymous usage statistics</strong> are stored on our backend (Cloudflare) until we no longer need them for product analysis. They contain no personal identifiers and aren&#x27;t linked to you. Turning the setting off stops new data from being sent.</li>
 </ul>
 <hr>
 <h2>5. Your choices and rights</h2>
@@ -58,6 +67,7 @@
 <ul>
 <li><strong>Delete anytime</strong> — delete an item, or uninstall the app, to remove your data.</li>
 <li><strong>Don&#x27;t want text sent to OpenAI?</strong> Use the manual-entry option instead of scanning, or use the on-device sensitive guides.</li>
+<li><strong>Turn off usage statistics</strong> — go to <strong>Profile → Privacy</strong> and switch off <em>Share anonymous usage data</em>; the app stops sending new usage events.</li>
 </ul>
 <p><strong>California (CCPA) and EU/UK (GDPR):</strong> we do not maintain personal data on our servers, so there is no server-side profile to access, port, or delete — you already control it on your device. For any questions about your rights, email us at the address above.</p>
 <hr>

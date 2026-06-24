@@ -62,10 +62,13 @@ struct CueviApp: App {
                     // first-launch explainer (NotificationPrimerView via
                     // RootTabView), not silently here.
                     refreshAllReminders()
+                    Metrics.flush()   // send any metric events not yet uploaded
                 }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
                         refreshAllReminders()
+                    } else if phase == .background {
+                        Metrics.flush()   // catch events logged during this session
                     }
                 }
         }

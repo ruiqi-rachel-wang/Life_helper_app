@@ -17,11 +17,29 @@ import Foundation
 // One logged moment in the confirm → complete loop.
 nonisolated struct MetricEvent: Codable, Equatable {
     enum Kind: String, Codable { case confirmed, completed }
+    var id = UUID()         // stable per-event id; the backend de-dupes uploads on it
     var kind: Kind
     var date: Date
     var itemID: UUID?       // which item — lets the summary de-dupe and match the funnel
     var source: String?     // scanned / guide / custom (on `confirmed`)
     var onTime: Bool?       // completed on/before the due date? nil if no due date
+
+    init(kind: Kind, date: Date, itemID: UUID? = nil, source: String? = nil, onTime: Bool? = nil) {
+        self.kind = kind; self.date = date
+        self.itemID = itemID; self.source = source; self.onTime = onTime
+    }
+
+    // Custom decode so metrics.json files written before `id` existed still load —
+    // a missing id just gets a fresh one (those events upload as new rows).
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        kind = try c.decode(Kind.self, forKey: .kind)
+        date = try c.decode(Date.self, forKey: .date)
+        itemID = try c.decodeIfPresent(UUID.self, forKey: .itemID)
+        source = try c.decodeIfPresent(String.self, forKey: .source)
+        onTime = try c.decodeIfPresent(Bool.self, forKey: .onTime)
+    }
 }
 
 // Rolled-up numbers for the launch metric + a light breakdown by source.
@@ -76,6 +94,18 @@ nonisolated struct MetricsSummary: Equatable {
 nonisolated enum Metrics {
     private static let queue = DispatchQueue(label: "com.notie.metrics")
 
+    // Upload high-water mark: how many events (the log is append-only) we've already
+    // sent to the backend. Lets flush() send only what's new.
+    private static let syncedKey = "cuevi.metrics.syncedCount"
+
+    // User consent for uploading anonymous usage stats. Default true (opted in); the
+    // Profile "Share anonymous usage data" toggle writes this same key. When off,
+    // flush() no-ops — events still log locally, they just never leave the device.
+    static let shareUsageKey = "cuevi.metrics.shareUsage"
+    static var uploadsEnabled: Bool {
+        UserDefaults.standard.object(forKey: shareUsageKey) as? Bool ?? true   // unset → opted in
+    }
+
     static let fileURL: URL = {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -102,13 +132,84 @@ nonisolated enum Metrics {
         FileManager.default.fileExists(atPath: fileURL.path) ? fileURL : nil
     }
 
+    // Best-effort upload of events not yet sent. Safe to call often (launch /
+    // foreground / background): no-ops when nothing is new, never blocks the UI,
+    // and the backend de-dupes on event id, so a dropped response can't double
+    // count. The local metrics.json stays the source of truth — we only advance
+    // the cursor after the server confirms it stored the batch.
+    static func flush() {
+        guard uploadsEnabled else { return }                             // user opted out
+        guard let endpoint = BackendConfig.eventsEndpoint else { return } // no Worker → stay local
+        queue.async {
+            let all = readFile()
+            let synced = UserDefaults.standard.integer(forKey: syncedKey)
+            guard all.count > synced else { return }               // nothing new
+            let total = all.count
+            let pending = Array(all[synced...])
+
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601                 // readable occurred_at
+            let envelope = UploadEnvelope(installID: Install.id,
+                                          appVersion: Install.appVersion,
+                                          events: pending)
+            guard let body = try? encoder.encode(envelope) else { return }
+
+            var req = URLRequest(url: endpoint)
+            req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            if !BackendConfig.proxyToken.isEmpty {
+                req.setValue(BackendConfig.proxyToken, forHTTPHeaderField: "X-Cuevi-Token")
+            }
+            req.httpBody = body
+
+            URLSession.shared.dataTask(with: req) { _, response, _ in
+                guard let http = response as? HTTPURLResponse,
+                      (200..<300).contains(http.statusCode) else { return }   // retry next launch
+                queue.async { UserDefaults.standard.set(total, forKey: syncedKey) }
+            }.resume()
+        }
+    }
+
+    // The JSON the Worker's /events route expects.
+    private struct UploadEnvelope: Encodable {
+        let installID: String
+        let appVersion: String
+        let events: [MetricEvent]
+    }
+
     #if DEBUG
-    static func reset() { try? FileManager.default.removeItem(at: fileURL) }
+    static func reset() {
+        try? FileManager.default.removeItem(at: fileURL)
+        UserDefaults.standard.removeObject(forKey: syncedKey)   // re-upload from scratch
+    }
     #endif
 
     private static func readFile() -> [MetricEvent] {
         guard let data = try? Data(contentsOf: fileURL),
               let events = try? JSONDecoder().decode([MetricEvent].self, from: data) else { return [] }
         return events
+    }
+}
+
+// Anonymous identity for the upload envelope. NO PII: the install id is a random
+// UUID minted once and kept in UserDefaults — it labels a device *install*, never
+// a person, and only Rachel-via-tester can ever map one back to someone.
+nonisolated enum Install {
+    private static let idKey = "cuevi.metrics.installID"
+
+    static var id: String {
+        let d = UserDefaults.standard
+        if let existing = d.string(forKey: idKey) { return existing }
+        let fresh = UUID().uuidString
+        d.set(fresh, forKey: idKey)
+        return fresh
+    }
+
+    // e.g. "1.0 (3)" — marketing version + build, so events can be read per build.
+    static var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        let v = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(v) (\(b))"
     }
 }

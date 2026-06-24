@@ -6,6 +6,42 @@
 > family sharing, configurable reminder time, …). NOTE: multi-page scan and
 > first-launch onboarding are now BUILT (2026-06-18), despite older "deferred" notes.
 
+**⚠️ VERSION BOUNDARY — read first (2026-06-23):**
+- **Beta testing has started.** Testers are running the **current shipped build**
+  (`MARKETING_VERSION 1.0`, build 2). Everything they have is FROZEN reference —
+  do not describe new work as if testers already have it.
+- **All development from 2026-06-23 onward is the NEXT version.** This is not just the
+  metrics work — *every* change going forward (features, fixes, refactors) belongs to
+  the next build, which testers do not yet have. When you (any chat) describe a change,
+  frame it as "new in the next build," and note whether it has shipped to TestFlight yet.
+- **Action when uploading the next TestFlight build:** bump `CURRENT_PROJECT_VERSION`
+  (build number) — currently 2 → 3 — so the boundary is concrete in App Store Connect.
+- The next version's roadmap is now organized as numbered **Parts** in
+  `future_features.md`. **Part 1 = metrics tracking backend** (in progress, see below).
+
+**Changed 2026-06-23 (Part 1: metrics tracking backend — IN PROGRESS):**
+- **Decision:** KEEP and EXTEND the local `Metrics.swift` (it already logs
+  `confirmed`/`completed`) into a backend-uploading tracker — do NOT delete it.
+  This supersedes the old "TelemetryDeck" idea (we build our own on Cloudflare, $0).
+- **Phase 1 (backend):** new Cloudflare **D1** database `cuevi-metrics` + a `POST /events`
+  endpoint on the EXISTING `cuevi-ai` Worker (same `X-Cuevi-Token` auth). See
+  `cloudflare-worker/worker.js`, `schema.sql`, `wrangler.toml`.
+- **Phase 2 (app):** anonymous per-install UUID (UserDefaults, no PII), each `MetricEvent`
+  gets a stable `id`, a synced-count cursor, and `Metrics.flush()` POSTs un-synced events
+  on launch/background. Strictly non-PII (kind, date, source, onTime, item UUID, install
+  ID, app version) — never titles/amounts/notes/document text.
+- **Cost: $0 added** (D1 + Workers free tier; tracking never calls OpenAI).
+- **Phase 1 DEPLOYED & verified 2026-06-23:** D1 `cuevi-metrics` live, Worker redeployed
+  with `/events` (store + auth-gate + AI-proxy all confirmed by curl; test row cleaned).
+  wrangler runs via `npx wrangler` in `cloudflare-worker/` — pinned **v3** (Node 20; v4
+  needs Node 22), installed as a local devDependency (node_modules gitignored).
+- **Phase 3 DONE 2026-06-23:** in-app + standalone privacy policy now disclose the
+  anonymous, non-PII usage stats; Apple privacy-label doc declares Usage Data + Identifiers
+  (Analytics, Not linked, No tracking); a **Profile → Privacy** opt-out toggle gates
+  `Metrics.flush()`. ⚠️ Still TODO before/at submit: **bump build 2→3**, and **re-host the
+  public policy page** `cuevi-legal.pages.dev/privacy.html` (App Store privacy URL) to match.
+- **How Rachel reads the data:** `notie_life_helper_app/how_to_view_tester_data.md`.
+
 **Changed 2026-06-21 (external-review blocker fixes):**
 - **Security:** the OpenAI key is no longer compiled into the app — `APIKeys` reads
   `OPENAI_API_KEY` from the environment at runtime (empty in Release; the Worker holds
