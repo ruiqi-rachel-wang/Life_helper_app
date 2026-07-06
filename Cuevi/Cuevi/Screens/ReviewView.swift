@@ -65,7 +65,9 @@ struct ReviewView: View {
         .navigationBarHidden(true)
         .sheet(item: $detailStep) { tapped in
             if let idx = draft.detailedSteps.firstIndex(where: { $0.id == tapped.id }) {
-                StepDetailView(step: $draft.detailedSteps[idx])   // edits ride into the saved item
+                // A plain step (no detail yet) opens straight into edit mode — same
+                // rule as the saved-item Detail page.
+                StepDetailView(step: $draft.detailedSteps[idx], startInEditMode: !tapped.hasDetail)
             }
         }
         .task { await run() }
@@ -247,8 +249,10 @@ struct ReviewView: View {
             // cadence can be confirmed or changed before saving.
             if isEditing || draft.repeats != nil { repeatsRow }
 
-            // Reminders — the SAME editor as the Detail page (shared component), so you
-            // can add / remove / retime here too, instead of silently getting defaults.
+            // Reminders — only when there's a due date (no date → no reminders).
+            // Follows the screen's Edit toggle like everything else: read by
+            // default, tap Edit to add / remove / retime. Edits now persist on
+            // save (see ActionItem.init(from:)), which is what was broken before.
             if draft.dueDate != nil {
                 card {
                     RemindersEditor(reminders: $draft.reminders,
@@ -315,7 +319,7 @@ struct ReviewView: View {
     }
 
     private var dueChip: some View {
-        chipBox("DUE", flagged: draft.lowConfidenceFields.contains("dueDate")) {
+        chipBox("DATE", flagged: draft.lowConfidenceFields.contains("dueDate")) {
             if isEditing {
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("Has due date", isOn: $includeDue.animation()).labelsHidden().tint(Color.ink)
@@ -350,6 +354,11 @@ struct ReviewView: View {
                         .frame(width: 10, alignment: .leading).padding(.top, isEditing ? 8 : 0)
                     if isEditing {
                         TextField("Step", text: $draft.steps[i], axis: .vertical).font(.body14).foregroundStyle(Color.ink)
+                        // Add/edit this step's mini-checklist, explanation, etc. — same
+                        // edit-mode pencil as the saved-item Detail page.
+                        Button { openStepDetail(i) } label: {
+                            Image(systemName: "pencil.circle").font(.system(size: 18)).foregroundStyle(Color.accent)
+                        }.buttonStyle(.plain)
                         Button { removeStep(i) } label: {
                             Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                         }.buttonStyle(.plain)
@@ -388,6 +397,16 @@ struct ReviewView: View {
     private func addStep() {
         draft.steps.append("")
         if !draft.detailedSteps.isEmpty { draft.detailedSteps.append(ChecklistStep(text: "")) }
+    }
+
+    // A scan's `detailedSteps` starts empty (only guides pre-author detail) — back
+    // it with one entry per step on first use, so any step can open a detail sheet
+    // to add a mini-checklist/explanation, same as the saved-item Detail page.
+    private func openStepDetail(_ i: Int) {
+        if draft.detailedSteps.count != draft.steps.count {
+            draft.detailedSteps = draft.steps.map { ChecklistStep(text: $0) }
+        }
+        detailStep = draft.detailedSteps[i]
     }
 
     private var notesSection: some View {

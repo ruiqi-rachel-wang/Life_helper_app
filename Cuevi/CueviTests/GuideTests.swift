@@ -67,18 +67,17 @@ struct GuideTests {
         #expect(r.detailedSteps.contains { $0.detail != nil })   // utility step has detail
     }
 
-    @Test func buyingIsTheLongerPathWithClosingFlow() {
-        let buying = Guide.buyingHome.build(["stage": "Just starting"])
-        let moveOut = Guide.moving.build(["home": "Renting"])
-        #expect(buying.steps.count > moveOut.steps.count)         // buying needs many more steps
+    @Test func buyingCoversOnlyPreApprovalThroughOffer() {
+        // The guide is a single path now — no stage question — and stops at an
+        // accepted offer; inspection/closing is a separate follow-up guide the
+        // user starts once they actually have an offer.
+        let buying = Guide.buyingHome.build([:])
         let s = buying.steps.joined(separator: "\n").lowercased()
         #expect(s.contains("pre-approved"))
-        #expect(s.contains("inspection"))
-        #expect(s.contains("closing disclosure"))
-        #expect(s.contains("homeowners insurance"))
-        // "Closing soon" skips the early shopping steps.
-        let late = Guide.buyingHome.build(["stage": "Closing soon"]).steps.joined().lowercased()
-        #expect(!late.contains("pre-approved"))
+        #expect(s.contains("make an offer"))
+        #expect(!s.contains("inspection"))
+        #expect(!s.contains("closing disclosure"))
+        #expect(buying.notes.contains { $0.lowercased().contains("once your offer is accepted") })
     }
 
     // MARK: New job — W-2 vs contractor branch
@@ -180,11 +179,10 @@ struct GuideTests {
     @Test func sensitiveTopicsAreFlaggedAsSensitive() {
         for id in ["immigration", "bank_account", "doctor_appointment", "car_accident",
                    "taxes", "ssn_itin", "school_enrollment", "health_insurance",
-                   "start_business"] {
+                   "start_business", "new_job"] {
             #expect(guide(id).risk == .sensitive)
         }
         #expect(guide("moving").risk == .general)
-        #expect(guide("new_job").risk == .general)
     }
 
     @Test func guidesCarryStructuredOfficialSource() {
@@ -401,6 +399,32 @@ struct GuideTests {
         let internet = item.steps.first { $0.text.contains("utilities and internet") }
         #expect(internet?.hasDetail == true)
         #expect(internet?.detail?.miniChecklist.contains { $0.text.lowercased().contains("provider") } == true)
+    }
+
+    @Test func utilitiesDetailBreaksOutEachUtility() {
+        // The shared utilities detail must name each utility on its own line
+        // (electricity, gas, water, internet/WiFi) — not bundle them together.
+        let lines = Guide.utilitiesDetail.miniChecklist.map { $0.text.lowercased() }
+        for utility in ["electricity", "gas", "water", "internet"] {
+            #expect(lines.contains { $0.contains(utility) })
+        }
+    }
+
+    @Test func zipUtilitiesDetailNamesProvidersWithContacts() {
+        let providers = [
+            LocalUtility(kind: "Electricity", name: "Austin Energy",
+                         website: "austinenergy.com", phone: "512-494-9400", inPerson: nil),
+            LocalUtility(kind: "Internet", name: "Google Fiber",
+                         website: "fiber.google.com", phone: nil, inPerson: nil),
+        ]
+        let detail = Guide.utilitiesDetail(forZip: "78701", providers: providers)
+        let lines = detail?.miniChecklist.map(\.text) ?? []
+        // Names + their contact methods appear; the verify caveat leads.
+        #expect(lines.first?.contains("78701") == true)
+        #expect(lines.contains { $0.contains("Austin Energy") && $0.contains("austinenergy.com") && $0.contains("512-494-9400") })
+        #expect(lines.contains { $0.contains("Google Fiber") })
+        // Empty lookup → nil, so the caller keeps the generic detail.
+        #expect(Guide.utilitiesDetail(forZip: "78701", providers: []) == nil)
     }
 
     @Test func licenseGatherStepHasDocumentsChecklist() {

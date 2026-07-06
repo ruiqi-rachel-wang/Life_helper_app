@@ -218,6 +218,22 @@
         }
       }
     },
+    "⚠ DUE TODAY" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠ VENCE HOY"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠ 今日到期"
+          }
+        }
+      }
+    },
     "✓ COMPLETED" : {
       "localizations" : {
         "es" : {
@@ -578,6 +594,23 @@
         }
       }
     },
+    "A step-by-step checklist to get from credit check to an accepted offer." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una lista paso a paso desde revisar tu crédito hasta que acepten tu oferta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一份从信用检查到报价被接受的分步清单。"
+          }
+        }
+      }
+    },
     "A step-by-step checklist to start a business — structure, EIN, licenses, and taxes." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -691,6 +724,22 @@
         }
       }
     },
+    "Add a date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir una fecha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加日期"
+          }
+        }
+      }
+    },
     "Add a detail" : {
       "localizations" : {
         "es" : {
@@ -708,6 +757,7 @@
       }
     },
     "Add a due date" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -757,6 +807,7 @@
       }
     },
     "Add a note…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -1481,6 +1532,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "询问校车、免费／减价餐食和课后项目。"
+          }
+        }
+      }
+    },
+    "Ask about one-time fees: deposits, installation, and equipment/router rental." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregunta sobre cargos únicos: depósitos, instalación y renta de equipo/router."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "询问一次性费用：押金、安装费以及设备/路由器租赁费。"
           }
         }
       }
@@ -2650,6 +2718,23 @@
         }
       }
     },
+    "Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance)." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa tu crédito y define un presupuesto, incluyendo el pago inicial y el costo mensual (préstamo, impuestos, seguro)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查你的信用记录并制定预算，包括首付和每月支出（贷款、税费、保险）。"
+          }
+        }
+      }
+    },
     "Checking…" : {
       "localizations" : {
         "es" : {
@@ -2780,6 +2865,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Closing costs are usually about 2–5% of the price, on top of your down payment — budget for that too." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los costos de cierre suelen ser del 2 % al 5 % del precio, además de tu pago inicial — considéralos también en tu presupuesto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交割费用通常是房价的2%-5%，且在首付之外——也要把它算进预算。"
           }
         }
       }
@@ -3189,6 +3291,23 @@
         }
       }
     },
+    "Credit, pre-approval, agent, offer" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crédito, preaprobación, agente, oferta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信用、预批准、经纪人、报价"
+          }
+        }
+      }
+    },
     "Cuevi is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional." : {
       "localizations" : {
         "es" : {
@@ -3249,6 +3368,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cuevi 会在账单、预约或表格到期前提醒你。请打开通知，这些提醒才能及时送达——否则 Cuevi 无法及时提醒你。"
+          }
+        }
+      }
+    },
+    "Date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期"
+          }
+        }
+      }
+    },
+    "DATE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FECHA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期"
           }
         }
       }
@@ -3738,6 +3889,7 @@
       }
     },
     "Due" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3754,6 +3906,7 @@
       }
     },
     "DUE" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3931,6 +4084,9 @@
         }
       }
     },
+    "Edit step details" : {
+
+    },
     "EIN" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3944,6 +4100,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "EIN（雇主识别号）"
+          }
+        }
+      }
+    },
+    "Electricity — start service with your local electric company." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Electricidad — inicia el servicio con tu compañía eléctrica local."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电力——联系本地电力公司开通服务。"
           }
         }
       }
@@ -4366,6 +4539,23 @@
         }
       }
     },
+    "Find a real estate agent and start touring homes in your price range." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busca un agente inmobiliario y comienza a visitar casas dentro de tu presupuesto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找一位房产经纪人，开始看你预算范围内的房子。"
+          }
+        }
+      }
+    },
     "Find an affordable doctor and get ready for the visit." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4430,6 +4620,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在你保险计划的医生目录里找一位网络内的医生（或拨打卡背面的电话）。"
+          }
+        }
+      }
+    },
+    "Find which providers serve your address (ask the building, neighbors, or your realtor)." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Averigua qué proveedores dan servicio en tu dirección (pregunta al edificio, a los vecinos o a tu agente inmobiliario)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查清楚哪些供应商为你的地址提供服务（可以询问物业、邻居或你的房产经纪人）。"
           }
         }
       }
@@ -4616,6 +4823,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自由职业 / 个人服务"
+          }
+        }
+      }
+    },
+    "Gas — start natural-gas service if your home uses gas for heat, the stove, or hot water." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gas — inicia el servicio de gas natural si tu hogar lo usa para calefacción, la estufa o el agua caliente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "燃气——如果你家使用燃气供暖、做饭或供应热水，请开通天然气服务。"
           }
         }
       }
@@ -4922,6 +5146,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "即使看起来轻微也要就医——有些伤会过后才显现。"
+          }
+        }
+      }
+    },
+    "Get pre-approved for a mortgage — compare rates and fees from a few lenders." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consigue una preaprobación de hipoteca — compara tasas y comisiones de varios prestamistas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "获取房贷预批准 — 比较几家贷款机构的利率和费用。"
           }
         }
       }
@@ -5770,6 +6011,23 @@
         }
       }
     },
+    "If you rent, first confirm which of these your landlord already includes." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si alquilas, primero confirma cuáles de estos ya incluye tu arrendador."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果你是租房，请先确认房东已经包含了哪些服务。"
+          }
+        }
+      }
+    },
     "Immigration guide" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5982,6 +6240,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保险计划"
+          }
+        }
+      }
+    },
+    "Internet / WiFi — compare providers on speed and total monthly price, then book installation (often 1–2 weeks out)." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internet / WiFi — compara proveedores por velocidad y precio mensual total, luego programa la instalación (suele tardar de 1 a 2 semanas)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络 / WiFi——比较各供应商的速度和每月总费用，然后预约安装（通常需要1-2周）。"
           }
         }
       }
@@ -6409,6 +6684,7 @@
       }
     },
     "LOCAL OCR · NO BANK LINK · NO AUTOPAY" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -6488,6 +6764,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "低收入？可全年随时申请 Medicaid 或 CHIP——若获批，保障何时开始取决于你所在州。"
+          }
+        }
+      }
+    },
+    "Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz una oferta; una vez aceptada, firma el contrato de compraventa y paga el depósito de garantía (earnest money)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提出报价；一旦被接受，签署购房合同并支付诚意金（earnest money）。"
           }
         }
       }
@@ -7433,6 +7726,7 @@
       }
     },
     "NOTE" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7710,6 +8004,39 @@
         }
       }
     },
+    "On-device scanning · No bank login · No autopay" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escaneo en el dispositivo · Sin acceso bancario · Sin pago automático"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本机扫描 · 无需银行登录 · 不自动扣款"
+          }
+        }
+      }
+    },
+    "Once your offer is accepted, come back to Guides and start a new checklist — inspection, appraisal, insurance, and closing all happen after this point." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez que acepten tu oferta, vuelve a Guías y comienza una nueva lista — la inspección, la tasación, el seguro y el cierre ocurren después de este punto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一旦你的报价被接受，请回到「指南」开始一个新的清单——验房、评估、保险和交割都在此之后进行。"
+          }
+        }
+      }
+    },
     "Online store (e-commerce)" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7739,6 +8066,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只能打开 %1$lld / %2$lld 张照片，将使用已成功打开的照片。"
+          }
+        }
+      }
+    },
+    "Only changes the language Cuevi uses to explain your scans and guides. The app itself follows your phone." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo cambia el idioma con el que Cuevi explica tus escaneos y guías. La app sigue el idioma de tu teléfono."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅更改 Cuevi 解释扫描件和指南所用的语言。应用本身的语言跟随你的手机。"
           }
         }
       }
@@ -8365,6 +8709,9 @@
           }
         }
       }
+    },
+    "PRIVACY" : {
+
     },
     "Privacy Policy" : {
       "localizations" : {
@@ -9068,6 +9415,23 @@
         }
       }
     },
+    "Save each account number and confirmation after you sign up." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda cada número de cuenta y confirmación después de inscribirte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注册后请保存每个账号和确认信息。"
+          }
+        }
+      }
+    },
     "Save everything: your formation documents, EIN letter, licenses, and tax registrations." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9504,6 +9868,9 @@
         }
       }
     },
+    "Sends anonymous, non-identifying stats about which features you use — for example, items you add and complete — so we can improve Cuevi. Never your documents, photos, or any text from your items. Turn this off anytime." : {
+
+    },
     "Set a date" : {
       "localizations" : {
         "es" : {
@@ -9516,6 +9883,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置日期"
+          }
+        }
+      }
+    },
+    "Set up — or transfer or stop — every utility your home uses; each has its own provider. Internet usually needs the most lead time, so start there. Aim to have them all on for your move-in date." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa, transfiere o cancela cada servicio público de tu hogar; cada uno tiene su propio proveedor. Internet suele necesitar más tiempo de anticipación, así que empieza por ahí. Intenta tenerlos todos listos para tu fecha de mudanza."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为你的新家开通、转移或停止每一项公用事业服务；每项服务都有各自的供应商。网络通常需要最长的提前时间，所以先从它开始。尽量让所有服务在搬入当天都已开通。"
           }
         }
       }
@@ -9587,6 +9971,9 @@
           }
         }
       }
+    },
+    "Share anonymous usage data" : {
+
     },
     "Share your number only when truly required — a job, bank, or taxes — and keep it private." : {
       "extractionState" : "stale",
@@ -10421,9 +10808,6 @@
         }
       }
     },
-    "This sets the language Cuevi uses to explain your documents and guides (it defaults to your phone's language). The app's own buttons and labels follow your phone's language. Sensitive guides — money, immigration, medical — are translated on your device, without sending anything to AI." : {
-
-    },
     "Through a job" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10552,6 +10936,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "转学？请原学校转送记录（成绩单，以及 IEP/504 计划（如有））。"
+          }
+        }
+      }
+    },
+    "Trash & recycling — city pickup or a private hauler, depending on the area." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basura y reciclaje — recolección municipal o una empresa privada, según la zona."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "垃圾与回收——由市政收运或私人承运商负责，具体取决于所在地区。"
           }
         }
       }
@@ -10957,6 +11358,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每个雇主的 W-2。"
+          }
+        }
+      }
+    },
+    "Water & sewer — set up with the city or your local water utility." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agua y alcantarillado — regístrate con la ciudad o tu proveedor local de agua."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自来水与排污——向市政或本地自来水公司申请开通。"
           }
         }
       }
@@ -11718,6 +12136,7 @@
       }
     },
     "Your own note…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {

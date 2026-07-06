@@ -33,6 +33,15 @@ struct ProfileView: View {
 
     private var language: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
 
+    // Resolve a string in the PICKED explain-language (not the phone's), so this
+    // card's helper note appears in whatever language the user just selected — the
+    // same on-device bundle lookup ExtractionResult.localized() uses.
+    private func inPickedLanguage(_ s: String) -> String {
+        let bundle = Bundle.main.path(forResource: language.lprojCode, ofType: "lproj")
+            .flatMap(Bundle.init(path:)) ?? .main
+        return bundle.localizedString(forKey: s, value: s, table: nil)
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             Color.paper.ignoresSafeArea()
@@ -122,7 +131,9 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("This sets the language Cuevi uses to explain your documents and guides (it defaults to your phone's language). The app's own buttons and labels follow your phone's language. Sensitive guides — money, immigration, medical — are translated on your device, without sending anything to AI.")
+                // Passed as a resolved String (not a literal) so it shows in the
+                // PICKED language, not the phone's — and kept short.
+                Text(inPickedLanguage("Only changes the language Cuevi uses to explain your scans and guides. The app itself follows your phone."))
                     .font(.subline).foregroundStyle(Color.faint)
                     .padding(.top, 10)
             }

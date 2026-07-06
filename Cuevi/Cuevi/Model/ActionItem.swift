@@ -264,6 +264,11 @@ final class ActionItem {
         self.notes = r.notes
         self.source = source
         self.reminderLeadHours = Self.defaultLeadHours(documentType: r.documentType ?? "", category: r.category)
+        // Carry the reminders the user set on the Review screen — otherwise their
+        // edits are dropped and the saved item silently falls back to defaults.
+        // (Not customized → stays empty, so the item uses its smart defaults.)
+        self.reminders = r.reminders
+        self.remindersCustomized = r.remindersCustomized
     }
 
     // Choices for the "remind me _ before" picker (hours; 24 = one day).
@@ -295,10 +300,11 @@ final class ActionItem {
 
     var isOverdue: Bool {
         guard status != .done, let due = dueDate else { return false }
-        // Timed events are overdue once the exact time passes (even later the same
-        // day); plain due-dates compare day-to-day (overdue the day AFTER).
+        // Timed events are overdue once the exact time passes; plain due-dates
+        // are overdue starting the day they're due (so "due today" already
+        // counts — it needs to get done today, not "any time before tomorrow").
         let cal = Calendar.current
-        return dueHasTime ? due < .now : due < cal.startOfDay(for: .now)
+        return dueHasTime ? due < .now : due <= cal.startOfDay(for: .now)
     }
 
     var doneCount: Int { steps.filter(\.done).count }
@@ -432,6 +438,10 @@ final class ActionItem {
             let fire = r.exactTime ? r.date : calendar.date(bySettingHour: 9, minute: 0, second: 0, of: r.date)
             return fire.map { ReminderItem(date: $0) }
         }
+        // Only suggest times still ahead — so a near due date gives 1–2 useful
+        // reminders, not three with two already in the past. (The scheduler also
+        // skips past times; filtering here keeps the editable list honest too.)
+        .filter { $0.date > now }
     }
 
     // What actually gets scheduled/shown: the user's custom list once edited,

@@ -227,7 +227,7 @@ private struct InboxRow: View {
 
 private struct PrivacyBanner: View {
     var body: some View {
-        Text("LOCAL OCR · NO BANK LINK · NO AUTOPAY")
+        Text("On-device scanning · No bank login · No autopay")
             .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faded)
             .padding(.vertical, 14).padding(.horizontal, 18)
             .frame(maxWidth: .infinity, alignment: .leading)

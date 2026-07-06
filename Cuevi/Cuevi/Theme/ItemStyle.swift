@@ -139,12 +139,13 @@ extension ActionItem {
         dueDate?.formatted(.dateTime.month(.abbreviated).day())
     }
 
-    // The red banner line on Detail, e.g. "⚠ 2 DAYS OVERDUE". nil if fine.
+    // The red banner line on Detail, e.g. "⚠ 2 DAYS OVERDUE" or "⚠ DUE TODAY". nil if fine.
     var overdueText: String? {
         guard isOverdue, let due = dueDate else { return nil }
         let days = Calendar.current.dateComponents(
             [.day], from: Calendar.current.startOfDay(for: due),
             to: Calendar.current.startOfDay(for: .now)).day ?? 0
+        guard days > 0 else { return String(localized: "⚠ DUE TODAY") }
         return String(localized: "⚠ \(days) DAYS OVERDUE")
     }
 
@@ -169,5 +170,16 @@ extension ActionItem {
         if days == 0 { return String(localized: "today") }
         if days > 0  { return String(localized: "in \(days) days") }
         return String(localized: "\(-days) days overdue")
+    }
+}
+
+extension View {
+    // Tap anywhere — including on a button or card — to dismiss the keyboard.
+    // A `simultaneousGesture` (not `.onTapGesture`) so it never steals the tap
+    // from whatever's underneath; it just also resigns first responder.
+    func dismissKeyboardOnTap() -> some View {
+        simultaneousGesture(TapGesture().onEnded {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        })
     }
 }

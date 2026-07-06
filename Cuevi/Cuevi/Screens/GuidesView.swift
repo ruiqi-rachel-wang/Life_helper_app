@@ -77,11 +77,27 @@ struct GuidesView: View {
                                 // Sensitive guides skip the AI; translate their authored
                                 // content on-device via the String Catalog instead.
                                 guard g.risk == .general else { return [base.localized(language)] }
+                                // Remember the utilities step (if this guide has one) BEFORE the AI
+                                // rewords and .localized() regenerates sub-step IDs, so we can drop in
+                                // the ZIP-matched providers at the same index afterward.
+                                let utilIdx = base.detailedSteps.firstIndex { $0.detail == Guide.utilitiesDetail }
                                 let context = "\(g.title). "
                                     + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
-                                // Polish (AI) translates the STEPS; .localized() then
-                                // translates the static summary/notes/detail on-device.
-                                return [await OpenAIClient().polish(base, context: context, language: language).localized(language)]
+                                // ONE AI call per guide: rewords the steps and (if a ZIP was given)
+                                // looks up local utility companies in the same response.
+                                let (built, providers) = await OpenAIClient()
+                                    .buildGuide(base, context: context, zip: answers["zip"], language: language)
+                                // Rewrite (AI) is translated; .localized() then translates the static
+                                // summary/notes/detail on-device.
+                                var result = built.localized(language)
+                                // Replace the generic utilities detail with the named local companies
+                                // (already in the user's language from the same call). Best-effort: if
+                                // the lookup found nothing, keep the generic detail.
+                                if let i = utilIdx, let zip = answers["zip"]?.trimmingCharacters(in: .whitespaces),
+                                   let detail = Guide.utilitiesDetail(forZip: zip, providers: providers, language: language) {
+                                    result.detailedSteps[i].detail = detail
+                                }
+                                return [result]
                             },
                             source: .guide,
                             loadingLabel: "Personalizing your checklist…",

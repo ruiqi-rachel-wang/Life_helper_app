@@ -141,7 +141,7 @@ extension Guide {
         buyingHome.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov/owning-a-home/")),
         bankAccount.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov"), risk: .sensitive),
         taxes.meta(source: fed("IRS", "irs.gov", "https://www.irs.gov"), risk: .sensitive),
-        newJob.meta(source: fed("USCIS (Form I-9)", "uscis.gov", "https://www.uscis.gov/i-9")),
+        newJob.meta(source: fed("USCIS (Form I-9)", "uscis.gov", "https://www.uscis.gov/i-9"), risk: .sensitive),
         startBusiness.meta(source: fed("U.S. Small Business Administration", "sba.gov", "https://www.sba.gov/business-guide"), risk: .sensitive),
         ssnItin.meta(source: fed("Social Security Administration", "ssa.gov", "https://www.ssa.gov"), risk: .sensitive),
         driversLicense.meta(source: perState("Your state's DMV", "https://www.usa.gov/motor-vehicle-services")),
@@ -238,7 +238,7 @@ extension Guide {
     }
 
     private static func movingDetail(_ text: String, _ state: String) -> StepDetail? {
-        if text.contains("utilities and internet") { return internetDetail }
+        if text.contains("utilities and internet") { return utilitiesDetail }
         if text.contains("driver's license") || text.contains("license/ID") {
             return StepDetail(
                 explanation: "Update your license/ID address at the DMV — many states require this within ~10–30 days.",
@@ -256,17 +256,80 @@ extension Guide {
             "Book early for month-end or summer — they fill up.",
             "Get boxes and packing supplies (stores, marketplaces, or free from local groups).",
         ])
-    static let internetDetail = StepDetail(
-        explanation: "Set up (or stop) electricity, gas, water, and internet. Internet usually needs the most lead time, so start there.",
+    // Every utility a home needs, broken out one by one (internet, electricity,
+    // gas, water/sewer, trash) so none is forgotten. Shared by the moving, renting,
+    // and home-buying guides. Internet needs the most lead time, so it's first.
+    static let utilitiesDetail = StepDetail(
+        explanation: "Set up — or transfer or stop — every utility your home uses; each has its own provider. Internet usually needs the most lead time, so start there. Aim to have them all on for your move-in date.",
         miniChecklist: [
-            "Find which providers serve your new address (ask the building, neighbors, or your realtor).",
-            "Compare a couple of plans on speed and the total monthly price.",
-            "Ask about one-time fees: installation, equipment/router rental, deposits.",
-            "Schedule installation for on or just after your move-in date.",
-            "Start or transfer electricity, gas, and water for the same date.",
-            "Save your account number and confirmation after you sign up.",
+            "Internet / WiFi — compare providers on speed and total monthly price, then book installation (often 1–2 weeks out).",
+            "Electricity — start service with your local electric company.",
+            "Gas — start natural-gas service if your home uses gas for heat, the stove, or hot water.",
+            "Water & sewer — set up with the city or your local water utility.",
+            "Trash & recycling — city pickup or a private hauler, depending on the area.",
+            "If you rent, first confirm which of these your landlord already includes.",
+            "Find which providers serve your address (ask the building, neighbors, or your realtor).",
+            "Ask about one-time fees: deposits, installation, and equipment/router rental.",
+            "Save each account number and confirmation after you sign up.",
         ],
         needed: ["New address", "Move-in date", "Photo ID (a deposit may be required)"])
+
+    // The utilities step, tailored to a ZIP: the AI looked up which companies
+    // actually serve that area, so we name each one with whatever contact methods
+    // it offers (website, phone, in-person). The contact text stays inline so
+    // `linkified` makes the URL and phone tappable. Returns nil when the lookup
+    // found nothing, so the caller keeps the generic `utilitiesDetail`.
+    //
+    // Hand-translated per language (NOT the String Catalog): this text is built
+    // fresh each time with per-ZIP/per-provider data spliced in, so it can never
+    // be a stable catalog lookup key the way `.localized()` handles static guide
+    // text elsewhere. It's inserted into the result AFTER `.localized()` already
+    // ran, so if it stayed in English here it would silently stay English forever
+    // regardless of the picked language — that was the actual bug.
+    static func utilitiesDetail(forZip zip: String, providers: [LocalUtility],
+                                language: ExplainLanguage = .english) -> StepDetail? {
+        guard !providers.isEmpty else { return nil }
+
+        let warning, callWord, inPersonWord, askFees, saveConfirmation, explanationTemplate: String
+        let needed: [String]
+        switch language {
+        case .english:
+            warning = "⚠️ These companies are matched to ZIP \(zip) by AI — confirm each one is right before you pay or share personal info."
+            callWord = "call"; inPersonWord = "in person"
+            askFees = "Ask each about deposits, installation, and any equipment/router fees."
+            saveConfirmation = "Save every account number and confirmation after you sign up."
+            explanationTemplate = "Utility companies serving ZIP \(zip). Electricity, gas, water, and trash are usually one company per area; internet often has a few options."
+            needed = ["New address", "Move-in date", "Photo ID (a deposit may be required)"]
+        case .spanish:
+            warning = "⚠️ Estas empresas se emparejaron con el código postal \(zip) mediante IA — confirma que cada una sea correcta antes de pagar o compartir información personal."
+            callWord = "llamar al"; inPersonWord = "en persona"
+            askFees = "Pregunta a cada una sobre depósitos, instalación y cualquier cargo por equipo/router."
+            saveConfirmation = "Guarda cada número de cuenta y confirmación después de inscribirte."
+            explanationTemplate = "Empresas de servicios públicos que atienden el código postal \(zip). La electricidad, el gas, el agua y la basura suelen tener una sola empresa por zona; el internet suele tener varias opciones."
+            needed = ["Dirección nueva", "Fecha de mudanza", "Identificación con foto (puede requerirse un depósito)"]
+        case .chinese:
+            warning = "⚠️ 这些公司是 AI 根据邮编 \(zip) 匹配的——付款或提供个人信息前请先核实每一家是否正确。"
+            callWord = "致电"; inPersonWord = "现场地址"
+            askFees = "向每家询问押金、安装费以及设备/路由器等相关费用。"
+            saveConfirmation = "注册后请保存每个账号和确认信息。"
+            explanationTemplate = "为邮编 \(zip) 提供服务的公用事业公司。电力、燃气、自来水和垃圾清运通常每个地区只有一家公司；网络通常有多个选择。"
+            needed = ["新地址", "搬入日期", "带照片的身份证件（可能需要押金）"]
+        }
+
+        var lines = [warning]
+        lines += providers.map { p in
+            // "Electricity — Austin Energy. austinenergy.com · call 512-494-9400 · in person: 4815 Mueller Blvd"
+            var contacts: [String] = []
+            if let w = p.website, !w.isEmpty { contacts.append(w) }
+            if let ph = p.phone, !ph.isEmpty { contacts.append("\(callWord) \(ph)") }
+            if let v = p.inPerson, !v.isEmpty { contacts.append("\(inPersonWord): \(v)") }
+            let tail = contacts.isEmpty ? "" : ". " + contacts.joined(separator: " · ")
+            return "\(p.kind) — \(p.name)\(tail)"
+        }
+        lines.append(askFees)
+        lines.append(saveConfirmation)
+        return StepDetail(explanation: explanationTemplate, miniChecklist: lines, needed: needed)
+    }
 
     private static func newJobDetail(_ text: String, _ state: String) -> StepDetail? {
         if text.hasPrefix("Complete Form I-9") { return i9Detail }
@@ -332,6 +395,8 @@ extension Guide {
                           kind: .choice(["Yes", "Not yet"])),
             GuideQuestion(id: "car", prompt: "Do you have a car to update?",
                           kind: .choice(["Yes", "No"])),
+            GuideQuestion(id: "zip", prompt: "Your new home's ZIP code? (optional — to find your local utility companies)",
+                          kind: .text("e.g. 78701"), showIf: { $0["knowAddress"] != "Not yet" }),
             GuideQuestion(id: "moveDate", prompt: "When's your move date? (optional)", kind: .date),
         ],
         build: { a in
@@ -398,7 +463,7 @@ extension Guide {
 
     // MARK: Renting a new place (settling into the new home)
     private static func rentingDetail(_ text: String, _ state: String) -> StepDetail? {
-        text.contains("electricity, gas, water, and internet") ? internetDetail : nil
+        text.contains("electricity, gas, water, and internet") ? utilitiesDetail : nil
     }
     static let rentingNewPlace = Guide(
         id: "renting",
@@ -408,6 +473,8 @@ extension Guide {
         questions: [
             GuideQuestion(id: "signed", prompt: "Have you signed the lease yet?",
                           kind: .choice(["Yes", "Not yet"])),
+            GuideQuestion(id: "zip", prompt: "The new place's ZIP code? (optional — to find your local utility companies)",
+                          kind: .text("e.g. 78701")),
             GuideQuestion(id: "moveDate", prompt: "When's your move-in date? (optional)", kind: .date),
         ],
         build: { a in
@@ -441,52 +508,34 @@ extension Guide {
                 confidence: 1)
         })
 
-    // MARK: Buying a home (the longer path — pre-approval through closing)
+    // MARK: Buying a home (pre-offer only — inspection through closing is its
+    // own follow-up guide, started fresh once an offer is actually accepted;
+    // see the last note below).
     static let buyingHome = Guide(
         id: "buying",
         title: "Buying a home",
-        subtitle: "Mortgage, inspection, closing, insurance",
+        subtitle: "Credit, pre-approval, agent, offer",
         category: .housing,
-        questions: [
-            GuideQuestion(id: "stage", prompt: "Where are you in the process?",
-                          kind: .choice(["Just starting", "Offer accepted", "Closing soon"])),
-            GuideQuestion(id: "closeDate", prompt: "Closing or move-in date? (optional)", kind: .date),
-        ],
-        build: { a in
-            let stage = val(a, "stage", default: "Just starting")
-            let closeDate = GuideDate.decode(a["closeDate"])
-
-            var steps: [String] = []
-            if stage == "Just starting" {
-                steps.append("Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).")
-                steps.append("Get pre-approved for a mortgage — compare rates and fees from a few lenders.")
-                steps.append("Find a real estate agent and start touring homes in your price range.")
-                steps.append("Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.")
-            }
-            if stage != "Closing soon" {
-                steps.append("Schedule a home inspection, review the report, and negotiate repairs or a price credit.")
-                steps.append("Let the lender order the appraisal, and finish your mortgage application (lock the rate, send documents, clear underwriting).")
-            }
-            steps.append("Buy homeowners insurance with a policy effective on the closing date — your lender requires it.")
-            steps.append("Have a title search done and buy title insurance, and set up your escrow account.")
-            steps.append("Review the Closing Disclosure about 3 days before closing and compare it to your original Loan Estimate.")
-            steps.append("Do a final walkthrough of the home shortly before closing.")
-            steps.append("Wire or bring a cashier's check for your down payment and closing costs, sign at closing, and get the keys.")
-            steps.append("After closing: set up utilities, change your address (USPS, bank, DMV), and file for any homestead or property-tax exemption.")
+        questions: [],
+        build: { _ in
+            let steps = [
+                "Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).",
+                "Get pre-approved for a mortgage — compare rates and fees from a few lenders.",
+                "Find a real estate agent and start touring homes in your price range.",
+                "Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.",
+            ]
 
             var notes = [
-                "Closing costs are usually about 2–5% of the price, on top of your down payment.",
-                "Don't open new credit cards or change jobs while your mortgage is in underwriting — it can delay or sink the loan.",
+                "Closing costs are usually about 2–5% of the price, on top of your down payment — budget for that too.",
+                "Once your offer is accepted, come back to Guides and start a new checklist — inspection, appraisal, insurance, and closing all happen after this point.",
             ]
             notes.append(referenceNote)
             return ExtractionResult(
                 title: "Home-buying checklist",
                 documentType: "Home-buying guide",
-                dueDate: closeDate,
-                otherIDs: [DocID(label: "Lender / loan #", value: ""),
-                           DocID(label: "Closing date", value: "")],
+                otherIDs: [DocID(label: "Lender / loan #", value: "")],
                 category: .housing,
-                summary: "A step-by-step checklist for buying a home, from pre-approval to closing.",
+                summary: "A step-by-step checklist to get from credit check to an accepted offer.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", buyingDetail),
                 notes: notes,
@@ -502,33 +551,6 @@ extension Guide {
                                 "Ask each lender for a Loan Estimate and compare the APR and fees, not just the rate.",
                                 "Get the pre-approval letter in writing."],
                 links: [StepLink(label: "CFPB — owning a home", url: "https://www.consumerfinance.gov/owning-a-home/")])
-        }
-        if text.hasPrefix("Schedule a home inspection") {
-            return StepDetail(
-                explanation: "An inspection finds problems before you're locked in. Go if you can, and use the report to negotiate repairs or a credit.",
-                miniChecklist: ["Hire a licensed home inspector.",
-                                "Attend and ask questions.",
-                                "Read the whole report — roof, foundation, plumbing, electrical, HVAC.",
-                                "Add tests if relevant (radon, pests, sewer line).",
-                                "Negotiate repairs or a price credit before removing the inspection contingency."])
-        }
-        if text.hasPrefix("Review the Closing Disclosure") {
-            return StepDetail(
-                explanation: "By law you get the Closing Disclosure at least 3 business days before closing. Compare it line-by-line to your Loan Estimate and question anything that jumped.",
-                miniChecklist: ["Check the loan amount, interest rate, and monthly payment.",
-                                "Compare the closing costs to your Loan Estimate.",
-                                "Confirm your name and the property address are correct.",
-                                "Ask the lender about any new or higher fees."],
-                links: [StepLink(label: "CFPB — Closing Disclosure explainer", url: "https://www.consumerfinance.gov/owning-a-home/closing-disclosure/")])
-        }
-        if text.hasPrefix("Wire or bring a cashier's check") {
-            return StepDetail(
-                explanation: "Wire fraud is common at closing — scammers email fake wiring instructions. ALWAYS confirm the wire details by calling the title/escrow company at a number you look up yourself, never one from an email.",
-                miniChecklist: ["Call the title company to verify wire instructions before sending.",
-                                "Never trust wiring changes that arrive by email.",
-                                "Bring a government photo ID to closing.",
-                                "After wiring, call to confirm the money arrived."],
-                links: [StepLink(label: "CFPB — mortgage closing scams", url: "https://www.consumerfinance.gov/owning-a-home/")])
         }
         return nil
     }
@@ -726,7 +748,7 @@ extension Guide {
                 miniChecklist: ["Government photo ID (passport, driver's license, or state ID).",
                                 "A second ID if the bank asks for two.",
                                 "Proof of address: a lease, utility bill, or bank statement.",
-                                "Your SSN, or an ITIN if you don't have an SSN.",
+                                "An identification number the bank accepts — an SSN, ITIN, passport number, alien ID number, or another government-issued ID number.",
                                 "Money for the opening deposit (often $25–$100)."],
                 needed: ["Originals, not photocopies"])
         }
@@ -774,9 +796,10 @@ extension Guide {
                          "Attend the interview and pass the English and civics tests.",
                          "Take the Oath of Allegiance at your ceremony."]
             case "Renew work permit (EAD)":
-                steps = ["Create or sign in to your free USCIS online account.",
+                steps = ["Check your EAD category (the (c)(#) code on your notice or prior card) — it determines the filing method, fee, fee waiver, and any automatic-extension rules.",
+                         "Create or sign in to your free USCIS online account.",
                          "File Form I-765, Application for Employment Authorization.",
-                         "Pay any fee (some categories are fee-exempt) and do biometrics if scheduled.",
+                         "Pay any fee your category requires (some are fee-exempt) and do biometrics if scheduled.",
                          "Track your case and watch for your EAD card in the mail."]
             case "Check my case status":
                 steps = ["Find your receipt number (3 letters then numbers, e.g. IOE…).",
@@ -1063,7 +1086,7 @@ extension Guide {
                                 "Confirm the date, time, address, and what to bring.",
                                 "Save the appointment details and any confirmation number."])
         }
-        if text.hasPrefix("Bring your insurance card") || text.hasPrefix("Bring a photo ID") {
+        if text.hasPrefix("Bring your insurance card") {
             return StepDetail(
                 explanation: "Arrive about 15 minutes early for any new-patient paperwork.",
                 miniChecklist: ["Insurance card and a government photo ID.",
@@ -1071,6 +1094,17 @@ extension Guide {
                                 "A referral, if your plan needs one for a specialist.",
                                 "Your copay or a payment method.",
                                 "Past records or test results, if relevant."])
+        }
+        // Uninsured — no insurance card to bring; swap it for what actually helps
+        // (records, proof of income for sliding-scale, a way to pay).
+        if text.hasPrefix("Bring a photo ID") {
+            return StepDetail(
+                explanation: "Arrive about 15 minutes early for any new-patient paperwork.",
+                miniChecklist: ["A government photo ID.",
+                                "A list of your medicines, doses, and allergies.",
+                                "Any past medical records or test results you have.",
+                                "Proof of income, if asking about a sliding-scale fee.",
+                                "A way to pay (cash or card) since you don't have insurance."])
         }
         return nil
     }
@@ -1099,7 +1133,7 @@ extension Guide {
             }
             steps.append("Check whether you also need a state return — and if you moved or worked in another state, check both.")
             steps.append("File for free if you qualify: IRS Free File online, or a VITA site for free in-person help.")
-            steps.append("File by the deadline — usually April 15. Can't make it? File an extension, but any tax owed is still due then.")
+            steps.append("File by the federal deadline — usually around April 15, though the exact date can shift for weekends, holidays, or disasters. Can't make it? File an extension, but any tax owed is still due by the original deadline.")
             steps.append("After filing, save a copy of your return and confirmation; if you're owed a refund, track it with the IRS 'Where's My Refund?' tool.")
             return ExtractionResult(
                 title: "Prepare to file taxes",
@@ -1158,7 +1192,7 @@ extension Guide {
             let which = val(a, "which", default: "Not sure")
             var steps: [String] = []
             if which == "Not sure" {
-                steps.append("An SSN is for people authorized to work; an ITIN is a tax ID for those who can't get an SSN.")
+                steps.append("An SSN is for U.S. citizens and certain noncitizens who are work-authorized or have another valid reason; an ITIN is mainly for tax filing when you're not eligible for an SSN.")
             }
             if which != "ITIN (I can't get an SSN)" {
                 steps.append("For an SSN: gather proof of identity, age, and work-authorized immigration status.")
@@ -1218,7 +1252,7 @@ extension Guide {
         build: { a in
             let newcomer = a["newcomer"] != "No — transferring"
             var steps = ["Find your assigned public school by your home address — it's set by where you live.",
-                         "Gather what you'll need: your child's birth certificate, proof of your address, and immunization records.",
+                         "Gather what you'll need: proof of your child's age (birth certificate, passport, or another document the school accepts), proof of your address, and immunization records.",
                          "Ask the enrollment office for an interpreter if you need one.",
                          "Fill out the enrollment forms and the Home Language Survey."]
             if newcomer {
@@ -1247,10 +1281,11 @@ extension Guide {
         if text.hasPrefix("Gather what you'll need") {
             return StepDetail(
                 explanation: "Schools accept many documents for proof of address — a lease, a utility bill, or an affidavit.",
-                miniChecklist: ["Child's birth certificate (or passport).",
+                miniChecklist: ["Proof of your child's age: a birth certificate, passport, or another document the school accepts.",
                                 "Proof of your address (lease or utility bill).",
                                 "Immunization / vaccination records.",
-                                "Any past school records."],
+                                "Any past school records.",
+                                "Missing one? Ask the enrollment office what alternatives they accept."],
                 links: [StepLink(label: "CDC — vaccines for school", url: "https://www.cdc.gov/vaccines/")])
         }
         if text.hasPrefix("New to the U.S.?") {
@@ -1361,9 +1396,9 @@ extension Guide {
             if isLLC {
                 steps.append("Form your LLC: file articles of organization with your state's Secretary of State and pay the filing fee.")
             } else if isSoleProp {
-                steps.append("As a sole proprietor there's usually no state formation filing — but file a DBA (\"doing business as\") if you'll use a business name.")
+                steps.append("As a sole proprietor there's usually no state formation filing — but file a DBA (\"doing business as\") if required by your state or local government to use a business name.")
             } else {
-                steps.append("Choose your structure — sole proprietor (simplest) or LLC (separates your personal assets) — then register accordingly.")
+                steps.append("Choose your structure — sole proprietor (simplest) or LLC (can help separate personal and business liability, if maintained properly) — then register accordingly.")
             }
 
             steps.append("Get a free EIN from the IRS — needed to hire or to open a business bank account (most LLCs get one). Sole proprietors can use their SSN, but an EIN keeps it private.")
@@ -1387,7 +1422,7 @@ extension Guide {
             if isSoleProp {
                 notes.append("You can start earning as a sole proprietor right away, then form an LLC later as you grow.")
             } else {
-                notes.append("An LLC separates your personal assets from the business; a sole proprietorship is simpler but offers no such protection.")
+                notes.append("An LLC can help separate personal and business liability, but only if you maintain it properly; a sole proprietorship is simpler but offers no such protection.")
             }
             notes.append("An EIN is free at IRS.gov — never pay a third-party site for one.")
             notes.append("State rules, fees, and license requirements vary — confirm the specifics with your state's Secretary of State.")
@@ -1431,9 +1466,9 @@ extension Guide {
         if text.hasPrefix("Form your LLC") || text.hasPrefix("Choose your structure")
             || text.contains("As a sole proprietor there's usually no") {
             return StepDetail(
-                explanation: "A sole proprietorship is simplest but doesn't separate your personal assets. An LLC costs a state fee but protects your personal assets if the business is sued or owes money.",
+                explanation: "A sole proprietorship is simplest but doesn't separate your personal assets. An LLC costs a state fee and, if maintained properly, can help separate personal and business liability — but it isn't a guarantee against everything.",
                 miniChecklist: ["Sole proprietor: no formation filing; you and the business are one.",
-                                "LLC: file with the state; separates personal and business assets.",
+                                "LLC: file with the state; can help separate personal and business liability if maintained properly.",
                                 "An accountant can help weigh the tax trade-offs."],
                 links: [StepLink(label: "SBA — choose a business structure",
                                  url: "https://www.sba.gov/business-guide/launch-your-business/choose-business-structure")])

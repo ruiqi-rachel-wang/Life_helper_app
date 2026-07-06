@@ -60,8 +60,10 @@ its AI proxy; or use it to harm others.
 ## 6. Your content
 
 You keep ownership of the documents and content you put into Cuevi. The content
-stays on your device; when you scan a non-sensitive document, its text is sent for
-AI processing as described in the [Privacy Policy](privacy-policy.md). You grant
+stays on your device; when you scan or upload a document, its full recognized text
+is sent for AI processing — however sensitive the document is — as described in
+the [Privacy Policy](privacy-policy.md). (This does not apply to the built-in
+guides classified as sensitive, which are generated entirely on-device.) You grant
 us only the limited permission needed to process that text and return a result to
 you.
 

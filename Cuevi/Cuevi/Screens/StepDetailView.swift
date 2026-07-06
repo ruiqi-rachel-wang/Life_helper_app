@@ -11,6 +11,7 @@ import SwiftUI
 
 struct StepDetailView: View {
     @Binding var step: ChecklistStep
+    var startInEditMode: Bool = false
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
 
@@ -40,6 +41,10 @@ struct StepDetailView: View {
                 }
                 .padding(.horizontal, 14).padding(.top, 20)
             }
+            .dismissKeyboardOnTap()
+        }
+        .onAppear {
+            if startInEditMode { isEditing = true }
         }
         .presentationDragIndicator(.visible)
     }

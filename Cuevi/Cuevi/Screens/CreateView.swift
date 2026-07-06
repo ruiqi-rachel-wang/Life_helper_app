@@ -247,7 +247,9 @@ private struct CreateForm: View {
     @State private var dueDate = Calendar.current.startOfDay(for: .now)
     @State private var steps: [ChecklistStep] = []
     @State private var amount = ""
-    @State private var note = ""
+    @State private var notes: [String] = []
+    @State private var reminders: [ReminderItem] = []
+    @State private var remindersCustomized = false
     @State private var photoItem: PhotosPickerItem?
     @State private var imageData: Data?
 
@@ -274,6 +276,12 @@ private struct CreateForm: View {
                     dueCard
                         .padding(.horizontal, 14)
                         .padding(.top, 14)
+                    // Reminders only make sense with a due date — no date, no reminders.
+                    if includeDue {
+                        remindersCard
+                            .padding(.horizontal, 14)
+                            .padding(.top, 14)
+                    }
                     stepsCard
                         .padding(.horizontal, 14)
                         .padding(.top, 14)
@@ -287,6 +295,7 @@ private struct CreateForm: View {
                 }
                 .padding(.top, 48)
             }
+            .dismissKeyboardOnTap()
         }
         .navigationBarHidden(true)
     }
@@ -373,14 +382,14 @@ private struct CreateForm: View {
     private var dueCard: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Add a due date").font(.system(size: 14)).foregroundStyle(Color.ink)
+                Text("Add a date").font(.system(size: 14)).foregroundStyle(Color.ink)
                 Spacer()
                 Toggle("", isOn: $includeDue.animation()).labelsHidden().tint(Color.ink)
             }
             if includeDue {
                 Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
                 HStack {
-                    Text("Due").font(.subline).foregroundStyle(Color.faded)
+                    Text("Date").font(.subline).foregroundStyle(Color.faded)
                     Spacer()
                     DatePicker("", selection: $dueDate, displayedComponents: .date)
                         .labelsHidden().datePickerStyle(.compact)
@@ -435,13 +444,43 @@ private struct CreateForm: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 
-    // MARK: note (text + optional photo)
+    // MARK: reminders (only with a due date) — same editor as Review / Detail
+
+    private var remindersCard: some View {
+        RemindersEditor(
+            reminders: $reminders,
+            customized: $remindersCustomized,
+            defaults: ActionItem.defaultReminders(dueDate: dueDate, dueHasTime: false, leadHours: 2),
+            dueDate: dueDate,
+            isEditing: true)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
+
+    // MARK: notes (a checklist of notes — same as Review / Detail) + optional photo
 
     private var noteCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("NOTE").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-            TextField("Add a note…", text: $note, axis: .vertical)
-                .font(.body14).foregroundStyle(Color.ink).lineLimit(2...5)
+            Text("NOTES").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+            ForEach(notes.indices, id: \.self) { i in
+                HStack(alignment: .top, spacing: 8) {
+                    Text("•").font(.body14).foregroundStyle(Color.faded)
+                    TextField("Note", text: $notes[i], axis: .vertical)
+                        .font(.body14).foregroundStyle(Color.ink)
+                    Button { notes.remove(at: i) } label: {
+                        Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            Button { notes.append("") } label: {
+                Label("Add a note", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+            }
+            .buttonStyle(.plain)
 
             if let imageData, let uiImage = UIImage(data: imageData) {
                 ZStack(alignment: .topTrailing) {
@@ -506,12 +545,19 @@ private struct CreateForm: View {
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             category: category,
             dueDate: includeDue ? dueDate : nil,
-            note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             imageData: imageData,
             steps: cleanSteps
         )
+        item.notes = notes.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         if let amt = Decimal(string: amount.filter { $0.isNumber || $0 == "." }), amt > 0 {
             item.amount = amt
+        }
+        // Reminders only when there's a due date; if the user edited them, keep
+        // their list, otherwise leave them off the custom path so the item uses
+        // the smart defaults.
+        if includeDue, remindersCustomized {
+            item.reminders = reminders
+            item.remindersCustomized = true
         }
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)

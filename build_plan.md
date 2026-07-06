@@ -14,8 +14,8 @@
   metrics work — *every* change going forward (features, fixes, refactors) belongs to
   the next build, which testers do not yet have. When you (any chat) describe a change,
   frame it as "new in the next build," and note whether it has shipped to TestFlight yet.
-- **Action when uploading the next TestFlight build:** bump `CURRENT_PROJECT_VERSION`
-  (build number) — currently 2 → 3 — so the boundary is concrete in App Store Connect.
+- **Build number already bumped to 3** (`CURRENT_PROJECT_VERSION`), so the boundary is
+  concrete in App Store Connect once this build is archived and uploaded.
 - The next version's roadmap is now organized as numbered **Parts** in
   `future_features.md`. **Part 1 = metrics tracking backend** (in progress, see below).
 
@@ -38,8 +38,10 @@
 - **Phase 3 DONE 2026-06-23:** in-app + standalone privacy policy now disclose the
   anonymous, non-PII usage stats; Apple privacy-label doc declares Usage Data + Identifiers
   (Analytics, Not linked, No tracking); a **Profile → Privacy** opt-out toggle gates
-  `Metrics.flush()`. ⚠️ Still TODO before/at submit: **bump build 2→3**, and **re-host the
-  public policy page** `cuevi-legal.pages.dev/privacy.html` (App Store privacy URL) to match.
+  `Metrics.flush()`. Build bump **done** (`CURRENT_PROJECT_VERSION` is 3). ⚠️ Still TODO
+  before/at submit: **re-host the public policy page**
+  `cuevi-legal.pages.dev/privacy.html` (App Store privacy URL) to match — unverified from
+  here, a hosted resource outside this repo.
 - **How Rachel reads the data:** `notie_life_helper_app/how_to_view_tester_data.md`.
 
 **Changed 2026-06-21 (external-review blocker fixes):**
@@ -644,9 +646,9 @@ before handing the app to testers.
      stable root-domain URLs, and now **shown** as a tappable, dated citation
      footer on the guide's questions screen. Unit-tested (every guide has an
      https source; per-state guides flagged as such).
-   - **Verify USCIS pages manually** — the canonical-looking USCIS URLs (uscis.gov/i-90,
-     /n-400, /i-765, /file-online, case-status) could NOT be reliably fetched by the
-     browser tool. Open each in a real browser and confirm before TestFlight.
+   - **Verify USCIS pages manually before TestFlight** — the URLs (uscis.gov/i-90,
+     /n-400, /i-765, /file-online, case-status) look canonical but haven't been
+     confirmed to load; open each in a real browser and check before shipping.
    - **More step-detail breadth** — author detail on the remaining steps across
      all guides (currently the heavy ones have it).
    - **Per-state appointment deep-links** — today the DMV link is each state's
@@ -760,6 +762,10 @@ first 10-user beta. It matters before a **paid** or **public** App Store launch.
 - **Use Apple In-App Purchase / subscriptions** for digital features — Apple takes 15%
   (Small Business Program, under $1M/yr) to 30%. You may **not** use outside payment for
   digital goods.
+- **RevenueCat** (decided 2026-07-01, see `future_features.md` Part 3) manages the IAP
+  subscription on top of StoreKit — entitlements, upgrade/downgrade/restore, paywall —
+  instead of hand-rolling it. Free up to $2.5k/mo tracked revenue, then a small rev-share
+  **on top of** Apple's cut, not instead of it.
 - **Terms of Service / EULA** (Apple ships a standard EULA; a custom one is better here).
 - **Income tax** — app revenue is taxable; track OpenAI / Cloudflare / Apple fees as
   business expenses.

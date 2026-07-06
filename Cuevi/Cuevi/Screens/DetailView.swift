@@ -36,18 +36,21 @@ struct DetailView: View {
                     if !item.steps.isEmpty || isEditing { checklistCard }
                     if !item.otherIDs.isEmpty || siteURLToShow != nil || isEditing { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
-                    if !item.notes.isEmpty || !item.note.isEmpty || isEditing { noteCard }
+                    if !item.notes.isEmpty || isEditing { noteCard }
                     footer
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal, 14)
                 .padding(.top, 48)
             }
+            .dismissKeyboardOnTap()
         }
         .navigationBarHidden(true)
         .sheet(item: $detailStep) { tapped in
             if let idx = item.steps.firstIndex(where: { $0.id == tapped.id }) {
-                StepDetailView(step: $item.steps[idx])   // edits persist to the item
+                // A plain step (no detail yet) opens straight into edit mode —
+                // there's nothing to read otherwise.
+                StepDetailView(step: $item.steps[idx], startInEditMode: !tapped.hasDetail)
             }
         }
         .onDisappear {
@@ -172,7 +175,6 @@ struct DetailView: View {
 
     private var dueChip: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("DUE").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             if isEditing {
                 if item.dueDate != nil {
                     HStack(spacing: 6) {
@@ -236,6 +238,14 @@ struct DetailView: View {
                         HStack(alignment: .top, spacing: 10) {
                             TextField("Step", text: $step.text, axis: .vertical)
                                 .font(.body14).foregroundStyle(Color.ink)
+                            // Add/edit a step's mini-checklist, explanation, etc. — lives
+                            // here in the general edit page, not floating in the read list.
+                            Button { detailStep = step } label: {
+                                Image(systemName: "pencil.circle")
+                                    .font(.system(size: 18)).foregroundStyle(Color.accent)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Edit step details")
                             Button { item.steps.removeAll { $0.id == step.id } } label: {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 18)).foregroundStyle(Color.faint)
@@ -244,14 +254,23 @@ struct DetailView: View {
                         }
                         .padding(.vertical, 8)
                         .overlay(alignment: .top) { divider(above: step) }
-                    } else {
+                    } else if step.hasDetail {
                         HStack(alignment: .top, spacing: 10) {
                             Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
                                 .buttonStyle(.plain)
-                            // Every step opens its detail sheet — even a plain one — so
-                            // there's always a way to add a sub-checklist / what-you'll-need.
+                            // Has real detail (mini-checklist / explanation / links) — open to read it.
                             Button { detailStep = step } label: { stepText(step, chevron: true) }
                                 .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 8)
+                        .overlay(alignment: .top) { divider(above: step) }
+                    } else {
+                        // Nothing to read on a plain step — not tappable in the read view.
+                        // Adding details happens in edit mode (the pencil above).
+                        HStack(alignment: .top, spacing: 10) {
+                            Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
+                                .buttonStyle(.plain)
+                            stepText(step, chevron: false)
                         }
                         .padding(.vertical, 8)
                         .overlay(alignment: .top) { divider(above: step) }
@@ -316,8 +335,8 @@ struct DetailView: View {
 
     // MARK: details — IDs (claim/policy/confirmation)
 
-    // DETAILS — saved IDs / provider / claim #, etc. Values are editable inline
-    // (tap to fill, even in read mode); labels and add/remove appear in edit mode.
+    // DETAILS — saved IDs / provider / claim #, etc. Editable only in edit mode,
+    // same as everything else; read mode just displays whatever's filled in.
     private var detailsCard: some View {
         card {
             VStack(alignment: .leading, spacing: 10) {
@@ -336,10 +355,17 @@ struct DetailView: View {
                             Text(item.otherIDs[i].label.uppercased())
                                 .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
                         }
-                        TextField("Tap to fill in", text: $item.otherIDs[i].value)
-                            .font(.body14).foregroundStyle(Color.ink)
-                            .padding(.horizontal, 10).padding(.vertical, 8)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
+                        if isEditing {
+                            TextField("Tap to fill in", text: $item.otherIDs[i].value)
+                                .font(.body14).foregroundStyle(Color.ink)
+                                .padding(.horizontal, 10).padding(.vertical, 8)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
+                        } else if !item.otherIDs[i].value.isEmpty {
+                            Text(item.otherIDs[i].value)
+                                .font(.body14).foregroundStyle(Color.ink)
+                                .padding(.horizontal, 10).padding(.vertical, 8)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
+                        }
                     }
                 }
                 if isEditing {
@@ -365,7 +391,7 @@ struct DetailView: View {
         return hay.contains(host) ? nil : url
     }
 
-    // MARK: notes (AI notes + the user's free note) — last
+    // MARK: notes (a checklist of notes — same editor as Review / Create) — last
 
     private var noteCard: some View {
         card {
@@ -387,17 +413,12 @@ struct DetailView: View {
                         Label("Add a note", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
                     }
                     .buttonStyle(.plain)
-                    TextField("Your own note…", text: $item.note, axis: .vertical)
-                        .font(.body14).foregroundStyle(Color.ink).lineLimit(2...5).padding(.top, 4)
                 } else {
                     ForEach(item.notes.indices, id: \.self) { i in
                         HStack(alignment: .top, spacing: 8) {
                             Text("•").font(.body14).foregroundStyle(Color.faded)
                             Text(linked(item.notes[i])).font(.body14).foregroundStyle(Color.faded).tint(Color.accent)
                         }
-                    }
-                    if !item.note.isEmpty {
-                        Text(item.note).font(.body14).foregroundStyle(Color.ink).padding(.top, item.notes.isEmpty ? 0 : 4)
                     }
                 }
             }

@@ -95,14 +95,26 @@ struct ActionItemTests {
         #expect(b.activeCount == 4)   // everything except the done one
     }
 
-    @Test func dueTodayIsDueThisWeekNotOverdue() {
+    @Test func dueTodayIsOverdueNotDueThisWeek() {
+        // A task due today needs to get done today, not "any time this week" —
+        // it lands in Needs attention (and gets the daily overdue nudge) the
+        // same day it's due, not the day after.
         let b = [ActionItem(title: "today", category: .other, dueDate: day(0))].groupedForInbox()
-        #expect(b.dueThisWeek.count == 1)
-        #expect(b.needsAttention.isEmpty)
+        #expect(b.needsAttention.count == 1)
+        #expect(b.dueThisWeek.isEmpty)
     }
 
-    @Test func noDueDateGoesToInProgressNotUpcoming() {
+    @Test func noDueDateGoesToUpcomingNotInProgress() {
+        // An undated, not-started task waits in Upcoming — it only becomes
+        // In progress once a step is checked.
         let b = [ActionItem(title: "no date", category: .other)].groupedForInbox()
+        #expect(b.upcoming.count == 1)
+        #expect(b.inProgress.isEmpty)
+    }
+
+    @Test func undatedItemWithCheckedStepIsInProgress() {
+        let b = [ActionItem(title: "started, no date", category: .other,
+                            steps: [ChecklistStep(text: "a", done: true)])].groupedForInbox()
         #expect(b.inProgress.count == 1)
         #expect(b.upcoming.isEmpty)
     }
@@ -202,6 +214,25 @@ struct ActionItemTests {
         let item = ActionItem(title: "Bill", category: .utility, dueDate: day(10))
         item.remindersCustomized = true                     // emptied on purpose
         #expect(item.effectiveReminders.isEmpty)
+    }
+
+    @Test func reviewDraftRemindersSurviveSave() {
+        // Reminders set on the Review screen must persist onto the saved item.
+        var draft = ExtractionResult(title: "Bill", dueDate: day(10), confidence: 1)
+        let custom = day(5)
+        draft.reminders = [ReminderItem(date: custom, note: "Pay early")]
+        draft.remindersCustomized = true
+        let item = ActionItem(from: draft)
+        #expect(item.remindersCustomized)
+        #expect(item.effectiveReminders.map(\.date) == [custom])
+        #expect(item.effectiveReminders.first?.note == "Pay early")
+    }
+
+    @Test func nearDueDateDropsPastDefaultReminders() {
+        // A due date tomorrow shouldn't seed "3 days before"/"1 day before" (both
+        // already past) — only times still ahead are offered.
+        let defaults = ActionItem.defaultReminders(dueDate: day(1), dueHasTime: false, leadHours: 2)
+        #expect(defaults.allSatisfy { $0.date > .now })
     }
 
     @MainActor
