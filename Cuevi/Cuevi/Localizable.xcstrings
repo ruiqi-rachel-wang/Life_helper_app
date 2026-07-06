@@ -7253,7 +7253,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "添加"
+            "value" : "新建"
           }
         }
       }
@@ -12223,7 +12223,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Añadir tarea"
+            "value" : "Añadir una tarea"
           }
         },
         "zh-Hans" : {
@@ -12383,7 +12383,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tareas y avisos"
+            "value" : "Tareas y recordatorios"
           }
         },
         "zh-Hans" : {
@@ -12438,6 +12438,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自己动手输入一个待办"
+          }
+        }
+      }
+    },
+    "PROFILE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PERFIL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人"
           }
         }
       }

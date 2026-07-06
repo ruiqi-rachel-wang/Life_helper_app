@@ -77,7 +77,9 @@ struct ProfileView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("ACCOUNT").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
+            // "PROFILE", not "ACCOUNT" — there's no sign-in yet, and the account
+            // card below already carries the ACCOUNT label.
+            Text("PROFILE").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
             Text("My Settings").font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
