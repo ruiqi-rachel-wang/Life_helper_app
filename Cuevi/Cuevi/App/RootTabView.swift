@@ -1,9 +1,10 @@
 //  RootTabView.swift
 //
 //  The tab-bar shell shown when the app launches. Holds the 4 main
-//  destinations (Inbox, Add, Guides, Settings); tapping a tab swaps which
-//  screen is shown above the bar. Tab titles are deliberately wordy
-//  (tester feedback: "Guides" alone meant nothing) — say what each tab DOES.
+//  destinations (Inbox, Add, Guides, Profile); tapping a tab swaps which
+//  screen is shown above the bar. Tab titles stay SHORT (they'd wrap/shrink
+//  in the bar); each PAGE's masthead carries the long, self-explaining title
+//  (e.g. 提醒待办事项 / To-Dos & Reminders) — Rachel's 2026-07-06 ask.
 //
 //  Tab selection is driven by a shared AppRouter so screens can jump back to
 //  the Inbox after saving. (A raised ＋ FAB was tried and dropped — a flat bar
@@ -24,19 +25,19 @@ struct RootTabView: View {
         @Bindable var router = router
         return TabView(selection: $router.selectedTab) {
             InboxView()
-                .tabItem { Label("To-Dos & Reminders", systemImage: "checklist") }
+                .tabItem { Label("To-Do", systemImage: "checklist") }
                 .tag(AppRouter.Tab.inbox)
 
             CreateView()
-                .tabItem { Label("Add To-Do", systemImage: "plus.circle.fill") }
+                .tabItem { Label("Add", systemImage: "plus.circle.fill") }
                 .tag(AppRouter.Tab.add)
 
             GuidesView()
-                .tabItem { Label("Life Guides", systemImage: "books.vertical.fill") }
+                .tabItem { Label("Guides", systemImage: "books.vertical.fill") }
                 .tag(AppRouter.Tab.guides)
 
             ProfileView()
-                .tabItem { Label("My Settings", systemImage: "gearshape.fill") }
+                .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(AppRouter.Tab.profile)
         }
         .tint(Color.accent)

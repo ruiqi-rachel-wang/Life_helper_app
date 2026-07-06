@@ -53,11 +53,22 @@ struct CreateView: View {
                 Color.paper.ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("NEW ITEM")
-                        .font(.eyebrow)
-                        .tracking(1.4)
-                        .foregroundStyle(Color.faded)
-                        .padding(.horizontal, 24)
+                    // Masthead matches the other tabs: eyebrow + a long serif
+                    // title (添加到提醒待办) + a one-liner saying what this page
+                    // can DO — the three ways in, and what comes out.
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("NEW ITEM")
+                            .font(.eyebrow)
+                            .tracking(1.4)
+                            .foregroundStyle(Color.faded)
+                        Text("Add To-Do")
+                            .font(.serifTitle).tracking(-0.6)
+                            .foregroundStyle(Color.ink)
+                        Text("Scan a paper, upload a photo, or type it yourself — it becomes a to-do with reminders.")
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .padding(.top, 4)
+                    }
+                    .padding(.horizontal, 24)
 
                     heroTile
                         .padding(.horizontal, 14)
@@ -179,13 +190,15 @@ struct CreateView: View {
     }
 
     // Two smaller tiles: Upload from Photos (→ OCR), Create it yourself.
+    // Top-aligned: the captions wrap differently, so the cards differ in height.
     private var secondaryRow: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             PhotosPicker(selection: $photoItems, maxSelectionCount: Self.maxPages,
                          selectionBehavior: .ordered, matching: .images) {
                 SecondaryTile(symbol: "photo.on.rectangle.angled",
                               color: .sourceScanned,
-                              title: "Upload from Photos")
+                              title: "Upload from Photos",
+                              caption: "A photo or screenshot you already have")
             }
             .buttonStyle(.plain)
 
@@ -194,7 +207,8 @@ struct CreateView: View {
             } label: {
                 SecondaryTile(symbol: "square.and.pencil",
                               color: .sourceGuide,
-                              title: "Create it yourself")
+                              title: "Create it yourself",
+                              caption: "Type a quick to-do by hand")
             }
             .buttonStyle(.plain)
         }
@@ -207,6 +221,7 @@ private struct SecondaryTile: View {
     let symbol: String
     let color: Color
     let title: String
+    let caption: String   // one plain line on what this option is for
 
     var body: some View {
         VStack(spacing: 8) {
@@ -218,11 +233,15 @@ private struct SecondaryTile: View {
             }
             .frame(width: 38, height: 38)
 
-            // LocalizedStringKey so the passed-in literal ("Upload from Photos",
-            // "Create it yourself") is translated, not shown verbatim.
+            // LocalizedStringKey so the passed-in literals ("Upload from Photos",
+            // "Create it yourself", captions) are translated, not shown verbatim.
             Text(LocalizedStringKey(title))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.ink)
+                .multilineTextAlignment(.center)
+            Text(LocalizedStringKey(caption))
+                .font(.system(size: 11.5))
+                .foregroundStyle(Color.faded)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

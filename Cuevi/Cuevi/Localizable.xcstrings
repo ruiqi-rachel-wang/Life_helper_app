@@ -12393,6 +12393,54 @@
           }
         }
       }
+    },
+    "Scan a paper, upload a photo, or type it yourself — it becomes a to-do with reminders." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanea un papel, sube una foto o escríbelo tú mismo — se convierte en una tarea con recordatorios."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扫描纸质文件、上传照片，或自己输入——都会变成带提醒的待办。"
+          }
+        }
+      }
+    },
+    "A photo or screenshot you already have" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una foto o captura que ya tienes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手机里已有的照片或截图"
+          }
+        }
+      }
+    },
+    "Type a quick to-do by hand" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe una tarea rápida a mano"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自己动手输入一个待办"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

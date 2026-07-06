@@ -78,7 +78,7 @@ struct ProfileView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("ACCOUNT").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
-            Text("Profile").font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
+            Text("My Settings").font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)

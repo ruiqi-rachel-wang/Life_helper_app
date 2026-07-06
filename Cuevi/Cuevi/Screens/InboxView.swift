@@ -84,7 +84,7 @@ struct InboxView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(dateLabel)
                     .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
-                Text("To-Do")
+                Text("To-Dos & Reminders")
                     .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
             }
             Spacer()
