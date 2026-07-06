@@ -141,15 +141,50 @@ struct InboxView: View {
         }
     }
 
+    // The empty Inbox is a teacher, not a dead end: the three ways to start,
+    // with colorful icons (tester feedback: make what-to-do-next obvious).
     private var emptyState: some View {
-        VStack(spacing: 8) {
-            Text("Nothing yet")
-                .font(.serifSection).foregroundStyle(Color.faded)
-            Text("Tap ＋ to scan a document or add a task.")
-                .font(.subline).foregroundStyle(Color.faint)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Nothing here yet — three ways to start")
+                .font(.serifSection).foregroundStyle(Color.ink)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 4)
+
+            emptyRow("camera.viewfinder", Color.sourceScanned,
+                     "Scan a letter or bill",
+                     "Tap ＋ below, then Scan — Cuevi explains it and builds your steps.")
+            emptyRow("books.vertical.fill", Color.sourceGuide,
+                     "Pick a life guide",
+                     "Moving, taxes, driver's license… ready-made checklists for life in the U.S.")
+            emptyRow("square.and.pencil", Color.accent,
+                     "Add it yourself",
+                     "A quick to-do with a date — Cuevi reminds you before it's due.")
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 60)
+        .padding(.horizontal, 14)
+        .padding(.top, 12)
+    }
+
+    private func emptyRow(_ symbol: String, _ color: Color,
+                          _ title: LocalizedStringKey, _ body: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12).fill(color.opacity(0.14))
+                Image(systemName: symbol)
+                    .font(.system(size: 20)).foregroundStyle(color)
+            }
+            .frame(width: 44, height: 44)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.cardTitle).foregroundStyle(Color.ink)
+                Text(body).font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
     }
 }
 

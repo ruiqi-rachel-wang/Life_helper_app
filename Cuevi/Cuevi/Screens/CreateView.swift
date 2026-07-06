@@ -144,6 +144,8 @@ struct CreateView: View {
 
     // Big primary action: Scan a document → camera → OCR. With no camera
     // (Simulator), fall back to the photo picker so it still works.
+    // The subtitle says what scanning is FOR — tester feedback: "most used" and
+    // "OCR runs on device" meant nothing; examples do.
     private var heroTile: some View {
         Button {
             guard allowScan() else { return }
@@ -151,20 +153,18 @@ struct CreateView: View {
         } label: {
             HStack(alignment: .center, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("MOST COMMON")
-                        .font(.eyebrow).tracking(1.4)
-                        .foregroundStyle(Color.paper.opacity(0.55))
                     Text("Scan a document")
                         .font(.serifModal).tracking(-0.4)
                         .foregroundStyle(Color.paper)
-                    Text("Camera · OCR runs on device")
+                    Text("Bills, letters & mail, notices, forms — Cuevi explains what to do")
                         .font(.subline)
-                        .foregroundStyle(Color.paper.opacity(0.65))
+                        .foregroundStyle(Color.paper.opacity(0.75))
+                        .lineSpacing(2)
                 }
                 Spacer()
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.paper.opacity(0.12))
+                        .fill(Color.accent)
                     Image(systemName: "camera.viewfinder")
                         .font(.system(size: 26))
                         .foregroundStyle(Color.paper)
@@ -184,6 +184,7 @@ struct CreateView: View {
             PhotosPicker(selection: $photoItems, maxSelectionCount: Self.maxPages,
                          selectionBehavior: .ordered, matching: .images) {
                 SecondaryTile(symbol: "photo.on.rectangle.angled",
+                              color: .sourceScanned,
                               title: "Upload from Photos")
             }
             .buttonStyle(.plain)
@@ -192,6 +193,7 @@ struct CreateView: View {
                 CreateForm()
             } label: {
                 SecondaryTile(symbol: "square.and.pencil",
+                              color: .sourceGuide,
                               title: "Create it yourself")
             }
             .buttonStyle(.plain)
@@ -203,22 +205,23 @@ struct CreateView: View {
 
 private struct SecondaryTile: View {
     let symbol: String
+    let color: Color
     let title: String
 
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8).fill(Color.bg)
+                RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.14))
                 Image(systemName: symbol)
-                    .font(.system(size: 18))
-                    .foregroundStyle(Color.ink)
+                    .font(.system(size: 20))
+                    .foregroundStyle(color)
             }
-            .frame(width: 32, height: 32)
+            .frame(width: 38, height: 38)
 
             // LocalizedStringKey so the passed-in literal ("Upload from Photos",
             // "Create it yourself") is translated, not shown verbatim.
             Text(LocalizedStringKey(title))
-                .font(.system(size: 11.5, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.ink)
                 .multilineTextAlignment(.center)
         }
