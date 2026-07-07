@@ -12218,22 +12218,6 @@
         }
       }
     },
-    "Add To-Do" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir una tarea"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "添加到提醒待办"
-          }
-        }
-      }
-    },
     "Add it yourself" : {
       "localizations" : {
         "es" : {
@@ -12262,22 +12246,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "账单、信件/邮件、通知、表格——Cuevi 告诉你要做什么"
-          }
-        }
-      }
-    },
-    "Life Guides" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guías de vida"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "生活指南服务"
           }
         }
       }
@@ -12454,6 +12422,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "个人"
+          }
+        }
+      }
+    },
+    "Add a To-Do & Reminder" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir tarea y recordatorio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加到提醒待办"
+          }
+        }
+      }
+    },
+    "Life Guides & Checklists" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guías de vida paso a paso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生活指南服务"
           }
         }
       }

@@ -61,7 +61,7 @@ struct CreateView: View {
                             .font(.eyebrow)
                             .tracking(1.4)
                             .foregroundStyle(Color.faded)
-                        Text("Add To-Do")
+                        Text("Add a To-Do & Reminder")
                             .font(.serifTitle).tracking(-0.6)
                             .foregroundStyle(Color.ink)
                         Text("Scan a paper, upload a photo, or type it yourself — it becomes a to-do with reminders.")

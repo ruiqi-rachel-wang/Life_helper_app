@@ -111,7 +111,7 @@ struct GuidesView: View {
     private var masthead: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("LIBRARY").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
-            Text("Life Guides").font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
+            Text("Life Guides & Checklists").font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
             Text("Life events come with a stack of paperwork. Pick a guide and Cuevi walks you through it.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                 .padding(.top, 4).frame(maxWidth: 300, alignment: .leading)
