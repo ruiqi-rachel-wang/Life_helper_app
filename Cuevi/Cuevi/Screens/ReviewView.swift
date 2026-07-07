@@ -323,11 +323,27 @@ struct ReviewView: View {
             if isEditing {
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("Has due date", isOn: $includeDue.animation()).labelsHidden().tint(Color.ink)
+                        // Seed the draft the moment the toggle turns on — otherwise the
+                        // picker SHOWS today but the draft still holds nil, and the item
+                        // saves with no date (and no reminders) unless the picker is touched.
+                        .onChange(of: includeDue) { _, on in
+                            if on, draft.dueDate == nil {
+                                draft.dueDate = Calendar.current.startOfDay(for: .now)
+                            }
+                        }
                     if includeDue {
                         DatePicker("", selection: dueDateBinding,
                                    displayedComponents: draft.dueHasTime ? [.date, .hourAndMinute] : [.date])
                             .labelsHidden().datePickerStyle(.compact)
                         Toggle("Specific time", isOn: bindBool(\.dueHasTime)).font(.subline).tint(Color.ink)
+                            // A plain date carries midnight; turning "time" on would make a
+                            // 12:00 AM event that's instantly overdue. Start at 9am instead.
+                            .onChange(of: draft.dueHasTime) { _, on in
+                                if on, let due = draft.dueDate,
+                                   Calendar.current.dateComponents([.hour, .minute], from: due) == DateComponents(hour: 0, minute: 0) {
+                                    draft.dueDate = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: due)
+                                }
+                            }
                     }
                 }
             } else if let due = draft.dueDate {

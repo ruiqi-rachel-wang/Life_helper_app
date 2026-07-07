@@ -193,6 +193,14 @@ struct DetailView: View {
                         .buttonStyle(.plain).accessibilityLabel("Remove due date")
                     }
                     Toggle("Specific time", isOn: $item.dueHasTime).font(.subline).tint(Color.ink)
+                        // A plain date carries midnight; turning "time" on would make a
+                        // 12:00 AM event that's instantly overdue. Start at 9am instead.
+                        .onChange(of: item.dueHasTime) { _, on in
+                            if on, let due = item.dueDate,
+                               Calendar.current.dateComponents([.hour, .minute], from: due) == DateComponents(hour: 0, minute: 0) {
+                                item.dueDate = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: due)
+                            }
+                        }
                 } else {
                     Button { item.dueDate = startOfToday } label: {
                         Label("Add date", systemImage: "plus.circle").font(.subline).foregroundStyle(Color.accent)
