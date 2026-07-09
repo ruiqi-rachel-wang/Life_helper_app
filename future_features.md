@@ -39,16 +39,22 @@
 6. **Part 3: accounts → family sharing → Cuevi Plus** — the retention and
    revenue unlock.
 
-## Part 1 — Metrics tracking backend  *(code DONE — one ship blocker left)*
+## Part 1 — Metrics tracking backend  *(code DONE — upload checklist left)*
 
 Anonymous usage stats now reach Rachel: Cloudflare D1 `cuevi-metrics` + `POST /events`
 on the `cuevi-ai` Worker; the app uploads un-synced `Metrics` events on
 launch/background with a per-install UUID (no PII — never titles/amounts/notes/text).
 Privacy policy + Apple label + Profile opt-out all landed; build number bumped to 3.
 
-- **Remaining before the next TestFlight upload:** re-host the public policy page
-  `cuevi-legal.pages.dev/privacy.html` so the App Store privacy URL matches the
-  in-app policy.
+- **2026-07-08 — the "re-host the policy page" blocker turned out already done:**
+  the live `cuevi-legal.pages.dev/privacy` is byte-identical to `docs/` and
+  discloses the usage stats. Verified from here. What WAS stale: the July terms
+  §6 clarification — now synced across md / in-app / html; needs one
+  `pages deploy` to publish.
+- **Remaining (Rachel, ~30 min):** the 4-step checklist in
+  `testflight_build3_notes.md` — publish terms page, update the ASC App Privacy
+  label (Product Interaction + User ID are NEW since build 2), archive & upload
+  build 3, set the OpenAI spend cap. What-to-Test notes (EN+中文) are drafted there.
 - Reporting: `wrangler d1 execute` queries (see `how_to_view_tester_data.md`);
   a summary endpoint/dashboard only if querying gets tedious.
 

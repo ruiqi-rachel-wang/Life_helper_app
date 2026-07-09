@@ -1,7 +1,7 @@
 # Terms of Service & Disclaimers for Cuevi
 
 **Effective date:** June 18, 2026
-**Last updated:** June 18, 2026
+**Last updated:** July 8, 2026
 
 > ⚠️ **Template — not legal advice.** Have a lawyer review this before a paid or
 > public launch. Cuevi gives guidance on tax, immigration, insurance, medical, and

@@ -124,7 +124,7 @@ We may update this policy as the app evolves (for example, if we add accounts, s
     static let terms = #"""
 # Terms of Service & Disclaimers for Cuevi
 
-**Effective date:** June 18, 2026 **Last updated:** June 18, 2026
+**Effective date:** June 18, 2026 **Last updated:** July 8, 2026
 
 By downloading or using **Cuevi** ("the app"), you agree to these Terms. If you do not agree, do not use the app.
 
@@ -160,7 +160,7 @@ You agree not to: use the app for any unlawful purpose; upload content you have 
 
 ## 6. Your content
 
-You keep ownership of the documents and content you put into Cuevi. The content stays on your device; when you scan a non-sensitive document, its text is sent for AI processing as described in the [Privacy Policy](privacy-policy.md). You grant us only the limited permission needed to process that text and return a result to you.
+You keep ownership of the documents and content you put into Cuevi. The content stays on your device; when you scan or upload a document, its full recognized text is sent for AI processing — however sensitive the document is — as described in the Privacy Policy. (This does not apply to the built-in guides classified as sensitive, which are generated entirely on-device.) You grant us only the limited permission needed to process that text and return a result to you.
 
 ## 7. No warranty
 
