@@ -16,3 +16,14 @@ compatibility_date = "2024-11-01"
 binding = "DB"               # how worker.js refers to it: env.DB
 database_name = "cuevi-metrics"
 database_id = "5e803b6a-8d38-4388-a4b8-23a0e4fa3122"
+
+# Per-IP rate limit (worker-level, before any body parsing). 60 requests/min
+# per IP is far above honest app use (a scan = 1 call) and bounds bursts from
+# a leaked token. worker.js skips the check if this binding is missing, so
+# removing it degrades gracefully. `namespace_id` is just a local identifier
+# (any unique int per limiter in this Worker).
+[[unsafe.bindings]]
+name = "RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }

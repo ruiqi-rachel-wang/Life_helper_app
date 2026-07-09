@@ -12457,6 +12457,70 @@
           }
         }
       }
+    },
+    "Hide details in notifications" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar detalles en las notificaciones"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知中隐藏内容"
+          }
+        }
+      }
+    },
+    "Reminders on the lock screen will say \"Cuevi\" instead of the task's name, in case a title is private (a medical or immigration letter, for example)." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los recordatorios en la pantalla bloqueada dirán \"Cuevi\" en lugar del nombre de la tarea, por si un título es privado (una carta médica o de inmigración, por ejemplo)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁屏提醒将只显示 \"Cuevi\"，不显示事项名称——以防标题涉及隐私（例如医疗或移民信件）。"
+          }
+        }
+      }
+    },
+    "A task needs your attention — open Cuevi." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una tarea necesita tu atención — abre Cuevi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有事项需要处理——打开 Cuevi 查看。"
+          }
+        }
+      }
+    },
+    "The AI service is busy or this device hit its limit — please try again later." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El servicio de IA está ocupado o este dispositivo alcanzó su límite — inténtalo más tarde."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 服务繁忙或本设备已达使用上限——请稍后再试。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

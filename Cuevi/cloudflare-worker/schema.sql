@@ -22,3 +22,13 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_install ON events(install_id);
 CREATE INDEX IF NOT EXISTS idx_events_kind    ON events(kind);
 CREATE INDEX IF NOT EXISTS idx_events_item    ON events(item_id);
+
+-- Per-install AI-call counters (chat proxy quota; see worker.js AI_DAY_LIMIT).
+-- The worker lazy-creates this table too, so applying this file is optional;
+-- kept here so schema.sql stays the one honest description of the database.
+CREATE TABLE IF NOT EXISTS ai_usage (
+  install_id TEXT NOT NULL,   -- anonymous per-install UUID (same id metrics use)
+  period     TEXT NOT NULL,   -- '2026-07-08' (a day) or '2026-07' (a month)
+  count      INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (install_id, period)
+);

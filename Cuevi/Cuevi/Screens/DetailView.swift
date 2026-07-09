@@ -555,7 +555,17 @@ struct DetailView: View {
     }
 
     private var dueBinding: Binding<Date> {
-        Binding(get: { item.dueDate ?? startOfToday }, set: { item.dueDate = $0 })
+        Binding(get: { item.dueDate ?? startOfToday },
+                set: { newValue in
+                    // Custom reminder times were picked relative to the OLD date —
+                    // slide them by the same number of days so "1 day before at
+                    // 9am" stays 1 day before, instead of silently going stale.
+                    if item.remindersCustomized {
+                        item.reminders = ActionItem.shiftedReminders(
+                            item.reminders, fromDue: item.dueDate, toDue: newValue)
+                    }
+                    item.dueDate = newValue
+                })
     }
 
     // MARK: shared helpers

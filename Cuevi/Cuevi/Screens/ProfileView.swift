@@ -13,13 +13,16 @@
 //
 
 import SwiftUI
+import SwiftData
 import UserNotifications
 import UIKit
 
 struct ProfileView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.modelContext) private var modelContext
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
+    @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
     @State private var notifyStatus = String(localized: "Checking…")
     @State private var notifyOn = false
     @State private var notifyUndetermined = false   // never asked → row can request
@@ -231,6 +234,24 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("PRIVACY").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                     .padding(.bottom, 10)
+
+                Toggle(isOn: $discreetNotifications) {
+                    Text("Hide details in notifications").font(.body14).foregroundStyle(Color.ink)
+                }
+                .tint(Color.accent)
+                Text("Reminders on the lock screen will say \"Cuevi\" instead of the task's name, in case a title is private (a medical or immigration letter, for example).")
+                    .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
+                    .padding(.top, 8)
+                // Rebuild already-scheduled banners so the choice applies to
+                // reminders scheduled before the toggle changed, not just new ones.
+                .onChange(of: discreetNotifications) { _, _ in
+                    if let items = try? modelContext.fetch(FetchDescriptor<ActionItem>()) {
+                        ReminderScheduler.shared.rescheduleAll(for: items)
+                    }
+                }
+
+                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
+
                 Toggle(isOn: $shareUsage) {
                     Text("Share anonymous usage data").font(.body14).foregroundStyle(Color.ink)
                 }

@@ -13,8 +13,31 @@
 > "make everything obvious" clarity pass (longer tab titles, plainer scan copy,
 > bigger fonts, colorful icons) was done the same day; the rest of Part 2 is
 > decided but not started.
+>
+> **2026-07-08 — full pre-ship review done (code + product).** All watch-list
+> hardening landed the same day: Worker per-IP rate limit + per-install AI quota,
+> notification scheduling now survives iOS's 64-pending cap (soonest-first
+> budget), SwiftData VersionedSchema V1 baseline (+ test proving old stores open
+> intact — schema changes are migratable now), custom reminders follow a moved
+> due date, decimal-comma amounts parse, and a "Hide details in notifications"
+> privacy toggle. Product asks from the review are folded into Parts 2/5 below.
 
 ---
+
+## Ship order for the next version *(agreed 2026-07-08)*
+
+1. **Re-host the privacy page & upload to TestFlight** — the one Part 1 blocker;
+   everything since build 2 is invisible to testers until this happens.
+2. **Part 2 as planned** — first-run walkthrough, photo shown at the end of
+   Detail, save-photo opt-out.
+3. **Swipe-to-complete/delete in the Inbox + "due today" softening** (Part 2
+   additions below) — small, direct hit on the one launch metric.
+4. **Verbatim document translation** — pulled forward from Part 5; deepens the
+   core "I can finally read this" promise (a tester already effectively asked).
+5. **Cloudflare dashboard rate rule + OpenAI spending cap** — 10 minutes, Rachel
+   only (code-level limits landed 2026-07-08; these are the outer $ ceilings).
+6. **Part 3: accounts → family sharing → Cuevi Plus** — the retention and
+   revenue unlock.
 
 ## Part 1 — Metrics tracking backend  *(code DONE — one ship blocker left)*
 
@@ -45,12 +68,20 @@ the 3 seeded example items will be **replaced** by a real first-run walkthrough.
   (below notes) so the user can always check the original; a My Settings toggle opts
   out. (Today the photo is already stored in `ActionItem.imageData` but never shown
   after saving.)
-- **Clarity pass — DONE 2026-07-06:** longer/plainer tab titles (提醒待办事项 ·
-  添加到提醒待办 · 生活指南服务 · 我的设置 / To-Dos & Reminders · Add To-Do · Life
-  Guides · My Settings), scan tile says what it's FOR (bills/letters/mail/forms)
-  instead of "most used" / "OCR on device", type scale bumped ~2pt everywhere,
-  colorful icons on the Add tiles + a teaching three-ways-to-start empty Inbox,
-  tab/accent tint warmed to the brand sienna.
+- **Clarity pass — DONE 2026-07-06:** longer/plainer page titles (提醒待办事项 ·
+  添加到提醒待办 · 生活指南服务 · 我的设置 / To-Dos & Reminders · Add a To-Do &
+  Reminder · Life Guides & Checklists · My Settings; tabs stay short), scan tile
+  says what it's FOR (bills/letters/mail/forms) instead of "most used" / "OCR on
+  device", type scale bumped ~2pt everywhere, colorful icons on the Add tiles +
+  a teaching three-ways-to-start empty Inbox, tint warmed to the brand sienna.
+- **Swipe-to-complete/delete in the Inbox** *(from the 2026-07-08 review — not
+  started)* — marking done today takes open item → scroll → Mark done; the
+  launch metric IS completions, so make it one swipe on the row (with the same
+  recurring-spawn + metrics logging the Detail button does).
+- **Soften "due today"** *(from the 2026-07-08 review — not started)* — a task
+  due today currently shows as 逾期/overdue in red, which punishes exactly our
+  audience. Show 今天到期 / "Due today" in amber for day-of; red stays for
+  actually-past items. (Keep `isOverdue` for scheduling; this is display-only.)
 - Feeds the one launch metric (confirmed → done before due) — people can't complete
   the loop if they don't understand it.
 
@@ -81,13 +112,16 @@ and Cuevi Plus needs the Apple Paid Apps Agreement signed before any of it can c
 
 ## Part 5 — Localization & content
 
-Ordered by expected impact:
+Ordered by expected impact. Review note (2026-07-08): for Chinese users the app
+currently feels HALF-translated — chrome is 中文 but guide titles/questions are
+English — so the two items below are the credibility gap, not polish.
 
-- **Full verbatim translation of a scanned doc** *(Rachel, 2026-06-23 — the
-  high-value one)* — the scan only shows an AI summary + steps, so a line in the
-  original can be missed. When explain-language isn't English, offer "点击查看翻译 /
-  Tap to translate" on the item's photo that overlays a line-by-line translation of
-  the whole document (reuse the OCR text + one translate call).
+- **Full verbatim translation of a scanned doc** *(Rachel, 2026-06-23 — pulled
+  forward into the ship order, step 4)* — the scan only shows an AI summary +
+  steps, so a line in the original can be missed. When explain-language isn't
+  English, offer "点击查看翻译 / Tap to translate" on the item's photo that overlays
+  a line-by-line translation of the whole document (reuse the OCR text + one
+  translate call).
 - **Translate guide content** — guide titles/subtitles/questions/step text are still
   English; general guides get the checklist translated by the AI polish, the rest is
   a content pass.

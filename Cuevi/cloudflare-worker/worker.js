@@ -6,25 +6,47 @@
 //   • POST /events                 → store anonymous tester metrics in D1 (Part 1).
 //
 // Cost/abuse guardrails (the endpoint URL is discoverable, so these BOUND the
-// damage rather than hide the URL):
+// damage rather than hide the URL) — layered, from outermost in:
+//   • Per-IP rate limit (RATE_LIMITER binding below; no-op if the binding is
+//     missing so a config slip can't take the app down).
 //   • POST only; shared-secret header required IFF PROXY_TOKEN is set.
 //   • AI: model allow-list + a hard max_tokens cap on every request.
+//   • AI: per-install daily/monthly call caps in D1 (X-Cuevi-Install header).
+//     Old app builds don't send the header and skip this check — the IP limit
+//     still covers them; an abuser omitting the header is likewise IP-limited.
 //   • /events: capped batch size, every stored string clamped, only known event
 //     kinds accepted, INSERT OR IGNORE so re-sends never duplicate.
-//   • ALSO add a Cloudflare "Rate limiting rule" on this route in the dashboard,
-//     and keep an OpenAI spending cap — those are the real volume/$ ceilings.
+//   • The final $ ceiling is the OpenAI spending cap (dashboard) — keep it set.
 
 const ALLOWED_MODELS = new Set(["gpt-4o", "gpt-4o-mini"]);
 const MAX_TOKENS = 2000; // hard ceiling AND the default when the client sends none
+
+// Per-install AI-call caps. Deliberately ~3x the app's own scan quota (10/day,
+// 50/month) because guides also call the AI — honest users should never see
+// these; they exist to bound a runaway device or a copied token+install id.
+const AI_DAY_LIMIT = 30;
+const AI_MONTH_LIMIT = 150;
 
 // /events guardrails.
 const MAX_BATCH = 500;                               // events accepted per request
 const VALID_KINDS = new Set(["confirmed", "completed"]);
 const MAX_STR = 64;                                  // clamp every stored string
 
+// One-time (per isolate) lazy DDL so the quota table exists without a manual
+// migration step. Cheap: runs once per Worker instance, IF NOT EXISTS after.
+let usageTableReady = false;
+
 export default {
   async fetch(request, env) {
     if (request.method !== "POST") return json({ error: "POST only" }, 405);
+
+    // Outermost: per-IP rate limit (Workers rate-limiting binding). Applies to
+    // every route, before any body parsing. Missing binding → skip, don't break.
+    if (env.RATE_LIMITER) {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const { success } = await env.RATE_LIMITER.limit({ key: ip });
+      if (!success) return json({ error: "Too many requests" }, 429);
+    }
 
     const path = new URL(request.url).pathname;
 
@@ -47,6 +69,18 @@ async function handleChat(request, env) {
 
   if (!ALLOWED_MODELS.has(body.model)) return json({ error: "Model not allowed" }, 400);
 
+  // Per-install quota (see header note at the top). Fail OPEN on storage
+  // errors: a D1 hiccup shouldn't block every scan; the other layers hold.
+  const installID = clamp(request.headers.get("X-Cuevi-Install") || "");
+  if (installID && env.DB) {
+    try {
+      const { day, month } = await bumpUsage(env.DB, installID);
+      if (day > AI_DAY_LIMIT || month > AI_MONTH_LIMIT) {
+        return json({ error: "quota", message: "AI limit reached for this device" }, 429);
+      }
+    } catch { /* fail open */ }
+  }
+
   // Cap tokens even if the client omitted max_tokens (the previously-broken cap).
   const requested = Number(body.max_tokens);
   body.max_tokens = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
@@ -64,6 +98,27 @@ async function handleChat(request, env) {
     status: upstream.status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+// Count this call against the install's day + month windows and return the new
+// totals. Counts attempts (not successes) — the limits carry 3x headroom for that.
+async function bumpUsage(db, installID) {
+  if (!usageTableReady) {
+    await db.exec(
+      "CREATE TABLE IF NOT EXISTS ai_usage (install_id TEXT NOT NULL, period TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (install_id, period))"
+    );
+    usageTableReady = true;
+  }
+  const now = new Date().toISOString();       // "2026-07-08T…"
+  const dayKey = now.slice(0, 10);            // 2026-07-08
+  const monthKey = now.slice(0, 7);           // 2026-07
+  const bump = db.prepare(
+    `INSERT INTO ai_usage (install_id, period, count) VALUES (?, ?, 1)
+     ON CONFLICT(install_id, period) DO UPDATE SET count = count + 1
+     RETURNING count`
+  );
+  const [d, m] = await db.batch([bump.bind(installID, dayKey), bump.bind(installID, monthKey)]);
+  return { day: d.results?.[0]?.count ?? 0, month: m.results?.[0]?.count ?? 0 };
 }
 
 // ── Anonymous metrics ingest ─────────────────────────────────────────────────

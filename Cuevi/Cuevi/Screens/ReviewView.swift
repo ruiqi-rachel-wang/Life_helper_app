@@ -693,7 +693,16 @@ struct ReviewView: View {
         Binding(get: { draft[keyPath: key] }, set: { draft[keyPath: key] = $0 })
     }
     private var dueDateBinding: Binding<Date> {
-        Binding(get: { draft.dueDate ?? .now }, set: { draft.dueDate = $0 })
+        Binding(get: { draft.dueDate ?? .now },
+                set: { newValue in
+                    // Same rule as Detail: reminders the user already customized
+                    // slide with the date instead of going stale.
+                    if draft.remindersCustomized {
+                        draft.reminders = ActionItem.shiftedReminders(
+                            draft.reminders, fromDue: draft.dueDate, toDue: newValue)
+                    }
+                    draft.dueDate = newValue
+                })
     }
 
     // MARK: small view helpers

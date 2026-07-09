@@ -26,22 +26,32 @@ struct CueviApp: App {
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
 
-    // Resilient container: if the on-disk store can't be opened (e.g. an
-    // incompatible schema after a model change), recreate it instead of
-    // hard-crashing the app at launch. Pre-1.0 we have no real user data —
-    // samples reseed. NOTE: before shipping real updates, replace this with a
-    // proper VersionedSchema + MigrationPlan so testers don't silently lose data.
+    // Versioned container (CueviSchemaV1 + migration plan): future model changes
+    // become a V2 schema + a migration stage, so updates carry tester data
+    // forward. The wipe-and-recreate fallback stays as a last resort against a
+    // corrupt store file, but with versioned migrations a schema change should
+    // never trigger it anymore.
     private static func makeContainer() -> ModelContainer {
         do {
-            return try ModelContainer(for: ActionItem.self)
+            return try versionedContainer()
         } catch {
             deleteStore()
-            if let fresh = try? ModelContainer(for: ActionItem.self) { return fresh }
+            if let fresh = try? versionedContainer() { return fresh }
             // Last resort so launch never crashes: an in-memory store.
             return try! ModelContainer(
                 for: ActionItem.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         }
+    }
+
+    // Shared with SchemaVersioningTests (which points it at a temp file).
+    static func versionedContainer(url: URL? = nil) throws -> ModelContainer {
+        let schema = Schema(versionedSchema: CueviSchemaV1.self)
+        let config = url.map { ModelConfiguration(schema: schema, url: $0) }
+            ?? ModelConfiguration(schema: schema)
+        return try ModelContainer(for: schema,
+                                  migrationPlan: CueviMigrationPlan.self,
+                                  configurations: [config])
     }
 
     private static func deleteStore() {
@@ -77,13 +87,12 @@ struct CueviApp: App {
 
     // Dates keep moving even when an item is untouched. Rebuild schedules on
     // launch/foreground so an item that became overdue while the app was away
-    // starts its repeating daily nudge.
+    // starts its repeating daily nudge. Goes through rescheduleAll so the
+    // soonest reminders across ALL items win iOS's 64-pending-request budget.
     @MainActor
     private func refreshAllReminders() {
         let context = ModelContext(container)
         guard let items = try? context.fetch(FetchDescriptor<ActionItem>()) else { return }
-        for item in items {
-            ReminderScheduler.shared.reschedule(for: item)
-        }
+        ReminderScheduler.shared.rescheduleAll(for: items)
     }
 }

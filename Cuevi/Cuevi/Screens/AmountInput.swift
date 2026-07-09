@@ -18,13 +18,29 @@ struct AmountInput: View {
         }
     }
 
-    // Tolerant parse: keep digits + one decimal point; empty clears the amount.
+    // Tolerant parse (shared AmountParsing); empty clears the amount.
     private var text: Binding<String> {
         Binding(
             get: { amount.map { ($0 as NSDecimalNumber).stringValue } ?? "" },
-            set: { newValue in
-                let cleaned = newValue.filter { $0.isNumber || $0 == "." }
-                amount = cleaned.isEmpty ? nil : Decimal(string: cleaned)
-            })
+            set: { amount = AmountParsing.decimal(from: $0) })
+    }
+}
+
+// Tolerant money-string parsing, shared by AmountInput and the manual create
+// form. iOS shows a COMMA on many locales' decimal keyboards, so "12,50" must
+// read as 12.50 — while "1,234" (three digits after) stays a thousands comma.
+// Pure → unit-tested.
+nonisolated enum AmountParsing {
+    static func decimal(from raw: String) -> Decimal? {
+        var s = raw.filter { $0.isNumber || $0 == "." || $0 == "," }
+        if !s.contains("."),
+           s.filter({ $0 == "," }).count == 1,
+           let comma = s.firstIndex(of: ","),
+           s.distance(from: s.index(after: comma), to: s.endIndex) <= 2 {
+            s = s.replacingOccurrences(of: ",", with: ".")   // decimal comma
+        } else {
+            s = s.replacingOccurrences(of: ",", with: "")    // thousands comma(s)
+        }
+        return s.isEmpty ? nil : Decimal(string: s)
     }
 }

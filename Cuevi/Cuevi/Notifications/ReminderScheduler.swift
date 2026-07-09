@@ -9,6 +9,14 @@
 //  the model stays free of UserNotifications. Notifications fire at 9am on
 //  each reminder day; past times are skipped.
 //
+//  iOS keeps at most 64 pending local notifications PER APP and silently
+//  drops the rest. rescheduleAll() (launch/foreground) therefore spends a
+//  global budget soonest-first across ALL items, so with many dated items
+//  it's the far-future reminders that wait (they get scheduled on a later
+//  launch as their turn nears) — never the urgent ones. Per-item
+//  reschedule(for:) stays unbudgeted: a single item is small, and the next
+//  launch rebalances globally anyway.
+//
 
 import Foundation
 import UserNotifications
@@ -25,6 +33,12 @@ enum ReminderID {
 final class ReminderScheduler {
     static let shared = ReminderScheduler()
     private let center = UNUserNotificationCenter.current()
+
+    // "Hide details in notifications" (My Settings → Privacy): when on, banners
+    // say "Cuevi" instead of the item's title, and a generic body instead of
+    // the due text / user note — nothing sensitive on the lock screen.
+    static let discreetKey = "cuevi.notifications.discreet"
+    private var discreet: Bool { UserDefaults.standard.bool(forKey: Self.discreetKey) }
 
     // Ask once for permission to show notifications.
     func requestAuthorization() async {
@@ -45,11 +59,14 @@ final class ReminderScheduler {
         center.setNotificationCategories([category])
     }
 
-    // Reminders are now an editable list, so notifications are id'd by index
+    // Reminders are an editable list, so notifications are id'd by index
     // ("<uuid>|r0", "r1", …). cancel() clears a generous range so a variable
     // count is always fully removed without an async fetch.
     private static let maxReminders = 32
     private static let legacyOverdueNudges = 14
+    // Global pending-request budget for rescheduleAll — under iOS's 64 cap,
+    // with headroom for snoozes and per-item edits made between launches.
+    private static let globalBudget = 56
 
     private func ids(for itemID: UUID) -> [String] {
         var ids = (0..<Self.maxReminders).map { "\(itemID.uuidString)|r\($0)" }
@@ -60,49 +77,51 @@ final class ReminderScheduler {
         return ids
     }
 
-    // Cancel + (re)schedule all reminders for an item. cancel() is synchronous
-    // (removes known ids), so the adds below can't be undone by a late callback.
+    // Cancel + (re)schedule all reminders for ONE item (after an edit / save /
+    // reopen). cancel() is synchronous (removes known ids), so the adds below
+    // can't be undone by a late callback.
     func reschedule(for item: ActionItem) {
         cancel(itemID: item.id)
-        guard item.status != .done else { return }
-        guard !item.isExample else { return }   // onboarding examples never nag
+        guard wantsReminders(item) else { return }
 
         let now = Date.now
         for (index, reminder) in item.effectiveReminders.enumerated() where reminder.date > now {
             guard index < Self.maxReminders else { break }
-            let content = UNMutableNotificationContent()
-            content.title = item.title
-            // A user-written note shows verbatim; otherwise compute a friendly body.
-            content.body = reminder.note.isEmpty
-                ? body(fireDate: reminder.date, due: item.dueDate, hasTime: item.dueHasTime)
-                : reminder.note
-            content.sound = .default
-            content.categoryIdentifier = ReminderID.category
-            content.userInfo = [ReminderID.itemKey: item.id.uuidString]
+            scheduleOneShot(item, index: index, reminder: reminder)
+        }
+        if item.isOverdue { scheduleOverdueNudge(item) }
+    }
 
-            let comps = Calendar.current.dateComponents(
-                [.year, .month, .day, .hour, .minute], from: reminder.date)
-            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
-            let id = "\(item.id.uuidString)|r\(index)"
-            center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    // Cancel + reschedule EVERYTHING (launch / foreground), spending the global
+    // budget soonest-first across all items — see the header comment.
+    func rescheduleAll(for items: [ActionItem]) {
+        for item in items { cancel(itemID: item.id) }
+        let active = items.filter(wantsReminders)
+        var budget = Self.globalBudget
+
+        // The daily overdue nudges first: they're the safety net, and there is
+        // exactly one per overdue item.
+        for item in active where item.isOverdue && budget > 0 {
+            scheduleOverdueNudge(item)
+            budget -= 1
         }
 
-        // One repeating 9am request keeps nudging every day until Mark done /
-        // Delete cancels it. Newly-overdue items are picked up when the app
-        // refreshes all schedules on launch or foreground.
-        if item.isOverdue {
-            let content = UNMutableNotificationContent()
-            content.title = item.title
-            content.body = String(localized: "Overdue — still not done")
-            content.sound = .default
-            content.categoryIdentifier = ReminderID.category
-            content.userInfo = [ReminderID.itemKey: item.id.uuidString]
-            let trigger = UNCalendarNotificationTrigger(
-                dateMatching: DateComponents(hour: 9, minute: 0),
-                repeats: true)
-            center.add(UNNotificationRequest(
-                identifier: "\(item.id.uuidString)|odDaily", content: content, trigger: trigger))
+        // Then every future one-shot across all items, soonest first.
+        let now = Date.now
+        let upcoming = active
+            .flatMap { item in
+                item.effectiveReminders.enumerated()
+                    .filter { $0.element.date > now && $0.offset < Self.maxReminders }
+                    .map { (item: item, index: $0.offset, reminder: $0.element) }
+            }
+            .sorted { $0.reminder.date < $1.reminder.date }
+        for slot in upcoming.prefix(max(budget, 0)) {
+            scheduleOneShot(slot.item, index: slot.index, reminder: slot.reminder)
         }
+    }
+
+    private func wantsReminders(_ item: ActionItem) -> Bool {
+        item.status != .done && !item.isExample   // done never nags; nor do examples
     }
 
     // Remove every pending reminder belonging to this item. Synchronous —
@@ -114,8 +133,8 @@ final class ReminderScheduler {
     // "Remind me later" → fire again in 2 hours.
     func snooze(itemID: UUID, title: String) {
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = String(localized: "Snoozed reminder")
+        content.title = discreet ? String(localized: "Cuevi") : title
+        content.body = discreet ? Self.discreetBody() : String(localized: "Snoozed reminder")
         content.sound = .default
         content.categoryIdentifier = ReminderID.category
         content.userInfo = [ReminderID.itemKey: itemID.uuidString]
@@ -124,7 +143,50 @@ final class ReminderScheduler {
             identifier: "\(itemID.uuidString)|snooze", content: content, trigger: trigger))
     }
 
+    // MARK: the two request builders
+
+    private func scheduleOneShot(_ item: ActionItem, index: Int, reminder: ReminderItem) {
+        let content = UNMutableNotificationContent()
+        content.title = discreet ? String(localized: "Cuevi") : item.title
+        // A user-written note shows verbatim; otherwise compute a friendly body.
+        // Discreet mode hides both — the note may be as sensitive as the title.
+        content.body = discreet ? Self.discreetBody()
+            : reminder.note.isEmpty
+                ? body(fireDate: reminder.date, due: item.dueDate, hasTime: item.dueHasTime)
+                : reminder.note
+        content.sound = .default
+        content.categoryIdentifier = ReminderID.category
+        content.userInfo = [ReminderID.itemKey: item.id.uuidString]
+
+        let comps = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute], from: reminder.date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        let id = "\(item.id.uuidString)|r\(index)"
+        center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    }
+
+    // One repeating 9am request keeps nudging every day until Mark done /
+    // Delete cancels it. Newly-overdue items are picked up when the app
+    // refreshes all schedules on launch or foreground.
+    private func scheduleOverdueNudge(_ item: ActionItem) {
+        let content = UNMutableNotificationContent()
+        content.title = discreet ? String(localized: "Cuevi") : item.title
+        content.body = discreet ? Self.discreetBody() : String(localized: "Overdue — still not done")
+        content.sound = .default
+        content.categoryIdentifier = ReminderID.category
+        content.userInfo = [ReminderID.itemKey: item.id.uuidString]
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: DateComponents(hour: 9, minute: 0),
+            repeats: true)
+        center.add(UNNotificationRequest(
+            identifier: "\(item.id.uuidString)|odDaily", content: content, trigger: trigger))
+    }
+
     // MARK: helpers
+
+    private static func discreetBody() -> String {
+        String(localized: "A task needs your attention — open Cuevi.")
+    }
 
     // Friendly body computed from how far the fire date is before the due date.
     private func body(fireDate: Date, due: Date?, hasTime: Bool, calendar: Calendar = .current) -> String {

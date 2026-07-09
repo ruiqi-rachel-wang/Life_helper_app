@@ -38,6 +38,9 @@ nonisolated struct OpenAIClient: Extractor {
             if !BackendConfig.proxyToken.isEmpty {
                 req.setValue(BackendConfig.proxyToken, forHTTPHeaderField: "X-Cuevi-Token")
             }
+            // Anonymous install id (same one metrics use) — lets the Worker enforce
+            // its per-install AI quota, the server-side backstop to ScanQuota.
+            req.setValue(Install.id, forHTTPHeaderField: "X-Cuevi-Install")
         } else {
             req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
@@ -60,6 +63,9 @@ nonisolated struct OpenAIClient: Extractor {
         var errorDescription: String? {
             switch self {
             case .missingKey:        return "No OpenAI key set. Add it in APIKeys.swift."
+            // 429 = the Worker's rate/quota guard (or OpenAI itself) said "not now" —
+            // tell the user something they can act on, not an HTTP code.
+            case .http(429, _):      return String(localized: "The AI service is busy or this device hit its limit — please try again later.")
             case .http(let c, _):    return "OpenAI request failed (HTTP \(c))."
             case .emptyContent:      return "OpenAI returned no content."
             case .badJSON:           return "Couldn't parse the AI response."

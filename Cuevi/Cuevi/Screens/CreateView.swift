@@ -571,7 +571,7 @@ private struct CreateForm: View {
             steps: cleanSteps
         )
         item.notes = notes.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        if let amt = Decimal(string: amount.filter { $0.isNumber || $0 == "." }), amt > 0 {
+        if let amt = AmountParsing.decimal(from: amount), amt > 0 {
             item.amount = amt
         }
         // Reminders only when there's a due date; if the user edited them, keep

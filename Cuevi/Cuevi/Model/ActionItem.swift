@@ -449,6 +449,24 @@ final class ActionItem {
     var effectiveReminders: [ReminderItem] {
         remindersCustomized ? reminders : defaultReminders()
     }
+
+    // Move a CUSTOMIZED reminder list along with a changed due date: shift every
+    // reminder by the same whole-day delta, keeping its time of day and note.
+    // (Un-customized lists need nothing — their defaults recompute from the new
+    // date.) Pure → unit-tested; shared by the Detail and Review date pickers.
+    static func shiftedReminders(_ reminders: [ReminderItem], fromDue old: Date?, toDue new: Date,
+                                 calendar: Calendar = .current) -> [ReminderItem] {
+        guard let old else { return reminders }
+        let delta = calendar.dateComponents([.day],
+                                            from: calendar.startOfDay(for: old),
+                                            to: calendar.startOfDay(for: new)).day ?? 0
+        guard delta != 0 else { return reminders }
+        return reminders.map { r in
+            var moved = r
+            moved.date = calendar.date(byAdding: .day, value: delta, to: r.date) ?? r.date
+            return moved
+        }
+    }
 }
 
 // MARK: - Onboarding examples
