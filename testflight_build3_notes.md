@@ -22,18 +22,19 @@
 
 ## Rachel's steps, in order
 
-1. ☐ **Publish the updated terms page:**
-   `cd notie_life_helper_app && npx wrangler@3 pages deploy docs --project-name=cuevi-legal --branch=main`
-   Then open https://cuevi-legal.pages.dev/terms in a **private window** and
-   confirm "Last updated: July 8, 2026".
+1. ✅ **Terms page published & verified** (2026-07-08, from this machine):
+   live https://cuevi-legal.pages.dev/terms shows "Last updated: July 8, 2026"
+   with a working /privacy link.
 2. ☐ **Update the App Privacy label in App Store Connect** (App → App Privacy):
    answers changed since build 2 — add **Product Interaction** and **User ID**
    (Analytics, not linked, no tracking) per `legal/app-store-privacy-label.md`.
    Confirm the privacy policy URL field is `https://cuevi-legal.pages.dev/privacy`.
-3. ☐ **Archive & upload:** Xcode → open `Cuevi/Cuevi.xcodeproj` → destination
-   "Any iOS Device (arm64)" → Product ▸ Archive → Organizer ▸ Distribute App ▸
-   App Store Connect ▸ Upload. Wait for processing (~10–30 min), then in
+3. ☐ **Upload the archive (already built & staged 2026-07-08):** the signed
+   1.0 (3) archive sits in Xcode's Organizer. Xcode → Window ▸ Organizer ▸
+   Archives → select "Cuevi-build3" → **Distribute App ▸ App Store Connect ▸
+   Upload** (sign in if asked). Wait for processing (~10–30 min), then in
    TestFlight add build 3 to the tester group and paste the notes below.
+   (CLI upload was attempted — blocked on Apple ID auth, which only Xcode has.)
 4. ☐ **OpenAI spending cap** (platform.openai.com → Settings → Limits) if not
    already set — the final $ ceiling behind the Worker's limits.
 
