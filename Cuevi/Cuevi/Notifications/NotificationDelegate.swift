@@ -67,39 +67,17 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    // Find the item in the store and mark it done, cancelling its reminders.
+    // Find the item in the store and mark it done. Routes through ItemActions —
+    // the SAME code the Detail button and Inbox swipe use — so the banner
+    // "Mark done" can't behave differently (metric, cancel, recurring spawn +
+    // prune are all handled there). Our ModelContext isn't autosaving, so save.
     private func markDone(_ id: UUID) {
         guard let container else { return }
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<ActionItem>(
             predicate: #Predicate { $0.id == id })
         guard let item = try? context.fetch(descriptor).first else { return }
-        // Idempotent: a stale delivered notification's "Mark done" must not
-        // re-complete an already-done item (double metric + duplicate next cycle).
-        guard item.status != .done else { return }
-        Metrics.record(.completed, itemID: id, onTime: item.doneOnTime())
-        item.status = .done
-        // A recurring item spawns its next cycle when completed from the banner,
-        // same as marking done in the app.
-        let next = item.makeNextOccurrence()
-        if let next {
-            item.seriesID = item.effectiveSeriesID   // link parent + new cycle
-            next.seriesID = item.effectiveSeriesID
-            context.insert(next)
-            pruneSeries(item.effectiveSeriesID, in: context)   // keep ≤1 active + ≤1 done
-        }
+        ItemActions.complete(item, in: context)
         try? context.save()
-        ReminderScheduler.shared.cancel(itemID: id)
-        if let next { ReminderScheduler.shared.reschedule(for: next) }
-    }
-
-    // Enforce at most one active + one done per recurring series.
-    private func pruneSeries(_ sid: UUID, in context: ModelContext) {
-        let descriptor = FetchDescriptor<ActionItem>(predicate: #Predicate { $0.seriesID == sid })
-        guard let members = try? context.fetch(descriptor) else { return }
-        for redundant in ActionItem.redundantInSeries(members) {
-            ReminderScheduler.shared.cancel(itemID: redundant.id)
-            context.delete(redundant)
-        }
     }
 }

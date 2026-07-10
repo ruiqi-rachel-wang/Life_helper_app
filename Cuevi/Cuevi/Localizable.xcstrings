@@ -1,7 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {},
+    "" : {
+
+    },
     "… PLUS List C (work): Social Security card or birth certificate." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -36,7 +38,9 @@
         }
       }
     },
-    "%lld" : {},
+    "%lld" : {
+
+    },
     "%lld active" : {
       "localizations" : {
         "es" : {
@@ -149,7 +153,9 @@
         }
       }
     },
-    "•" : {},
+    "•" : {
+
+    },
     "⚠ %lld DAYS OVERDUE" : {
       "localizations" : {
         "en" : {
@@ -260,8 +266,12 @@
         }
       }
     },
-    "$" : {},
-    "0.00" : {},
+    "$" : {
+
+    },
+    "0.00" : {
+
+    },
     "1099 forms for contract or gig income." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -393,6 +403,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "做一点准备能让就诊更顺利。"
+          }
+        }
+      }
+    },
+    "A photo or screenshot you already have" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una foto o captura que ya tienes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手机里已有的照片或截图"
+          }
+        }
+      }
+    },
+    "A quick to-do with a date — Cuevi reminds you before it's due." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una tarea rápida con fecha — Cuevi te avisa antes de que venza."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速添加一个带日期的待办——到期前 Cuevi 会提醒你。"
           }
         }
       }
@@ -618,6 +661,22 @@
         }
       }
     },
+    "A task needs your attention — open Cuevi." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una tarea necesita tu atención — abre Cuevi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有事项需要处理——打开 Cuevi 查看。"
+          }
+        }
+      }
+    },
     "ABOUT & LEGAL" : {
       "localizations" : {
         "es" : {
@@ -829,7 +888,9 @@
         }
       }
     },
-    "Add a small to-do" : {},
+    "Add a small to-do" : {
+
+    },
     "Add a step" : {
       "localizations" : {
         "es" : {
@@ -858,6 +919,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加步骤（留空则仅作提醒）"
+          }
+        }
+      }
+    },
+    "Add a To-Do & Reminder" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir tarea y recordatorio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加到提醒待办"
           }
         }
       }
@@ -908,6 +985,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如有需要，添加受养人和受益人。"
+          }
+        }
+      }
+    },
+    "Add it yourself" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añádelo tú mismo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自己添加"
           }
         }
       }
@@ -1149,7 +1242,9 @@
         }
       }
     },
-    "Amount" : {},
+    "Amount" : {
+
+    },
     "AMOUNT" : {
       "localizations" : {
         "es" : {
@@ -1958,6 +2053,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "福利参保通常在入职后约 30 天截止——加个提醒。"
+          }
+        }
+      }
+    },
+    "Bills, letters & mail, notices, forms — Cuevi explains what to do" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturas, cartas y correo, avisos, formularios — Cuevi te explica qué hacer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账单、信件/邮件、通知、表格——Cuevi 告诉你要做什么"
           }
         }
       }
@@ -3278,6 +3389,9 @@
         }
       }
     },
+    "Cuevi" : {
+
+    },
     "Cuevi is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional." : {
       "localizations" : {
         "es" : {
@@ -4054,7 +4168,9 @@
         }
       }
     },
-    "Edit step details" : {},
+    "Edit step details" : {
+
+    },
     "EIN" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5470,6 +5586,22 @@
         }
       }
     },
+    "Hide details in notifications" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar detalles en las notificaciones"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知中隐藏内容"
+          }
+        }
+      }
+    },
     "Hire a licensed home inspector." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6583,6 +6715,22 @@
         }
       }
     },
+    "Life Guides & Checklists" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guías de vida paso a paso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生活指南服务"
+          }
+        }
+      }
+    },
     "LINKS" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7136,6 +7284,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在同一州内搬家还是搬到其他州？"
+          }
+        }
+      }
+    },
+    "Moving, taxes, driver's license… ready-made checklists for life in the U.S." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudanza, impuestos, licencia de conducir… listas preparadas para la vida en EE. UU."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搬家、报税、考驾照……为在美国生活准备好的现成清单。"
+          }
+        }
+      }
+    },
+    "My Settings" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mis ajustes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的设置"
           }
         }
       }
@@ -7739,6 +7919,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "备注"
+          }
+        }
+      }
+    },
+    "Nothing here yet — three ways to start" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay nada — tres formas de empezar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里还没有内容——三种开始方式"
           }
         }
       }
@@ -8578,6 +8774,22 @@
         }
       }
     },
+    "Pick a life guide" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una guía de vida"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择生活指南"
+          }
+        }
+      }
+    },
     "Plan name" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -8646,7 +8858,9 @@
         }
       }
     },
-    "PRIVACY" : {},
+    "PRIVACY" : {
+
+    },
     "Privacy Policy" : {
       "localizations" : {
         "es" : {
@@ -8675,6 +8889,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的"
+          }
+        }
+      }
+    },
+    "PROFILE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PERFIL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人"
           }
         }
       }
@@ -9009,6 +9239,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提醒是 Cuevi 帮你掌握截止日期的方式——请在“设置”中打开，以充分使用本应用。"
+          }
+        }
+      }
+    },
+    "Reminders on the lock screen will say \"Cuevi\" instead of the task's name, in case a title is private (a medical or immigration letter, for example)." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los recordatorios en la pantalla bloqueada dirán \"Cuevi\" en lugar del nombre de la tarea, por si un título es privado (una carta médica o de inmigración, por ejemplo)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁屏提醒将只显示 \"Cuevi\"，不显示事项名称——以防标题涉及隐私（例如医疗或移民信件）。"
           }
         }
       }
@@ -9584,6 +9830,38 @@
         }
       }
     },
+    "Scan a letter or bill" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanea una carta o factura"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扫描信件或账单"
+          }
+        }
+      }
+    },
+    "Scan a paper, upload a photo, or type it yourself — it becomes a to-do with reminders." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanea un papel, sube una foto o escríbelo tú mismo — se convierte en una tarea con recordatorios."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扫描纸质文件、上传照片，或自己输入——都会变成带提醒的待办。"
+          }
+        }
+      }
+    },
     "Scan limit reached" : {
       "localizations" : {
         "es" : {
@@ -9802,7 +10080,9 @@
         }
       }
     },
-    "Sends anonymous, non-identifying stats about which features you use — for example, items you add and complete — so we can improve Cuevi. Never your documents, photos, or any text from your items. Turn this off anytime." : {},
+    "Sends anonymous, non-identifying stats about which features you use — for example, items you add and complete — so we can improve Cuevi. Never your documents, photos, or any text from your items. Turn this off anytime." : {
+
+    },
     "Set a date" : {
       "localizations" : {
         "es" : {
@@ -9904,7 +10184,9 @@
         }
       }
     },
-    "Share anonymous usage data" : {},
+    "Share anonymous usage data" : {
+
+    },
     "Share your number only when truly required — a job, bank, or taxes — and keep it private." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10524,6 +10806,22 @@
         }
       }
     },
+    "Tap ＋ below, then Scan — Cuevi explains it and builds your steps." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca ＋ abajo y elige Escanear — Cuevi lo explica y crea tus pasos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点下方的＋，选择扫描——Cuevi 帮你看懂并生成步骤。"
+          }
+        }
+      }
+    },
     "Tap the box to check off a step as you finish it." : {
       "localizations" : {
         "es" : {
@@ -10618,6 +10916,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "条款与免责声明"
+          }
+        }
+      }
+    },
+    "The AI service is busy or this device hit its limit — please try again later." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El servicio de IA está ocupado o este dispositivo alcanzó su límite — inténtalo más tarde."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 服务繁忙或本设备已达使用上限——请稍后再试。"
           }
         }
       }
@@ -10787,6 +11101,22 @@
         }
       }
     },
+    "To-Dos & Reminders" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tareas y recordatorios"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒待办事项"
+          }
+        }
+      }
+    },
     "today" : {
       "localizations" : {
         "es" : {
@@ -10934,6 +11264,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "两份居住证明：租约、水电账单、银行对账单或政府邮件。"
+          }
+        }
+      }
+    },
+    "Type a quick to-do by hand" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe una tarea rápida a mano"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自己动手输入一个待办"
           }
         }
       }
@@ -12198,326 +12545,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "把你最想问的问题写下来。"
-          }
-        }
-      }
-    },
-    "A quick to-do with a date — Cuevi reminds you before it's due." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una tarea rápida con fecha — Cuevi te avisa antes de que venza."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "快速添加一个带日期的待办——到期前 Cuevi 会提醒你。"
-          }
-        }
-      }
-    },
-    "Add it yourself" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añádelo tú mismo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自己添加"
-          }
-        }
-      }
-    },
-    "Bills, letters & mail, notices, forms — Cuevi explains what to do" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Facturas, cartas y correo, avisos, formularios — Cuevi te explica qué hacer"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账单、信件/邮件、通知、表格——Cuevi 告诉你要做什么"
-          }
-        }
-      }
-    },
-    "Moving, taxes, driver's license… ready-made checklists for life in the U.S." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mudanza, impuestos, licencia de conducir… listas preparadas para la vida en EE. UU."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "搬家、报税、考驾照……为在美国生活准备好的现成清单。"
-          }
-        }
-      }
-    },
-    "My Settings" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mis ajustes"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "我的设置"
-          }
-        }
-      }
-    },
-    "Nothing here yet — three ways to start" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aún no hay nada — tres formas de empezar"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这里还没有内容——三种开始方式"
-          }
-        }
-      }
-    },
-    "Pick a life guide" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elige una guía de vida"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择生活指南"
-          }
-        }
-      }
-    },
-    "Scan a letter or bill" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escanea una carta o factura"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "扫描信件或账单"
-          }
-        }
-      }
-    },
-    "Tap ＋ below, then Scan — Cuevi explains it and builds your steps." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca ＋ abajo y elige Escanear — Cuevi lo explica y crea tus pasos."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点下方的＋，选择扫描——Cuevi 帮你看懂并生成步骤。"
-          }
-        }
-      }
-    },
-    "To-Dos & Reminders" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tareas y recordatorios"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "提醒待办事项"
-          }
-        }
-      }
-    },
-    "Scan a paper, upload a photo, or type it yourself — it becomes a to-do with reminders." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escanea un papel, sube una foto o escríbelo tú mismo — se convierte en una tarea con recordatorios."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "扫描纸质文件、上传照片，或自己输入——都会变成带提醒的待办。"
-          }
-        }
-      }
-    },
-    "A photo or screenshot you already have" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una foto o captura que ya tienes"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "手机里已有的照片或截图"
-          }
-        }
-      }
-    },
-    "Type a quick to-do by hand" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escribe una tarea rápida a mano"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自己动手输入一个待办"
-          }
-        }
-      }
-    },
-    "PROFILE" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PERFIL"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "个人"
-          }
-        }
-      }
-    },
-    "Add a To-Do & Reminder" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir tarea y recordatorio"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "添加到提醒待办"
-          }
-        }
-      }
-    },
-    "Life Guides & Checklists" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guías de vida paso a paso"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "生活指南服务"
-          }
-        }
-      }
-    },
-    "Hide details in notifications" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocultar detalles en las notificaciones"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通知中隐藏内容"
-          }
-        }
-      }
-    },
-    "Reminders on the lock screen will say \"Cuevi\" instead of the task's name, in case a title is private (a medical or immigration letter, for example)." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los recordatorios en la pantalla bloqueada dirán \"Cuevi\" en lugar del nombre de la tarea, por si un título es privado (una carta médica o de inmigración, por ejemplo)."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "锁屏提醒将只显示 \"Cuevi\"，不显示事项名称——以防标题涉及隐私（例如医疗或移民信件）。"
-          }
-        }
-      }
-    },
-    "A task needs your attention — open Cuevi." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una tarea necesita tu atención — abre Cuevi."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "有事项需要处理——打开 Cuevi 查看。"
-          }
-        }
-      }
-    },
-    "The AI service is busy or this device hit its limit — please try again later." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El servicio de IA está ocupado o este dispositivo alcanzó su límite — inténtalo más tarde."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 服务繁忙或本设备已达使用上限——请稍后再试。"
           }
         }
       }

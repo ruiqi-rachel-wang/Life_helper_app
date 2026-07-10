@@ -139,7 +139,19 @@ extension ActionItem {
         dueDate?.formatted(.dateTime.month(.abbreviated).day())
     }
 
-    // The red banner line on Detail, e.g. "⚠ 2 DAYS OVERDUE" or "⚠ DUE TODAY". nil if fine.
+    // Due today = the due day is today and not done. Kept SEPARATE from truly
+    // overdue so a same-day bill gets a gentle amber "Due today" instead of an
+    // accusatory red "overdue" — it isn't a failure yet. Display-only; `isOverdue`
+    // (used for scheduling + bucketing) is unchanged.
+    var isDueToday: Bool {
+        guard status != .done, let due = dueDate else { return false }
+        return Calendar.current.isDateInToday(due)
+    }
+    // Truly past: overdue AND the due day is before today → the red treatment.
+    var isPastDue: Bool { isOverdue && !isDueToday }
+
+    // The colored banner line on Detail: amber "⚠ DUE TODAY", red "⚠ N DAYS OVERDUE".
+    // nil if fine. The COLOR is chosen by the caller via `isPastDue`.
     var overdueText: String? {
         guard isOverdue, let due = dueDate else { return nil }
         let days = Calendar.current.dateComponents(
@@ -149,12 +161,20 @@ extension ActionItem {
         return String(localized: "⚠ \(days) DAYS OVERDUE")
     }
 
+    // The color for the due/overdue line + inbox subtitle: red only once truly
+    // past, amber for day-of, faded otherwise.
+    var dueColor: Color {
+        isPastDue ? .bad : isDueToday ? .warn : .faded
+    }
+
     // The inbox subline: the meaningful facts only — amount (if any) + due date.
     // (No "checklist X of Y done" — the step progress lives on the Detail page.)
     var inboxSubtitle: String {
         let tail: String
-        if isOverdue {
-            tail = overdueText.map { _ in dueRelative } ?? String(localized: "overdue")
+        if isDueToday {
+            tail = String(localized: "Due today")
+        } else if isOverdue {
+            tail = dueRelative                       // "N days overdue"
         } else {
             tail = dueText ?? ""
         }

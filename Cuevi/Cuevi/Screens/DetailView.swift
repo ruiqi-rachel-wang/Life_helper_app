@@ -95,7 +95,8 @@ struct DetailView: View {
                 }
 
                 if !isEditing, !isDone, let overdue = item.overdueText {
-                    Text(overdue).font(.eyebrow).tracking(0.6).foregroundStyle(Color.bad)
+                    // Amber for "due today" (not a failure yet), red once truly past.
+                    Text(overdue).font(.eyebrow).tracking(0.6).foregroundStyle(item.dueColor)
                 }
                 if isDone {
                     Text("✓ COMPLETED").font(.eyebrow).tracking(0.6).foregroundStyle(Color.ok)
@@ -210,7 +211,7 @@ struct DetailView: View {
             } else if let due = item.dueDate {
                 Text(dueDisplay(due, hasTime: item.dueHasTime))
                     .font(.serifStat).tracking(-0.5)
-                    .foregroundStyle(item.isOverdue ? Color.bad : Color.ink)
+                    .foregroundStyle(item.isPastDue ? Color.bad : item.isDueToday ? Color.warn : Color.ink)
                     .minimumScaleFactor(0.5).lineLimit(2)
             } else {
                 // No date yet (e.g. a guide task) — let the user add one in read mode.
@@ -504,17 +505,10 @@ struct DetailView: View {
     }
 
     private func markDone() {
-        // Idempotent: an already-done item must not re-log a completion or spawn
-        // another next cycle (e.g. tapping a stale notification action after
-        // completing in the app).
-        guard item.status != .done else { return }
-        Metrics.record(.completed, itemID: item.id, onTime: item.doneOnTime())
-        item.status = .done
-        ReminderScheduler.shared.cancel(itemID: item.id)
-        if spawnNextOccurrence() != nil {
-            // Keep the series to one active + one done so cycles can't pile up.
-            pruneSeries(item.effectiveSeriesID)
-        }
+        // Shared with the Inbox swipe + the notification "Mark done" action
+        // (ItemActions) so the three can't diverge. Idempotent; handles the
+        // metric log, reminder cancel, and recurring spawn + prune.
+        ItemActions.complete(item, in: context)
     }
 
     private func deleteItem() {
@@ -541,17 +535,6 @@ struct DetailView: View {
         context.insert(next)
         ReminderScheduler.shared.reschedule(for: next)
         return next
-    }
-
-    // Enforce at most one active + one done per recurring series, deleting the
-    // rest (and cancelling their reminders).
-    private func pruneSeries(_ sid: UUID) {
-        let descriptor = FetchDescriptor<ActionItem>(predicate: #Predicate { $0.seriesID == sid })
-        guard let members = try? context.fetch(descriptor) else { return }
-        for redundant in ActionItem.redundantInSeries(members) {
-            ReminderScheduler.shared.cancel(itemID: redundant.id)
-            context.delete(redundant)
-        }
     }
 
     private var dueBinding: Binding<Date> {

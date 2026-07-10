@@ -129,7 +129,11 @@ struct InboxView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
                         if index != 0 { InboxRowDivider() }
-                        RowLink(item: item, done: done)
+                        SwipeRow(
+                            item: item, done: done,
+                            onOpen: { router.pendingItemID = item.id },
+                            onComplete: { withAnimation { ItemActions.complete(item, in: context) } },
+                            onDelete: { withAnimation { ItemActions.delete(item, in: context) } })
                     }
                 }
                 .background(Color.card)
@@ -190,24 +194,85 @@ struct InboxView: View {
 
 enum SectionTone { case normal, bad }
 
-// MARK: - Row link
+// MARK: - Swipeable row
 
-private struct RowLink: View {
+// Tap opens Detail (via the router's pendingItemID — the same push the
+// notification tap uses, so there's only one navigationDestination). Swiping
+// left reveals Done (active rows) + Delete. A horizontal-dominance guard keeps
+// vertical scrolling working, and a VoiceOver action exposes the same buttons.
+private struct SwipeRow: View {
     let item: ActionItem
     var done: Bool = false
+    let onOpen: () -> Void
+    let onComplete: () -> Void
+    let onDelete: () -> Void
+
+    @State private var settled: CGFloat = 0        // 0 = closed, -reveal = open
+    @GestureState private var live: CGFloat = 0    // in-flight drag
+    private let btnW: CGFloat = 78
+
+    private var reveal: CGFloat { done ? btnW : btnW * 2 }  // done rows: delete only
+    private var offset: CGFloat { min(0, max(-reveal, settled + live)) }
 
     var body: some View {
-        NavigationLink {
-            DetailView(item: item)
-        } label: {
-            InboxRow(
-                glyph: item.category.symbol,
-                color: item.category.tint,
-                title: item.title,
-                subtitle: done ? String(localized: "Completed") : item.inboxSubtitle,
-                isOverdue: item.isOverdue,
-                done: done
+        ZStack(alignment: .trailing) {
+            HStack(spacing: 0) {
+                if !done {
+                    swipeButton("checkmark", "Done", Color.ok) { close(); onComplete() }
+                }
+                swipeButton("trash", "Delete", Color.bad) { close(); onDelete() }
+            }
+
+            Button { offset < 0 ? close() : onOpen() } label: {
+                InboxRow(
+                    glyph: item.category.symbol,
+                    color: item.category.tint,
+                    title: item.title,
+                    subtitle: done ? String(localized: "Completed") : item.inboxSubtitle,
+                    subtitleColor: done ? Color.faded : item.dueColor,
+                    done: done
+                )
+                .background(Color.card)   // opaque so the buttons stay hidden until revealed
+            }
+            .buttonStyle(.plain)
+            .offset(x: offset)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 20)
+                    .updating($live) { value, state, _ in
+                        // Only react to mostly-horizontal drags, so vertical
+                        // scrolling of the list still works normally.
+                        if abs(value.translation.width) > abs(value.translation.height) {
+                            state = value.translation.width
+                        }
+                    }
+                    .onEnded { value in
+                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                            settled = (settled + value.translation.width) < -reveal / 2 ? -reveal : 0
+                        }
+                    }
             )
+            .accessibilityAction(named: done ? Text("Delete") : Text("Mark done")) {
+                done ? onDelete() : onComplete()
+            }
+        }
+        .clipped()
+    }
+
+    private func close() {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) { settled = 0 }
+    }
+
+    private func swipeButton(_ icon: String, _ label: LocalizedStringKey,
+                             _ color: Color, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: icon).font(.system(size: 17, weight: .semibold))
+                Text(label).font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .frame(width: btnW).frame(maxHeight: .infinity)
+            .background(color)
         }
         .buttonStyle(.plain)
     }
@@ -224,7 +289,7 @@ private struct InboxRow: View {
     let color: Color
     let title: String
     let subtitle: String
-    var isOverdue: Bool = false
+    var subtitleColor: Color = .faded
     var done: Bool = false
 
     var body: some View {
@@ -245,7 +310,7 @@ private struct InboxRow: View {
                     .lineLimit(1)
                 Text(subtitle)
                     .font(.subline)
-                    .foregroundStyle(isOverdue ? Color.bad : Color.faded)
+                    .foregroundStyle(subtitleColor)
             }
 
             Spacer()
