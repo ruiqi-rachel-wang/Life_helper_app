@@ -23,6 +23,7 @@ struct ProfileView: View {
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
     @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
+    @AppStorage(AppSettings.savePhotoKey) private var savePhoto = true // keep scanned photo on the item
     @State private var notifyStatus = String(localized: "Checking…")
     @State private var notifyOn = false
     @State private var notifyUndetermined = false   // never asked → row can request
@@ -234,6 +235,16 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("PRIVACY").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                     .padding(.bottom, 10)
+
+                Toggle(isOn: $savePhoto) {
+                    Text("Save document photo with the item").font(.body14).foregroundStyle(Color.ink)
+                }
+                .tint(Color.accent)
+                Text("The scanned photo is kept on the saved item so you can check the original anytime — it stays on your device. Turn off to stop saving photos for new scans.")
+                    .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
+                    .padding(.top, 8)
+
+                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
 
                 Toggle(isOn: $discreetNotifications) {
                     Text("Hide details in notifications").font(.body14).foregroundStyle(Color.ink)

@@ -16,9 +16,9 @@ struct InboxView: View {
     @Environment(AppRouter.self) private var router
     @Query(sort: \ActionItem.createdAt, order: .reverse) private var items: [ActionItem]
 
-    // TEMP (Week 2): seed sample items once on first launch so a fresh
-    // install isn't empty while testing. Real app starts empty.
-    @AppStorage("didSeedSamples") private var didSeed = false
+    // Resetting this flag makes RootTabView replay the welcome walkthrough
+    // (the "Show me how Cuevi works" button in the empty state).
+    @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
 
     // Urgency buckets — computed by the pure, tested grouping function.
     private var buckets: InboxBuckets { items.groupedForInbox() }
@@ -59,12 +59,6 @@ struct InboxView: View {
             // the item by the id the delegate stashed in the router.
             .navigationDestination(item: pendingItem) { item in
                 DetailView(item: item)
-            }
-        }
-        .task {
-            if !didSeed {
-                for sample in ActionItem.samples { context.insert(sample) }
-                didSeed = true
             }
         }
     }
@@ -163,6 +157,13 @@ struct InboxView: View {
             emptyRow("square.and.pencil", Color.accent,
                      "Add it yourself",
                      "A quick to-do with a date — Cuevi reminds you before it's due.")
+
+            Button { didShowWelcomeTour = false } label: {
+                Label("Show me how Cuevi works", systemImage: "play.circle")
+                    .font(.system(size: 15, weight: .medium)).foregroundStyle(Color.accent)
+                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.top, 12)

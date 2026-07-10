@@ -1,9 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
+    "" : {},
     "… PLUS List C (work): Social Security card or birth certificate." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -38,9 +36,7 @@
         }
       }
     },
-    "%lld" : {
-
-    },
+    "%lld" : {},
     "%lld active" : {
       "localizations" : {
         "es" : {
@@ -153,9 +149,7 @@
         }
       }
     },
-    "•" : {
-
-    },
+    "•" : {},
     "⚠ %lld DAYS OVERDUE" : {
       "localizations" : {
         "en" : {
@@ -266,12 +260,8 @@
         }
       }
     },
-    "$" : {
-
-    },
-    "0.00" : {
-
-    },
+    "$" : {},
+    "0.00" : {},
     "1099 forms for contract or gig income." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -888,9 +878,7 @@
         }
       }
     },
-    "Add a small to-do" : {
-
-    },
+    "Add a small to-do" : {},
     "Add a step" : {
       "localizations" : {
         "es" : {
@@ -1242,9 +1230,7 @@
         }
       }
     },
-    "Amount" : {
-
-    },
+    "Amount" : {},
     "AMOUNT" : {
       "localizations" : {
         "es" : {
@@ -3389,9 +3375,7 @@
         }
       }
     },
-    "Cuevi" : {
-
-    },
+    "Cuevi" : {},
     "Cuevi is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional." : {
       "localizations" : {
         "es" : {
@@ -4168,9 +4152,7 @@
         }
       }
     },
-    "Edit step details" : {
-
-    },
+    "Edit step details" : {},
     "EIN" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -8858,9 +8840,7 @@
         }
       }
     },
-    "PRIVACY" : {
-
-    },
+    "PRIVACY" : {},
     "Privacy Policy" : {
       "localizations" : {
         "es" : {
@@ -10080,9 +10060,7 @@
         }
       }
     },
-    "Sends anonymous, non-identifying stats about which features you use — for example, items you add and complete — so we can improve Cuevi. Never your documents, photos, or any text from your items. Turn this off anytime." : {
-
-    },
+    "Sends anonymous, non-identifying stats about which features you use — for example, items you add and complete — so we can improve Cuevi. Never your documents, photos, or any text from your items. Turn this off anytime." : {},
     "Set a date" : {
       "localizations" : {
         "es" : {
@@ -10184,9 +10162,7 @@
         }
       }
     },
-    "Share anonymous usage data" : {
-
-    },
+    "Share anonymous usage data" : {},
     "Share your number only when truly required — a job, bank, or taxes — and keep it private." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12545,6 +12521,310 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "把你最想问的问题写下来。"
+          }
+        }
+      }
+    },
+    "Welcome to Cuevi" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenido a Cuevi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "欢迎使用 Cuevi"
+          }
+        }
+      }
+    },
+    "Confusing letters, bills, and official mail — turned into simple steps and reminders, in your language." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartas, facturas y correo oficial confusos — convertidos en pasos sencillos y recordatorios, en tu idioma."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看不懂的信件、账单和官方邮件——变成简单的步骤和提醒，而且用你的语言。"
+          }
+        }
+      }
+    },
+    "Three ways to add something" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tres formas de añadir algo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "三种添加方式"
+          }
+        }
+      }
+    },
+    "Snap a photo of a bill, letter, or notice — Cuevi explains it and builds your to-do." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz una foto de una factura, carta o aviso — Cuevi la explica y crea tu tarea."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍下账单、信件或通知——Cuevi 帮你看懂并生成待办。"
+          }
+        }
+      }
+    },
+    "Cuevi keeps you on track" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuevi te mantiene al día"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuevi 帮你不误事"
+          }
+        }
+      }
+    },
+    "Simple checklists" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listas sencillas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "简单清单"
+          }
+        }
+      }
+    },
+    "Each item becomes a simple checklist." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada elemento se convierte en una lista sencilla."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个事项都会变成一份简单的清单。"
+          }
+        }
+      }
+    },
+    "Reminders" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorios"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        }
+      }
+    },
+    "You get reminders before things are due." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recibes recordatorios antes de las fechas límite."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "到期之前你会收到提醒。"
+          }
+        }
+      }
+    },
+    "Check things off" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marca lo hecho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "逐项勾掉"
+          }
+        }
+      }
+    },
+    "Check off steps as you finish them — or swipe a row to mark it done." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marca los pasos al terminarlos — o desliza una fila para marcarla como hecha."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成一步就勾掉一步——也可以在列表里左滑一行标记完成。"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
+          }
+        }
+      }
+    },
+    "Get started" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comenzar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始使用"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
+          }
+        }
+      }
+    },
+    "Show me how Cuevi works" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver cómo funciona Cuevi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看看 Cuevi 怎么用"
+          }
+        }
+      }
+    },
+    "Save document photo with the item" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar la foto del documento con el elemento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "随事项保存文件照片"
+          }
+        }
+      }
+    },
+    "The scanned photo is kept on the saved item so you can check the original anytime — it stays on your device. Turn off to stop saving photos for new scans." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La foto escaneada se guarda con el elemento para que puedas consultar el original cuando quieras — permanece en tu dispositivo. Desactívalo para no guardar fotos en los nuevos escaneos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扫描的照片会保存在事项里，方便你随时查看原件——照片只保存在你的手机上。关闭后，新的扫描将不再保存照片。"
+          }
+        }
+      }
+    },
+    "ORIGINAL DOCUMENT" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOCUMENTO ORIGINAL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件原件"
+          }
+        }
+      }
+    },
+    "Tap to enlarge" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca para ampliar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击放大"
           }
         }
       }

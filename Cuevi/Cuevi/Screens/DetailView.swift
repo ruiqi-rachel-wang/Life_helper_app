@@ -11,6 +11,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct DetailView: View {
     @Bindable var item: ActionItem
@@ -21,6 +22,7 @@ struct DetailView: View {
     @State private var showDeleteConfirm = false
     @State private var didDelete = false
     @State private var detailStep: ChecklistStep?   // tapped step → detail sheet
+    @State private var showFullPhoto = false         // tapped photo → full-screen viewer
 
     private var isDone: Bool { item.status == .done }
     private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
@@ -37,6 +39,7 @@ struct DetailView: View {
                     if !item.otherIDs.isEmpty || siteURLToShow != nil || isEditing { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
                     if !item.notes.isEmpty || isEditing { noteCard }
+                    if let photo = storedPhoto { photoCard(photo) }
                     footer
                     Spacer(minLength: 40)
                 }
@@ -434,6 +437,33 @@ struct DetailView: View {
         }
     }
 
+    // MARK: original photo — the scanned document, kept at the very end so the
+    // user can always go back to the source. Tap to view it full-screen.
+
+    private var storedPhoto: UIImage? {
+        item.imageData.flatMap(UIImage.init(data:))
+    }
+
+    private func photoCard(_ photo: UIImage) -> some View {
+        card {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("ORIGINAL DOCUMENT").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                Button { showFullPhoto = true } label: {
+                    Image(uiImage: photo)
+                        .resizable().scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: 340)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.hair, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                Text("Tap to enlarge").font(.subline).foregroundStyle(Color.faint)
+            }
+        }
+        .fullScreenCover(isPresented: $showFullPhoto) {
+            FullPhotoViewer(photo: photo)
+        }
+    }
+
     // MARK: footer — Mark done / Delete
 
     private var footer: some View {
@@ -566,7 +596,37 @@ struct DetailView: View {
     private func linked(_ string: String) -> AttributedString { linkified(string) }
 }
 
+// MARK: - Full-screen photo viewer
+
+// The scanned document at full size, pinch-to-zoom on the image inside a
+// two-axis ScrollView.
+private struct FullPhotoViewer: View {
+    let photo: UIImage
+    @Environment(\.dismiss) private var dismiss
+    @State private var zoom: CGFloat = 1
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+            ScrollView([.vertical, .horizontal]) {
+                Image(uiImage: photo)
+                    .resizable().scaledToFit()
+                    .containerRelativeFrame(.horizontal)
+                    .scaleEffect(zoom, anchor: .center)
+                    .gesture(MagnifyGesture().onChanged { zoom = max(1, min($0.magnification, 5)) })
+            }
+            Button { dismiss() } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 30)).foregroundStyle(.white.opacity(0.85)).padding(16)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close")
+        }
+    }
+}
+
 #Preview {
-    DetailView(item: ActionItem.samples[0])
+    DetailView(item: ActionItem(title: "Preview item", category: .utility,
+                                dueDate: .now, steps: [ChecklistStep(text: "A step")]))
         .modelContainer(for: ActionItem.self, inMemory: true)
 }

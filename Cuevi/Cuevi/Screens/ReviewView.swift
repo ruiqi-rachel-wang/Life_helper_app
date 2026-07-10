@@ -642,9 +642,11 @@ struct ReviewView: View {
 
     // The scanned photo to store on the item. Stacks ALL pages into one tall
     // image so a multi-page document keeps its back pages too (the old code kept
-    // only the first). Single-page documents store as-is.
+    // only the first). Single-page documents store as-is. Saved by default so
+    // the user can always check the original on the Detail page — the My Settings
+    // toggle (AppSettings.savePhoto) opts out. Photos never leave the device.
     private var scanImageData: Data? {
-        guard !images.isEmpty else { return nil }
+        guard AppSettings.savePhoto, !images.isEmpty else { return nil }
         let stored = images.count == 1 ? images[0] : UIImage.stackedVertically(images)
         return stored?.jpegData(compressionQuality: 0.7)
     }

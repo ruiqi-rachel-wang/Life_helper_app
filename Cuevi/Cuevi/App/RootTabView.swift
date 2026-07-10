@@ -19,7 +19,11 @@ struct RootTabView: View {
     @Environment(AppRouter.self) private var router
     // Whether we've shown the first-launch notification explainer yet.
     @AppStorage("didAskNotifications") private var didAskNotifications = false
+    // Whether the first-run walkthrough has been seen (the empty Inbox can reset
+    // this to replay it via "Show me how Cuevi works").
+    @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
     @State private var showNotificationPrimer = false
+    @State private var showWelcome = false
 
     var body: some View {
         @Bindable var router = router
@@ -42,20 +46,38 @@ struct RootTabView: View {
         }
         .tint(Color.accent)
         .environment(router)
+        .fullScreenCover(isPresented: $showWelcome) {
+            WelcomeTourView { didShowWelcomeTour = true; showWelcome = false }
+        }
         .sheet(isPresented: $showNotificationPrimer) {
             NotificationPrimerView { didAskNotifications = true; showNotificationPrimer = false }
         }
         .task {
-            // First launch: explain why reminders matter, THEN ask. Skip under UI
-            // tests (a system alert blocks automation) and once we've asked.
-            guard !didAskNotifications,
-                  !ProcessInfo.processInfo.arguments.contains("-uitest") else { return }
-            let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-            if status == .notDetermined {
-                showNotificationPrimer = true
+            // Skip both one-time moments under UI tests (a system alert / a cover
+            // block automation).
+            guard !ProcessInfo.processInfo.arguments.contains("-uitest") else { return }
+            if !didShowWelcomeTour {
+                showWelcome = true          // the notification primer follows once it closes
             } else {
-                didAskNotifications = true   // already decided in a past install/session
+                await maybeShowNotificationPrimer()
             }
+        }
+        // The tour just closed (or the Inbox asked to replay it by resetting the flag).
+        .onChange(of: didShowWelcomeTour) { _, seen in
+            if seen { Task { await maybeShowNotificationPrimer() } }
+            else { showWelcome = true }
+        }
+    }
+
+    // First launch: explain why reminders matter, THEN ask — after the walkthrough,
+    // and only while iOS hasn't been asked yet.
+    private func maybeShowNotificationPrimer() async {
+        guard !didAskNotifications else { return }
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        if status == .notDetermined {
+            showNotificationPrimer = true
+        } else {
+            didAskNotifications = true   // already decided in a past install/session
         }
     }
 }
