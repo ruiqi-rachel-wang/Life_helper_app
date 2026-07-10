@@ -26,16 +26,18 @@
 
 ## Ship order for the next version *(agreed 2026-07-08)*
 
-1. **Re-host the privacy page & upload to TestFlight** — the one Part 1 blocker;
-   everything since build 2 is invisible to testers until this happens.
-2. **Part 2 as planned** — first-run walkthrough, photo shown at the end of
-   Detail, save-photo opt-out.
-3. **Swipe-to-complete/delete in the Inbox + "due today" softening** (Part 2
-   additions below) — small, direct hit on the one launch metric.
+1. **Re-host the privacy page & upload to TestFlight** — privacy page ✅ done;
+   the build-3 upload is deliberately held to fold in the Part 2 fixes first
+   (steps 2–3). Signed 1.0 (3) archive is staged in Xcode's Organizer.
+2. ✅ **Part 2 as planned (DONE 2026-07-09)** — first-run walkthrough, photo
+   shown at the end of Detail, save-photo opt-out. See Part 2 below.
+3. ✅ **Swipe-to-complete/delete + "due today" softening (DONE 2026-07-09)** —
+   direct hit on the one launch metric. See Part 2 below.
 4. **Verbatim document translation** — pulled forward from Part 5; deepens the
    core "I can finally read this" promise (a tester already effectively asked).
-5. **Cloudflare dashboard rate rule + OpenAI spending cap** — 10 minutes, Rachel
-   only (code-level limits landed 2026-07-08; these are the outer $ ceilings).
+   *(next up — start here once build 3 is uploaded, or before if bundling more.)*
+5. ✅ **OpenAI spending cap set** ($20/mo + 80%/100% alerts, 2026-07-09) and
+   Worker rate limit deployed (2026-07-08). Nothing outstanding here.
 6. **Part 3: accounts → family sharing → Cuevi Plus** — the retention and
    revenue unlock.
 
@@ -58,36 +60,37 @@ Privacy policy + Apple label + Profile opt-out all landed; build number bumped t
 - Reporting: `wrangler d1 execute` queries (see `how_to_view_tester_data.md`);
   a summary endpoint/dashboard only if querying gets tedious.
 
-## Part 2 — First-run onboarding & comprehension  *(NEXT UP — decisions locked 2026-07-06)*
+## Part 2 — First-run onboarding & comprehension  *(DONE 2026-07-09)*
 
 Testers may still not understand how the app works. Decision (Rachel, 2026-07-06):
-the 3 seeded example items will be **replaced** by a real first-run walkthrough.
+the 3 seeded example items were **replaced** by a real first-run walkthrough.
 
-- **First-run walkthrough** *(not started)* — 3 short skippable screens (what Cuevi
-  is → the three ways to add → checklist + reminders). Show once, before the
-  notification primer; replayable from the empty Inbox. When it lands, remove the
-  seeding of `ActionItem.samples` — but KEEP the stored `isExample` property
-  (removing it changes the SwiftData schema and would wipe testers' data via the
-  resilient container).
-- **Keep the scanned photo (new ask, 2026-07-06 — not started)** — save the document
-  photo with the item **by default** and show it at the end of its Detail page
-  (below notes) so the user can always check the original; a My Settings toggle opts
-  out. (Today the photo is already stored in `ActionItem.imageData` but never shown
-  after saving.)
+- **First-run walkthrough — DONE 2026-07-09** — `WelcomeTourView`: 3 short
+  skippable screens (what Cuevi is → the three ways to add → checklist +
+  reminders + swipe-to-done). Shows once before the notification primer;
+  replayable from the empty Inbox ("Show me how Cuevi works"). First-launch
+  seeding of `ActionItem.samples` removed; `isExample` KEPT on the model (old
+  testers still have the seeded items; dropping the property would change the
+  schema). `samples` static kept for previews.
+- **Keep the scanned photo — DONE 2026-07-09** — the document photo shows at the
+  end of Detail (below notes), tap for full-screen pinch-zoom. Saved by default;
+  My Settings → Privacy has the "Save document photo with the item" opt-out
+  (`AppSettings.savePhoto`). Photos never leave the device.
 - **Clarity pass — DONE 2026-07-06:** longer/plainer page titles (提醒待办事项 ·
   添加到提醒待办 · 生活指南服务 · 我的设置 / To-Dos & Reminders · Add a To-Do &
   Reminder · Life Guides & Checklists · My Settings; tabs stay short), scan tile
   says what it's FOR (bills/letters/mail/forms) instead of "most used" / "OCR on
   device", type scale bumped ~2pt everywhere, colorful icons on the Add tiles +
   a teaching three-ways-to-start empty Inbox, tint warmed to the brand sienna.
-- **Swipe-to-complete/delete in the Inbox** *(from the 2026-07-08 review — not
-  started)* — marking done today takes open item → scroll → Mark done; the
-  launch metric IS completions, so make it one swipe on the row (with the same
-  recurring-spawn + metrics logging the Detail button does).
-- **Soften "due today"** *(from the 2026-07-08 review — not started)* — a task
-  due today currently shows as 逾期/overdue in red, which punishes exactly our
-  audience. Show 今天到期 / "Due today" in amber for day-of; red stays for
-  actually-past items. (Keep `isOverdue` for scheduling; this is display-only.)
+- **Swipe-to-complete/delete in the Inbox — DONE 2026-07-09** — swipe a row left
+  to reveal Done (active rows) + Delete. Custom gesture (rows aren't a List);
+  tap still opens Detail; VoiceOver action exposes the same buttons. All three
+  completion paths (Detail, swipe, notification) now share one `ItemActions`
+  helper so they can't diverge.
+- **Soften "due today" — DONE 2026-07-09** — day-of shows amber "Due today /
+  今天到期" instead of red overdue; red stays for actually-past items. Display-only
+  (`isDueToday`/`isPastDue`/`dueColor`); `isOverdue` (scheduling + bucketing)
+  unchanged.
 - Feeds the one launch metric (confirmed → done before due) — people can't complete
   the loop if they don't understand it.
 
