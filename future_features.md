@@ -65,33 +65,42 @@ Privacy policy + Apple label + Profile opt-out all landed; build number bumped t
 Testers may still not understand how the app works. Decision (Rachel, 2026-07-06):
 the 3 seeded example items were **replaced** by a real first-run walkthrough.
 
-- **First-run walkthrough — reworked 3x, 2026-07-11/12 (Rachel's feedback each
+- **First-run walkthrough — reworked 4x, 2026-07-11/13 (Rachel's feedback each
   time).** 1st pass: static instructional slides ("not what I mean"). 2nd pass:
   same content as swipeable mockup screens with a Next button ("still screens, I
   want interactive"). 3rd pass: a self-contained interactive demo of a fake
   ConEd bill ("still wrong... I don't want any separate screen or note. I want
   on page instruction... transparent background with arrow telling you what to
-  do"). **Current version (2026-07-12) — no separate screen at all:** deleted
-  `WelcomeTourView` entirely. A small `TourGuide` (`App/TourGuide.swift`, an
-  `@Observable` step machine: `.addTab → .reviewAdd → .inboxRow → nil`) drives a
-  `CoachHint` (`Components/CoachHint.swift`) — a translucent (`.ultraThinMaterial`)
-  arrow + one line of text — dropped directly into the REAL screens next to the
-  REAL control, teaching the user's own actual first scan instead of a canned
-  example:
-  - Empty **Inbox** → hint above the "Show me how Cuevi works" button: "Tap
-    **Add** below to try it." Dismisses when `router.selectedTab` actually
-    becomes `.add`.
-  - **Review** (scan or guide result) → hint right above the real **Add to
-    inbox** button: "This is what Cuevi found — tap here to save it." Dismisses
-    inside `addToInbox()`, i.e. only on the real save.
-  - **Inbox** again, once the real item exists → hint above the list: "Tap a
-    to-do to open it, or swipe it left to mark it done." Dismisses on the row's
-    real `onOpen`/`onComplete`.
-  Every hint also has its own "×" to dismiss the whole tour early. "Show me how
-  Cuevi works" in the empty state now calls `tourGuide.start()` directly (no
-  more bouncing through the `didShowWelcomeTour` flag to reopen a modal).
+  do"). 4th pass: translucent one-line arrow hints (`CoachHint`) on the real
+  screens ("still not what i want" — she sent Evernote's onboarding screenshots:
+  solid blue cards with a bold title, short body, page dots, and a Next button
+  over a dimmed screen). **Current version (2026-07-13) — Evernote-style coach
+  marks, still on the REAL screens:** `CoachHint` deleted, replaced by `TourCard`
+  (`Components/TourCard.swift`) — a solid `Color.accent` card: bold white title,
+  1–2 line body, 4 page dots, Skip + white **Next** button (**Done**, no Skip,
+  on the last card). `TourGuide` (`App/TourGuide.swift`) gained a `.welcome`
+  step: `.welcome → .addTab → .reviewAdd → .inboxRow → nil`; `Step` is
+  `Int`-raw-valued so `rawValue` doubles as the lit page dot.
+  - **Inbox, `.welcome`** → centered intro card over a dimmed screen (Evernote's
+    "Here's your note" moment): "Welcome to Cuevi."
+  - **Inbox, `.addTab`** → card parked just above the tab bar, screen dimmed but
+    the tab bar stays BRIGHT and tappable (the overlay lives inside the tab's
+    content, so the dim can't reach the bar — Evernote's spotlight effect).
+    Next switches to the Add tab itself; tapping the real tab also advances
+    (`RootTabView` advances from `.welcome` AND `.addTab` on tab switch, so
+    jumping ahead during the intro skips straight to the Review card).
+  - **Review, `.reviewAdd`** → card directly above the real **Add to inbox**
+    button. NO dim here — the point of Review is reading/editing what Cuevi
+    found. Real save still advances inside `addToInbox()`; Next just moves on.
+  - **Inbox, `.inboxRow`** → card above the tab bar, NO dim, list fully live —
+    it invites tapping/swiping the new row, so the row must work while the card
+    shows. Row `onOpen`/`onComplete` or **Done** finishes.
+  Skip (any card) = `tourGuide.finish()` — replaces the old per-hint "×". "Show
+  me how Cuevi works" in the empty state still calls `tourGuide.start()`.
   `didShowWelcomeTour` (AppStorage) still gates first-launch autostart and is
-  flipped true by `RootTabView` once `tourGuide.step` returns to `nil`.
+  flipped true by `RootTabView` once `tourGuide.step` returns to `nil`. All 10
+  new strings localized EN/ZH/ES (3 orphaned CoachHint strings purged); welcome
+  card verified on a fresh zh-Hans sim install (screenshot).
   First-launch seeding of `ActionItem.samples` removed; `isExample` KEPT on the
   model (old testers still have the seeded items; dropping the property would
   change the schema). `samples` static kept for previews.

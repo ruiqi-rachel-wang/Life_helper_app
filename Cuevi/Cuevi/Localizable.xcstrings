@@ -12606,54 +12606,6 @@
         }
       }
     },
-    "Tap **Add** below to try it — scan, pick a guide, or add one yourself" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca **Añadir** abajo para probar: escanea, elige una guía o añádelo tú mismo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点下方的**添加**试试——扫描、选个指南，或自己添加"
-          }
-        }
-      }
-    },
-    "This is what Cuevi found — tap here to save it" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esto es lo que Cuevi encontró — toca aquí para guardarlo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这是 Cuevi 识别的结果——点这里保存"
-          }
-        }
-      }
-    },
-    "It's here — tap a to-do to open it, or swipe it left to mark it done" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ya está aquí — tócalo para abrirlo o deslízalo a la izquierda para marcarlo hecho"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已经加进来了——点一下打开，或向左滑标记完成"
-          }
-        }
-      }
-    },
     "This task repeats — deleting it also stops future ones." : {
       "localizations" : {
         "es" : {
@@ -12666,6 +12618,166 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这是重复任务——删除后以后的也不再出现。"
+          }
+        }
+      }
+    },
+    "Welcome to Cuevi" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te damos la bienvenida a Cuevi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "欢迎来到 Cuevi"
+          }
+        }
+      }
+    },
+    "Let's take a quick tour — add your first to-do and see how Cuevi keeps you on track." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un recorrido rápido: añade tu primer pendiente y mira cómo Cuevi te mantiene al día."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速看一遍怎么用——添加你的第一个待办，看看 Cuevi 怎么帮你不错过任何事。"
+          }
+        }
+      }
+    },
+    "Add anything" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade lo que sea"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "想加什么都可以"
+          }
+        }
+      }
+    },
+    "Tap **Add** below — scan a letter or bill, pick a life guide, or type it yourself." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca **Añadir** abajo: escanea una carta o factura, elige una guía de vida o escríbelo tú."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点下方的**添加**——扫描信件或账单、选一个生活指南，或自己输入。"
+          }
+        }
+      }
+    },
+    "Here's what Cuevi found" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto es lo que encontró Cuevi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是 Cuevi 识别的结果"
+          }
+        }
+      }
+    },
+    "Check the steps and due date, then tap **Add to inbox** to save it." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa los pasos y la fecha límite, y toca **Añadir a la bandeja** para guardarlo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查步骤和截止日期，然后点**添加到待办**保存。"
+          }
+        }
+      }
+    },
+    "Your to-dos live here" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus pendientes viven aquí"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的待办都在这里"
+          }
+        }
+      }
+    },
+    "Tap one to open it, or swipe it left to mark it done. You're all set." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca uno para abrirlo o deslízalo a la izquierda para marcarlo hecho. ¡Todo listo!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点一下打开，向左滑标记完成。就这么简单！"
+          }
+        }
+      }
+    },
+    "Next" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一步"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
           }
         }
       }

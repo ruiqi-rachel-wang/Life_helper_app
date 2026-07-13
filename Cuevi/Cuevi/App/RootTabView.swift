@@ -63,9 +63,15 @@ struct RootTabView: View {
         .onChange(of: showNotificationPrimer) { was, isNow in
             if was, !isNow, !didShowWelcomeTour { tourGuide.start() }
         }
-        // The Add-tab hint is satisfied by the user actually switching to Add.
+        // Reaching the Add tab satisfies the first two cards — whether the user
+        // tapped Next on the Add-tab card, tapped the tab themselves, or jumped
+        // ahead during the welcome card. Both calls are no-ops past their step,
+        // so together they land the tour on .reviewAdd either way.
         .onChange(of: router.selectedTab) { _, tab in
-            if tab == .add { tourGuide.advance(from: .addTab) }
+            if tab == .add {
+                tourGuide.advance(from: .welcome)
+                tourGuide.advance(from: .addTab)
+            }
         }
         // The tour just finished (all hints dismissed/completed) — remember that
         // so it doesn't restart on the next launch.

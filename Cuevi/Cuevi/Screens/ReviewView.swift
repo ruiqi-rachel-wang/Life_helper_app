@@ -516,10 +516,15 @@ struct ReviewView: View {
                     .font(.subline).foregroundStyle(Color.faded)
                 Button { finish() } label: { primaryLabel("Done") }.buttonStyle(.plain)
             } else {
+                // Tour card sits directly above the real button it introduces.
+                // No dimming here — the point of Review is READING what Cuevi
+                // found (and editing it), so the content stays fully usable.
                 if tourGuide.step == .reviewAdd {
-                    CoachHint(text: "This is what Cuevi found — tap here to save it", arrow: .down) {
-                        tourGuide.finish()
-                    }
+                    TourCard(title: "Here's what Cuevi found",
+                             message: "Check the steps and due date, then tap **Add to inbox** to save it.",
+                             stepIndex: TourGuide.Step.reviewAdd.rawValue,
+                             onNext: { tourGuide.advance(from: .reviewAdd) },
+                             onSkip: { tourGuide.finish() })
                 }
                 Button { addToInbox() } label: { primaryLabel("Add to inbox") }.buttonStyle(.plain)
             }

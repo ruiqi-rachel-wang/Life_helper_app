@@ -34,22 +34,6 @@ struct InboxView: View {
                         if items.isEmpty {
                             emptyState
                         } else {
-                            if tourGuide.step == .inboxRow {
-                                CoachHint(text: "It's here — tap a to-do to open it, or swipe it left to mark it done", arrow: .down) {
-                                    tourGuide.finish()
-                                }
-                                .padding(.horizontal, 14)
-                                .padding(.bottom, 10)
-                            }
-                            // Upgrading testers start the tour WITH items — the
-                            // empty-state copy of this hint never renders for them.
-                            if tourGuide.step == .addTab {
-                                CoachHint(text: "Tap **Add** below to try it — scan, pick a guide, or add one yourself", arrow: .down) {
-                                    tourGuide.finish()
-                                }
-                                .padding(.horizontal, 14)
-                                .padding(.bottom, 10)
-                            }
                             let b = buckets
                             section("Needs attention", b.needsAttention, tone: .bad)
                             section("Due this week", b.dueThisWeek)
@@ -66,13 +50,64 @@ struct InboxView: View {
                     }
                     .padding(.top, 48)
                 }
+
+                tourOverlay
             }
+            .animation(.easeInOut(duration: 0.25), value: tourGuide.step)
             .navigationBarHidden(true)
             // Notification tap → open that item's Detail. The binding finds
             // the item by the id the delegate stashed in the router.
             .navigationDestination(item: pendingItem) { item in
                 DetailView(item: item)
             }
+        }
+    }
+
+    // MARK: first-run tour (Evernote-style coach marks)
+    //
+    // The intro + Add-tab cards dim the screen behind them — but the tab bar
+    // sits outside this view, so it stays bright and tappable (the card points
+    // at it). The final card doesn't dim anything: it invites you to actually
+    // tap/swipe the row it's introducing, so the list has to stay live.
+    // The .reviewAdd card renders on the Review screen, not here.
+    @ViewBuilder
+    private var tourOverlay: some View {
+        switch tourGuide.step {
+        case .welcome:
+            ZStack {
+                Color.black.opacity(0.35).ignoresSafeArea()
+                TourCard(title: "Welcome to Cuevi",
+                         message: "Let's take a quick tour — add your first to-do and see how Cuevi keeps you on track.",
+                         stepIndex: TourGuide.Step.welcome.rawValue,
+                         onNext: { tourGuide.advance(from: .welcome) },
+                         onSkip: { tourGuide.finish() })
+                    .padding(.horizontal, 24)
+            }
+        case .addTab:
+            ZStack(alignment: .bottom) {
+                Color.black.opacity(0.35).ignoresSafeArea()
+                TourCard(title: "Add anything",
+                         message: "Tap **Add** below — scan a letter or bill, pick a life guide, or type it yourself.",
+                         stepIndex: TourGuide.Step.addTab.rawValue,
+                         onNext: { router.selectedTab = .add },   // RootTabView advances the tour
+                         onSkip: { tourGuide.finish() })
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+        case .inboxRow where !items.isEmpty:
+            VStack {
+                Spacer()
+                TourCard(title: "Your to-dos live here",
+                         message: "Tap one to open it, or swipe it left to mark it done. You're all set.",
+                         stepIndex: TourGuide.Step.inboxRow.rawValue,
+                         isLast: true,
+                         onNext: { tourGuide.finish() },
+                         onSkip: { tourGuide.finish() })
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+        default:
+            EmptyView()
         }
     }
 
@@ -170,13 +205,6 @@ struct InboxView: View {
             emptyRow("square.and.pencil", Color.accent,
                      "Add it yourself",
                      "A quick to-do with a date — Cuevi reminds you before it's due.")
-
-            if tourGuide.step == .addTab {
-                CoachHint(text: "Tap **Add** below to try it — scan, pick a guide, or add one yourself", arrow: .down) {
-                    tourGuide.finish()
-                }
-                .padding(.top, 4)
-            }
 
             Button { tourGuide.start() } label: {
                 Label("Show me how Cuevi works", systemImage: "play.circle")
