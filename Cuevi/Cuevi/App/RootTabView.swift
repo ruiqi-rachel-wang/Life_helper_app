@@ -17,13 +17,13 @@ import UserNotifications
 
 struct RootTabView: View {
     @Environment(AppRouter.self) private var router
+    @Environment(TourGuide.self) private var tourGuide
     // Whether we've shown the first-launch notification explainer yet.
     @AppStorage("didAskNotifications") private var didAskNotifications = false
-    // Whether the first-run walkthrough has been seen (the empty Inbox can reset
-    // this to replay it via "Show me how Cuevi works").
+    // Whether the first-run tour has been seen (the empty Inbox can call
+    // tourGuide.start() directly to replay it via "Show me how Cuevi works").
     @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
     @State private var showNotificationPrimer = false
-    @State private var showWelcome = false
 
     var body: some View {
         @Bindable var router = router
@@ -46,9 +46,6 @@ struct RootTabView: View {
         }
         .tint(Color.accent)
         .environment(router)
-        .fullScreenCover(isPresented: $showWelcome) {
-            WelcomeTourView { didShowWelcomeTour = true; showWelcome = false }
-        }
         .sheet(isPresented: $showNotificationPrimer) {
             NotificationPrimerView { didAskNotifications = true; showNotificationPrimer = false }
         }
@@ -56,16 +53,24 @@ struct RootTabView: View {
             // Skip both one-time moments under UI tests (a system alert / a cover
             // block automation).
             guard !ProcessInfo.processInfo.arguments.contains("-uitest") else { return }
-            if !didShowWelcomeTour {
-                showWelcome = true          // the notification primer follows once it closes
-            } else {
-                await maybeShowNotificationPrimer()
-            }
+            // One thing at a time: the notification primer (a modal sheet) first;
+            // the tour's first hint starts right away only when no sheet is coming,
+            // otherwise when the sheet is dismissed (onChange below).
+            await maybeShowNotificationPrimer()
+            if !showNotificationPrimer, !didShowWelcomeTour { tourGuide.start() }
         }
-        // The tour just closed (or the Inbox asked to replay it by resetting the flag).
-        .onChange(of: didShowWelcomeTour) { _, seen in
-            if seen { Task { await maybeShowNotificationPrimer() } }
-            else { showWelcome = true }
+        // Primer dismissed on first launch → now start the tour.
+        .onChange(of: showNotificationPrimer) { was, isNow in
+            if was, !isNow, !didShowWelcomeTour { tourGuide.start() }
+        }
+        // The Add-tab hint is satisfied by the user actually switching to Add.
+        .onChange(of: router.selectedTab) { _, tab in
+            if tab == .add { tourGuide.advance(from: .addTab) }
+        }
+        // The tour just finished (all hints dismissed/completed) — remember that
+        // so it doesn't restart on the next launch.
+        .onChange(of: tourGuide.step) { old, new in
+            if old != nil && new == nil { didShowWelcomeTour = true }
         }
     }
 
@@ -86,4 +91,5 @@ struct RootTabView: View {
     RootTabView()
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
+        .environment(TourGuide())
 }

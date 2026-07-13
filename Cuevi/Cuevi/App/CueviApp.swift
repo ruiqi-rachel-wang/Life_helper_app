@@ -13,6 +13,7 @@ import UserNotifications
 struct CueviApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var router = AppRouter()
+    @State private var tourGuide = TourGuide()
     private let container: ModelContainer
     private let notificationDelegate = NotificationDelegate()
 
@@ -66,6 +67,7 @@ struct CueviApp: App {
         WindowGroup {
             RootTabView()
                 .environment(router)
+                .environment(tourGuide)
                 .onAppear { notificationDelegate.attach(router: router) }
                 .task {
                     // Notification permission is now requested through the

@@ -65,13 +65,36 @@ Privacy policy + Apple label + Profile opt-out all landed; build number bumped t
 Testers may still not understand how the app works. Decision (Rachel, 2026-07-06):
 the 3 seeded example items were **replaced** by a real first-run walkthrough.
 
-- **First-run walkthrough — DONE 2026-07-09** — `WelcomeTourView`: 3 short
-  skippable screens (what Cuevi is → the three ways to add → checklist +
-  reminders + swipe-to-done). Shows once before the notification primer;
-  replayable from the empty Inbox ("Show me how Cuevi works"). First-launch
-  seeding of `ActionItem.samples` removed; `isExample` KEPT on the model (old
-  testers still have the seeded items; dropping the property would change the
-  schema). `samples` static kept for previews.
+- **First-run walkthrough — reworked 3x, 2026-07-11/12 (Rachel's feedback each
+  time).** 1st pass: static instructional slides ("not what I mean"). 2nd pass:
+  same content as swipeable mockup screens with a Next button ("still screens, I
+  want interactive"). 3rd pass: a self-contained interactive demo of a fake
+  ConEd bill ("still wrong... I don't want any separate screen or note. I want
+  on page instruction... transparent background with arrow telling you what to
+  do"). **Current version (2026-07-12) — no separate screen at all:** deleted
+  `WelcomeTourView` entirely. A small `TourGuide` (`App/TourGuide.swift`, an
+  `@Observable` step machine: `.addTab → .reviewAdd → .inboxRow → nil`) drives a
+  `CoachHint` (`Components/CoachHint.swift`) — a translucent (`.ultraThinMaterial`)
+  arrow + one line of text — dropped directly into the REAL screens next to the
+  REAL control, teaching the user's own actual first scan instead of a canned
+  example:
+  - Empty **Inbox** → hint above the "Show me how Cuevi works" button: "Tap
+    **Add** below to try it." Dismisses when `router.selectedTab` actually
+    becomes `.add`.
+  - **Review** (scan or guide result) → hint right above the real **Add to
+    inbox** button: "This is what Cuevi found — tap here to save it." Dismisses
+    inside `addToInbox()`, i.e. only on the real save.
+  - **Inbox** again, once the real item exists → hint above the list: "Tap a
+    to-do to open it, or swipe it left to mark it done." Dismisses on the row's
+    real `onOpen`/`onComplete`.
+  Every hint also has its own "×" to dismiss the whole tour early. "Show me how
+  Cuevi works" in the empty state now calls `tourGuide.start()` directly (no
+  more bouncing through the `didShowWelcomeTour` flag to reopen a modal).
+  `didShowWelcomeTour` (AppStorage) still gates first-launch autostart and is
+  flipped true by `RootTabView` once `tourGuide.step` returns to `nil`.
+  First-launch seeding of `ActionItem.samples` removed; `isExample` KEPT on the
+  model (old testers still have the seeded items; dropping the property would
+  change the schema). `samples` static kept for previews.
 - **Keep the scanned photo — DONE 2026-07-09** — the document photo shows at the
   end of Detail (below notes), tap for full-screen pinch-zoom. Saved by default;
   My Settings → Privacy has the "Save document photo with the item" opt-out
@@ -100,16 +123,64 @@ The Profile tab scaffolds "Sign in / Family sharing / Cuevi Plus" as coming-soon
 Sequencing note: accounts come first — family sharing and cloud sync both need them,
 and Cuevi Plus needs the Apple Paid Apps Agreement signed before any of it can charge.
 
-- **Accounts** — sign-in so data isn't trapped on one device (needs a backend; until
-  now everything is local-only by design).
-- **Family sharing** — the core differentiator: a daughter/son manages their parents'
-  English mail without missing deadlines. Multiple profiles / shared inbox; per-person
-  items; "handling this for Mom."
+- **Accounts (free)** — sign in with Apple/Google/email. The only thing this unlocks
+  vs. guest is that your data survives sign-out/sign-in (and, eventually,
+  reinstall/new-phone) — **one profile, one device.** No family sharing, no
+  multi-device. This is deliberately free: it's retention (don't lose your data),
+  not a paid feature.
+- **Family sharing → Cuevi Plus (paid), decided 2026-07-11** — the free/paid line is
+  specifically **multiple profiles / multiple devices under one account.** A free
+  account is capped at one profile on one device; Cuevi Plus is what lets a signed-in
+  account add more profiles (Mom, Dad) and use them from more than one device —
+  a daughter/son manages their parents' English mail without missing deadlines.
+  *(Whether Plus also raises the scan quota is still open — not decided, don't
+  assume it does until Rachel says so.)*
 - **Paid plan ("Cuevi Plus")** — subscription via Apple In-App Purchase, managed
   through **RevenueCat** *(decided 2026-07-01)*: entitlements, upgrade/downgrade/
   restore, receipt validation, configurable paywall. Free to $2.5k/mo tracked revenue,
-  then a small rev-share **on top of** Apple's 15–30% cut. Likely gates higher scan
-  limits, family sharing, cloud sync.
+  then a small rev-share **on top of** Apple's 15–30% cut. Gates family sharing
+  (multi-profile, multi-device) per the decision above.
+
+### Layout plan (reference mockups reviewed 2026-07-11)
+
+- **Signed-out Profile — unchanged from today**, plus one new button: guest
+  `profileCard` gets a **"Sign in or create account"** button under it (replaces the
+  need to tap a coming-soon row). Everything below (Language, Notifications, Privacy,
+  About & Legal) stays exactly where it is.
+- **Sign in / Create account screen** — Apple + Google sign-in buttons (primary; no
+  password to manage) with email + password as a fallback. Standard iOS auth screen,
+  nothing custom needed.
+- **Signed-in, free account — the common case, keep it boring:** `profileCard`
+  becomes a tappable row (avatar + name + email, chevron → **Account Details**).
+  No "Current profiles" strip — free is one profile, one device, so there's nothing
+  to switch between. `accountCard` shows **Family sharing** (subtitle "Add family
+  members" with an "Upgrade" chip → paywall, since it's Plus-only) and **Sign out**.
+  That's the entire difference from guest: an identity row + the ability to sign out
+  without losing data.
+- **Signed-in, Cuevi Plus — `profileCard` and `accountCard` gain the multi-profile
+  pieces:**
+  - A **"Current profiles"** strip appears directly under `profileCard`: small avatar
+    circles for each family member (you first) + a dashed "add" circle, and a small
+    "Manage" link → **Family Sharing** screen. Tapping an avatar switches which
+    profile's items show in the Inbox (only meaningful once >1 profile exists, which
+    requires Plus).
+  - `accountCard`'s **Family sharing** row subtitle switches to names once profiles
+    exist (e.g. "3 profiles: Jing, Mom, Dad") → Family Sharing screen; **Cuevi Plus**
+    row shows active/managed state instead of an upgrade chip; **Sign out** stays a
+    plain row at the bottom.
+- **Account Details screen** (from tapping the profile row) — kept minimal, no phone
+  number field (not needed for anything Cuevi does): avatar (tap to change),
+  **name**, **email**, and a **Delete account** row at the
+  bottom. Does **not** duplicate Language/Notifications/Privacy/App rows — those
+  already live on the main Profile screen; Account Details is just identity + auth.
+- **Family Sharing screen** — a grid of profile avatars (owner first, then members)
+  + a dashed "add profile" tile, same avatar style as the Current-profiles strip.
+  Tapping a profile switches the active one. One line under the grid: "Cuevi Plus
+  covers every profile on this account — no extra charge per person."
+
+**Deliberately left out of the mockups (keep it simple):** no per-profile phone
+number, no in-screen scan-count dashboard, no password-change flow beyond what
+Apple/Google sign-in already handles. Add only if a real need shows up post-launch.
 
 ## Part 4 — Reminders & personalization
 

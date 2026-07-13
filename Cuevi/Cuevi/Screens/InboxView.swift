@@ -14,11 +14,8 @@ import SwiftData
 struct InboxView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
+    @Environment(TourGuide.self) private var tourGuide
     @Query(sort: \ActionItem.createdAt, order: .reverse) private var items: [ActionItem]
-
-    // Resetting this flag makes RootTabView replay the welcome walkthrough
-    // (the "Show me how Cuevi works" button in the empty state).
-    @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
 
     // Urgency buckets — computed by the pure, tested grouping function.
     private var buckets: InboxBuckets { items.groupedForInbox() }
@@ -37,6 +34,22 @@ struct InboxView: View {
                         if items.isEmpty {
                             emptyState
                         } else {
+                            if tourGuide.step == .inboxRow {
+                                CoachHint(text: "It's here — tap a to-do to open it, or swipe it left to mark it done", arrow: .down) {
+                                    tourGuide.finish()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.bottom, 10)
+                            }
+                            // Upgrading testers start the tour WITH items — the
+                            // empty-state copy of this hint never renders for them.
+                            if tourGuide.step == .addTab {
+                                CoachHint(text: "Tap **Add** below to try it — scan, pick a guide, or add one yourself", arrow: .down) {
+                                    tourGuide.finish()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.bottom, 10)
+                            }
                             let b = buckets
                             section("Needs attention", b.needsAttention, tone: .bad)
                             section("Due this week", b.dueThisWeek)
@@ -125,8 +138,8 @@ struct InboxView: View {
                         if index != 0 { InboxRowDivider() }
                         SwipeRow(
                             item: item, done: done,
-                            onOpen: { router.pendingItemID = item.id },
-                            onComplete: { withAnimation { ItemActions.complete(item, in: context) } },
+                            onOpen: { tourGuide.advance(from: .inboxRow); router.pendingItemID = item.id },
+                            onComplete: { tourGuide.advance(from: .inboxRow); withAnimation { ItemActions.complete(item, in: context) } },
                             onDelete: { withAnimation { ItemActions.delete(item, in: context) } })
                     }
                 }
@@ -158,7 +171,14 @@ struct InboxView: View {
                      "Add it yourself",
                      "A quick to-do with a date — Cuevi reminds you before it's due.")
 
-            Button { didShowWelcomeTour = false } label: {
+            if tourGuide.step == .addTab {
+                CoachHint(text: "Tap **Add** below to try it — scan, pick a guide, or add one yourself", arrow: .down) {
+                    tourGuide.finish()
+                }
+                .padding(.top, 4)
+            }
+
+            Button { tourGuide.start() } label: {
                 Label("Show me how Cuevi works", systemImage: "play.circle")
                     .font(.system(size: 15, weight: .medium)).foregroundStyle(Color.accent)
                     .frame(maxWidth: .infinity).padding(.vertical, 12)
@@ -210,6 +230,7 @@ private struct SwipeRow: View {
 
     @State private var settled: CGFloat = 0        // 0 = closed, -reveal = open
     @GestureState private var live: CGFloat = 0    // in-flight drag
+    @State private var confirmDelete = false       // swipe Delete asks first — no undo exists
     private let btnW: CGFloat = 78
 
     private var reveal: CGFloat { done ? btnW : btnW * 2 }  // done rows: delete only
@@ -221,7 +242,7 @@ private struct SwipeRow: View {
                 if !done {
                     swipeButton("checkmark", "Done", Color.ok) { close(); onComplete() }
                 }
-                swipeButton("trash", "Delete", Color.bad) { close(); onDelete() }
+                swipeButton("trash", "Delete", Color.bad) { close(); confirmDelete = true }
             }
 
             Button { offset < 0 ? close() : onOpen() } label: {
@@ -254,10 +275,22 @@ private struct SwipeRow: View {
                     }
             )
             .accessibilityAction(named: done ? Text("Delete") : Text("Mark done")) {
-                done ? onDelete() : onComplete()
+                done ? (confirmDelete = true) : onComplete()
             }
         }
         .clipped()
+        // Delete is final (no undo), and a swipe is easy to fat-finger — confirm.
+        // The Detail screen keeps the richer recurring "just this one / all future"
+        // choice; here the title just says plainly what deleting will do.
+        .confirmationDialog(
+            item.isRecurring
+                ? "This task repeats — deleting it also stops future ones."
+                : "Delete this task?",
+            isPresented: $confirmDelete, titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) { onDelete() }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     private func close() {
@@ -343,4 +376,5 @@ private struct PrivacyBanner: View {
     InboxView()
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
+        .environment(TourGuide())
 }

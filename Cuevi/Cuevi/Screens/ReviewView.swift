@@ -32,6 +32,7 @@ struct ReviewView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
+    @Environment(TourGuide.self) private var tourGuide
 
     @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
@@ -515,6 +516,11 @@ struct ReviewView: View {
                     .font(.subline).foregroundStyle(Color.faded)
                 Button { finish() } label: { primaryLabel("Done") }.buttonStyle(.plain)
             } else {
+                if tourGuide.step == .reviewAdd {
+                    CoachHint(text: "This is what Cuevi found — tap here to save it", arrow: .down) {
+                        tourGuide.finish()
+                    }
+                }
                 Button { addToInbox() } label: { primaryLabel("Add to inbox") }.buttonStyle(.plain)
             }
             // Always-visible AI-accuracy disclaimer (legal/risk control): the result
@@ -561,6 +567,7 @@ struct ReviewView: View {
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
+        tourGuide.advance(from: .reviewAdd)
         router.goToInbox()
         finish()
     }
