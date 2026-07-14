@@ -87,7 +87,7 @@ struct InboxView: View {
             ZStack(alignment: .bottom) {
                 Color.black.opacity(0.35).ignoresSafeArea()
                 TourCard(title: "Add anything",
-                         message: "Tap **Add** below — scan a letter or bill, pick a life guide, or type it yourself.",
+                         message: "Tap **Add** below — that's where new to-dos start.",
                          stepIndex: TourGuide.Step.addTab.rawValue,
                          onNext: { router.selectedTab = .add },   // RootTabView advances the tour
                          onSkip: { tourGuide.finish() })

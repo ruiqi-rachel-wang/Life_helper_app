@@ -95,6 +95,19 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
   - **Inbox, `.inboxRow`** → card above the tab bar, NO dim, list fully live —
     it invites tapping/swiping the new row, so the row must work while the card
     shows. Row `onOpen`/`onComplete` or **Done** finishes.
+  **Gap fix (Rachel, same day): the tour went silent on the Add page** — Next
+  on the `.addTab` card switched tabs and no card followed until Review. Added
+  a 5th step `.create` between them: a card on the Add page ("Start with a
+  scan"), no dim (the three tiles ARE the instruction), whose **Next opens the
+  scan flow itself** (`startScan()` — camera on device, photo picker on the
+  Simulator; same quota gate as the hero tile). Real-action advancement moved
+  from strict `advance(from:)` chains to `TourGuide.catchUp(to:)` (jump forward
+  to wherever the user actually is, never backward, no-op when the tour is
+  off): reaching the Add tab → `.create` (RootTabView); ReviewView `.onAppear`
+  → `.reviewAdd` (covers scans, uploads, AND guides entered via the Guides
+  tab); `CreateForm.save()` → `.inboxRow` (manual items skip Review, so skip
+  its card too). `.addTab` card copy shortened ("that's where new to-dos
+  start") since `.create` now explains the three ways in.
   Skip (any card) = `tourGuide.finish()` — replaces the old per-hint "×". "Show
   me how Cuevi works" in the empty state still calls `tourGuide.start()`.
   `didShowWelcomeTour` (AppStorage) still gates first-launch autostart and is

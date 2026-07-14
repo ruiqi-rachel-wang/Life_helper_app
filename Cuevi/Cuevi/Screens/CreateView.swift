@@ -28,6 +28,7 @@ private struct ScanRoute: Identifiable, Hashable {
 struct CreateView: View {
     static let maxPages = 5   // up to 5 photos per document (1 from the camera)
 
+    @Environment(TourGuide.self) private var tourGuide
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var showCamera = false
     @State private var showPhotoPicker = false
@@ -81,7 +82,26 @@ struct CreateView: View {
                     Spacer()
                 }
                 .padding(.top, 48)
+
+                // Tour card for this page — parked above the tab bar, nothing
+                // dimmed: all three tiles must stay tappable, they ARE the
+                // instruction. Next opens the scan flow itself (Evernote-style:
+                // the button takes you into the next thing); doing any tile by
+                // hand advances the tour the same way.
+                if tourGuide.step == .create {
+                    VStack {
+                        Spacer()
+                        TourCard(title: "Start with a scan",
+                                 message: "Try **Scan a document** — Cuevi reads it and builds your steps. Or upload a photo you already have, or type one in yourself.",
+                                 stepIndex: TourGuide.Step.create.rawValue,
+                                 onNext: { startScan() },
+                                 onSkip: { tourGuide.finish() })
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 8)
+                    }
+                }
             }
+            .animation(.easeInOut(duration: 0.25), value: tourGuide.step)
             .navigationBarHidden(true)
             // Camera capture (real device only) → OCR result.
             .fullScreenCover(isPresented: $showCamera) {
@@ -157,10 +177,16 @@ struct CreateView: View {
     // (Simulator), fall back to the photo picker so it still works.
     // The subtitle says what scanning is FOR — tester feedback: "most used" and
     // "OCR runs on device" meant nothing; examples do.
+    // The hero tile's action, also fired by the tour card's Next: camera on a
+    // real device, photo picker on the Simulator (no camera there).
+    private func startScan() {
+        guard allowScan() else { return }
+        if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+    }
+
     private var heroTile: some View {
         Button {
-            guard allowScan() else { return }
-            if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+            startScan()
         } label: {
             HStack(alignment: .center, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -262,6 +288,7 @@ private struct CreateForm: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
+    @Environment(TourGuide.self) private var tourGuide
 
     @State private var title = ""
     @State private var category: ItemCategory = .other
@@ -584,6 +611,9 @@ private struct CreateForm: View {
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)
         ReminderScheduler.shared.reschedule(for: item)   // schedule reminders
+        // Manual items skip the Review screen, so skip its tour card too —
+        // jump straight to the final "your to-dos live here" card.
+        tourGuide.catchUp(to: .inboxRow)
         router.goToInbox()   // land on the Inbox so the new item is visible
         dismiss()
     }

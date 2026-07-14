@@ -72,6 +72,10 @@ struct ReviewView: View {
             }
         }
         .task { await run() }
+        // Reaching Review IS the tour's next milestone, however the user got
+        // here (scan, upload, or a guide from the Guides tab) — catch up so
+        // the "Add to inbox" card shows once the result renders.
+        .onAppear { tourGuide.catchUp(to: .reviewAdd) }
     }
 
     // MARK: pipeline

@@ -12670,22 +12670,6 @@
         }
       }
     },
-    "Tap **Add** below — scan a letter or bill, pick a life guide, or type it yourself." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca **Añadir** abajo: escanea una carta o factura, elige una guía de vida o escríbelo tú."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点下方的**添加**——扫描信件或账单、选一个生活指南，或自己输入。"
-          }
-        }
-      }
-    },
     "Here's what Cuevi found" : {
       "localizations" : {
         "es" : {
@@ -12778,6 +12762,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳过"
+          }
+        }
+      }
+    },
+    "Tap **Add** below — that's where new to-dos start." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca **Añadir** abajo: ahí empiezan los nuevos pendientes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点下方的**添加**——新的待办都从这里开始。"
+          }
+        }
+      }
+    },
+    "Start with a scan" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza con un escaneo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从扫描开始"
+          }
+        }
+      }
+    },
+    "Try **Scan a document** — Cuevi reads it and builds your steps. Or upload a photo you already have, or type one in yourself." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba **Escanear un documento**: Cuevi lo lee y crea tus pasos. También puedes subir una foto que ya tengas, o escribirlo tú."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试试**扫描文件**——Cuevi 帮你读懂并生成步骤。也可以上传已有的照片，或自己输入。"
           }
         }
       }
