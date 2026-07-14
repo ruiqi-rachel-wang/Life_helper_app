@@ -414,22 +414,6 @@
         }
       }
     },
-    "A quick to-do with a date — Cuevi reminds you before it's due." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una tarea rápida con fecha — Cuevi te avisa antes de que venza."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "快速添加一个带日期的待办——到期前 Cuevi 会提醒你。"
-          }
-        }
-      }
-    },
     "A recent change — lost coverage, moved, married, had a baby, or job change?" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -973,22 +957,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如有需要，添加受养人和受益人。"
-          }
-        }
-      }
-    },
-    "Add it yourself" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añádelo tú mismo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自己添加"
           }
         }
       }
@@ -7905,22 +7873,6 @@
         }
       }
     },
-    "Nothing here yet — three ways to start" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aún no hay nada — tres formas de empezar"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这里还没有内容——三种开始方式"
-          }
-        }
-      }
-    },
     "Nothing to do — off by default" : {
       "localizations" : {
         "es" : {
@@ -12810,6 +12762,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "试试**扫描文件**——Cuevi 帮你读懂并生成步骤。也可以上传已有的照片，或自己输入。"
+          }
+        }
+      }
+    },
+    "Nothing here yet — two ways to start" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay nada — dos formas de empezar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这里还没有内容——两种开始方式"
           }
         }
       }

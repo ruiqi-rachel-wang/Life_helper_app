@@ -29,6 +29,7 @@ struct CreateView: View {
     static let maxPages = 5   // up to 5 photos per document (1 from the camera)
 
     @Environment(TourGuide.self) private var tourGuide
+    @Environment(AppRouter.self) private var router
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var showCamera = false
     @State private var showPhotoPicker = false
@@ -87,8 +88,9 @@ struct CreateView: View {
                 // dimmed: all three tiles must stay tappable, they ARE the
                 // instruction. Next opens the scan flow itself (Evernote-style:
                 // the button takes you into the next thing); doing any tile by
-                // hand advances the tour the same way.
-                if tourGuide.step == .create {
+                // hand advances the tour the same way. Gated on the Add tab
+                // being selected so it can't linger over the Inbox mid-switch.
+                if router.selectedTab == .add, tourGuide.step == .create {
                     VStack {
                         Spacer()
                         TourCard(title: "Start with a scan",

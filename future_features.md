@@ -114,6 +114,14 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
   flipped true by `RootTabView` once `tourGuide.step` returns to `nil`. All 10
   new strings localized EN/ZH/ES (3 orphaned CoachHint strings purged); welcome
   card verified on a fresh zh-Hans sim install (screenshot).
+  **Polish (Rachel, 2026-07-14):** (1) empty Inbox trimmed to TWO ways to start
+  (dropped the "Add it yourself" row) — the manual path still lives as a tile on
+  the Add page. (2) Each screen only draws its tour card while its own tab is
+  selected (`router.selectedTab == .inbox`/`.add` guards) so a tab switch can't
+  flash two cards mid-transition. (3) The scanned photo on Detail is now a small
+  96×120 preview with a corner expand badge (was up to 340pt tall and dominated
+  the page) — full document still one tap away in the pinch-zoom viewer. All
+  verified on the sim (empty-state + a seeded photo item, screenshots).
   First-launch seeding of `ActionItem.samples` removed; `isExample` KEPT on the
   model (old testers still have the seeded items; dropping the property would
   change the schema). `samples` static kept for previews.

@@ -448,12 +448,22 @@ struct DetailView: View {
         card {
             VStack(alignment: .leading, spacing: 10) {
                 Text("ORIGINAL DOCUMENT").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                // A small preview only — the full document is a tap away in the
+                // pinch-zoom viewer, so it doesn't need to fill the page here.
                 Button { showFullPhoto = true } label: {
                     Image(uiImage: photo)
-                        .resizable().scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: 340)
+                        .resizable().scaledToFill()
+                        .frame(width: 96, height: 120)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.hair, lineWidth: 1))
+                        .overlay(alignment: .bottomTrailing) {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(5)
+                                .background(Circle().fill(.black.opacity(0.45)))
+                                .padding(6)
+                        }
                 }
                 .buttonStyle(.plain)
                 Text("Tap to enlarge").font(.subline).foregroundStyle(Color.faint)

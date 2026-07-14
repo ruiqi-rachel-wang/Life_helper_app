@@ -72,7 +72,10 @@ struct InboxView: View {
     // The .reviewAdd card renders on the Review screen, not here.
     @ViewBuilder
     private var tourOverlay: some View {
-        switch tourGuide.step {
+        // Only the currently-selected tab draws a card. During a tab switch both
+        // this view and the Add page briefly coexist; without this guard each
+        // could show its own card for a frame, which looked "messy" mid-switch.
+        switch (router.selectedTab == .inbox) ? tourGuide.step : nil {
         case .welcome:
             ZStack {
                 Color.black.opacity(0.35).ignoresSafeArea()
@@ -187,11 +190,11 @@ struct InboxView: View {
         }
     }
 
-    // The empty Inbox is a teacher, not a dead end: the three ways to start,
+    // The empty Inbox is a teacher, not a dead end: the two ways to start,
     // with colorful icons (tester feedback: make what-to-do-next obvious).
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Nothing here yet — three ways to start")
+            Text("Nothing here yet — two ways to start")
                 .font(.serifSection).foregroundStyle(Color.ink)
                 .padding(.horizontal, 10)
                 .padding(.bottom, 4)
@@ -202,9 +205,6 @@ struct InboxView: View {
             emptyRow("books.vertical.fill", Color.sourceGuide,
                      "Pick a life guide",
                      "Moving, taxes, driver's license… ready-made checklists for life in the U.S.")
-            emptyRow("square.and.pencil", Color.accent,
-                     "Add it yourself",
-                     "A quick to-do with a date — Cuevi reminds you before it's due.")
 
             Button { tourGuide.start() } label: {
                 Label("Show me how Cuevi works", systemImage: "play.circle")
