@@ -76,6 +76,14 @@ struct StepDetailView: View {
 
     @ViewBuilder
     private var reader: some View {
+        // The authored "why and how" paragraph. Was silently dropped before —
+        // every guide's explanation (and official links, below) went unshown.
+        if !d.explanation.isEmpty {
+            Text(linkified(d.explanation))
+                .font(.body14).foregroundStyle(Color.ink).lineSpacing(3)
+                .tint(Color.accent)
+                .padding(.horizontal, 4)
+        }
         if !d.miniChecklist.isEmpty {
             section("CHECKLIST") {
                 ForEach(detail.miniChecklist.indices, id: \.self) { i in
@@ -98,9 +106,36 @@ struct StepDetailView: View {
                 }
             }
         }
+        // A phone script, when authored ("say this when you call").
+        if !d.script.isEmpty {
+            section("WHAT TO SAY") {
+                Text(linkified(d.script))
+                    .font(.body14).foregroundStyle(Color.ink).lineSpacing(3)
+                    .tint(Color.accent)
+            }
+        }
         if !d.needed.isEmpty {
             section("WHAT YOU'LL NEED") {
                 ForEach(Array(d.needed.enumerated()), id: \.offset) { _, line in bullet(line) }
+            }
+        }
+        // Authored official links (always .gov/.us — see GuideTests) as tappable rows.
+        if !d.links.isEmpty {
+            section("OFFICIAL LINKS") {
+                ForEach(Array(d.links.enumerated()), id: \.offset) { _, link in
+                    if let url = URL(string: link.url) {
+                        Link(destination: url) {
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: "arrow.up.right.square")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text(link.label).font(.body14).multilineTextAlignment(.leading)
+                                Spacer()
+                            }
+                            .foregroundStyle(Color.accent)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
         }
         if !glossaryTerms.isEmpty {

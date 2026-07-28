@@ -2,6 +2,1145 @@
   "sourceLanguage" : "en",
   "strings" : {
     "" : {},
+    "Adrenaline can hide injuries for hours or days — getting checked soon also ties any treatment to the accident, which the insurance claim will ask about." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La adrenalina puede ocultar lesiones durante horas o días; revisarte pronto también vincula cualquier tratamiento con el accidente, algo que el reclamo del seguro va a preguntar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "肾上腺素可能让伤痛几小时甚至几天后才显现——尽早检查也能把治疗与这次事故关联起来，保险理赔时会问到。"
+          }
+        }
+      }
+    },
+    "See a doctor or urgent care within a day or two, even if you feel okay." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ve a un médico o a atención de urgencia en uno o dos días, aunque te sientas bien."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即使感觉没事，也要在一两天内看医生或去急护中心（urgent care）。"
+          }
+        }
+      }
+    },
+    "Tell them it was a car accident, so it's in the record." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diles que fue un accidente de auto, para que quede en el expediente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "告诉医生这是车祸受伤，让它记录在案。"
+          }
+        }
+      }
+    },
+    "Keep every bill, record, and receipt — the claim can reimburse them." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda cada factura, registro y recibo: el reclamo puede reembolsarlos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留每张账单、病历和收据——理赔可以报销这些费用。"
+          }
+        }
+      }
+    },
+    "Call your insurer before the tow if you can — many policies include towing, and an approved shop avoids surprise fees. Don't let the car sit in a storage lot; storage fees add up daily." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si puedes, llama a tu aseguradora antes de la grúa: muchas pólizas incluyen remolque, y un taller aprobado evita cargos sorpresa. No dejes el auto en un depósito; las tarifas de almacenamiento se acumulan a diario."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以的话在拖车前先打给保险公司——很多保单包含拖车服务，拖到认可的修理厂能避免意外收费。别让车停在存放场；存放费每天都在累加。"
+          }
+        }
+      }
+    },
+    "Ask your insurer about roadside/tow coverage and approved shops." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregunta a tu aseguradora por la cobertura de asistencia/grúa y los talleres aprobados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向保险公司询问道路救援/拖车保障和认可的修理厂。"
+          }
+        }
+      }
+    },
+    "Tow to a repair shop or your home — not a storage lot." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remolca a un taller o a tu casa, no a un depósito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖到修理厂或你家——不要拖到存放场。"
+          }
+        }
+      }
+    },
+    "Save the tow receipt and write down where the car is." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda el recibo de la grúa y anota dónde quedó el auto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存拖车收据，并记下车停放的位置。"
+          }
+        }
+      }
+    },
+    "The insurer usually inspects the damage — an adjuster visit or photos you upload — before approving repairs." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La aseguradora suele inspeccionar el daño —una visita del ajustador o fotos que subes— antes de aprobar las reparaciones."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保险公司通常会先查勘损失——理赔员上门或让你上传照片——然后才批准维修。"
+          }
+        }
+      }
+    },
+    "Get a written estimate from a shop you trust." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pide un presupuesto por escrito en un taller de confianza."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找一家你信任的修理厂拿书面报价。"
+          }
+        }
+      }
+    },
+    "Don't authorize repairs before the claim is approved, unless you're paying yourself." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No autorices reparaciones antes de que aprueben el reclamo, a menos que pagues tú."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "理赔批准前不要授权维修，除非你打算自己付钱。"
+          }
+        }
+      }
+    },
+    "Ask whether the shop can bill the insurer directly." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregunta si el taller puede facturar directamente a la aseguradora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "问修理厂能否直接向保险公司结算。"
+          }
+        }
+      }
+    },
+    "Lenders decide your rate from your credit and your debt-to-income — check your reports early so there's time to fix errors." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los prestamistas fijan tu tasa según tu crédito y tu relación deuda-ingresos; revisa tus informes con tiempo para corregir errores."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "贷款机构根据你的信用和债务收入比来定利率——尽早查信用报告，留出时间纠正错误。"
+          }
+        }
+      }
+    },
+    "Get your free credit reports at AnnualCreditReport.com — the official, federally authorized site." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obtén tus informes de crédito gratis en AnnualCreditReport.com, el sitio oficial autorizado por el gobierno federal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AnnualCreditReport.com 免费获取你的信用报告——这是联邦授权的官方网站。"
+          }
+        }
+      }
+    },
+    "Dispute any errors before you apply — they can cost you a better rate." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disputa cualquier error antes de solicitar: puede costarte una mejor tasa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "申请前对任何错误提出异议——错误可能让你拿不到更好的利率。"
+          }
+        }
+      }
+    },
+    "Budget the full monthly cost: loan payment, property taxes, insurance, and any HOA fee." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presupuesta el costo mensual completo: pago del préstamo, impuestos de la propiedad, seguro y cualquier cuota de HOA."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按每月总成本做预算：贷款月供、房产税、保险，以及业主协会（HOA）费用。"
+          }
+        }
+      }
+    },
+    "Plan the cash you'll need: the down payment (some loans start around 3%) plus 2–5% closing costs." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planifica el efectivo que necesitarás: el pago inicial (algunos préstamos empiezan cerca del 3%) más el 2–5% de costos de cierre."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "算好需要的现金：首付（有些贷款低至约 3%）加上 2–5% 的过户费用。"
+          }
+        }
+      }
+    },
+    "CFPB — credit reports and scores" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CFPB — informes y puntajes de crédito"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CFPB — 信用报告与信用分"
+          }
+        }
+      }
+    },
+    "A buyer's agent represents you, not the seller. You may be asked to sign a buyer agreement — read what it says about services and fees before signing." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un agente del comprador te representa a ti, no al vendedor. Puede que te pidan firmar un acuerdo de comprador: lee qué dice sobre servicios y honorarios antes de firmar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "买方经纪人代表你，而不是卖家。你可能被要求签买方协议——签字前读清楚服务内容和费用条款。"
+          }
+        }
+      }
+    },
+    "Interview 2–3 agents and ask how well they know your target neighborhoods." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrevista a 2–3 agentes y pregunta qué tanto conocen tus vecindarios objetivo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "面谈 2–3 位经纪人，问他们对你目标社区的熟悉程度。"
+          }
+        }
+      }
+    },
+    "Ask what their fee is and who pays it — get it in writing." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregunta cuál es su honorario y quién lo paga, y pídelo por escrito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "问清佣金多少、由谁支付——并落实到书面。"
+          }
+        }
+      }
+    },
+    "Check their license on your state's real-estate board site." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica su licencia en el sitio de la junta de bienes raíces de tu estado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你所在州的房地产管理机构网站核实其执照。"
+          }
+        }
+      }
+    },
+    "Your agent drafts the offer using recent sales of similar homes. The earnest-money deposit (often 1–3%) shows you're serious and counts toward your purchase at closing." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu agente redacta la oferta usando ventas recientes de casas similares. El depósito de buena fe (a menudo 1–3%) muestra que vas en serio y se acredita a tu compra en el cierre."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "经纪人会参考近期同类房屋的成交价来起草报价。诚意金（通常 1–3%）表明你是认真的，并会在过户时计入房款。"
+          }
+        }
+      }
+    },
+    "Keep the inspection, financing, and appraisal contingencies — they let you back out safely if something goes wrong." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén las contingencias de inspección, financiamiento y avalúo: te permiten retirarte con seguridad si algo sale mal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留验房、贷款和估价这几项附加条件（contingencies）——出问题时它们让你安全退出。"
+          }
+        }
+      }
+    },
+    "Earnest money goes to an escrow or title company — never wire money based on emailed instructions without calling to verify; wire fraud is common in home sales." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El depósito de buena fe va a una compañía de custodia (escrow) o de títulos. Nunca transfieras dinero solo por instrucciones de un correo sin llamar para verificar; el fraude de transferencias es común en la compra de casas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "诚意金要交给托管（escrow）或产权公司——绝不要只凭电子邮件里的指示就转账，务必先打电话核实；房产交易中的电汇诈骗很常见。"
+          }
+        }
+      }
+    },
+    "If the offer is accepted, save the signed purchase agreement." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si aceptan la oferta, guarda el contrato de compra firmado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "报价被接受后，保存签署的购房合同。"
+          }
+        }
+      }
+    },
+    "Some" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有一些"
+          }
+        }
+      }
+    },
+    "The lease is a binding contract — once you sign, its terms hold. Read every line and ask about anything unclear before you sign. If a promise isn't written in the lease, it doesn't count." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El contrato de arrendamiento es vinculante: una vez que firmas, sus términos rigen. Lee cada línea y pregunta por cualquier cosa que no entiendas antes de firmar. Si una promesa no está escrita en el contrato, no cuenta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "租约是有约束力的合同——一旦签字，条款就生效。签字前逐条阅读，任何不清楚的地方都要问。没有写进租约的承诺，都不算数。"
+          }
+        }
+      }
+    },
+    "No U.S. credit history? A landlord may ask for a bigger deposit, a co-signer, or a few months up front — ask what proof they'll accept instead (pay stubs, a bank letter, or an offer letter)." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Sin historial crediticio en EE. UU.? Un arrendador puede pedir un depósito mayor, un co-firmante o varios meses por adelantado; pregunta qué comprobantes aceptan en su lugar (recibos de pago, una carta del banco o una carta de oferta de empleo)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有美国信用记录？房东可能要求更高的押金、担保人（co-signer）或预付几个月房租——问清楚他们可以接受哪些替代证明（工资单、银行证明信或工作录用信）。"
+          }
+        }
+      }
+    },
+    "CFPB — renting a home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CFPB — alquilar una vivienda"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CFPB — 租房指南"
+          }
+        }
+      }
+    },
+    "Renters insurance covers your belongings (theft, fire, water damage) and your liability — usually $10–20 a month. Your landlord's insurance does not cover your things." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El seguro de inquilinos cubre tus pertenencias (robo, incendio, daños por agua) y tu responsabilidad civil, por lo general $10–20 al mes. El seguro del arrendador no cubre tus cosas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "租客保险保障你的个人财物（失窃、火灾、水损）以及你的责任险——通常每月 10–20 美元。房东的保险并不保你的东西。"
+          }
+        }
+      }
+    },
+    "Send proof to your landlord if the lease requires it." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía el comprobante a tu arrendador si el contrato lo exige."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果租约要求，把保险证明发给房东。"
+          }
+        }
+      }
+    },
+    "Gross pay is before deductions; net (take-home) pay is after. Check your first stub closely — pay mistakes are easiest to fix early." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El pago bruto es antes de las deducciones; el pago neto (lo que recibes) es después. Revisa bien tu primer recibo: los errores de pago son más fáciles de corregir al principio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "税前工资（gross）是扣款之前的金额；到手工资（net）是扣款之后的金额。仔细核对你的第一张工资条——发薪错误越早发现越容易更正。"
+          }
+        }
+      }
+    },
+    "Your pay rate and hours match your offer." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu tarifa de pago y tus horas coinciden con tu oferta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工资标准和工时与录用信一致。"
+          }
+        }
+      }
+    },
+    "Taxes withheld — federal, state, Social Security, and Medicare." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los impuestos retenidos: federal, estatal, Seguro Social y Medicare."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预扣的税款——联邦税、州税、社会安全税（Social Security）和医疗保险税（Medicare）。"
+          }
+        }
+      }
+    },
+    "Any benefit or retirement deductions you signed up for." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier deducción de beneficios o de jubilación que hayas elegido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你所选的任何福利或退休金扣款。"
+          }
+        }
+      }
+    },
+    "The money landed in the right bank account." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El dinero llegó a la cuenta bancaria correcta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "钱打进了正确的银行账户。"
+          }
+        }
+      }
+    },
+    "As a 1099 contractor, no taxes are taken out of your pay — you handle them yourself. Set aside roughly 25–30% of each payment, and expect to pay the IRS four times a year." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como contratista 1099, no se retienen impuestos de tu pago: los manejas tú. Aparta aproximadamente el 25–30% de cada pago y espera pagarle al IRS cuatro veces al año."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "作为 1099 合同工，你的报酬不会预扣任何税——要自己处理。每笔收入大约留出 25–30%，并预计每年要向 IRS 缴税四次。"
+          }
+        }
+      }
+    },
+    "Move about 25–30% of each payment into a separate savings 'tax' bucket." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mueve alrededor del 25–30% de cada pago a una cuenta de ahorros aparte para impuestos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把每笔收入的大约 25–30% 转入一个单独的储蓄'税金'账户。"
+          }
+        }
+      }
+    },
+    "Track your income and business expenses — expenses lower what you owe." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lleva un registro de tus ingresos y gastos del negocio: los gastos reducen lo que debes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录你的收入和业务支出——支出能降低你要缴的税。"
+          }
+        }
+      }
+    },
+    "Pay quarterly estimated taxes (federal, and state if it has income tax)." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paga los impuestos estimados trimestrales (federales, y estatales si tu estado tiene impuesto sobre la renta)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按季度缴纳预估税（联邦税，以及如果你所在州有所得税，还有州税）。"
+          }
+        }
+      }
+    },
+    "A Special Enrollment Period usually gives you 60 days from the life event to enroll — after that you generally wait for open enrollment, so start now." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un Período Especial de Inscripción suele darte 60 días desde el evento para inscribirte; después, por lo general debes esperar a la inscripción abierta, así que empieza ya."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特殊参保期通常给你从事件发生起 60 天来参保——过了这段时间一般就要等公开参保期，所以尽快开始。"
+          }
+        }
+      }
+    },
+    "Qualifying changes include losing other coverage, moving, marriage, a new baby or adoption, or certain income or household changes." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los cambios que califican incluyen perder otra cobertura, mudarte, casarte, tener o adoptar un bebé, o ciertos cambios de ingresos u hogar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "符合条件的变化包括：失去其他保险、搬家、结婚、新生或收养孩子，或某些收入或家庭情况的变化。"
+          }
+        }
+      }
+    },
+    "You may need to prove it — a coverage-loss letter, marriage or birth certificate, or a lease." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es posible que debas comprobarlo: una carta de pérdida de cobertura, un certificado de matrimonio o nacimiento, o un contrato de arrendamiento."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可能需要提供证明——失去保险的信函、结婚证或出生证明，或租约。"
+          }
+        }
+      }
+    },
+    "Apply at HealthCare.gov and report the life change, or start a new application." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solicita en HealthCare.gov e informa el cambio de vida, o inicia una nueva solicitud."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 HealthCare.gov 上申请并报告这次人生变化，或开始一份新的申请。"
+          }
+        }
+      }
+    },
+    "HealthCare.gov — Special Enrollment Period" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthCare.gov — Período Especial de Inscripción"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthCare.gov — 特殊参保期"
+          }
+        }
+      }
+    },
+    "Job-based coverage usually has a short sign-up window — about 30 days from your start date. Miss it and you may wait until the company's yearly open enrollment." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La cobertura del trabajo suele tener un plazo corto de inscripción: unos 30 días desde tu fecha de inicio. Si lo pierdes, quizá debas esperar a la inscripción abierta anual de la empresa."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公司提供的保险通常有一个很短的参保窗口——从入职日起大约 30 天。错过就可能要等公司每年一次的公开参保期。"
+          }
+        }
+      }
+    },
+    "Ask HR for the benefits guide and your enrollment deadline." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pídele a Recursos Humanos la guía de beneficios y tu fecha límite de inscripción."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向 HR 索取福利说明和你的参保截止日期。"
+          }
+        }
+      }
+    },
+    "Compare the plans offered — premium, deductible, and whether your doctors are in-network." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compara los planes ofrecidos: prima, deducible y si tus médicos están en la red."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比较所提供的计划——保费、自付额，以及你的医生是否在网络内。"
+          }
+        }
+      }
+    },
+    "Add your spouse or children if you're covering them." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrega a tu cónyuge o hijos si los vas a cubrir."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果要为配偶或子女投保，把他们加进去。"
+          }
+        }
+      }
+    },
+    "Your household size and income decide everything — whether you qualify for Medicaid and how large your Marketplace savings are. Lawfully present immigrants can use the Marketplace and often qualify for these savings; undocumented adults generally can't, though some states cover children and pregnancy regardless of status." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El tamaño de tu hogar y tus ingresos lo deciden todo: si calificas para Medicaid y qué tan grandes son tus ahorros del Marketplace. Los inmigrantes con presencia legal pueden usar el Marketplace y a menudo califican para estos ahorros; los adultos indocumentados por lo general no, aunque algunos estados cubren a niños y el embarazo sin importar el estatus."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家庭人数和收入决定一切——你是否符合 Medicaid 资格，以及你能获得多少市场补贴。有合法身份的移民可以使用市场并且通常符合补贴资格；无证成年人一般不行，但部分州无论身份都为儿童和孕期提供保障。"
+          }
+        }
+      }
+    },
+    "Household size and everyone's income — pay stubs or last year's tax return." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El tamaño del hogar y los ingresos de todos: recibos de pago o la declaración de impuestos del año pasado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家庭人数和每个人的收入——工资单或去年的报税表。"
+          }
+        }
+      }
+    },
+    "Social Security numbers for anyone applying who has one." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Números de Seguro Social para quienes soliciten y los tengan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "申请人中有社会安全号（SSN）的，准备好号码。"
+          }
+        }
+      }
+    },
+    "Immigration document numbers — green card, work permit (EAD), or I-94 — for anyone applying." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Números de documentos de inmigración: tarjeta de residencia, permiso de trabajo (EAD) o I-94, para cada solicitante."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "申请人的移民证件号码——绿卡、工作许可（EAD）或 I-94。"
+          }
+        }
+      }
+    },
+    "A list of doctors you want to keep and prescriptions you take, to check they're covered." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una lista de los médicos que quieres conservar y los medicamentos que tomas, para verificar que estén cubiertos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一份你想继续看的医生和常吃的处方药清单，用来核对是否在保障范围内。"
+          }
+        }
+      }
+    },
+    "An email address to create your account." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una dirección de correo electrónico para crear tu cuenta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一个用来创建账户的电子邮箱。"
+          }
+        }
+      }
+    },
+    "HealthCare.gov — coverage for immigrants" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthCare.gov — cobertura para inmigrantes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthCare.gov — 移民的保险保障"
+          }
+        }
+      }
+    },
+    "Income for everyone in your household" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresos de todas las personas de tu hogar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家庭中每个人的收入"
+          }
+        }
+      }
+    },
+    "Immigration document numbers" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Números de documentos de inmigración"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移民证件号码"
+          }
+        }
+      }
+    },
+    "Plans are grouped by metal level — Bronze, Silver, Gold, Platinum. Bronze has the lowest monthly premium but you pay more when you get care; Gold and Platinum cost more each month but less at the doctor. If your income qualifies, choose a Silver plan to unlock extra cost-sharing savings." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los planes se agrupan por nivel de metal: Bronce, Plata, Oro y Platino. El Bronce tiene la prima mensual más baja pero pagas más al recibir atención; Oro y Platino cuestan más al mes pero menos en el consultorio. Si tus ingresos califican, elige un plan Plata para desbloquear ahorros adicionales en costos compartidos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划按金属等级分类——铜、银、金、铂。铜的月保费最低，但就医时自己付得更多；金和铂每月更贵，但看病时更便宜。如果你的收入符合条件，选银级计划可解锁额外的费用分摊补贴。"
+          }
+        }
+      }
+    },
+    "Premium — what you pay every month, even with no visits." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prima: lo que pagas cada mes, aunque no tengas consultas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保费——每月都要付的钱，即使没看病。"
+          }
+        }
+      }
+    },
+    "Deductible — what you pay yourself before the plan starts paying." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deducible: lo que pagas tú antes de que el plan empiece a pagar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自付额（deductible）——在计划开始付款之前你自己要先付的部分。"
+          }
+        }
+      }
+    },
+    "Copay or coinsurance — your share at each visit or prescription." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copago o coseguro: tu parte en cada consulta o receta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "挂号自付或共同保险——每次看病或买药时你要承担的部分。"
+          }
+        }
+      }
+    },
+    "Out-of-pocket max — the most you'll pay in a year; after that the plan pays 100%." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máximo de tu bolsillo: lo más que pagarás en un año; después de eso el plan paga el 100%."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自付上限——你一年最多要付的金额；达到后计划支付 100%。"
+          }
+        }
+      }
+    },
+    "Check your doctors are in-network and your prescriptions are on the plan's drug list (formulary)." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica que tus médicos estén en la red y que tus recetas estén en la lista de medicamentos del plan (formulario)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认你的医生在网络内，你的处方药在计划的药品清单（formulary）上。"
+          }
+        }
+      }
+    },
+    "HealthCare.gov — how to pick a plan" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthCare.gov — cómo elegir un plan"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthCare.gov — 如何挑选计划"
+          }
+        }
+      }
+    },
+    "Even if your income is low, lawfully present immigrants who don't yet qualify for Medicaid can often still get Marketplace savings." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aunque tus ingresos sean bajos, los inmigrantes con presencia legal que aún no califican para Medicaid a menudo pueden obtener ahorros del Marketplace."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即使收入较低，尚不符合 Medicaid 资格的合法身份移民，通常仍可获得市场补贴。"
+          }
+        }
+      }
+    },
     "… PLUS List C (work): Social Security card or birth certificate." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12778,6 +13917,193 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这里还没有内容——两种开始方式"
+          }
+        }
+      }
+    },
+    "Rent, the due date, late fees, and lease length." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El alquiler, la fecha de vencimiento, los recargos por mora y la duración del contrato."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "租金、到期日、滞纳金和租期长度。"
+          }
+        }
+      }
+    },
+    "The deposit amount — and exactly what you must do to get it back." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El monto del depósito, y exactamente qué debes hacer para recuperarlo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "押金金额——以及要拿回押金你到底得做些什么。"
+          }
+        }
+      }
+    },
+    "Which utilities you pay vs. the landlord, plus rules on pets and early-termination fees." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué servicios pagas tú y cuáles el arrendador, además de las reglas sobre mascotas y los cargos por terminación anticipada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "哪些水电费由你付、哪些由房东付，以及关于宠物和提前解约费的规定。"
+          }
+        }
+      }
+    },
+    "Pay by a traceable method — a check or bank transfer, not cash without a receipt — and get a dated receipt. It's your proof when it's time to get the deposit back." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paga por un método rastreable —cheque o transferencia bancaria, no efectivo sin recibo— y consigue un recibo con fecha. Es tu comprobante cuando llegue el momento de recuperar el depósito."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用可追溯的方式付款——支票或银行转账，别用没有收据的现金——并拿到写明日期的收据。这是你日后要回押金时的凭证。"
+          }
+        }
+      }
+    },
+    "Photos of any pre-existing damage are how you get your full deposit back — the landlord can't charge you for what was already there. Take them the day you get the keys, before you move anything in." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las fotos de cualquier daño preexistente son la forma de recuperar todo tu depósito: el arrendador no puede cobrarte por lo que ya estaba. Tómalas el día que recibas las llaves, antes de meter nada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍下任何原有损坏的照片，才能拿回全额押金——房东不能就本来就存在的问题向你收费。在拿到钥匙那天、搬入任何东西之前就拍好。"
+          }
+        }
+      }
+    },
+    "Note any existing damage in writing and give the landlord a copy." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anota por escrito cualquier daño existente y dale una copia al arrendador."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把任何原有损坏书面记录下来，并给房东一份副本。"
+          }
+        }
+      }
+    },
+    "Set up autopay or the tenant portal so you're never late — late rent means fees, and can hurt the references you'll need for your next place. Keep proof of each payment." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configura el pago automático o el portal del inquilino para no atrasarte nunca: el atraso genera recargos y puede perjudicar las referencias que necesitarás para tu próximo lugar. Guarda el comprobante de cada pago."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置自动扣款或使用租户门户，这样就绝不会逾期——租金逾期会产生费用，还可能影响你下次租房需要的推荐。保留每笔付款的凭证。"
+          }
+        }
+      }
+    },
+    "Direct deposit sends your pay straight to your bank account. You'll need your routing number and account number — both are on a check or in your banking app. Double-check them; a typo can delay your first pay." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El depósito directo envía tu pago directamente a tu cuenta bancaria. Necesitarás tu número de ruta y tu número de cuenta, que están en un cheque o en tu app bancaria. Revísalos bien; un error de tipeo puede retrasar tu primer pago."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直接存款会把工资直接打入你的银行账户。你需要银行路由号和账号——两者都在支票上或你的银行App里。仔细核对；填错一个数字可能会延误你的第一笔工资。"
+          }
+        }
+      }
+    },
+    "Have a voided check ready, if HR asks for one." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten a mano un cheque anulado, por si Recursos Humanos lo pide."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果人力资源部要求，准备一张作废支票。"
+          }
+        }
+      }
+    },
+    "The insurance company bills you directly for this first payment — not HealthCare.gov — so watch for that first bill (mail, email, or their site) and pay by the due date, or your start date won't stick." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La compañía de seguros te cobra directamente este primer pago —no HealthCare.gov—, así que está atento a esa primera factura (correo, email o su sitio web) y paga antes de la fecha límite, o tu fecha de inicio no quedará firme."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这第一笔付款由保险公司直接向你收取——不是 HealthCare.gov——所以要留意第一张账单（邮寄、电子邮件或他们的网站），并在到期日前付清，否则你的保险生效日期就不作数了。"
+          }
+        }
+      }
+    },
+    "Keep your plan name, member ID, and the member-services phone number handy — they're all on your insurance card, and you'll need them at every doctor visit and pharmacy." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ten a mano el nombre de tu plan, tu número de miembro y el teléfono de servicio al miembro: todos están en tu tarjeta del seguro, y los necesitarás en cada visita al médico y en la farmacia."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把你的保险计划名称、会员ID和会员服务电话放在手边——它们都在你的保险卡上，每次看病和去药房都会用到。"
           }
         }
       }

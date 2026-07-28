@@ -334,6 +334,27 @@ extension Guide {
     private static func newJobDetail(_ text: String, _ state: String) -> StepDetail? {
         if text.hasPrefix("Complete Form I-9") { return i9Detail }
         if text.hasPrefix("Enroll in benefits") { return benefitsDetail }
+        if text.hasPrefix("Set up direct deposit") {
+            return StepDetail(
+                explanation: "Direct deposit sends your pay straight to your bank account. You'll need your routing number and account number — both are on a check or in your banking app. Double-check them; a typo can delay your first pay.",
+                miniChecklist: ["Have a voided check ready, if HR asks for one."])
+        }
+        if text.hasPrefix("Check your first paycheck") {
+            return StepDetail(
+                explanation: "Gross pay is before deductions; net (take-home) pay is after. Check your first stub closely — pay mistakes are easiest to fix early.",
+                miniChecklist: ["Your pay rate and hours match your offer.",
+                                "Taxes withheld — federal, state, Social Security, and Medicare.",
+                                "Any benefit or retirement deductions you signed up for.",
+                                "The money landed in the right bank account."])
+        }
+        if text.hasPrefix("Set aside money for taxes") {
+            return StepDetail(
+                explanation: "As a 1099 contractor, no taxes are taken out of your pay — you handle them yourself. Set aside roughly 25–30% of each payment, and expect to pay the IRS four times a year.",
+                miniChecklist: ["Move about 25–30% of each payment into a separate savings 'tax' bucket.",
+                                "Track your income and business expenses — expenses lower what you owe.",
+                                "Pay quarterly estimated taxes (federal, and state if it has income tax)."],
+                links: [StepLink(label: "IRS — self-employed tax center", url: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center")])
+        }
         return nil
     }
     static let i9Detail = StepDetail(
@@ -463,7 +484,35 @@ extension Guide {
 
     // MARK: Renting a new place (settling into the new home)
     private static func rentingDetail(_ text: String, _ state: String) -> StepDetail? {
-        text.contains("electricity, gas, water, and internet") ? utilitiesDetail : nil
+        if text.contains("electricity, gas, water, and internet") { return utilitiesDetail }
+        if text.hasPrefix("Tour the unit and read the lease") {
+            return StepDetail(
+                explanation: "The lease is a binding contract — once you sign, its terms hold. Read every line and ask about anything unclear before you sign. If a promise isn't written in the lease, it doesn't count.",
+                miniChecklist: ["Rent, the due date, late fees, and lease length.",
+                                "The deposit amount — and exactly what you must do to get it back.",
+                                "Which utilities you pay vs. the landlord, plus rules on pets and early-termination fees.",
+                                "No U.S. credit history? A landlord may ask for a bigger deposit, a co-signer, or a few months up front — ask what proof they'll accept instead (pay stubs, a bank letter, or an offer letter)."],
+                links: [StepLink(label: "CFPB — renting a home", url: "https://www.consumerfinance.gov/renting/")])
+        }
+        if text.hasPrefix("Pay the security deposit and first month's rent") {
+            return StepDetail(
+                explanation: "Pay by a traceable method — a check or bank transfer, not cash without a receipt — and get a dated receipt. It's your proof when it's time to get the deposit back.")
+        }
+        if text.hasPrefix("Photograph the unit's condition") {
+            return StepDetail(
+                explanation: "Photos of any pre-existing damage are how you get your full deposit back — the landlord can't charge you for what was already there. Take them the day you get the keys, before you move anything in.",
+                miniChecklist: ["Note any existing damage in writing and give the landlord a copy."])
+        }
+        if text.hasPrefix("Get renters insurance") {
+            return StepDetail(
+                explanation: "Renters insurance covers your belongings (theft, fire, water damage) and your liability — usually $10–20 a month. Your landlord's insurance does not cover your things.",
+                miniChecklist: ["Send proof to your landlord if the lease requires it."])
+        }
+        if text.hasPrefix("Set up how you'll pay rent") {
+            return StepDetail(
+                explanation: "Set up autopay or the tenant portal so you're never late — late rent means fees, and can hurt the references you'll need for your next place. Keep proof of each payment.")
+        }
+        return nil
     }
     static let rentingNewPlace = Guide(
         id: "renting",
@@ -551,6 +600,29 @@ extension Guide {
                                 "Ask each lender for a Loan Estimate and compare the APR and fees, not just the rate.",
                                 "Get the pre-approval letter in writing."],
                 links: [StepLink(label: "CFPB — owning a home", url: "https://www.consumerfinance.gov/owning-a-home/")])
+        }
+        if text.hasPrefix("Check your credit and set a budget") {
+            return StepDetail(
+                explanation: "Lenders decide your rate from your credit and your debt-to-income — check your reports early so there's time to fix errors.",
+                miniChecklist: ["Get your free credit reports at AnnualCreditReport.com — the official, federally authorized site.",
+                                "Dispute any errors before you apply — they can cost you a better rate.",
+                                "Budget the full monthly cost: loan payment, property taxes, insurance, and any HOA fee.",
+                                "Plan the cash you'll need: the down payment (some loans start around 3%) plus 2–5% closing costs."],
+                links: [StepLink(label: "CFPB — credit reports and scores", url: "https://www.consumerfinance.gov/consumer-tools/credit-reports-and-scores/")])
+        }
+        if text.hasPrefix("Find a real estate agent") {
+            return StepDetail(
+                explanation: "A buyer's agent represents you, not the seller. You may be asked to sign a buyer agreement — read what it says about services and fees before signing.",
+                miniChecklist: ["Interview 2–3 agents and ask how well they know your target neighborhoods.",
+                                "Ask what their fee is and who pays it — get it in writing.",
+                                "Check their license on your state's real-estate board site."])
+        }
+        if text.hasPrefix("Make an offer") {
+            return StepDetail(
+                explanation: "Your agent drafts the offer using recent sales of similar homes. The earnest-money deposit (often 1–3%) shows you're serious and counts toward your purchase at closing.",
+                miniChecklist: ["Keep the inspection, financing, and appraisal contingencies — they let you back out safely if something goes wrong.",
+                                "Earnest money goes to an escrow or title company — never wire money based on emailed instructions without calling to verify; wire fraud is common in home sales.",
+                                "If the offer is accepted, save the signed purchase agreement."])
         }
         return nil
     }
@@ -976,6 +1048,27 @@ extension Guide {
                                 "Your photos and the other driver's info.",
                                 "Ask about your deductible, a rental car, and the timeline."])
         }
+        if text.hasPrefix("Get medical care") {
+            return StepDetail(
+                explanation: "Adrenaline can hide injuries for hours or days — getting checked soon also ties any treatment to the accident, which the insurance claim will ask about.",
+                miniChecklist: ["See a doctor or urgent care within a day or two, even if you feel okay.",
+                                "Tell them it was a car accident, so it's in the record.",
+                                "Keep every bill, record, and receipt — the claim can reimburse them."])
+        }
+        if text.hasPrefix("If the car isn't drivable") {
+            return StepDetail(
+                explanation: "Call your insurer before the tow if you can — many policies include towing, and an approved shop avoids surprise fees. Don't let the car sit in a storage lot; storage fees add up daily.",
+                miniChecklist: ["Ask your insurer about roadside/tow coverage and approved shops.",
+                                "Tow to a repair shop or your home — not a storage lot.",
+                                "Save the tow receipt and write down where the car is."])
+        }
+        if text.hasPrefix("Get a repair estimate") {
+            return StepDetail(
+                explanation: "The insurer usually inspects the damage — an adjuster visit or photos you upload — before approving repairs.",
+                miniChecklist: ["Get a written estimate from a shop you trust.",
+                                "Don't authorize repairs before the claim is approved, unless you're paying yourself.",
+                                "Ask whether the shop can bill the insurer directly."])
+        }
         return nil
     }
 
@@ -1341,6 +1434,7 @@ extension Guide {
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", healthInsuranceDetail),
                 notes: ["Marketplace plans often come with savings (subsidies) based on your income.",
+                        "Even if your income is low, lawfully present immigrants who don't yet qualify for Medicaid can often still get Marketplace savings.",
                         "No coverage yet? Community health centers see you on a sliding scale.",
                         referenceNote],
                 confidence: 1)
@@ -1356,6 +1450,54 @@ extension Guide {
             return StepDetail(
                 explanation: "Medicaid and CHIP are free or low-cost coverage for lower incomes (CHIP covers kids).",
                 links: [StepLink(label: "HealthCare.gov — Medicaid & CHIP", url: "https://www.healthcare.gov/medicaid-chip/")])
+        }
+        if text.hasPrefix("A recent life change") {
+            return StepDetail(
+                explanation: "A Special Enrollment Period usually gives you 60 days from the life event to enroll — after that you generally wait for open enrollment, so start now.",
+                miniChecklist: ["Qualifying changes include losing other coverage, moving, marriage, a new baby or adoption, or certain income or household changes.",
+                                "You may need to prove it — a coverage-loss letter, marriage or birth certificate, or a lease.",
+                                "Apply at HealthCare.gov and report the life change, or start a new application."],
+                links: [StepLink(label: "HealthCare.gov — Special Enrollment Period",
+                                 url: "https://www.healthcare.gov/coverage-outside-open-enrollment/special-enrollment-period/")])
+        }
+        if text.hasPrefix("Enroll through your job") {
+            return StepDetail(
+                explanation: "Job-based coverage usually has a short sign-up window — about 30 days from your start date. Miss it and you may wait until the company's yearly open enrollment.",
+                miniChecklist: ["Ask HR for the benefits guide and your enrollment deadline.",
+                                "Compare the plans offered — premium, deductible, and whether your doctors are in-network.",
+                                "Add your spouse or children if you're covering them.",
+                                "Submit before the deadline and save the confirmation."])
+        }
+        if text.hasPrefix("Have your household size and income ready") {
+            return StepDetail(
+                explanation: "Your household size and income decide everything — whether you qualify for Medicaid and how large your Marketplace savings are. Lawfully present immigrants can use the Marketplace and often qualify for these savings; undocumented adults generally can't, though some states cover children and pregnancy regardless of status.",
+                miniChecklist: ["Household size and everyone's income — pay stubs or last year's tax return.",
+                                "Social Security numbers for anyone applying who has one.",
+                                "Immigration document numbers — green card, work permit (EAD), or I-94 — for anyone applying.",
+                                "A list of doctors you want to keep and prescriptions you take, to check they're covered.",
+                                "An email address to create your account."],
+                links: [StepLink(label: "HealthCare.gov — coverage for immigrants",
+                                 url: "https://www.healthcare.gov/immigrants/")],
+                needed: ["Income for everyone in your household", "Immigration document numbers"])
+        }
+        if text.hasPrefix("Compare plans") {
+            return StepDetail(
+                explanation: "Plans are grouped by metal level — Bronze, Silver, Gold, Platinum. Bronze has the lowest monthly premium but you pay more when you get care; Gold and Platinum cost more each month but less at the doctor. If your income qualifies, choose a Silver plan to unlock extra cost-sharing savings.",
+                miniChecklist: ["Premium — what you pay every month, even with no visits.",
+                                "Deductible — what you pay yourself before the plan starts paying.",
+                                "Copay or coinsurance — your share at each visit or prescription.",
+                                "Out-of-pocket max — the most you'll pay in a year; after that the plan pays 100%.",
+                                "Check your doctors are in-network and your prescriptions are on the plan's drug list (formulary)."],
+                links: [StepLink(label: "HealthCare.gov — how to pick a plan",
+                                 url: "https://www.healthcare.gov/choose-a-plan/comparing-plans/")])
+        }
+        if text.hasPrefix("If you pick a Marketplace plan, pay the first premium") {
+            return StepDetail(
+                explanation: "The insurance company bills you directly for this first payment — not HealthCare.gov — so watch for that first bill (mail, email, or their site) and pay by the due date, or your start date won't stick.")
+        }
+        if text.hasPrefix("After you enroll, save") {
+            return StepDetail(
+                explanation: "Keep your plan name, member ID, and the member-services phone number handy — they're all on your insurance card, and you'll need them at every doctor visit and pharmacy.")
         }
         return nil
     }
