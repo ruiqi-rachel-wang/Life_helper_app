@@ -31,7 +31,7 @@
    Confirm the privacy policy URL field is `https://cuevi-legal.pages.dev/privacy`.
 3. ☐ **Upload the archive (already built & staged 2026-07-08):** the signed
    1.0 (3) archive sits in Xcode's Organizer. Xcode → Window ▸ Organizer ▸
-   Archives → select "Cuevi-build3" → **Distribute App ▸ App Store Connect ▸
+   Archives → select "Tadah-build3" → **Distribute App ▸ App Store Connect ▸
    Upload** (sign in if asked). Wait for processing (~10–30 min), then in
    TestFlight add build 3 to the tester group and paste the notes below.
    (CLI upload was attempted — blocked on Apple ID auth, which only Xcode has.)
@@ -54,7 +54,7 @@ This build is a big update — thank you for testing!
 - 中文/Español users: set your language in My Settings and scan — is the
   explanation clear?
 - New: the app now sends anonymous usage counts (never your documents or any
-  text) so we can see if Cuevi helps. You can turn this off in My Settings →
+  text) so we can see if Tadah helps. You can turn this off in My Settings →
   Privacy.
 
 **中文**
@@ -65,4 +65,4 @@ This build is a big update — thank you for testing!
 - 试试生活指南："搬家"或"租房"现在会问你的邮编，并列出你所在地区的水电网公司。列出的公司对吗？
 - 提醒：改一改某个事项的提醒时间；看看早上 9 点的提醒有没有来。新功能：我的设置 → 隐私 → "通知中隐藏内容"。
 - 在"我的设置"里把语言设为中文再扫描——解释清楚吗？
-- 新说明：应用现在会发送匿名使用统计（绝不包含你的文件或任何文字），帮助我们了解 Cuevi 是否有用。可在 我的设置 → 隐私 里关闭。
+- 新说明：应用现在会发送匿名使用统计（绝不包含你的文件或任何文字），帮助我们了解 Tadah 是否有用。可在 我的设置 → 隐私 里关闭。

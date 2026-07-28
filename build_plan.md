@@ -1,4 +1,4 @@
-# Cuevi iOS — Build Plan & Architecture
+# Tadah iOS — Build Plan & Architecture
 
 > Canonical build reference. Living doc — update as decisions change.
 > Companion docs: the Phase 1 Spec (HTML render), design prototype, and
@@ -51,7 +51,7 @@
   on every request, restricts the path, and supports an optional `PROXY_TOKEN`; the app
   sends `max_tokens` + the token. **Rachel's actions before TestFlight:** rotate the
   OpenAI key (it was in earlier builds), update the Worker secret, add a Cloudflare
-  rate-limit rule, and set up the `support.cuevi@gmail.com` inbox.
+  rate-limit rule, and set up the `support.tadah@gmail.com` inbox.
 - **Privacy policy corrected:** scanning sends the FULL recognized text (which may
   include sensitive health/financial/immigration/name/account info) to OpenAI; removed
   the false "non-sensitive only / names not sent / local-only" claims; noted OpenAI's
@@ -63,22 +63,22 @@
 - **Status now:** 14 guides; real C+tag app icon (replaced the placeholder); legal shown
   in-app via `LegalContent` + `LegalDocumentView` (the old `LegalConfig` was deleted).
 
-**Changed 2026-06-19 (renamed to Cuevi — FULL rename):**
-- **The whole project is now "Cuevi"** (history: Notie → briefly Plaino → Cuevi). Unlike
+**Changed 2026-06-19 (renamed to Tadah — FULL rename):**
+- **The whole project is now "Tadah"** (history: Notie → briefly Plaino → Tadah). Unlike
   the earlier Plaino pass, this rename is COMPLETE, including the internal Xcode labels:
-  the project (`Cuevi.xcodeproj`), **target / scheme / Swift module** (`Cuevi`), test
-  targets (`CueviTests` / `CueviUITests`), the source folders (`Cuevi/Cuevi/`, …), bundle
-  IDs (`com.rachelwang.Cuevi`), display name, every in-app string + String Catalog
-  (en/zh/es), the `@main` struct (`CueviApp`), Theme files (`Color+Cuevi.swift`,
-  `Font+Cuevi.swift`), legal docs, and the Cloudflare Worker (`cuevi-ai`). Build commands
-  are now `-project Cuevi/Cuevi.xcodeproj -scheme Cuevi`; tests `@testable import Cuevi`.
+  the project (`Tadah.xcodeproj`), **target / scheme / Swift module** (`Tadah`), test
+  targets (`TadahTests` / `TadahUITests`), the source folders (`Tadah/Tadah/`, …), bundle
+  IDs (`com.rachelwang.Tadah`), display name, every in-app string + String Catalog
+  (en/zh/es), the `@main` struct (`TadahApp`), Theme files (`Color+Tadah.swift`,
+  `Font+Tadah.swift`), legal docs, and the Cloudflare Worker (`cuevi-ai`). Build commands
+  are now `-project Tadah/Tadah.xcodeproj -scheme Tadah`; tests `@testable import Tadah`.
   Only the **outer working-dir folder `notie_life_helper_app/` is unchanged** (local
   container; the GitHub repo stays `Life_helper_app`).
 - **App icon** is a placeholder (three-bar mark on cream) — replace with a real exported
-  PNG at `Cuevi/Cuevi/Assets.xcassets/AppIcon.appiconset/icon-1024.png`. (The generator
+  PNG at `Tadah/Tadah/Assets.xcassets/AppIcon.appiconset/icon-1024.png`. (The generator
   script was removed.)
 - **Legal depersonalized + in-app**: no personal name/email; contact is a placeholder role
-  address `support.cuevi@gmail.com` (set up a real inbox before publishing). Privacy/Terms now
+  address `support.tadah@gmail.com` (set up a real inbox before publishing). Privacy/Terms now
   render **in-app** (`LegalContent` + `LegalDocumentView`); the unused `LegalConfig` was deleted.
 - **Guide content localization (started):** sensitive guides translate on-device via the
   String Catalog (`ExtractionResult.localized()`), no AI. Done: **bank account, taxes**.
@@ -196,9 +196,9 @@ Folders are plain-English and created only when they have content (grow
 incrementally). Today's layout:
 
 ```
-Cuevi/Cuevi/
+Tadah/Tadah/
 ├── App/                      ← entry point + app shell
-│   ├── CueviApp.swift        ← @main; launches RootTabView
+│   ├── TadahApp.swift        ← @main; launches RootTabView
 │   └── RootTabView.swift     ← the 4-tab bar (Inbox · Guides · Add · Settings)
 │
 ├── Screens/                  ← one SwiftUI view per screen (the build plan's "Features")
@@ -213,8 +213,8 @@ Cuevi/Cuevi/
 │   └── ActionItem.swift      ← ActionItem + ChecklistStep + WorkStatus + samples
 │
 ├── Theme/                    ← the app's visual identity
-│   ├── Color+Cuevi.swift     ← all color tokens
-│   └── Font+Cuevi.swift      ← serif / sans / mono scale
+│   ├── Color+Tadah.swift     ← all color tokens
+│   └── Font+Tadah.swift      ← serif / sans / mono scale
 │
 └── Assets.xcassets
 ```
@@ -258,11 +258,11 @@ parallel English extraction). Not Phase-1-core; a strong accessibility win for
 the ESL target. Builds on the single-language setup — this is the "show the
 English when you need it" escape hatch, not a full live re-translate.
 
-### CueviTests/ (auto-created with the project)
+### TadahTests/ (auto-created with the project)
 
 ```
-CueviTests/        RecurrenceTests, RuleBasedParserTests, …   (Wk 2+)
-CueviUITests/      basic tap-through (auto-generated)
+TadahTests/        RecurrenceTests, RuleBasedParserTests, …   (Wk 2+)
+TadahUITests/      basic tap-through (auto-generated)
 ```
 
 ### Data flow
@@ -335,9 +335,9 @@ The README handoff scoped the spec down. Where they conflict, **README wins**:
 - [ ] Apple Developer account — **deferred until Week 6 (intentional)**
 - [x] Sign in to Xcode with free Apple ID → "Personal Team"
 - [x] Create OpenAI account, generate API key, set $20/mo spending cap
-- [x] Create Cuevi Xcode project (SwiftUI, Swift, Storage: None, Tests: ✓)
+- [x] Create Tadah Xcode project (SwiftUI, Swift, Storage: None, Tests: ✓)
 - [x] Set up folder structure (flat for now — grow incrementally as features need them)
-- [x] Write design tokens (Color+Cuevi.swift, Font+Cuevi.swift)
+- [x] Write design tokens (Color+Tadah.swift, Font+Tadah.swift)
 - [ ] Pick product name (test "Noted" vs "Handle" with 5 target users)
 - [ ] Pick launch language (EN, 中文, or ES)
 
@@ -566,7 +566,7 @@ before handing the app to testers.
    - Tab renamed Settings → **Profile** (person icon); `AppRouter.Tab.settings`
      → `.profile`; `SettingsView` → `ProfileView`.
    - Layout: Guest profile header · **Language** picker on top · coming-soon
-     **Account** rows (Sign in / Family sharing / Cuevi Plus, "SOON" chips) ·
+     **Account** rows (Sign in / Family sharing / Tadah Plus, "SOON" chips) ·
      a **Notifications** row that shows the current permission status and taps
      through to iOS Settings (added 2026-06-18) · DEBUG test reminder in its own
      labeled block. (There is NO keep-original-scans toggle — that earlier note
@@ -629,7 +629,7 @@ before handing the app to testers.
      asking testers to Export is impractical. Apple gives crashes + sessions via
      App Store Connect, but NOT custom events. Chose **TelemetryDeck** (privacy-
      first, no PII, free tier) over Firebase to protect the privacy positioning
-     the ESL/immigrant audience depends on; Firebase only wins if Cuevi later goes
+     the ESL/immigrant audience depends on; Firebase only wins if Tadah later goes
      cross-platform (Android + accounts), and a backend can carry analytics then.
      This consciously revisits the "no analytics dashboard" hard-NO.
    - **Integration is a ~10-min add, no lock-in:** every event already flows
@@ -653,7 +653,7 @@ before handing the app to testers.
      all guides (currently the heavy ones have it).
    - **Per-state appointment deep-links** — today the DMV link is each state's
      official homepage; add verified "book appointment" deep-links for big states.
-   - **UI tap-through tests — ✓ DONE (2026-06-15).** `CueviUITests`: `testTabsNavigate`
+   - **UI tap-through tests — ✓ DONE (2026-06-15).** `TadahUITests`: `testTabsNavigate`
      (taps Add/Profile/Guides/Inbox, asserts each screen renders) and
      `testGuideFlowAddsItemToInbox` (Taxes guide → answer → Build → Review → Add →
      asserts the item lands in the Inbox). Uses a sensitive guide so it's
@@ -687,7 +687,7 @@ hands.
      store on failure). Decide before the first TestFlight build so a future schema
      change doesn't crash testers' installed app.
    - **Notification permission timing (QA finding 2026-06-15):** today the prompt
-     fires at launch (`CueviApp` `.task`, skipped under `-uitest`). A tester sees it
+     fires at launch (`TadahApp` `.task`, skipped under `-uitest`). A tester sees it
      before understanding what reminders are, which can depress opt-in — and
      reminders are the core of the launch metric. Move the request to a contextual
      moment (e.g. first time a reminder is actually scheduled) before widening the
@@ -744,7 +744,7 @@ first 10-user beta. It matters before a **paid** or **public** App Store launch.
   (Photos + Other), App Functionality, Not linked, No tracking**; everything else Not
   Collected. **TODO:** enter in App Store Connect at submission; update if analytics/
   accounts are ever added.
-- **Liability disclaimers — the BIGGEST risk for Cuevi** — ✓ DRAFTED (`legal/terms-of-service.md`)
+- **Liability disclaimers — the BIGGEST risk for Tadah** — ✓ DRAFTED (`legal/terms-of-service.md`)
   AND ✓ IN-APP. Terms cover "informational only — not legal/tax/immigration/financial/
   medical advice," no-warranty, and limitation of liability. In-app: a persistent
   disclaimer in **Profile → About & Legal**, the per-guide `referenceNote`, and the
@@ -771,7 +771,7 @@ first 10-user beta. It matters before a **paid** or **public** App Store launch.
   business expenses.
 
 ### Worth doing
-- **Trademark check** on "Cuevi" (USPTO) before investing in the name; consider registering.
+- **Trademark check** on "Tadah" (USPTO) before investing in the name; consider registering.
 - **Security**: OpenAI key off-device (Week 9 Worker), per-IP rate-limit, never log PII.
 - **E&O / liability insurance** once there's real usage/revenue.
 - **COPPA** — not aimed at under-13s; keep it that way (no child accounts).
@@ -892,7 +892,7 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 
 ### Unit tests (XCTest)
 - Auto-generated test target when you create the project
-- Write `XCTestCase` subclasses in `CueviTests/`
+- Write `XCTestCase` subclasses in `TadahTests/`
 - Run: **Cmd+U** in Xcode, runs in simulator, ~5 seconds
 - Test the `Core/` layer aggressively — it has no platform dependencies
 
@@ -927,11 +927,60 @@ Every layer produces this same type. ReviewViewModel just reads it. This is the 
 
 ## Still-open product decisions (not code-blocking)
 
-- [x] Final product name — **Cuevi** (chosen 2026-06-19; sole proprietor: Ruiqi Wang, New York)
+- [x] Final product name — **Tadah** (chosen 2026-06-19; sole proprietor: Ruiqi Wang, New York)
 - [ ] Launch language default (EN / 中文 / ES) — Settings picker is Week 8
 - [x] App icon — the C + terracotta-tag mark (installed 2026-06-20)
 - [ ] Domain name (optional, ~$12/year — for a landing page later)
 
 ---
 
-*Last updated: 2026-06-13. Update this doc whenever architecture decisions change.*
+## Guide-depth pass + Build-credit guide (2026-07-19, for build 3)
+
+Tester complaint: guide steps were headlines with no "how" behind them.
+
+- **StepDetailView bug found & fixed**: read mode never rendered `explanation`,
+  `links`, or `script` — every authored explanation and official-link button in
+  the app was invisible (link-only details even showed "No details yet").
+  Reader now shows: explanation ▸ CHECKLIST ▸ WHAT TO SAY ▸ WHAT YOU'LL NEED ▸
+  OFFICIAL LINKS ▸ WHAT THESE MEAN.
+- **Depth filled in** (EN/中文/ES, ~135 new catalog keys; catalog now 902):
+  health insurance (6 steps: SEP, job window, prep+immigrant eligibility, metal
+  tiers/cost words, binder payment, save IDs), renting (lease read-through +
+  no-credit-history workaround, deposit receipts, move-in photos, renters
+  insurance, rent setup), new job (direct deposit, first-paycheck audit, 1099
+  set-aside), car accident (hidden injuries, tow/storage fees, estimate), buying
+  (credit/budget, buyer's agent, offer/earnest money + wire-fraud warning).
+- **New guide #15: `build_credit`** (finance, sensitive, CFPB source) — secured
+  cards / credit-builder loans / authorized user, utilization + autopay, CPN
+  scam warning. GuideTests count bumped to 15. **⚠️ REMOVED 2026-07-27** at
+  Rachel's request (see the 2026-07-27 note below) — back to 14 guides.
+- Authoring discipline: the English literal in Guide.swift IS the catalog key —
+  scripts in the session scratchpad insert es/zh-Hans additively and verify
+  Swift↔catalog match. Screenshots verified on-sim in zh-Hans.
+
+---
+
+## Guide trim review + build_credit removal (2026-07-27, still for build 3)
+
+Rachel reviewed the 2026-07-19 depth pass for "too much / don't overwhelm the user":
+- **8 detail sheets trimmed** — renting ×5 (lease checklist 6→4; deposit / pay-rent
+  → explanation-only; photograph / renters-insurance → 1 bullet), new-job direct
+  deposit → 1 bullet, health "pay first premium" + "save your info" →
+  explanation-only. Cut bullets that just restated the step headline. **Kept
+  whole** (they decode jargon or prevent costly/legal/deadline mistakes): buying
+  ×3, new-job paycheck + 1099 taxes, car-accident ×3, health SEP / job-window /
+  household-eligibility / compare-tiers. Catalog: +11 new keys, −31 now-dead keys.
+- **`build_credit` guide deleted entirely** (Rachel didn't like it) — removed from
+  Guide.swift, GuideTests (count 15→14), and 37 catalog strings. **Back to 14 guides.**
+- **Nothing testers have (build 2) was touched** — every trimmed/removed string
+  was added *after* build 2 (verified against the last commit); dead catalog
+  strings pruned only after a grep confirmed 0 remaining `.swift` references, so
+  shared strings (SSN/ITIN/CFPB link/…) survived.
+- Catalog trajectory: 902 → 882 (trims) → **845** (after build_credit removal).
+- Companion doc: `guide_depth_before_after.md` (build-2 vs. now, per step).
+  GuideTests green at 14; build clean. **All still uncommitted** with the rest of
+  the build-3 work.
+
+---
+
+*Last updated: 2026-07-27. Update this doc whenever architecture decisions change.*

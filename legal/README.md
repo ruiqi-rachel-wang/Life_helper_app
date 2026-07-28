@@ -1,14 +1,14 @@
 # Legal & privacy documents
 
-Drafts of everything Cuevi needs for a **free** TestFlight / App Store release.
+Drafts of everything Tadah needs for a **free** TestFlight / App Store release.
 
 | File | What it's for |
 |---|---|
 | `privacy-policy.md` | Public Privacy Policy (App Store **requires** a public URL) |
-| `terms-of-service.md` | Terms + the liability & AI-accuracy disclaimers (Cuevi's biggest risk) |
+| `terms-of-service.md` | Terms + the liability & AI-accuracy disclaimers (Tadah's biggest risk) |
 | `app-store-privacy-label.md` | Exact answers for the App Store Connect "privacy nutrition label" |
 
-> ⚠️ **These are templates, not legal advice.** Cuevi advises on tax, immigration,
+> ⚠️ **These are templates, not legal advice.** Tadah advises on tax, immigration,
 > insurance, medical, and legal topics, so have a professional review them before a
 > **paid or public** launch. They do not block the free 10-person TestFlight beta.
 
@@ -16,7 +16,7 @@ Drafts of everything Cuevi needs for a **free** TestFlight / App Store release.
 The documents are completed for the current setup:
 - **Responsible party:** sole proprietor, New York, United States (add your legal name or LLC before a public launch — keep it off the public doc if you prefer).
 - **Governing law:** New York, United States (Terms §12).
-- **Contact:** `support.cuevi@gmail.com` (placeholder role address — set up a dedicated inbox; not a personal email).
+- **Contact:** `support.tadah@gmail.com` (placeholder role address — set up a dedicated inbox; not a personal email).
 
 If you form an LLC or move states later, update the responsible-party and
 governing-law sections in both documents.
@@ -34,7 +34,7 @@ Verify the URL loads in a **private/incognito** window (anonymously) before subm
 ## How the app shows these
 The in-app **Profile → About & Legal** screens render this text directly (not a web
 link): the privacy policy and terms are embedded in
-[`Cuevi/Cuevi/App/LegalContent.swift`](../Cuevi/Cuevi/App/LegalContent.swift) and shown
+[`Tadah/Tadah/App/LegalContent.swift`](../Tadah/Tadah/App/LegalContent.swift) and shown
 by `LegalDocumentView`. Keep `LegalContent.swift` in sync with these `.md` files (it's
 generated from them). For the App Store **privacy-policy URL** field, host
 `privacy-policy.md` (see above) and use that link.

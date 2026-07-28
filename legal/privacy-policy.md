@@ -1,18 +1,18 @@
-# Privacy Policy for Cuevi
+# Privacy Policy for Tadah
 
 **Effective date:** June 18, 2026
 **Last updated:** June 23, 2026
 
-> ⚠️ **Template — not legal advice.** This draft reflects how Cuevi actually
+> ⚠️ **Template — not legal advice.** This draft reflects how Tadah actually
 > handles data today, but you should have a lawyer review it before a paid or
-> public App Store launch, especially because Cuevi touches tax, immigration,
+> public App Store launch, especially because Tadah touches tax, immigration,
 > insurance, medical, and legal topics. Fill in every **[BRACKETED]** placeholder.
 
-Cuevi ("Cuevi", "we", "us") is an iOS app that helps you understand letters,
+Tadah ("Tadah", "we", "us") is an iOS app that helps you understand letters,
 bills, and official documents and turn them into reminders and checklists. This
 policy explains what data the app handles and what happens to it.
 
-The short version: **your documents and data stay on your device.** Cuevi has no
+The short version: **your documents and data stay on your device.** Tadah has no
 accounts and no sign-in. Two things leave your phone, both described below: (1) the
 *text* of a document you scan is sent for AI processing, and (2) **anonymous,
 non-identifying usage statistics** — which features you use, never your content —
@@ -23,9 +23,9 @@ anytime in the app.
 
 ## 1. Who is responsible
 
-Cuevi is operated as a sole proprietorship based in New York,
+Tadah is operated as a sole proprietorship based in New York,
 United States.
-Questions about this policy: **support.cuevi@gmail.com**.
+Questions about this policy: **support.tadah@gmail.com**.
 
 (If a business entity such as an LLC is formed later, this section will be updated
 with its legal name and address.)
@@ -64,7 +64,7 @@ documents or items. Uninstalling the app removes this local data.
   translate it. **Sensitive guides** (below) are never sent.
 - The request goes through a **Cloudflare Worker** we run, so our OpenAI key isn't in
   the app. Cloudflare may briefly process your device's IP address; we don't store it.
-- OpenAI processes the text and returns the result; Cuevi keeps no server-side copy.
+- OpenAI processes the text and returns the result; Tadah keeps no server-side copy.
   Per OpenAI's API policy, API data is **not used to train their models**, but OpenAI
   may **retain it for up to ~30 days** for abuse monitoring.
 
@@ -76,7 +76,7 @@ those guides only; it does **not** apply to **scanning**, where the recognized t
 sent to OpenAI as described above, however sensitive the document is.
 
 ### Anonymous usage statistics (sent to a backend we run)
-To understand whether Cuevi actually helps — for example, of the items you add, how
+To understand whether Tadah actually helps — for example, of the items you add, how
 many you come back and complete — the app sends a small amount of **anonymous,
 non-identifying** usage data to a backend we operate (a Cloudflare database):
 - **What happened, not what's in it:** that an item was *added* (and whether from a
@@ -87,7 +87,7 @@ non-identifying** usage data to a backend we operate (a Cloudflare database):
 - It **never** includes your documents, photos, titles, amounts, due dates, notes, or
   any text from your items.
 
-This is **first-party** data, used only to improve Cuevi. It is **not** advertising, is
+This is **first-party** data, used only to improve Tadah. It is **not** advertising, is
 **not** sold or shared, and is **not** used to track you across other apps or websites.
 You can turn it off anytime under **Profile → Privacy → Share anonymous usage data**.
 
@@ -144,7 +144,7 @@ at the address above.
 
 ## 6. Children
 
-Cuevi is **not directed to children under 13** and we do not knowingly collect
+Tadah is **not directed to children under 13** and we do not knowingly collect
 data from them. (COPPA.)
 
 ---
@@ -170,4 +170,4 @@ changes will be reflected in the app.
 
 ## 9. Contact
 
-**Cuevi Support** — **support.cuevi@gmail.com**
+**Tadah Support** — **support.tadah@gmail.com**

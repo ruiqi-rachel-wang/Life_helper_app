@@ -1,14 +1,14 @@
-# App Store Privacy "Nutrition Label" — answers for Cuevi
+# App Store Privacy "Nutrition Label" — answers for Tadah
 
 > Fill this into **App Store Connect → your app → App Privacy**. These answers
-> match how Cuevi works today (local-first; document text sent to OpenAI for
+> match how Tadah works today (local-first; document text sent to OpenAI for
 > processing; no accounts; plus anonymous, non-identifying first-party usage stats).
 > Re-check before each submission — if you later add accounts or a third-party
 > analytics SDK, you MUST update the label.
 
 ## Key nuance (don't get this wrong)
 Apple counts data as **"collected"** if it **leaves the device**, even if you don't
-store it on a server. Cuevi sends document **text** to OpenAI to generate results,
+store it on a server. Tadah sends document **text** to OpenAI to generate results,
 so you **do collect "User Content."** Answering "we don't collect any data" would
 be **inaccurate** and can get the app rejected. Answer "Yes, we collect data" and
 declare User Content as below.
@@ -37,7 +37,7 @@ identity · NOT used for tracking**:
 > professional can narrow this later if appropriate.
 
 ### Also collected — anonymous usage statistics (first-party)
-Cuevi sends anonymous, non-identifying usage events to our own backend (a Cloudflare
+Tadah sends anonymous, non-identifying usage events to our own backend (a Cloudflare
 database) to measure whether the app helps. Declare:
 
 - **Usage Data → Product Interaction** — Collected · purpose **Analytics** + App

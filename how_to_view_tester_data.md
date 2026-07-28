@@ -1,4 +1,4 @@
-# Cuevi metrics — commands
+# Tadah metrics — commands
 
 Anonymous, non-PII tester events (`confirmed`/`completed`) in Cloudflare D1.
 ⚠️ Nothing uploads until you deploy AND ship a build with the upload code — and do

@@ -1,4 +1,4 @@
-# Cuevi — translation review
+# Tadah — translation review
 
 All localized UI strings (293 shown). Source = English (the key).
 Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
@@ -11,7 +11,7 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | %lld of %lld | %1$lld / %2$lld | %1$lld de %2$lld |
 | %lld pages | %lld 页 | %lld páginas |
 | %lld THINGS FOUND | 找到 %lld 项 | %lld ELEMENTOS |
-| A few quick questions so Cuevi can tailor the checklist. | 回答几个小问题，Cuevi 就能为你定制清单。 | Unas preguntas rápidas para que Cuevi ajuste la lista. |
+| A few quick questions so Tadah can tailor the checklist. | 回答几个小问题，Tadah 就能为你定制清单。 | Unas preguntas rápidas para que Tadah ajuste la lista. |
 | A job (W-2) | 有工作（W-2） | Un empleo (W-2) |
 | A recent change — lost coverage, moved, married, had a baby, or job change? | 最近有变化吗——失去保险、搬家、结婚、生孩子或换工作？ | ¿Un cambio reciente: perdiste cobertura, te mudaste, te casaste, tuviste un bebé o cambiaste de trabajo? |
 | ACCOUNT | 账户 | CUENTA |
@@ -134,7 +134,7 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | Label | 标签 | Etiqueta |
 | Lease, deposit, utilities, insurance | 租约、押金、水电网、保险 | Contrato, depósito, servicios, seguro |
 | LIBRARY | 指南库 | BIBLIOTECA |
-| Life events come with a stack of paperwork. Pick a guide and Cuevi walks you through it. | 人生大事总伴随成堆的文件。选择一个指南，Cuevi 一步步带你完成。 | Los trámites de la vida traen mucho papeleo. Elige una guía y Cuevi te acompaña paso a paso. |
+| Life events come with a stack of paperwork. Pick a guide and Tadah walks you through it. | 人生大事总伴随成堆的文件。选择一个指南，Tadah 一步步带你完成。 | Los trámites de la vida traen mucho papeleo. Elige una guía y Tadah te acompaña paso a paso. |
 | LINKS | 链接 | ENLACES |
 | LOCAL OCR · NO BANK LINK · NO AUTOPAY | 本机识别 · 不连银行 · 不自动扣款 | OCR LOCAL · SIN BANCO · SIN PAGO AUTOMÁTICO |
 | Low income (Medicaid/CHIP) | 低收入（Medicaid/CHIP） | Bajos ingresos (Medicaid/CHIP) |
@@ -173,9 +173,9 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | Nothing to do — this is just for your information. | 无需操作 — 仅供参考。 | Nada que hacer — solo es información. |
 | Nothing yet | 还没有内容 | Nada todavía |
 | Notice, deposit, mail, change of address | 通知、押金、邮件、更改地址 | Aviso, depósito, correo, cambio de dirección |
-| Cuevi reminds you before it's due so you don't forget. | Cuevi 会在到期前提醒你，免得忘记。 | Cuevi te avisa antes del vencimiento para que no lo olvides. |
-| Cuevi turns a confusing bill or letter into simple steps like these. | Cuevi 把看不懂的账单或信件变成像这样的简单步骤。 | Cuevi convierte una factura o carta confusa en pasos simples como estos. |
-| Cuevi works by reminding you before a bill, appointment, or form is due. Turn on notifications so those reminders can actually reach you — without them, Cuevi can't nudge you in time. | Cuevi 会在账单、预约或表格到期前提醒你。请打开通知，这些提醒才能及时送达——否则 Cuevi 无法及时提醒你。 | Cuevi te avisa antes de que venza una factura, cita o formulario. Activa las notificaciones para que esos recordatorios te lleguen; sin ellas, Cuevi no puede avisarte a tiempo. |
+| Tadah reminds you before it's due so you don't forget. | Tadah 会在到期前提醒你，免得忘记。 | Tadah te avisa antes del vencimiento para que no lo olvides. |
+| Tadah turns a confusing bill or letter into simple steps like these. | Tadah 把看不懂的账单或信件变成像这样的简单步骤。 | Tadah convierte una factura o carta confusa en pasos simples como estos. |
+| Tadah works by reminding you before a bill, appointment, or form is due. Turn on notifications so those reminders can actually reach you — without them, Tadah can't nudge you in time. | Tadah 会在账单、预约或表格到期前提醒你。请打开通知，这些提醒才能及时送达——否则 Tadah 无法及时提醒你。 | Tadah te avisa antes de que venza una factura, cita o formulario. Activa las notificaciones para que esos recordatorios te lleguen; sin ellas, Tadah no puede avisarte a tiempo. |
 | NOTIFICATIONS | 通知 | NOTIFICACIONES |
 | Off — enable in iOS Settings to get reminders. | 已关闭 — 请在 iOS 设置中开启以接收提醒。 | Desactivado — actívalo en Ajustes de iOS para recibir recordatorios. |
 | Offer accepted | 报价已被接受 | Oferta aceptada |
@@ -202,7 +202,7 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | Remind me later | 稍后提醒 | Recordar más tarde |
 | Reminder | 提醒 | Recordatorio |
 | REMINDERS | 提醒 | RECORDATORIOS |
-| Reminders are how Cuevi keeps you on top of deadlines — turn them on in Settings to get the most out of the app. | 提醒是 Cuevi 帮你掌握截止日期的方式——请在“设置”中打开，以充分使用本应用。 | Los recordatorios son la forma en que Cuevi te mantiene al día con las fechas límite; actívalos en Ajustes para aprovechar la app al máximo. |
+| Reminders are how Tadah keeps you on top of deadlines — turn them on in Settings to get the most out of the app. | 提醒是 Tadah 帮你掌握截止日期的方式——请在“设置”中打开，以充分使用本应用。 | Los recordatorios son la forma en que Tadah te mantiene al día con las fechas límite; actívalos en Ajustes para aprovechar la app al máximo. |
 | Remote | 远程办公 | Remoto |
 | Remove due date | 移除截止日期 | Quitar fecha de vencimiento |
 | Renew or replace green card | 续期或补办绿卡 | Renovar o reemplazar la green card |
@@ -242,14 +242,14 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | Summary | 摘要 | Resumen |
 | Tap a circle to check off a step as you finish it. | 完成一步后，点按圆圈打勾。 | Toca un círculo para marcar un paso cuando lo termines. |
 | Tap to fill in | 点按填写 | Toca para rellenar |
-| Tap ＋ Add to scan a document — Cuevi explains it and what to do. | 点按 ＋ 添加 来扫描文件 — Cuevi 会解释它是什么以及该怎么做。 | Toca ＋ Añadir para escanear un documento: Cuevi lo explica y te dice qué hacer. |
+| Tap ＋ Add to scan a document — Tadah explains it and what to do. | 点按 ＋ 添加 来扫描文件 — Tadah 会解释它是什么以及该怎么做。 | Toca ＋ Añadir para escanear un documento: Tadah lo explica y te dice qué hacer. |
 | Tap ＋ to scan a document or add a task. | 点按 ＋ 扫描文件或添加任务。 | Toca ＋ para escanear un documento o añadir una tarea. |
 | Tax forms, pay, benefits — W-2 or 1099 | 税表、薪资、福利——W-2 或 1099 | Formularios fiscales, pago, beneficios: W-2 o 1099 |
 | Temporary. | 临时。 | Temporal. |
 | The other driver hit me | 对方司机撞了我 | El otro conductor me chocó |
 | This is a repeating task | 这是一个重复任务 | Esta es una tarea que se repite |
 | This scan has several items. Pick which to add — you can edit each one afterward. | 这次扫描包含多个项目。选择要添加的项 — 之后可逐个编辑。 | Este escaneo tiene varios elementos. Elige cuáles añadir — puedes editar cada uno después. |
-| This sets the language Cuevi uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device. | 这里设置 Cuevi 解释你文件时使用的语言（默认与手机语言一致）。应用本身会跟随手机语言。少数敏感指南（财务、移民、医疗）会保留英文并仅存于你的设备。 | Esto define el idioma con que Cuevi explica tus documentos (por defecto, el de tu teléfono). La app en sí sigue el idioma de tu teléfono. Algunas guías sensibles —dinero, inmigración, médico— se quedan en inglés y en tu dispositivo. |
+| This sets the language Tadah uses to explain your documents (it defaults to your phone's language). The app itself follows your phone's language. A few sensitive guides — money, immigration, medical — stay in English on your device. | 这里设置 Tadah 解释你文件时使用的语言（默认与手机语言一致）。应用本身会跟随手机语言。少数敏感指南（财务、移民、医疗）会保留英文并仅存于你的设备。 | Esto define el idioma con que Tadah explica tus documentos (por defecto, el de tu teléfono). La app en sí sigue el idioma de tu teléfono. Algunas guías sensibles —dinero, inmigración, médico— se quedan en inglés y en tu dispositivo. |
 | Through a job | 通过工作单位 | A través de un empleo |
 | Title | 标题 | Título |
 | TITLE | 标题 | TÍTULO |
@@ -297,4 +297,4 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | ⚠ %lld DAYS OVERDUE | ⚠ 逾期 %lld 天 | — |
 | ⚠︎ couldn't read clearly — review before adding | ⚠︎ 识别不清 — 添加前请核对 | ⚠︎ no se leyó con claridad — revisa antes de añadir |
 | ✓ COMPLETED | ✓ 已完成 | ✓ COMPLETADO |
-| 👋 Welcome to Cuevi | 👋 欢迎使用 Cuevi | 👋 Bienvenido a Cuevi |
+| 👋 Welcome to Tadah | 👋 欢迎使用 Tadah | 👋 Bienvenido a Tadah |

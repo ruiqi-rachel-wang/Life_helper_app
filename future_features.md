@@ -1,4 +1,4 @@
-# Cuevi — Next-Version Roadmap (post-first-TestFlight)
+# Tadah — Next-Version Roadmap (post-first-TestFlight)
 
 > Parking lot for work deferred out of the first-TestFlight scope in `build_plan.md`.
 > Move things here when we decide "not now, but yes later," so the build plan stays
@@ -38,7 +38,7 @@
    *(next up — start here once build 3 is uploaded, or before if bundling more.)*
 5. ✅ **OpenAI spending cap set** ($20/mo + 80%/100% alerts, 2026-07-09) and
    Worker rate limit deployed (2026-07-08). Nothing outstanding here.
-6. **Part 3: accounts → family sharing → Cuevi Plus** — the retention and
+6. **Part 3: accounts → family sharing → Tadah Plus** — the retention and
    revenue unlock.
 
 ## Part 1 — Metrics tracking backend  *(code DONE — upload checklist left)*
@@ -82,7 +82,7 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
   step: `.welcome → .addTab → .reviewAdd → .inboxRow → nil`; `Step` is
   `Int`-raw-valued so `rawValue` doubles as the lit page dot.
   - **Inbox, `.welcome`** → centered intro card over a dimmed screen (Evernote's
-    "Here's your note" moment): "Welcome to Cuevi."
+    "Here's your note" moment): "Welcome to Tadah."
   - **Inbox, `.addTab`** → card parked just above the tab bar, screen dimmed but
     the tab bar stays BRIGHT and tappable (the overlay lives inside the tab's
     content, so the dim can't reach the bar — Evernote's spotlight effect).
@@ -90,7 +90,7 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
     (`RootTabView` advances from `.welcome` AND `.addTab` on tab switch, so
     jumping ahead during the intro skips straight to the Review card).
   - **Review, `.reviewAdd`** → card directly above the real **Add to inbox**
-    button. NO dim here — the point of Review is reading/editing what Cuevi
+    button. NO dim here — the point of Review is reading/editing what Tadah
     found. Real save still advances inside `addToInbox()`; Next just moves on.
   - **Inbox, `.inboxRow`** → card above the tab bar, NO dim, list fully live —
     it invites tapping/swiping the new row, so the row must work while the card
@@ -109,7 +109,7 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
   its card too). `.addTab` card copy shortened ("that's where new to-dos
   start") since `.create` now explains the three ways in.
   Skip (any card) = `tourGuide.finish()` — replaces the old per-hint "×". "Show
-  me how Cuevi works" in the empty state still calls `tourGuide.start()`.
+  me how Tadah works" in the empty state still calls `tourGuide.start()`.
   `didShowWelcomeTour` (AppStorage) still gates first-launch autostart and is
   flipped true by `RootTabView` once `tourGuide.step` returns to `nil`. All 10
   new strings localized EN/ZH/ES (3 orphaned CoachHint strings purged); welcome
@@ -149,23 +149,23 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
 
 ## Part 3 — Accounts, family & monetization  *(Rachel's #1 future ask)*
 
-The Profile tab scaffolds "Sign in / Family sharing / Cuevi Plus" as coming-soon rows.
+The Profile tab scaffolds "Sign in / Family sharing / Tadah Plus" as coming-soon rows.
 Sequencing note: accounts come first — family sharing and cloud sync both need them,
-and Cuevi Plus needs the Apple Paid Apps Agreement signed before any of it can charge.
+and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can charge.
 
 - **Accounts (free)** — sign in with Apple/Google/email. The only thing this unlocks
   vs. guest is that your data survives sign-out/sign-in (and, eventually,
   reinstall/new-phone) — **one profile, one device.** No family sharing, no
   multi-device. This is deliberately free: it's retention (don't lose your data),
   not a paid feature.
-- **Family sharing → Cuevi Plus (paid), decided 2026-07-11** — the free/paid line is
+- **Family sharing → Tadah Plus (paid), decided 2026-07-11** — the free/paid line is
   specifically **multiple profiles / multiple devices under one account.** A free
-  account is capped at one profile on one device; Cuevi Plus is what lets a signed-in
+  account is capped at one profile on one device; Tadah Plus is what lets a signed-in
   account add more profiles (Mom, Dad) and use them from more than one device —
   a daughter/son manages their parents' English mail without missing deadlines.
   *(Whether Plus also raises the scan quota is still open — not decided, don't
   assume it does until Rachel says so.)*
-- **Paid plan ("Cuevi Plus")** — subscription via Apple In-App Purchase, managed
+- **Paid plan ("Tadah Plus")** — subscription via Apple In-App Purchase, managed
   through **RevenueCat** *(decided 2026-07-01)*: entitlements, upgrade/downgrade/
   restore, receipt validation, configurable paywall. Free to $2.5k/mo tracked revenue,
   then a small rev-share **on top of** Apple's 15–30% cut. Gates family sharing
@@ -187,7 +187,7 @@ and Cuevi Plus needs the Apple Paid Apps Agreement signed before any of it can c
   members" with an "Upgrade" chip → paywall, since it's Plus-only) and **Sign out**.
   That's the entire difference from guest: an identity row + the ability to sign out
   without losing data.
-- **Signed-in, Cuevi Plus — `profileCard` and `accountCard` gain the multi-profile
+- **Signed-in, Tadah Plus — `profileCard` and `accountCard` gain the multi-profile
   pieces:**
   - A **"Current profiles"** strip appears directly under `profileCard`: small avatar
     circles for each family member (you first) + a dashed "add" circle, and a small
@@ -195,17 +195,17 @@ and Cuevi Plus needs the Apple Paid Apps Agreement signed before any of it can c
     profile's items show in the Inbox (only meaningful once >1 profile exists, which
     requires Plus).
   - `accountCard`'s **Family sharing** row subtitle switches to names once profiles
-    exist (e.g. "3 profiles: Jing, Mom, Dad") → Family Sharing screen; **Cuevi Plus**
+    exist (e.g. "3 profiles: Jing, Mom, Dad") → Family Sharing screen; **Tadah Plus**
     row shows active/managed state instead of an upgrade chip; **Sign out** stays a
     plain row at the bottom.
 - **Account Details screen** (from tapping the profile row) — kept minimal, no phone
-  number field (not needed for anything Cuevi does): avatar (tap to change),
+  number field (not needed for anything Tadah does): avatar (tap to change),
   **name**, **email**, and a **Delete account** row at the
   bottom. Does **not** duplicate Language/Notifications/Privacy/App rows — those
   already live on the main Profile screen; Account Details is just identity + auth.
 - **Family Sharing screen** — a grid of profile avatars (owner first, then members)
   + a dashed "add profile" tile, same avatar style as the Current-profiles strip.
-  Tapping a profile switches the active one. One line under the grid: "Cuevi Plus
+  Tapping a profile switches the active one. One line under the grid: "Tadah Plus
   covers every profile on this account — no extra charge per person."
 
 **Deliberately left out of the mockups (keep it simple):** no per-profile phone

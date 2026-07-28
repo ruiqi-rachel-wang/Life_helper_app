@@ -1,5 +1,5 @@
 NOTIE — GUIDE CONTENT & AI PROMPTS
-Generated 2026-06-15 from Cuevi/Cuevi/Model/Guide.swift and Cuevi/Cuevi/AI/OpenAIClient.swift
+Generated 2026-06-15 from Tadah/Tadah/Model/Guide.swift and Tadah/Tadah/AI/OpenAIClient.swift
 This is a readable transcription of every guide (questions + the text they produce),
 the per-step detail, and the two AI prompts. Branches are shown with → conditions.
 
