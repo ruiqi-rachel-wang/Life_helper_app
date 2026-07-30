@@ -25,6 +25,12 @@ struct ReviewView: View {
     // Derived from the pages. Preview shows the first; the badge shows the count.
     private var image: UIImage? { images.first }
     private var pageCount: Int { images.count }
+    // The whole document as one image (all pages stacked) for the full-screen
+    // viewer + translation — vs `image`, which is only the page-one preview.
+    private var viewerImage: UIImage? {
+        guard !images.isEmpty else { return nil }
+        return images.count == 1 ? images[0] : UIImage.stackedVertically(images)
+    }
     // How to leave this screen. Guides/scans pass a closure that pops their
     // whole stack back to the tab's root; falls back to a one-level dismiss.
     var onClose: (() -> Void)? = nil
@@ -42,6 +48,10 @@ struct ReviewView: View {
     @State private var items: [ExtractionResult] = []    // when there are several
     @State private var selected: Set<Int> = []           // which multi-items to add
     @State private var detailStep: ChecklistStep?        // tapped step → detail sheet
+    @State private var showFullPhoto = false             // tapped photo → enlarge/translate
+
+    @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
+    private var explainLanguage: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
 
     enum Phase: Equatable { case loading, ready, readyMulti, noText, failed(String) }
 
@@ -62,6 +72,7 @@ struct ReviewView: View {
                 }
                 .padding(.top, 48)
             }
+            .dismissKeyboardOnTap()   // tap anywhere outside a field to close the keyboard
         }
         .navigationBarHidden(true)
         .sheet(item: $detailStep) { tapped in
@@ -114,8 +125,15 @@ struct ReviewView: View {
     // Leave the screen — pop the whole stack to root if the caller gave us a way,
     // otherwise just dismiss one level.
     private func finish() {
+        // Leaving Review during the tour WITHOUT adding an item (no-action "Done",
+        // close, or a failed/unreadable retake): end the tour so it can't get stuck
+        // on .reviewAdd — a step no other screen shows — and won't restart next
+        // launch. The add paths advance to .inboxRow *before* calling finish(), so
+        // they're already past .reviewAdd here and are left untouched.
+        if tourGuide.step == .reviewAdd { tourGuide.finish() }
         if let onClose { onClose() } else { dismiss() }
     }
+
 
     // MARK: header
 
@@ -146,21 +164,35 @@ struct ReviewView: View {
     @ViewBuilder
     private var photo: some View {
         if let image {
-            Image(uiImage: image)
-                .resizable().scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: 160)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
-                // Show how many pages were combined when it's more than one.
-                .overlay(alignment: .bottomTrailing) {
-                    if pageCount > 1 {
-                        Label("\(pageCount) pages", systemImage: "doc.on.doc")
-                            .font(.eyebrow).tracking(0.4).foregroundStyle(Color.paper)
-                            .padding(.horizontal, 8).padding(.vertical, 4)
-                            .background(Capsule().fill(Color.ink.opacity(0.75)))
-                            .padding(8)
+            Button { showFullPhoto = true } label: {
+                Image(uiImage: image)
+                    .resizable().scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+                    // Show how many pages were combined when it's more than one.
+                    .overlay(alignment: .bottomTrailing) {
+                        if pageCount > 1 {
+                            Label("\(pageCount) pages", systemImage: "doc.on.doc")
+                                .font(.eyebrow).tracking(0.4).foregroundStyle(Color.paper)
+                                .padding(.horizontal, 8).padding(.vertical, 4)
+                                .background(Capsule().fill(Color.ink.opacity(0.75)))
+                                .padding(8)
+                        }
                     }
-                }
+                    // Hint that tapping enlarges — and translates for non-English readers.
+                    .overlay(alignment: .topTrailing) {
+                        Image(systemName: explainLanguage == .english ? "arrow.up.left.and.arrow.down.right" : "globe")
+                            .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+                            .padding(5).background(Circle().fill(.black.opacity(0.45))).padding(8)
+                    }
+            }
+            .buttonStyle(.plain)
+            .fullScreenCover(isPresented: $showFullPhoto) {
+                // The FULL document (all pages stacked), so translating from Review
+                // covers every page — not just the page-one preview.
+                FullPhotoViewer(photo: viewerImage ?? image, language: explainLanguage)
+            }
         }
     }
 
@@ -254,11 +286,12 @@ struct ReviewView: View {
             // cadence can be confirmed or changed before saving.
             if isEditing || draft.repeats != nil { repeatsRow }
 
-            // Reminders — only when there's a due date (no date → no reminders).
-            // Follows the screen's Edit toggle like everything else: read by
-            // default, tap Edit to add / remove / retime. Edits now persist on
-            // save (see ActionItem.init(from:)), which is what was broken before.
-            if draft.dueDate != nil {
+            // Reminders are their own section, independent of the due date: in
+            // Edit you can always add absolute-date reminders (with or without a
+            // due date); in read mode it shows only when there are any. Edits
+            // persist on save (see ActionItem.init(from:)).
+            let hasReminders = draft.remindersCustomized ? !draft.reminders.isEmpty : draft.dueDate != nil
+            if isEditing || hasReminders {
                 card {
                     RemindersEditor(reminders: $draft.reminders,
                                     customized: $draft.remindersCustomized,
@@ -332,8 +365,10 @@ struct ReviewView: View {
                         // picker SHOWS today but the draft still holds nil, and the item
                         // saves with no date (and no reminders) unless the picker is touched.
                         .onChange(of: includeDue) { _, on in
-                            if on, draft.dueDate == nil {
-                                draft.dueDate = Calendar.current.startOfDay(for: .now)
+                            if on {
+                                if draft.dueDate == nil { draft.dueDate = Calendar.current.startOfDay(for: .now) }
+                            } else {
+                                draft.dueDate = nil   // turning it off removes the date (and its chip)
                             }
                         }
                     if includeDue {
@@ -471,17 +506,19 @@ struct ReviewView: View {
                 VStack(alignment: .leading, spacing: 5) {
                     if isEditing {
                         HStack(spacing: 8) {
-                            TextField("Label", text: $draft.otherIDs[i].label)
-                                .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                            TextField("", text: $draft.otherIDs[i].label,
+                                      prompt: Text("Label").foregroundStyle(Color.faded))
+                                .font(.subline).foregroundStyle(Color.ink)
                             Button { draft.otherIDs.remove(at: i) } label: {
                                 Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                             }.buttonStyle(.plain)
                         }
                     } else {
                         Text(draft.otherIDs[i].label.uppercased())
-                            .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                            .font(.subline).tracking(0.5).foregroundStyle(Color.faded)
                     }
-                    TextField("Tap to fill in", text: $draft.otherIDs[i].value)
+                    TextField("", text: $draft.otherIDs[i].value,
+                              prompt: Text("Tap to fill in").foregroundStyle(Color.faded))
                         .font(.body14).foregroundStyle(Color.ink)
                         .padding(.horizontal, 10).padding(.vertical, 8)
                         .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
@@ -675,6 +712,7 @@ struct ReviewView: View {
             Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
             ReminderScheduler.shared.reschedule(for: item)
         }
+        tourGuide.advance(from: .reviewAdd)   // → .inboxRow, like the single-item path
         router.goToInbox()
         finish()
     }

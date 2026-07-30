@@ -31,6 +31,15 @@ enum ItemActions {
         ReminderScheduler.shared.reschedule(for: next)
     }
 
+    // Reopen a done item: back to active and reschedule its still-future
+    // reminders. Idempotent (an active item no-ops). The Inbox re-buckets it by
+    // urgency; a part-checked item reads as in-progress via its derived state.
+    static func reopen(_ item: ActionItem) {
+        guard item.status == .done else { return }
+        item.status = .todo
+        ReminderScheduler.shared.reschedule(for: item)
+    }
+
     // Delete an item and cancel its pending reminders. (Single occurrence — the
     // recurring "just this one vs. all future" choice stays on the Detail screen,
     // where there's room to ask.)

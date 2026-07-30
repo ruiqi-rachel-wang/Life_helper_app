@@ -37,7 +37,7 @@ final class ReminderScheduler {
     // "Hide details in notifications" (My Settings → Privacy): when on, banners
     // say "Tadah" instead of the item's title, and a generic body instead of
     // the due text / user note — nothing sensitive on the lock screen.
-    static let discreetKey = "tadah.notifications.discreet"
+    nonisolated static let discreetKey = "tadah.notifications.discreet"
     private var discreet: Bool { UserDefaults.standard.bool(forKey: Self.discreetKey) }
 
     // Ask once for permission to show notifications.

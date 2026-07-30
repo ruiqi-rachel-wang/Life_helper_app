@@ -42,6 +42,15 @@ nonisolated enum ExplainLanguage: String, Codable, CaseIterable {
         }
     }
 
+    // BCP-47 tag for Apple's on-device Translation framework (Locale.Language).
+    var bcp47: String {
+        switch self {
+        case .english: return "en"
+        case .chinese: return "zh-Hans"
+        case .spanish: return "es"
+        }
+    }
+
     // The label shown in the picker — each language in its own script.
     var displayName: String {
         switch self {

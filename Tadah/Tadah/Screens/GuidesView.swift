@@ -325,7 +325,10 @@ struct GuideQuestionsView: View {
                     }
                 } label: {
                     HStack {
-                        Text(answers[q.id] ?? "Select a state")
+                        // Localize the "Select a state" placeholder (a String literal
+                        // via `??` uses the NON-localizing Text initializer); a chosen
+                        // state name passes through unchanged (not a catalog key).
+                        Text(answers[q.id].map { LocalizedStringKey($0) } ?? "Select a state")
                             .font(.body14).foregroundStyle(answers[q.id] == nil ? Color.faded : Color.ink)
                         Spacer()
                         Image(systemName: "chevron.up.chevron.down").font(.system(size: 12)).foregroundStyle(Color.faint)

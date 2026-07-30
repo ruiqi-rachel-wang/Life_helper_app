@@ -24,6 +24,12 @@ struct DetailView: View {
     @State private var detailStep: ChecklistStep?   // tapped step → detail sheet
     @State private var showFullPhoto = false         // tapped photo → full-screen viewer
 
+    // The reader's explanation language (Profile picker). The enlarged photo viewer
+    // offers in-place translation only when it isn't English — an English reader of
+    // an English doc doesn't need it.
+    @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
+    private var explainLanguage: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
+
     private var isDone: Bool { item.status == .done }
     private var startOfToday: Date { Calendar.current.startOfDay(for: .now) }
 
@@ -466,11 +472,12 @@ struct DetailView: View {
                         }
                 }
                 .buttonStyle(.plain)
-                Text("Tap to enlarge").font(.subline).foregroundStyle(Color.faint)
+                Text(explainLanguage == .english ? "Tap to enlarge" : "Tap to enlarge and translate")
+                    .font(.subline).foregroundStyle(Color.faint)
             }
         }
         .fullScreenCover(isPresented: $showFullPhoto) {
-            FullPhotoViewer(photo: photo)
+            FullPhotoViewer(photo: photo, language: explainLanguage)
         }
     }
 
@@ -540,8 +547,7 @@ struct DetailView: View {
     // Reopen a done item: back to active (the Inbox re-buckets it by urgency /
     // derived in-progress) and reschedule its still-future reminders.
     private func reopen() {
-        item.status = .todo
-        ReminderScheduler.shared.reschedule(for: item)
+        ItemActions.reopen(item)   // centralized so all reopen paths stay in sync
     }
 
     private func markDone() {
@@ -604,35 +610,6 @@ struct DetailView: View {
 
     // URLs + phone numbers → tappable links (shared with Review/StepDetail).
     private func linked(_ string: String) -> AttributedString { linkified(string) }
-}
-
-// MARK: - Full-screen photo viewer
-
-// The scanned document at full size, pinch-to-zoom on the image inside a
-// two-axis ScrollView.
-private struct FullPhotoViewer: View {
-    let photo: UIImage
-    @Environment(\.dismiss) private var dismiss
-    @State private var zoom: CGFloat = 1
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color.black.ignoresSafeArea()
-            ScrollView([.vertical, .horizontal]) {
-                Image(uiImage: photo)
-                    .resizable().scaledToFit()
-                    .containerRelativeFrame(.horizontal)
-                    .scaleEffect(zoom, anchor: .center)
-                    .gesture(MagnifyGesture().onChanged { zoom = max(1, min($0.magnification, 5)) })
-            }
-            Button { dismiss() } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 30)).foregroundStyle(.white.opacity(0.85)).padding(16)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close")
-        }
-    }
 }
 
 #Preview {

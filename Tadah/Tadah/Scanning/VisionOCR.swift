@@ -14,6 +14,39 @@ import Vision
 import UIKit
 
 enum VisionOCR {
+    /// One recognized line of text plus where it sits in the image. `box` is
+    /// Vision-normalized (0–1, origin bottom-left) — convert at render time.
+    struct OCRLine: Sendable { let text: String; let box: CGRect }
+
+    /// Recognize text AND keep each line's position, for an in-place translation
+    /// overlay (Google-Translate-image style). Same Vision pass as `recognizeText`.
+    static func recognizeLines(in image: UIImage) async -> [OCRLine] {
+        guard let cgImage = image.cgImage else { return [] }
+        let orientation = cgOrientation(from: image.imageOrientation)
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let request = VNRecognizeTextRequest { request, _ in
+                    let lines = (request.results as? [VNRecognizedTextObservation] ?? [])
+                        .compactMap { obs -> OCRLine? in
+                            guard let s = obs.topCandidates(1).first?.string, !s.isEmpty else { return nil }
+                            return OCRLine(text: s, box: obs.boundingBox)
+                        }
+                    continuation.resume(returning: lines)
+                }
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                let wanted = ["en-US", "zh-Hans", "es-ES"]
+                let supported = Set((try? request.supportedRecognitionLanguages()) ?? [])
+                let available = wanted.filter { supported.contains($0) }
+                request.recognitionLanguages = available.isEmpty ? ["en-US"] : available
+                let scaled = downsampled(cgImage)
+                let handler = VNImageRequestHandler(cgImage: scaled, orientation: orientation, options: [:])
+                do { try handler.perform([request]) }
+                catch { continuation.resume(returning: []) }
+            }
+        }
+    }
+
     /// Recognize printed text in an image. Returns lines joined by "\n",
     /// or "" if the image can't be read.
     static func recognizeText(in image: UIImage) async -> String {

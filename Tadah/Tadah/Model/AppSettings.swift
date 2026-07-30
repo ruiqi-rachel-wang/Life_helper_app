@@ -12,7 +12,7 @@ enum AppSettings {
     // Keep the scanned document's photo on the saved item, shown at the end of
     // its Detail page so the user can always check the original. Default ON;
     // My Settings has the opt-out. Photos never leave the device either way.
-    static let savePhotoKey = "tadah.savePhotoWithItem"
+    nonisolated static let savePhotoKey = "tadah.savePhotoWithItem"
     static var savePhoto: Bool {
         UserDefaults.standard.object(forKey: savePhotoKey) as? Bool ?? true   // unset → on
     }

@@ -7,7 +7,7 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 |---|---|---|
 | %@ before | %@ 前 | %@ antes |
 | %lld active | %lld 项待办 | %lld activas |
-| %lld days overdue | 逾期 %lld 天 | — |
+| %lld days overdue | 逾期 %lld 天 | %lld días de retraso |
 | %lld of %lld | %1$lld / %2$lld | %1$lld de %2$lld |
 | %lld pages | %lld 页 | %lld páginas |
 | %lld THINGS FOUND | 找到 %lld 项 | %lld ELEMENTOS |
@@ -294,7 +294,50 @@ Edit the Chinese/Spanish here and I'll fold corrections into the catalog.
 | You've reached this month's scan limit (%lld a month). | 你已达到本月的扫描上限（每月 %lld 次）。 | Has alcanzado el límite de escaneos de este mes (%lld al mes). |
 | You've reached today's scan limit (%lld a day). Try again tomorrow. | 你已达到今天的扫描上限（每天 %lld 次）。请明天再试。 | Has alcanzado el límite de escaneos de hoy (%lld al día). Inténtalo mañana. |
 | Your own note… | 你的备注… | Tu propia nota… |
-| ⚠ %lld DAYS OVERDUE | ⚠ 逾期 %lld 天 | — |
+| ⚠ %lld DAYS OVERDUE | ⚠ 逾期 %lld 天 | ⚠ %lld DÍAS DE RETRASO |
 | ⚠︎ couldn't read clearly — review before adding | ⚠︎ 识别不清 — 添加前请核对 | ⚠︎ no se leyó con claridad — revisa antes de añadir |
 | ✓ COMPLETED | ✓ 已完成 | ✓ COMPLETADO |
 | 👋 Welcome to Tadah | 👋 欢迎使用 Tadah | 👋 Bienvenido a Tadah |
+
+---
+
+## New — added 2026-07-30 (please verify these 34)
+
+Machine-drafted es/zh for guide strings that were showing in English (sensitive-guide steps that had drifted from their catalog keys, plus the ZIP prompts / state placeholder). Correct any cell and I'll fold it back in.
+
+| English | 中文 (zh-Hans) | Español (es) |
+|---|---|---|
+| A government photo ID. | 一份政府签发的带照片的身份证件。 | Una identificación con foto emitida por el gobierno. |
+| A sole proprietorship is simplest but doesn't separate your personal assets. An LLC costs a state fee and, if maintained properly, can help separate personal and business liability — but it isn't a guarantee against everything. | 个体经营最简单，但不能将你的个人资产分开。成立 LLC 需缴纳州费用，如维护得当，有助于将个人与企业的责任分开——但它并不能保证防范一切。 | Ser empresario individual es lo más sencillo, pero no separa tus bienes personales. Una LLC tiene un costo de tarifa estatal y, si se mantiene correctamente, puede ayudar a separar la responsabilidad personal de la del negocio, aunque no es una garantía contra todo. |
+| A way to pay (cash or card) since you don't have insurance. | 一种付款方式（现金或银行卡），因为你没有保险。 | Una forma de pago (efectivo o tarjeta), ya que no tienes seguro. |
+| An LLC can help separate personal and business liability, but only if you maintain it properly; a sole proprietorship is simpler but offers no such protection. | LLC 有助于将个人与企业的责任分开，但前提是你妥善维护它；个体经营更简单，但没有这种保护。 | Una LLC puede ayudar a separar la responsabilidad personal de la del negocio, pero solo si la mantienes correctamente; ser empresario individual es más sencillo, pero no ofrece esa protección. |
+| An SSN is for U.S. citizens and certain noncitizens who are work-authorized or have another valid reason; an ITIN is mainly for tax filing when you're not eligible for an SSN. | SSN 适用于美国公民以及某些有工作许可或其他正当理由的非公民；ITIN 主要用于在你不符合 SSN 资格时报税。 | El SSN es para ciudadanos estadounidenses y ciertos no ciudadanos con autorización de trabajo u otra razón válida; el ITIN es principalmente para declarar impuestos cuando no reúnes los requisitos para un SSN. |
+| An identification number the bank accepts — an SSN, ITIN, passport number, alien ID number, or another government-issued ID number. | 银行接受的一种身份识别号码——SSN、ITIN、护照号码、外国人证件号码，或其他政府签发的证件号码。 | Un número de identificación que el banco acepte: un SSN, ITIN, número de pasaporte, número de identificación de extranjero u otro número de identificación emitido por el gobierno. |
+| Any past medical records or test results you have. | 你手上的任何既往病历或检查结果。 | Cualquier expediente médico o resultado de pruebas que tengas. |
+| Arrange your laptop/equipment shipment and remote access (VPN, accounts). | 安排你的笔记本电脑/设备寄送以及远程访问（VPN、账户）。 | Coordina el envío de tu laptop/equipo y el acceso remoto (VPN, cuentas). |
+| As a sole proprietor there's usually no state formation filing — but file a DBA ("doing business as") if required by your state or local government to use a business name. | 作为个体经营者，通常无需向州注册成立公司——但如果你所在的州或地方政府要求使用商号，则需申报 DBA（"doing business as"，即以某商号经营）。 | Como empresario individual, por lo general no hay que presentar una constitución ante el estado, pero registra un DBA ("doing business as", nombre comercial) si tu estado o gobierno local lo exige para usar un nombre de negocio. |
+| Check which licenses and permits you need — federal, state, and city/county. | 查清你需要哪些执照和许可证——联邦、州以及市/县级。 | Averigua qué licencias y permisos necesitas: federales, estatales y de la ciudad/el condado. |
+| Check your EAD category (the (c)(#) code on your notice or prior card) — it determines the filing method, fee, fee waiver, and any automatic-extension rules. | 查看你的 EAD 类别（你的通知或旧卡上的 (c)(#) 代码）——它决定申请方式、费用、费用豁免以及任何自动延期规则。 | Revisa tu categoría de EAD (el código (c)(#) en tu aviso o tarjeta anterior): determina el método de solicitud, la tarifa, la exención de tarifa y las reglas de extensión automática. |
+| Check your first paycheck — pay rate, taxes, and direct deposit. | 核对你的第一笔工资——薪资标准、税款和直接存款。 | Revisa tu primer cheque de pago: la tarifa, los impuestos y el depósito directo. |
+| Choose your structure — sole proprietor (simplest) or LLC (can help separate personal and business liability, if maintained properly) — then register accordingly. | 选择你的组织形式——个体经营者（最简单）或 LLC（如维护得当，有助于将个人与企业的责任分开）——然后据此进行登记。 | Elige tu estructura —empresario individual (lo más sencillo) o LLC (puede ayudar a separar la responsabilidad personal de la del negocio, si se mantiene correctamente)— y luego regístrate según corresponda. |
+| Complete your state tax form, if any. | 如有，请填写你所在州的税表。 | Completa el formulario de impuestos de tu estado, si lo hay. |
+| Confirm the contract scope, rate, payment schedule, and how to invoice. | 确认合同范围、费率、付款时间表以及如何开具发票。 | Confirma el alcance del contrato, la tarifa, el calendario de pagos y cómo facturar. |
+| Confirm your first-day schedule, work location, badge, and parking. | 确认你第一天的日程、工作地点、门禁卡和停车。 | Confirma tu horario del primer día, el lugar de trabajo, la credencial y el estacionamiento. |
+| Enroll in benefits (health, dental, retirement) before the deadline. | 在截止日期前参保福利（医疗、牙科、退休）。 | Inscríbete en los beneficios (salud, dental, jubilación) antes de la fecha límite. |
+| File by the federal deadline — usually around April 15, though the exact date can shift for weekends, holidays, or disasters. Can't make it? File an extension, but any tax owed is still due by the original deadline. | 在联邦截止日期前报税——通常在 4 月 15 日前后，但确切日期可能因周末、节假日或灾害而调整。赶不上？可以申请延期，但欠缴的税款仍需在原截止日期前缴清。 | Presenta tu declaración antes de la fecha límite federal, que suele ser alrededor del 15 de abril, aunque la fecha exacta puede cambiar por fines de semana, días festivos o desastres. ¿No llegas a tiempo? Solicita una prórroga, pero cualquier impuesto que debas sigue venciendo en la fecha límite original. |
+| Finish any background check or drug screen if required. | 如有要求，完成背景调查或药物检测。 | Completa cualquier verificación de antecedentes o prueba de drogas si se requiere. |
+| Gather what you'll need: proof of your child's age (birth certificate, passport, or another document the school accepts), proof of your address, and immunization records. | 准备好你需要的材料：孩子的年龄证明（出生证、护照或学校接受的其他证件）、住址证明以及免疫接种记录。 | Reúne lo que necesitarás: comprobante de la edad de tu hijo (acta de nacimiento, pasaporte u otro documento que la escuela acepte), comprobante de tu domicilio y registros de vacunación. |
+| Get access to the HR, payroll, and benefits portals, and a work email. | 获取人力资源、工资和福利门户的访问权限，以及一个工作邮箱。 | Obtén acceso a los portales de Recursos Humanos, nómina y beneficios, y a un correo del trabajo. |
+| LLC: file with the state; can help separate personal and business liability if maintained properly. | LLC：向州登记；如维护得当，有助于将个人与企业的责任分开。 | LLC: se registra ante el estado; puede ayudar a separar la responsabilidad personal de la del negocio si se mantiene correctamente. |
+| Missing one? Ask the enrollment office what alternatives they accept. | 缺少某项？向招生办公室询问他们接受哪些替代材料。 | ¿Te falta alguno? Pregunta en la oficina de inscripción qué alternativas aceptan. |
+| Pay any fee your category requires (some are fee-exempt) and do biometrics if scheduled. | 缴纳你的类别所需的任何费用（有些可免费），如已安排则完成生物识别采集。 | Paga la tarifa que requiera tu categoría (algunas están exentas) y acude a los datos biométricos si te los programan. |
+| Proof of income, if asking about a sliding-scale fee. | 收入证明（如果你要咨询按收入浮动的收费）。 | Comprobante de ingresos, si vas a preguntar por una tarifa según ingresos. |
+| Proof of your child's age: a birth certificate, passport, or another document the school accepts. | 孩子的年龄证明：出生证、护照或学校接受的其他证件。 | Comprobante de la edad de tu hijo: un acta de nacimiento, un pasaporte u otro documento que la escuela acepte. |
+| Save the signed contract, and track your invoices and payment dates. | 保存签署的合同，并记录你的发票和付款日期。 | Guarda el contrato firmado y lleva un registro de tus facturas y fechas de pago. |
+| Save your offer letter and confirm your start date and first-day details. | 保存你的录用信，并确认入职日期和第一天的安排。 | Guarda tu carta de oferta y confirma tu fecha de inicio y los detalles del primer día. |
+| Select a state | 选择一个州 | Selecciona un estado |
+| Set aside money for taxes — contractors usually pay quarterly. | 预留缴税的钱——承包人通常按季度缴税。 | Aparta dinero para los impuestos: los contratistas suelen pagar cada trimestre. |
+| Set up direct deposit (voided check or bank details). | 设置直接存款（作废的支票或银行信息）。 | Configura el depósito directo (un cheque anulado o los datos bancarios). |
+| The new place's ZIP code? (optional — to find your local utility companies) | 新住处的邮政编码？（可选——用于查找你所在地区的公用事业公司） | ¿El código postal del nuevo lugar? (opcional: para encontrar las empresas de servicios públicos de tu zona) |
+| Your new home's ZIP code? (optional — to find your local utility companies) | 你新家的邮政编码？（可选——用于查找你所在地区的公用事业公司） | ¿El código postal de tu nuevo hogar? (opcional: para encontrar las empresas de servicios públicos de tu zona) |
+| e.g. 78701 | 例如 78701 | p. ej., 78701 |

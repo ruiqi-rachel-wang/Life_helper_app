@@ -178,6 +178,7 @@ struct InboxView: View {
                             item: item, done: done,
                             onOpen: { tourGuide.advance(from: .inboxRow); router.pendingItemID = item.id },
                             onComplete: { tourGuide.advance(from: .inboxRow); withAnimation { ItemActions.complete(item, in: context) } },
+                            onReopen: { withAnimation { ItemActions.reopen(item) } },
                             onDelete: { withAnimation { ItemActions.delete(item, in: context) } })
                     }
                 }
@@ -246,97 +247,123 @@ enum SectionTone { case normal, bad }
 // MARK: - Swipeable row
 
 // Tap opens Detail (via the router's pendingItemID — the same push the
-// notification tap uses, so there's only one navigationDestination). Swiping
-// left reveals Done (active rows) + Delete. A horizontal-dominance guard keeps
-// vertical scrolling working, and a VoiceOver action exposes the same buttons.
+// notification tap uses, so there's only one navigationDestination). Swipe LEFT
+// toggles done immediately (swipe again to undo); swipe RIGHT reveals a Delete
+// button to tap. A horizontal-dominance guard keeps vertical scrolling working,
+// and VoiceOver actions expose the same choices.
 private struct SwipeRow: View {
     let item: ActionItem
     var done: Bool = false
     let onOpen: () -> Void
     let onComplete: () -> Void
+    let onReopen: () -> Void
     let onDelete: () -> Void
 
-    @State private var settled: CGFloat = 0        // 0 = closed, -reveal = open
-    @GestureState private var live: CGFloat = 0    // in-flight drag
-    @State private var confirmDelete = false       // swipe Delete asks first — no undo exists
-    private let btnW: CGFloat = 78
-
-    private var reveal: CGFloat { done ? btnW : btnW * 2 }  // done rows: delete only
-    private var offset: CGFloat { min(0, max(-reveal, settled + live)) }
+    @State private var offset: CGFloat = 0     // live x-offset of the row
+    @State private var rest: CGFloat = 0       // committed resting offset (0, or +btnW = Delete open)
+    private let btnW: CGFloat = 84
+    private let spring = Animation.spring(response: 0.28, dampingFraction: 0.85)
 
     var body: some View {
-        ZStack(alignment: .trailing) {
+        ZStack {
+            // Behind the row: Delete on the leading edge (revealed by a RIGHT
+            // swipe), and a Done/Undo hint on the trailing edge (shown while
+            // swiping LEFT, before the toggle fires on release).
             HStack(spacing: 0) {
-                if !done {
-                    swipeButton("checkmark", "Done", Color.ok) { close(); onComplete() }
-                }
-                swipeButton("trash", "Delete", Color.bad) { close(); confirmDelete = true }
+                deleteButton
+                Spacer()
+                doneHint
             }
 
-            Button { offset < 0 ? close() : onOpen() } label: {
-                InboxRow(
-                    glyph: item.category.symbol,
-                    color: item.category.tint,
-                    title: item.title,
-                    subtitle: done ? String(localized: "Completed") : item.inboxSubtitle,
-                    subtitleColor: done ? Color.faded : item.dueColor,
-                    done: done
-                )
-                .background(Color.card)   // opaque so the buttons stay hidden until revealed
-            }
-            .buttonStyle(.plain)
-            .offset(x: offset)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 20)
-                    .updating($live) { value, state, _ in
-                        // Only react to mostly-horizontal drags, so vertical
-                        // scrolling of the list still works normally.
-                        if abs(value.translation.width) > abs(value.translation.height) {
-                            state = value.translation.width
-                        }
-                    }
-                    .onEnded { value in
-                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
-                            settled = (settled + value.translation.width) < -reveal / 2 ? -reveal : 0
-                        }
-                    }
+            // A plain tappable view — NOT a Button. A Button paired with
+            // `.simultaneousGesture` fires a phantom tap on release of every
+            // swipe, which used to auto-open the row after a left-swipe (done)
+            // and slam the Delete tray shut right after a right-swipe. A
+            // `.onTapGesture` only fires on a clean tap (the finger didn't move),
+            // so a swipe never triggers it, while the drag stays simultaneous so
+            // vertical scrolling keeps working.
+            InboxRow(
+                glyph: item.category.symbol,
+                color: item.category.tint,
+                title: item.title,
+                subtitle: done ? String(localized: "Completed") : item.inboxSubtitle,
+                subtitleColor: done ? Color.faded : item.dueColor,
+                done: done
             )
-            .accessibilityAction(named: done ? Text("Delete") : Text("Mark done")) {
-                done ? (confirmDelete = true) : onComplete()
+            .background(Color.card)   // opaque so the buttons stay hidden until revealed
+            .contentShape(Rectangle())
+            .offset(x: offset)
+            .onTapGesture { rest != 0 ? close() : onOpen() }
+            .simultaneousGesture(dragGesture)
+            .accessibilityAddTraits(.isButton)
+            // Expose the SAME actions to VoiceOver: an active row toggles done, a
+            // done row toggles back, and either can be deleted.
+            .accessibilityActions {
+                if done { Button("Mark as not done") { onReopen() } }
+                else { Button("Mark done") { onComplete() } }
+                Button("Delete") { onDelete() }
             }
         }
         .clipped()
-        // Delete is final (no undo), and a swipe is easy to fat-finger — confirm.
-        // The Detail screen keeps the richer recurring "just this one / all future"
-        // choice; here the title just says plainly what deleting will do.
-        .confirmationDialog(
-            item.isRecurring
-                ? "This task repeats — deleting it also stops future ones."
-                : "Delete this task?",
-            isPresented: $confirmDelete, titleVisibility: .visible
-        ) {
-            Button("Delete", role: .destructive) { onDelete() }
-            Button("Cancel", role: .cancel) {}
-        }
     }
 
-    private func close() {
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) { settled = 0 }
+    // Swipe LEFT toggles done immediately (then springs back — swipe again to
+    // undo); swipe RIGHT settles open to reveal Delete. Small drags snap to the
+    // nearest resting state; the horizontal-dominance guard keeps vertical
+    // scrolling working.
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onChanged { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                offset = min(btnW, max(-btnW, rest + value.translation.width))
+            }
+            .onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else {
+                    withAnimation(spring) { offset = rest }; return
+                }
+                let dx = value.translation.width
+                let t = btnW * 0.5
+                if dx <= -t && rest == 0 {
+                    done ? onReopen() : onComplete()                       // LEFT → toggle done
+                    withAnimation(spring) { offset = 0 }
+                } else if dx >= t {
+                    rest = btnW; withAnimation(spring) { offset = btnW }    // RIGHT → reveal Delete
+                } else {
+                    rest = 0; withAnimation(spring) { offset = 0 }          // close / snap back
+                }
+            }
     }
 
-    private func swipeButton(_ icon: String, _ label: LocalizedStringKey,
-                             _ color: Color, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    // Tap-to-delete, revealed by a right swipe ("one more click" before it's gone).
+    private var deleteButton: some View {
+        Button { onDelete() } label: {
             VStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 17, weight: .semibold))
-                Text(label).font(.system(size: 11, weight: .semibold))
+                Image(systemName: "trash").font(.system(size: 17, weight: .semibold))
+                Text("Delete").font(.system(size: 11, weight: .semibold))
             }
             .foregroundStyle(.white)
             .frame(width: btnW).frame(maxHeight: .infinity)
-            .background(color)
+            .background(Color.bad)
         }
         .buttonStyle(.plain)
+        .opacity(offset > 1 ? 1 : 0)
+    }
+
+    // Feedback while swiping left; the done toggle itself fires on release.
+    private var doneHint: some View {
+        VStack(spacing: 3) {
+            Image(systemName: done ? "arrow.uturn.left" : "checkmark").font(.system(size: 17, weight: .semibold))
+            Text(done ? "Undo" : "Done").font(.system(size: 11, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .frame(width: btnW).frame(maxHeight: .infinity)
+        .background(done ? Color.warn : Color.ok)
+        .opacity(offset < -1 ? 1 : 0)
+    }
+
+    private func close() {
+        rest = 0
+        withAnimation(spring) { offset = 0 }
     }
 }
 
