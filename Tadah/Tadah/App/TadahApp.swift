@@ -14,6 +14,7 @@ struct TadahApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var router = AppRouter()
     @State private var tourGuide = TourGuide()
+    @State private var account = AccountStore()
     private let container: ModelContainer
     private let notificationDelegate = NotificationDelegate()
 
@@ -72,6 +73,7 @@ struct TadahApp: App {
             RootTabView()
                 .environment(router)
                 .environment(tourGuide)
+                .environment(account)
                 .onAppear { notificationDelegate.attach(router: router) }
                 .task {
                     // Notification permission is now requested through the

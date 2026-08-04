@@ -149,6 +149,45 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
 
 ## Part 3 — Accounts, family & monetization  *(Rachel's #1 future ask)*
 
+**Phase 1 — free accounts (Sign in with Apple) BUILT 2026-07-30 (not yet on TestFlight):**
+- `Model/Account.swift` — `Account` (userID/provider/name/email + displayName/initials
+  helpers) and `@Observable AccountStore` (persists one account to UserDefaults; sign
+  in/out/update/delete; sign-out and delete NEVER touch the local SwiftData items, so
+  "data survives sign-out/sign-in" holds). Injected in `TadahApp` via `.environment`.
+- `Screens/SignInView.swift` — Sign in with Apple only (native, no backend/SDK). Google
+  + email are noted as "coming soon", not dead buttons.
+- `Screens/AccountDetailsView.swift` — avatar/name/email + Delete account (local-only:
+  forgets the identity, keeps items).
+- `ProfileView` — signed-out gets a "Sign in or create account" button; the ACCOUNT card
+  shows Family sharing (UPGRADE chip → coming-soon alert) + Sign out; profile row becomes
+  a tappable identity row → Account Details. 8 `AccountStoreTests` pass; build green.
+- **⚠️ Rachel's 1 manual step before it works at runtime:** Xcode → Tadah target →
+  Signing & Capabilities → **+ Capability → "Sign in with Apple"** (adds the entitlement
+  and enables it on the App ID / provisioning — can't be done from the CLI). Until then
+  the button compiles but authorization will fail on device.
+- **Profile redesigned to Rachel's mockup 2026-07-31** (3-state mockup: No account /
+  Free / Family Plus). Reachable states BUILT: guest = "No account" card ("Your
+  information stays on this phone" + Create a free account); free = identity card
+  ("Free plan" + email → Account Details), a **Tadah Plus** upgrade card (UPGRADE chip
+  → coming-soon), then compact **SETTINGS** (Language row → sheet, Notifications row),
+  **PRIVACY** (Save photos / Hide details / Share anonymous data toggles + Privacy
+  Policy + Terms), a centered **Log out**, **HELP** (Send feedback → mailto), and the
+  legal disclaimer + version footer. The long inline language list is now a single row
+  → a Language sheet (the main declutter win Rachel asked for).
+- **Next phases (not started):** Google + email sign-in (needs GoogleSignIn SPM / a
+  backend); then family sharing (multi-profile) + Tadah Plus paywall via RevenueCat +
+  cloud sync (multi-device / new-phone) — these are the paid line.
+- **Family Plus screen — mockup captured, BUILD WITH THE PLUS PHASE (not reachable
+  until a Plus/family state exists):** identity shows "Family Plus · N family members";
+  a **FAMILY** section (Family members, Shared tasks, Family notifications) —
+  Rachel: keep this "as before" but restyle *with color / a different layout* (avatar
+  circles, not plain rows); an **ACCOUNT** section at the bottom (Manage Family Plus +
+  Log out). Rachel's tweak: **for the Plus screen, move MORE of the settings under the
+  Account section** rather than listing SETTINGS/MORE SETTINGS/PRIVACY all on the main
+  Profile — the Plus screen otherwise has "too many things." (Extra Plus toggles in the
+  mockup: notify-when-family-adds-a-task, notify-when-completed, default reminder time
+  — the reminder-time one overlaps Part 4.)
+
 The Profile tab scaffolds "Sign in / Family sharing / Tadah Plus" as coming-soon rows.
 Sequencing note: accounts come first — family sharing and cloud sync both need them,
 and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can charge.
@@ -235,9 +274,16 @@ English — so the two items below are the credibility gap, not polish.
 - **Translate guide content** — guide titles/subtitles/questions/step text are still
   English; general guides get the checklist translated by the AI polish, the rest is
   a content pass.
-- **Picker-controlled UI language** — let the Profile language picker override the
-  whole UI chrome (today chrome follows the iPhone language via String Catalog);
-  needs a runtime language override.
+- **Two language settings (Rachel, 2026-08-01)** — today's single Profile picker only
+  changes the AI *explain* language (scans + guide prose); the app's own UI chrome still
+  follows the iPhone language via the String Catalog, so it feels half-translated. Split
+  it into **two** rows in SETTINGS:
+  - **App language** — overrides the WHOLE UI (all chrome + content). Needs a runtime
+    language override (set `AppleLanguages` in UserDefaults + a `.environment(\.locale)`
+    override / relaunch prompt).
+  - **Explain language** — the existing per-user "explain my documents in…" control, for
+    when someone wants the app in English but explanations in 中文 (the customized case).
+  Default: Explain language follows App language until the user sets it differently.
 - **Bilingual term toggle** — tap a translated field to reveal the English term
   (确认码 ↔ "Confirmation code") for forms/clerks. (Detailed note in build plan.)
 
