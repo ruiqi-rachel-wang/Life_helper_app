@@ -26,11 +26,16 @@ struct TadahApp: App {
         // Cuevi→Tadah UserDefaults-key rename before anything reads them.
         Metrics.migrateLegacyKeysIfNeeded()
 
-        // RevenueCat (Tadah Plus billing). This is the RevenueCat *test-store*
-        // key — fine for development. Before shipping paid Plus, swap it for the
-        // public Apple key ("appl_…") from RevenueCat → Project → API Keys.
+        // RevenueCat (Tadah Plus billing). This is the PUBLIC Apple SDK key — it
+        // is meant to ship inside the app and is safe in source control. The
+        // *secret* key (sk_…) and the In-App Purchase .p8 never live here: they
+        // stay in RevenueCat and in the Worker (REVENUECAT_SECRET).
+        //
+        // Purchases only work once, in RevenueCat: both products are attached to
+        // the `Tadah Pro` entitlement (must match PlusStore.entitlementID and the
+        // Worker's PLUS_ENTITLEMENT) and sit in an Offering marked Current.
         Purchases.logLevel = .warn
-        Purchases.configure(withAPIKey: "test_uBThfzDeOxcOcoWghcfurizGBKe")
+        Purchases.configure(withAPIKey: "appl_NkpoJAXKXycQKzzekTUOmXaxedM")
 
         // One shared container, used by the UI and the notification delegate.
         let container = Self.makeContainer()

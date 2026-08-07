@@ -41,3 +41,8 @@ secrets.plist
 
 # Personal test documents (PII) — never commit
 testing files/
+
+# Apple keys — never commit these (In-App Purchase / App Store Connect API .p8)
+*.p8
+AuthKey_*
+SubscriptionKey_*
