@@ -109,7 +109,9 @@ struct RemindersEditor: View {
         ensureCustomized()
         let base = dueDate ?? Date()
         let dayBefore = Calendar.current.date(byAdding: .day, value: -1, to: base) ?? base
-        let fire = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: dayBefore) ?? dayBefore
+        let fire = Calendar.current.date(bySettingHour: AppSettings.defaultReminderHour,
+                                         minute: AppSettings.defaultReminderMinute,
+                                         second: 0, of: dayBefore) ?? dayBefore
         reminders.append(ReminderItem(date: fire))
     }
 }

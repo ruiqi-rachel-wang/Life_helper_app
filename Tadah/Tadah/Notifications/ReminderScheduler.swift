@@ -176,7 +176,8 @@ final class ReminderScheduler {
         content.categoryIdentifier = ReminderID.category
         content.userInfo = [ReminderID.itemKey: item.id.uuidString]
         let trigger = UNCalendarNotificationTrigger(
-            dateMatching: DateComponents(hour: 9, minute: 0),
+            dateMatching: DateComponents(hour: AppSettings.defaultReminderHour,
+                                         minute: AppSettings.defaultReminderMinute),
             repeats: true)
         center.add(UNNotificationRequest(
             identifier: "\(item.id.uuidString)|odDaily", content: content, trigger: trigger))
