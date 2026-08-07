@@ -27,11 +27,27 @@ const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
 // before writing any JSON — too low a ceiling truncates the answer.
 const MAX_TOKENS = 4000;
 
-// Per-install AI-call caps. Deliberately ~3x the app's own scan quota (10/day,
-// 50/month) because guides also call the AI — honest users should never see
-// these; they exist to bound a runaway device or a copied token+install id.
-const AI_DAY_LIMIT = 30;
-const AI_MONTH_LIMIT = 150;
+// Per-install AI-call caps — a COST backstop, not entitlement enforcement.
+// Entitlement is the app's job (ScanQuota.swift + PlusStore); this only bounds a
+// device that bypasses it (ScanQuota lives in UserDefaults, so a reinstall resets
+// it) or a copied token+install id.
+//
+// MUST be sized off the PLUS tier, not the free one: this endpoint is anonymous
+// (install id only, no session), so it CANNOT tell a Plus user from a free one —
+// every request has to be allowed the highest legitimate usage. Sizing these off
+// the free tier is what made a paying user's 31st scan of the day fail with
+// "AI service is busy", which is both wrong and unactionable.
+//
+// Keep them in sync with ScanQuota.swift — that drift is exactly the bug above:
+//   Free: 10/day, 20 per rolling 30 days.  Plus: 60/day, 300 per rolling 30 days.
+const PLUS_PER_DAY = 60;    // ScanQuota.perDayPlus
+const PLUS_PER_30D = 300;   // ScanQuota.perWindowPlus
+// 3x headroom on top, because the two sides don't count the same events: the app
+// records a scan only when it SUCCEEDS (see CreateView), while bumpUsage counts
+// every ATTEMPT — so retries over flaky network legitimately burn Worker budget
+// the app never charged the user for.
+const AI_DAY_LIMIT = PLUS_PER_DAY * 3;      // 180
+const AI_MONTH_LIMIT = PLUS_PER_30D * 3;    // 900
 
 // /events guardrails.
 const MAX_BATCH = 500;                               // events accepted per request
@@ -135,6 +151,12 @@ async function bumpUsage(db, installID) {
     );
     usageTableReady = true;
   }
+  // NOTE the two deliberate mismatches with ScanQuota, both fine because these
+  // caps only need to sit safely ABOVE legitimate use, never exactly on it:
+  //   • CALENDAR month here vs the app's ROLLING 30 days (so this window resets
+  //     on the 1st, and AI_MONTH_LIMIT is derived from a rolling-30d number).
+  //   • UTC day here vs the app's LOCAL day, so the two roll over at different
+  //     moments for anyone not on UTC.
   const now = new Date().toISOString();       // "2026-07-08T…"
   const dayKey = now.slice(0, 10);            // 2026-07-08
   const monthKey = now.slice(0, 7);           // 2026-07

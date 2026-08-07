@@ -215,17 +215,17 @@ and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can c
   day, 20 per rolling 30 days, 20 tasks. **Plus** = 60/day, 300 per 30 days, 100
   tasks (high enough to feel unlimited, but a real backstop against a runaway
   OpenAI bill). *Decided 2026-08-05 — supersedes the earlier "Plus quota open" note.*
-- **⚠️ TODO (Rachel, deferred 2026-08-06) — REWRITE THE PRIVACY POLICY + TERMS.**
-  `App/LegalContent.swift` is now **factually out of date** and must be updated before
-  the next TestFlight/App Store submission. What's wrong: it says *"Tadah has no
-  accounts and no sign-in"* (accounts shipped), *"your documents and data stay on your
-  device"* and *"the content stays on your device"* (tasks now back up to the Cloudflare
-  Worker + D1 under a signed-in account), and it references a *"stays on your device"*
-  badge on sensitive guides that has been **removed** from the UI. Also needs: what the
-  account stores server-side (task text/dates/steps — not photos, today), the free
-  one-device rule, and how to delete server data. The **Apple App Privacy label** needs
-  the same update. *(Sensitive guides do still skip the AI — that behavior is unchanged,
-  we just no longer advertise it.)*
+- **✅ DONE 2026-08-07 — privacy policy + terms rewritten for accounts/sync.**
+  `App/LegalContent.swift` now describes Sign in with Apple, exactly what is backed up
+  (item content incl. reference numbers) vs not (photos, raw OCR text), the free
+  one-device rule, retention, and how to get server data deleted. `legal/*.md` and
+  `docs/*.html` are now **generated from** LegalContent.swift by one script, so the three
+  copies can't drift. `legal/app-store-privacy-label.md` gained a **Linked-to-Identity**
+  section (User ID / user content / Purchases) — the old label declared everything as
+  not-linked, which stopped being true with accounts.
+  - ⚠️ **Still to do (Rachel):** (a) `wrangler pages deploy docs --project-name cuevi-legal`
+    — as of 2026-08-07 the LIVE pages still show the June/July text, so the deploy has
+    not landed; (b) enter the revised answers in App Store Connect → App Privacy.
 - **Positioning decision (Rachel, 2026-08-06): stop selling "on-device / local" as a
   feature.** Keep the capability, drop the marketing. Removed the guides "Stays on your
   device" badge and reworded the Profile guest card, sign-out confirmation, and Sign-in
