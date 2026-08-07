@@ -30,6 +30,7 @@ struct CreateView: View {
 
     @Environment(TourGuide.self) private var tourGuide
     @Environment(AppRouter.self) private var router
+    @Environment(PlusStore.self) private var plus
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var showCamera = false
     @State private var showPhotoPicker = false
@@ -45,7 +46,7 @@ struct CreateView: View {
     // Gate a scan on the rate limit; shows the limit message and returns false
     // when the user is out of scans for the day/month.
     private func allowScan() -> Bool {
-        if let reason = ScanQuota.blockedReason() { quotaMessage = reason; return false }
+        if let reason = ScanQuota.blockedReason(plus: plus.isPlus) { quotaMessage = reason; return false }
         return true
     }
 
@@ -291,6 +292,7 @@ private struct CreateForm: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
+    @Environment(PlusStore.self) private var plus
 
     @State private var title = ""
     @State private var category: ItemCategory = .other
@@ -303,6 +305,7 @@ private struct CreateForm: View {
     @State private var remindersCustomized = false
     @State private var photoItem: PhotosPickerItem?
     @State private var imageData: Data?
+    @State private var limitMessage: String?   // task-list full
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -349,6 +352,10 @@ private struct CreateForm: View {
             .dismissKeyboardOnTap()
         }
         .navigationBarHidden(true)
+        .alert("List full", isPresented: Binding(
+            get: { limitMessage != nil }, set: { if !$0 { limitMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(limitMessage ?? "") }
     }
 
     // MARK: header
@@ -501,7 +508,8 @@ private struct CreateForm: View {
         RemindersEditor(
             reminders: $reminders,
             customized: $remindersCustomized,
-            defaults: ActionItem.defaultReminders(dueDate: dueDate, dueHasTime: false, leadHours: 2),
+            defaults: ActionItem.defaultReminders(dueDate: dueDate, dueHasTime: false, leadHours: 2,
+                                                  defaultMinutes: AppSettings.defaultReminderMinutes),
             dueDate: dueDate,
             isEditing: true)
         .padding(.horizontal, 18)
@@ -589,6 +597,7 @@ private struct CreateForm: View {
     }
 
     private func save() {
+        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus) { limitMessage = reason; return }
         let cleanSteps = steps
             .map { ChecklistStep(text: $0.text.trimmingCharacters(in: .whitespaces), done: $0.done) }
             .filter { !$0.text.isEmpty }
@@ -613,6 +622,7 @@ private struct CreateForm: View {
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)
         ReminderScheduler.shared.reschedule(for: item)   // schedule reminders
+        SyncCoordinator.shared.noteLocalChange()         // back it up to the account
         // Manual items skip the Review screen, so skip its tour card too —
         // jump straight to the final "your to-dos live here" card.
         tourGuide.catchUp(to: .inboxRow)
@@ -625,4 +635,5 @@ private struct CreateForm: View {
     CreateView()
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
+        .environment(PlusStore())
 }

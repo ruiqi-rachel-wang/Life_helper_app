@@ -2,7 +2,7 @@
 //
 //  Sign in / create account (Part 3, phase 1). Sign in with Apple is the whole
 //  flow for now: native, free, no password to manage, and the document never
-//  leaves the phone — it fits Tadah's on-device privacy stance. Google + email
+//  leaves the phone. Google + email
 //  are planned (see future_features.md Part 3) but need an SDK / a backend, so
 //  they're noted as coming, not shown as dead buttons.
 //
@@ -12,9 +12,12 @@
 
 import SwiftUI
 import AuthenticationServices
+import RevenueCat
 
 struct SignInView: View {
     @Environment(AccountStore.self) private var account
+    @Environment(SyncCoordinator.self) private var sync
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @State private var errorMessage: String?
@@ -30,7 +33,7 @@ struct SignInView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Sign in").font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
-                    Text("Create a free account so your items are never lost — they'll survive signing out and, later, moving to a new phone. Everything still stays private to you.")
+                    Text("Create a free account so your items are never lost — they're backed up to your account and come with you to a new phone.")
                         .font(.body14).foregroundStyle(Color.faded).lineSpacing(3)
                 }
                 .padding(.horizontal, 6)
@@ -58,7 +61,7 @@ struct SignInView: View {
 
                 Spacer()
 
-                Text("Signing in is free and only stores your name and email to keep your data with you. It doesn't unlock anything else yet.")
+                Text("Signing in is free. Your items are backed up to your account so you don't lose them, and a free account is used on one device at a time.")
                     .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
                     .padding(.bottom, 8)
             }
@@ -90,6 +93,24 @@ struct SignInView: View {
                 .compactMap { $0 }.joined(separator: " ")
             account.signIn(Account(userID: cred.user, provider: .apple,
                                    name: name, email: cred.email ?? ""))
+
+            // Part 3 sync: tie RevenueCat to this Apple id (so the server can
+            // check the tier authoritatively) and exchange the Apple token for a
+            // server session. Both are BEST-EFFORT — local sign-in has already
+            // succeeded; these light up backup/sync only when a Worker is
+            // configured, and quietly no-op on the simulator or if offline.
+            Purchases.shared.logIn(cred.user) { _, _, _ in }
+            if let identityToken = cred.identityToken {
+                Task {
+                    // A session unlocks backup/sync. Reconciliation then decides
+                    // what happens to the tasks already on THIS device (seed a new
+                    // account, or back up + ask before touching them).
+                    if let session = try? await AuthService.authenticate(
+                        identityToken: identityToken, deviceID: Install.id) {
+                        await sync.afterSignIn(session: session, context: context)
+                    }
+                }
+            }
             dismiss()
         case .failure(let error):
             // A user-cancelled sheet isn't an error worth surfacing.

@@ -17,9 +17,11 @@ nonisolated enum GuideRoute: Hashable {
 }
 
 struct GuidesView: View {
+    @Environment(PlusStore.self) private var plus
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var selectedCategory: ItemCategory?   // nil = All
     @State private var path: [GuideRoute] = []
+    @State private var quotaMessage: String?             // free-tier limit hit
 
     private var chipCategories: [ItemCategory] {
         // Follow ItemCategory's most-common-first order, keeping only the
@@ -61,7 +63,16 @@ struct GuidesView: View {
                 switch route {
                 case .questions(let id):
                     if let g = Guide.all.first(where: { $0.id == id }) {
-                        GuideQuestionsView(guide: g) { answers in path.append(.review(id, answers)) }
+                        GuideQuestionsView(guide: g) { answers in
+                            // Only general guides hit the AI (sensitive ones stay
+                            // on-device), so only those draw from the scan/guide
+                            // pool. Gate before the expensive build.
+                            if g.risk == .general, let reason = ScanQuota.blockedReason(plus: plus.isPlus) {
+                                quotaMessage = reason
+                                return
+                            }
+                            path.append(.review(id, answers))
+                        }
                     }
                 case .review(let id, let answers):
                     if let g = Guide.all.first(where: { $0.id == id }) {
@@ -87,6 +98,7 @@ struct GuidesView: View {
                                 // looks up local utility companies in the same response.
                                 let (built, providers) = await OpenAIClient()
                                     .buildGuide(base, context: context, zip: answers["zip"], language: language)
+                                ScanQuota.record()   // one built guide = one from the scan/guide pool
                                 // Rewrite (AI) is translated; .localized() then translates the static
                                 // summary/notes/detail on-device.
                                 var result = built.localized(language)
@@ -104,6 +116,13 @@ struct GuidesView: View {
                             onClose: { path.removeAll() })   // back to the guide list
                     }
                 }
+            }
+            .alert("Free limit reached", isPresented: Binding(
+                get: { quotaMessage != nil },
+                set: { if !$0 { quotaMessage = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(quotaMessage ?? "")
             }
         }
     }
@@ -213,7 +232,6 @@ struct GuideQuestionsView: View {
                     }
                     .padding(.horizontal, 8)
 
-                    if guide.risk == .sensitive { privacyBadge }
                     if let note = guide.emergencyNote { emergencyBanner(note) }
 
                     ForEach(visibleQuestions) { q in questionCard(q) }
@@ -260,17 +278,10 @@ struct GuideQuestionsView: View {
         }
     }
 
-    // Small reassurance for sensitive topics — built on-device, never sent to AI.
-    private var privacyBadge: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "lock.fill").font(.system(size: 10))
-            Text("Stays on your device").font(.eyebrow).tracking(0.4)
-        }
-        .foregroundStyle(Color.faded)
-        .padding(.horizontal, 10).padding(.vertical, 5)
-        .background(Capsule().fill(Color.bg))
-        .padding(.horizontal, 8)
-    }
+    // NOTE: sensitive guides still skip the AI and are built on-device — that
+    // behavior is unchanged. We just don't ADVERTISE it (Rachel, 2026-08-06):
+    // no "stays on your device" badge, so the promise isn't one we have to keep
+    // as the product grows into account backup / sync.
 
     // Emergency notice on the first page (e.g. "call 911"), above the questions —
     // so urgent help is never buried inside the checklist.
@@ -366,4 +377,5 @@ struct GuideQuestionsView: View {
     GuidesView()
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
+        .environment(PlusStore())
 }

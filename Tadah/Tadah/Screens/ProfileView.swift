@@ -27,10 +27,13 @@ struct ProfileView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
     @Environment(AccountStore.self) private var account
+    @Environment(PlusStore.self) private var plus
+    @Environment(SyncCoordinator.self) private var sync
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
     @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
     @AppStorage(AppSettings.savePhotoKey) private var savePhoto = true // keep scanned photo on the item
+    @AppStorage(AppSettings.defaultReminderMinutesKey) private var reminderMinutes = AppSettings.fallbackReminderMinutes
     @State private var notifyStatus = String(localized: "Checking…")
     @State private var notifyOn = false
     @State private var notifyUndetermined = false   // never asked → row can request
@@ -40,6 +43,7 @@ struct ProfileView: View {
     @State private var showLanguageSheet = false
     @State private var confirmSignOut = false
     @State private var showPlusComingSoon = false
+    @State private var showPaywall = false
 
     // Which legal document the in-app sheet is showing.
     private enum LegalDoc: Int, Identifiable { case privacy, terms; var id: Int { rawValue } }
@@ -93,12 +97,7 @@ struct ProfileView: View {
         .sheet(isPresented: $showSignIn) { SignInView() }
         .sheet(isPresented: $showAccountDetails) { AccountDetailsView() }
         .sheet(isPresented: $showLanguageSheet) { languageSheet }
-        .confirmationDialog("Sign out?", isPresented: $confirmSignOut, titleVisibility: .visible) {
-            Button("Sign out", role: .destructive) { account.signOut() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Your items stay on this device — signing back in brings them right back.")
-        }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
         .alert("Family sharing is coming with Tadah Plus", isPresented: $showPlusComingSoon) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -132,7 +131,8 @@ struct ProfileView: View {
                             avatar(initials: account.initials)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(account.displayName).font(.cardTitle).foregroundStyle(Color.ink)
-                                Text("Free plan").font(.subline).foregroundStyle(Color.faded)
+                                Text(plus.isPlus ? "Tadah Plus" : "Free plan")
+                                    .font(.subline).foregroundStyle(Color.faded)
                                 if !account.email.isEmpty {
                                     Text(account.email).font(.subline).foregroundStyle(Color.faded)
                                 }
@@ -148,6 +148,10 @@ struct ProfileView: View {
 
                     divider
 
+                    syncStatusRow
+
+                    divider
+
                     plusUpgradeRow
                 }
             }
@@ -157,7 +161,7 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("No account").font(.cardTitle).foregroundStyle(Color.ink)
-                        Text("Your information stays on this phone.")
+                        Text("Sign in to keep your items backed up.")
                             .font(.subline).foregroundStyle(Color.faded)
                     }
                     Button { showSignIn = true } label: {
@@ -182,30 +186,89 @@ struct ProfileView: View {
         .frame(width: 52, height: 52)
     }
 
+    // MARK: backup/sync status — plain reassurance that items are saved to the
+    // account, since that's the whole point of signing in. Tapping syncs now.
+
+    private var syncStatusRow: some View {
+        Button {
+            Task { await sync.syncNow(context: modelContext, account: account) }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: syncSymbol).font(.system(size: 15))
+                    .foregroundStyle(sync.lastError == nil ? Color.accent : Color.warn)
+                    .frame(width: 24)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Backup").font(.body14).foregroundStyle(Color.ink)
+                    Text(syncDetail).font(.subline).foregroundStyle(Color.faded)
+                }
+                Spacer(minLength: 8)
+                if sync.isSyncing { ProgressView().controlSize(.small) }
+            }
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(sync.isSyncing)
+    }
+
+    private var syncSymbol: String {
+        if sync.lastError != nil { return "exclamationmark.icloud" }
+        return sync.lastSyncedAt == nil ? "icloud" : "checkmark.icloud"
+    }
+
+    private var syncDetail: String {
+        if sync.isSyncing { return String(localized: "Backing up…") }
+        if sync.lastError != nil { return String(localized: "Couldn't back up — tap to try again") }
+        guard let at = sync.lastSyncedAt else { return String(localized: "Tap to back up your items now") }
+        let f = RelativeDateTimeFormatter(); f.unitsStyle = .full
+        return String(localized: "Backed up \(f.localizedString(for: at, relativeTo: .now))")
+    }
+
     // MARK: Tadah Plus upgrade — a row inside the account card, under the email
 
+    @ViewBuilder
     private var plusUpgradeRow: some View {
-        Button { showPlusComingSoon = true } label: {
+        if plus.isPlus {
+            // Already Plus: show it as active, no upgrade prompt.
             HStack(spacing: 12) {
                 Image(systemName: "sparkles").font(.system(size: 17)).foregroundStyle(Color.accent)
                     .frame(width: 24)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tadah Plus").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
-                    // A little more on what Plus unlocks (Rachel's ask).
-                    Text("Add family members, share tasks, and use Tadah on more than one device.")
+                    Text("Your family members and all your devices are covered.")
                         .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
-                Text("UPGRADE")
-                    .font(.eyebrow).tracking(0.8).foregroundStyle(Color.accent)
+                Text("ACTIVE")
+                    .font(.eyebrow).tracking(0.8).foregroundStyle(Color.ok)
                     .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(Capsule().fill(Color.accent.opacity(0.12)))
+                    .background(Capsule().fill(Color.ok.opacity(0.12)))
             }
             .padding(.top, 14)
-            .contentShape(Rectangle())
+        } else {
+            Button { showPaywall = true } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "sparkles").font(.system(size: 17)).foregroundStyle(Color.accent)
+                        .frame(width: 24)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Tadah Plus").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
+                        // A little more on what Plus unlocks (Rachel's ask).
+                        Text("Add family members, share tasks, and use Tadah on more than one device.")
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Text("UPGRADE")
+                        .font(.eyebrow).tracking(0.8).foregroundStyle(Color.accent)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(Color.accent.opacity(0.12)))
+                }
+                .padding(.top, 14)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: settings (compact rows)
@@ -217,7 +280,38 @@ struct ProfileView: View {
                 navRow("Language", value: language.displayName) { showLanguageSheet = true }
                 divider
                 notificationsRow
+                divider
+                // The time a reminder fires when its task has no time of its own
+                // (plain-date tasks + the daily overdue nudge). Timed tasks keep
+                // their own exact time.
+                DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
+                    Text("Default reminder time").font(.body14).foregroundStyle(Color.ink)
+                }
+                .tint(Color.accent)
+                .padding(.vertical, 8)
+                .onChange(of: reminderMinutes) { _, _ in rescheduleAllItems() }
             }
+        }
+    }
+
+    // Map the stored minutes-past-midnight to/from the Date the picker wants.
+    private var reminderTime: Binding<Date> {
+        Binding(
+            get: {
+                Calendar.current.date(bySettingHour: reminderMinutes / 60,
+                                      minute: reminderMinutes % 60, second: 0, of: Date()) ?? Date()
+            },
+            set: { newValue in
+                let c = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                reminderMinutes = (c.hour ?? 9) * 60 + (c.minute ?? 0)
+            })
+    }
+
+    // Existing non-customized reminders + overdue nudges recompute at the new
+    // time, so the change applies to items already scheduled, not just new ones.
+    private func rescheduleAllItems() {
+        if let items = try? modelContext.fetch(FetchDescriptor<ActionItem>()) {
+            ReminderScheduler.shared.rescheduleAll(for: items)
         }
     }
 
@@ -274,16 +368,43 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: log out (signed-in only) — a plain centered action, per the mockup
+    // MARK: log out (signed-in only) — the confirmation expands inline, right
+    // inside this card, so it stays attached to the button and scrolls with it
+    // (no bottom action sheet that sits detached at the edge of the screen).
 
     private var logOutButton: some View {
-        Button { confirmSignOut = true } label: {
-            card {
-                Text("Log out").font(.body14.weight(.semibold)).foregroundStyle(Color.bad)
-                    .frame(maxWidth: .infinity, alignment: .center)
+        card {
+            if confirmSignOut {
+                VStack(spacing: 12) {
+                    Text("Sign out?").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
+                    Text("Your items are saved — signing back in brings them right back.")
+                        .font(.subline).foregroundStyle(Color.faded)
+                        .multilineTextAlignment(.center).lineSpacing(2)
+                    HStack(spacing: 10) {
+                        Button { withAnimation(.easeInOut(duration: 0.2)) { confirmSignOut = false } } label: {
+                            Text("Cancel").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
+                                .frame(maxWidth: .infinity).padding(.vertical, 10)
+                                .background(RoundedRectangle(cornerRadius: 10).stroke(Color.hairD, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                        Button { confirmSignOut = false; account.signOut() } label: {
+                            Text("Log out").font(.body14.weight(.semibold)).foregroundStyle(Color.paper)
+                                .frame(maxWidth: .infinity).padding(.vertical, 10)
+                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.bad))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                Button { withAnimation(.easeInOut(duration: 0.2)) { confirmSignOut = true } } label: {
+                    Text("Log out").font(.body14.weight(.semibold)).foregroundStyle(Color.bad)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: help
@@ -495,4 +616,6 @@ struct ProfileView: View {
 #Preview {
     ProfileView()
         .environment(AccountStore())
+        .environment(PlusStore())
+        .environment(SyncCoordinator.shared)
 }

@@ -202,8 +202,50 @@ and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can c
   account is capped at one profile on one device; Tadah Plus is what lets a signed-in
   account add more profiles (Mom, Dad) and use them from more than one device —
   a daughter/son manages their parents' English mail without missing deadlines.
-  *(Whether Plus also raises the scan quota is still open — not decided, don't
-  assume it does until Rachel says so.)*
+- **Plus caps — decided 2026-08-05: 8 profiles + 8 devices per account, independent.**
+  Even Plus isn't unlimited (anti-abuse + sync-cost backstop). The two caps are
+  DECOUPLED — not a 1-device-per-profile mapping: any profile can be signed in on
+  several devices at once, and the account's limits are simply "≤ 8 profiles total"
+  and "≤ 8 devices total." **Free** stays **1 profile / 1 device.** Enforcement lands
+  with the family-sharing + multi-device-sync build (foundation only so far — see the
+  task-sync notes); nothing enforces these counts yet.
+- **Free-tier limits BUILT 2026-08-04, Plus caps wired 2026-08-05** — scans+guides
+  share one pool; the task list is capped. Per tier (via `PlusStore.isPlus`,
+  `Model/ScanQuota.swift` + `Model/TaskLimit.swift`): **Free** = 10 scans/guides a
+  day, 20 per rolling 30 days, 20 tasks. **Plus** = 60/day, 300 per 30 days, 100
+  tasks (high enough to feel unlimited, but a real backstop against a runaway
+  OpenAI bill). *Decided 2026-08-05 — supersedes the earlier "Plus quota open" note.*
+- **⚠️ TODO (Rachel, deferred 2026-08-06) — REWRITE THE PRIVACY POLICY + TERMS.**
+  `App/LegalContent.swift` is now **factually out of date** and must be updated before
+  the next TestFlight/App Store submission. What's wrong: it says *"Tadah has no
+  accounts and no sign-in"* (accounts shipped), *"your documents and data stay on your
+  device"* and *"the content stays on your device"* (tasks now back up to the Cloudflare
+  Worker + D1 under a signed-in account), and it references a *"stays on your device"*
+  badge on sensitive guides that has been **removed** from the UI. Also needs: what the
+  account stores server-side (task text/dates/steps — not photos, today), the free
+  one-device rule, and how to delete server data. The **Apple App Privacy label** needs
+  the same update. *(Sensitive guides do still skip the AI — that behavior is unchanged,
+  we just no longer advertise it.)*
+- **Positioning decision (Rachel, 2026-08-06): stop selling "on-device / local" as a
+  feature.** Keep the capability, drop the marketing. Removed the guides "Stays on your
+  device" badge and reworded the Profile guest card, sign-out confirmation, and Sign-in
+  screen copy to sell **backup** instead of device-only storage. Rationale: the product
+  is growing into account backup + cross-device sync, so a "never leaves your phone"
+  guarantee is a promise we'd have to break. Keep options open, don't advertise them.
+- **TODO (not built) — photo backup as an OPTION:** photos are the one thing still not
+  synced, so on a second device a task shows no document image. Rachel wants this
+  available but **not** framed as a privacy guarantee either way. Plan: Cloudflare **R2**
+  (same account, egress-free), keyed by item id, gated behind a Settings toggle
+  (off by default), reusing the existing session auth. Cost is negligible — task caps
+  bound it (Free 20 tasks ≈ 40 MB, Plus 100 ≈ 200 MB per user); R2's 10 GB free tier
+  covers ~250 free users, then $0.015/GB-month (~$0.45/mo at 1,000 users). Needs an R2
+  bucket created + a `wrangler.toml` binding. **Requires the privacy policy update above
+  to ship first.**
+- **TODO (not built) — show usage on Profile:** a small "X of N scans/guides used
+  this month · Y of Z tasks" readout on the Profile screen so users see where they
+  stand and feel the ceiling before they hit it (doubles as a soft Plus nudge for
+  free users). Reads `ScanQuota.usedLast30Days` / `usedToday` + `TaskLimit.count`
+  against the tier caps.
 - **Paid plan ("Tadah Plus")** — subscription via Apple In-App Purchase, managed
   through **RevenueCat** *(decided 2026-07-01)*: entitlements, upgrade/downgrade/
   restore, receipt validation, configurable paywall. Free to $2.5k/mo tracked revenue,

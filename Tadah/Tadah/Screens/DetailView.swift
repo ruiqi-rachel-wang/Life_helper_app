@@ -81,7 +81,13 @@ struct DetailView: View {
             Spacer()
             Text("ACTION").font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
             Spacer()
-            Button { isEditing.toggle() } label: {
+            Button {
+                if isEditing {                  // leaving edit mode = commit
+                    item.touch()
+                    SyncCoordinator.shared.noteLocalChange()
+                }
+                isEditing.toggle()
+            } label: {
                 Text(isEditing ? "Done" : "Edit")
                     .font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.accent)
             }
@@ -274,7 +280,11 @@ struct DetailView: View {
                         .overlay(alignment: .top) { divider(above: step) }
                     } else if step.hasDetail {
                         HStack(alignment: .top, spacing: 10) {
-                            Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
+                            Button {
+                                $step.done.wrappedValue.toggle()
+                                item.touch()
+                                SyncCoordinator.shared.noteLocalChange()
+                            } label: { checkbox(done: step.done) }
                                 .buttonStyle(.plain)
                             // Has real detail (mini-checklist / explanation / links) — open to read it.
                             Button { detailStep = step } label: { stepText(step, chevron: true) }
@@ -286,7 +296,11 @@ struct DetailView: View {
                         // Nothing to read on a plain step — not tappable in the read view.
                         // Adding details happens in edit mode (the pencil above).
                         HStack(alignment: .top, spacing: 10) {
-                            Button { $step.done.wrappedValue.toggle() } label: { checkbox(done: step.done) }
+                            Button {
+                                $step.done.wrappedValue.toggle()
+                                item.touch()
+                                SyncCoordinator.shared.noteLocalChange()
+                            } label: { checkbox(done: step.done) }
                                 .buttonStyle(.plain)
                             stepText(step, chevron: false)
                         }
@@ -559,8 +573,13 @@ struct DetailView: View {
 
     private func deleteItem() {
         didDelete = true
-        ReminderScheduler.shared.cancel(itemID: item.id)
-        if item.modelContext != nil { context.delete(item) }
+        // Centralized so the reminder-cancel + delete-tombstone (for sync) can't
+        // drift from the Inbox swipe / notification paths.
+        if item.modelContext != nil {
+            ItemActions.delete(item, in: context)
+        } else {
+            ReminderScheduler.shared.cancel(itemID: item.id)
+        }
         dismiss()
     }
 

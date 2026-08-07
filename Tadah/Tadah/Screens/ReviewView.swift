@@ -39,6 +39,7 @@ struct ReviewView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
+    @Environment(PlusStore.self) private var plus
 
     @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
@@ -49,6 +50,7 @@ struct ReviewView: View {
     @State private var selected: Set<Int> = []           // which multi-items to add
     @State private var detailStep: ChecklistStep?        // tapped step → detail sheet
     @State private var showFullPhoto = false             // tapped photo → enlarge/translate
+    @State private var limitMessage: String?             // task-list full
 
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     private var explainLanguage: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
@@ -87,6 +89,10 @@ struct ReviewView: View {
         // here (scan, upload, or a guide from the Guides tab) — catch up so
         // the "Add to inbox" card shows once the result renders.
         .onAppear { tourGuide.catchUp(to: .reviewAdd) }
+        .alert("List full", isPresented: Binding(
+            get: { limitMessage != nil }, set: { if !$0 { limitMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(limitMessage ?? "") }
     }
 
     // MARK: pipeline
@@ -297,7 +303,8 @@ struct ReviewView: View {
                                     customized: $draft.remindersCustomized,
                                     defaults: ActionItem.defaultReminders(dueDate: draft.dueDate,
                                                                           dueHasTime: draft.dueHasTime,
-                                                                          leadHours: leadHours),
+                                                                          leadHours: leadHours,
+                                                                          defaultMinutes: AppSettings.defaultReminderMinutes),
                                     dueDate: draft.dueDate,
                                     isEditing: isEditing)
                 }
@@ -586,6 +593,7 @@ struct ReviewView: View {
     }
 
     private func addToInbox() {
+        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus) { limitMessage = reason; return }
         if !includeDue { draft.dueDate = nil }
         // Drop blank steps, keeping each step's detail aligned by index so nothing
         // the user removed comes back (and added/edited steps stick).
@@ -613,6 +621,7 @@ struct ReviewView: View {
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
+        SyncCoordinator.shared.noteLocalChange()
         tourGuide.advance(from: .reviewAdd)
         router.goToInbox()
         finish()
@@ -697,7 +706,9 @@ struct ReviewView: View {
     // image so a multi-page document keeps its back pages too (the old code kept
     // only the first). Single-page documents store as-is. Saved by default so
     // the user can always check the original on the Detail page — the My Settings
-    // toggle (AppSettings.savePhoto) opts out. Photos never leave the device.
+    // toggle (AppSettings.savePhoto) opts out. Photos are not uploaded today (see
+    // TaskDTO); backing them up to the account is a planned OPTION, not a promise
+    // that they stay local.
     private var scanImageData: Data? {
         guard AppSettings.savePhoto, !images.isEmpty else { return nil }
         let stored = images.count == 1 ? images[0] : UIImage.stackedVertically(images)
@@ -705,12 +716,26 @@ struct ReviewView: View {
     }
 
     private func addSelected() {
+        let chosen = items.indices.filter { selected.contains($0) }
+        let room = TaskLimit.remaining(context, plus: plus.isPlus)
+        guard room > 0 else {
+            limitMessage = TaskLimit.blockedReason(context, plus: plus.isPlus)
+            return
+        }
+        // Add what fits, oldest-selected first; tell the user if some didn't fit.
+        let toAdd = Array(chosen.prefix(room))
         let img = scanImageData
-        for i in items.indices where selected.contains(i) {
+        for i in toAdd {
             let item = ActionItem(from: items[i], imageData: img, source: source)
             context.insert(item)
             Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
             ReminderScheduler.shared.reschedule(for: item)
+        }
+        SyncCoordinator.shared.noteLocalChange()
+        if toAdd.count < chosen.count {
+            limitMessage = String(localized: "Your list is full at \(TaskLimit.cap(plus: plus.isPlus)) items, so only \(toAdd.count) of \(chosen.count) were added. Delete some to add the rest.")
+            selected = Set(chosen.dropFirst(room))   // leave the ones that didn't fit checked
+            return
         }
         tourGuide.advance(from: .reviewAdd)   // → .inboxRow, like the single-item path
         router.goToInbox()
