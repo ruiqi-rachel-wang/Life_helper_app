@@ -1,10 +1,16 @@
 //  OpenAIClient.swift
 //
 //  The real Extractor: sends the OCR text to the model and gets back a
-//  structured ExtractionResult. Uses gpt-4o (not 4o-mini) because users need
-//  real REASONING — explain *why* they got this, find the root cause, and give
-//  conditional next steps — not just field extraction. ~$0.003–0.006/scan;
-//  affordable because scans+guides are rate-limited (see ScanQuota: 10/day, 20 per 30 days).
+//  structured ExtractionResult. Uses gpt-5-mini because users need real
+//  REASONING — explain *why* they got this, find the root cause, and give
+//  conditional next steps — not just field extraction.
+//
+//  COST: ~$0.003/scan (was ~$0.02 on gpt-4o — gpt-5-mini is ~7x cheaper per
+//  token AND a newer model). The ~4,300-token system prompt dominates, not the
+//  document. Affordable anyway because scans+guides are rate-limited
+//  (see ScanQuota: 10/day, 20 per 30 days). Verify with the DEBUG usage log in
+//  extract() rather than trusting this comment — the last estimate here went
+//  4x stale as the prompt grew.
 //
 //  WEEK 5: calls api.openai.com DIRECTLY with the dev key in APIKeys.swift.
 //  Safe because this only runs on the Simulator. Before TestFlight the URL +
@@ -20,7 +26,7 @@ import Foundation
 
 nonisolated struct OpenAIClient: Extractor {
     var apiKey: String = APIKeys.openAI
-    var model: String = "gpt-4o"            // extraction — needs reasoning
+    var model: String = "gpt-5-mini"        // extraction — needs reasoning
     var polishModel: String = "gpt-4o-mini" // guide polish — only light rewording, keep it cheap
     // The Worker when configured (no key on the phone), else OpenAI direct (dev).
     var endpoint = BackendConfig.chatEndpoint
@@ -79,11 +85,9 @@ nonisolated struct OpenAIClient: Extractor {
         // Need either the Worker (holds the key) or a real dev key for the direct path.
         guard canCall else { throw ClientError.missingKey }
 
-        let body = ChatRequest(
+        let body = ChatRequest.make(
             model: model,
-            response_format: .init(type: "json_object"),
-            temperature: 0.2,
-            max_tokens: 2000,
+            visibleTokens: 2000,
             messages: [
                 .init(role: "system", content: ScanPrompt.systemPrompt(language: language)),
                 .init(role: "user", content: ScanPrompt.userPrompt(text: text, hints: hints)),
@@ -98,6 +102,12 @@ nonisolated struct OpenAIClient: Extractor {
         }
 
         let chat = try JSONDecoder().decode(ChatResponse.self, from: data)
+        #if DEBUG
+        if let u = chat.usage {
+            print("[AI] \(model) in=\(u.prompt_tokens ?? 0) out=\(u.completion_tokens ?? 0) "
+                + "reasoning=\(u.completion_tokens_details?.reasoning_tokens ?? 0)")
+        }
+        #endif
         guard let content = chat.choices.first?.message.content, !content.isEmpty else {
             throw ClientError.emptyContent
         }
@@ -109,19 +119,61 @@ nonisolated struct OpenAIClient: Extractor {
 
 // MARK: - Wire types (Codable bridges to/from JSON)
 
+// Two model families with INCOMPATIBLE parameters, so every field that differs
+// is Optional and JSONEncoder omits the nils — never send both styles at once.
+//   • gpt-4o family: max_tokens + a custom temperature.
+//   • gpt-5 / o-series (reasoning): max_completion_tokens, and they REJECT a
+//     custom temperature (it's fixed at 1). Use `make` rather than the memberwise
+//     init so the right set is always chosen for the model.
 private nonisolated struct ChatRequest: Encodable {
     struct ResponseFormat: Encodable { let type: String }
     struct Message: Encodable { let role: String; let content: String }
     let model: String
     let response_format: ResponseFormat
-    let temperature: Double
-    let max_tokens: Int
     let messages: [Message]
+    var temperature: Double?           // 4o family only
+    var max_tokens: Int?               // 4o family only
+    var max_completion_tokens: Int?    // reasoning models only
+    var reasoning_effort: String?      // reasoning models only
+
+    static func isReasoning(_ model: String) -> Bool {
+        model.hasPrefix("gpt-5") || model.range(of: #"^o\d"#, options: .regularExpression) != nil
+    }
+
+    // `visibleTokens` is the budget for the JSON we actually want back.
+    static func make(model: String, visibleTokens: Int, messages: [Message]) -> ChatRequest {
+        let reasoning = isReasoning(model)
+        // Reasoning tokens are invisible but count against max_completion_tokens
+        // (and bill at the OUTPUT rate). Without headroom ON TOP of the JSON we
+        // need, a long think truncates the answer and we get badJSON. "low"
+        // effort keeps both the cost and that headroom small — this is field
+        // extraction, not a math olympiad.
+        let cap = reasoning ? visibleTokens + 2000 : visibleTokens
+        return ChatRequest(
+            model: model,
+            response_format: .init(type: "json_object"),
+            messages: messages,
+            temperature: reasoning ? nil : 0.2,
+            max_tokens: reasoning ? nil : cap,
+            max_completion_tokens: reasoning ? cap : nil,
+            reasoning_effort: reasoning ? "low" : nil
+        )
+    }
 }
 
 private nonisolated struct ChatResponse: Decodable {
     struct Choice: Decodable { struct Msg: Decodable { let content: String? }; let message: Msg }
+    // OpenAI returns exact token counts on every call — the only honest way to
+    // know what a scan costs. `reasoning_tokens` is the part you can't see in the
+    // response but still pay for, so watch it after any model/effort change.
+    struct Usage: Decodable {
+        struct CompletionDetails: Decodable { let reasoning_tokens: Int? }
+        let prompt_tokens: Int?
+        let completion_tokens: Int?
+        let completion_tokens_details: CompletionDetails?
+    }
     let choices: [Choice]
+    let usage: Usage?
 }
 
 // Parses the model's JSON into ExtractionResult. We use JSONSerialization +
@@ -354,8 +406,8 @@ extension OpenAIClient {
         // actually in, does that company really serve it) — the cheap polish model
         // was confidently naming the WRONG company for the area. Only pay for the
         // stronger model on the (less common) ZIP-lookup path; plain rewording stays cheap.
-        let body = ChatRequest(
-            model: wantsUtilities ? model : polishModel, response_format: .init(type: "json_object"), temperature: 0.2, max_tokens: 1200,
+        let body = ChatRequest.make(
+            model: wantsUtilities ? model : polishModel, visibleTokens: 1200,
             messages: [
                 .init(role: "system", content: GuidePrompt.system(includeUtilities: wantsUtilities, language: language)),
                 .init(role: "user", content: GuidePrompt.user(context: context, steps: base.steps, zip: wantsUtilities ? z : nil)),

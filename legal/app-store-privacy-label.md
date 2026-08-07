@@ -1,10 +1,16 @@
 # App Store Privacy "Nutrition Label" — answers for Tadah
 
 > Fill this into **App Store Connect → your app → App Privacy**. These answers
-> match how Tadah works today (local-first; document text sent to OpenAI for
-> processing; no accounts; plus anonymous, non-identifying first-party usage stats).
-> Re-check before each submission — if you later add accounts or a third-party
-> analytics SDK, you MUST update the label.
+> match how Tadah works today: document text sent to OpenAI for processing;
+> anonymous, non-identifying first-party usage stats; **an optional Sign in with
+> Apple account that backs up your items to our backend and syncs them between
+> devices**; and **Tadah Plus subscriptions billed by Apple via RevenueCat**.
+> Re-check before each submission.
+>
+> **⚠️ Updated 2026-08-07 for accounts + sync + subscriptions.** The previous
+> version said "no accounts" and declared everything as *not linked to identity*.
+> That is no longer true for signed-in users — see §2.5. Submitting the old label
+> would misdeclare the app.
 
 ## Key nuance (don't get this wrong)
 Apple counts data as **"collected"** if it **leaves the device**, even if you don't
@@ -51,11 +57,40 @@ database) to measure whether the app helps. Declare:
 Both are **first-party only**: no third-party analytics SDK, no advertising, no data
 brokers, no cross-app tracking. The user can turn this off in **Profile → Privacy**.
 
+### 2.5 Accounts, sync, and subscriptions — **linked to identity**
+
+Signing in is optional, but when a user DOES sign in, their items are stored on our
+backend under a Tadah-specific Apple user identifier. For those users the data is
+**Linked to You**, and the label must say so. Declare:
+
+- **Identifiers → User ID** — Collected · purpose **App Functionality** · **LINKED to
+  identity** · not used for tracking. (The Sign in with Apple `sub` — a Tadah-specific
+  identifier. Sent to our backend to store the account's items, and to RevenueCat to
+  attach the subscription.)
+- **Other User Content** — also declare a **LINKED** instance for signed-in backup:
+  the item's title, amount, due date, notes, checklist steps, and any reference numbers
+  the user saves are stored on our backend under that User ID. Same for the
+  **Contact Info / Financial Info / Health / Sensitive Info** categories above, since an
+  item's content can contain any of them.
+- **Purchases** — Collected · purpose App Functionality · **LINKED** to identity · not
+  used for tracking. (Tadah Plus subscription status, via Apple's App Store and
+  RevenueCat.)
+
+> How to express this in App Store Connect: a data type can be declared twice — once
+> **not linked** (the anonymous, signed-out paths) and once **linked** (the signed-in
+> account). If the form makes that awkward, declare the **linked** version — it is the
+> stronger, safer statement.
+>
+> Name and email from Sign in with Apple are stored **on the device only** and are never
+> sent to our backend, so they are not declared as collected. If that ever changes,
+> declare **Contact Info → Name / Email Address**, linked.
+
 ### NOT collected
-- **Photos or Videos** — the photo is read on-device (OCR) and **stays on the device**;
-  only the recognized *text* is sent out. So Photos are **Not Collected**.
-- **Location, Diagnostics, Purchases, Browsing/Search History, Contacts** — none
-  collected (no third-party analytics, no accounts, no ad IDs).
+- **Photos or Videos** — the photo is read on-device (OCR) and **is not uploaded**,
+  including for signed-in accounts (photos are excluded from sync). So Photos are
+  **Not Collected**.
+- **Location, Diagnostics, Browsing/Search History, Contacts** — none collected (no
+  third-party analytics, no ad IDs).
 
 ## 3. Tracking
 **"Does this app track users?"** → **No.** (No cross-app/cross-site tracking, no

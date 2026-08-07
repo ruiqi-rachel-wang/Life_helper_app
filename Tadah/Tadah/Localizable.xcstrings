@@ -8073,23 +8073,6 @@
         }
       }
     },
-    "LOCAL OCR · NO BANK LINK · NO AUTOPAY": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OCR LOCAL · SIN BANCO · SIN PAGO AUTOMÁTICO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本机识别 · 不连银行 · 不自动扣款"
-          }
-        }
-      }
-    },
     "Label": {
       "localizations": {
         "es": {
@@ -9294,6 +9277,22 @@
         }
       }
     },
+    "No bank login · No autopay": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需银行登录 · 不自动扣款"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin acceso bancario · Sin pago automático"
+          }
+        }
+      }
+    },
     "No coverage yet? Community health centers see you on a sliding scale.": {
       "extractionState": "stale",
       "localizations": {
@@ -9918,22 +9917,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "已开启 — 将发送提醒。"
-          }
-        }
-      }
-    },
-    "On-device scanning · No bank login · No autopay": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Escaneo en el dispositivo · Sin acceso bancario · Sin pago automático"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本机扫描 · 无需银行登录 · 不自动扣款"
           }
         }
       }

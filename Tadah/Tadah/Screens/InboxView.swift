@@ -412,11 +412,16 @@ private struct InboxRow: View {
     }
 }
 
-// MARK: - Privacy banner
+// MARK: - Trust banner
+//
+// Was "On-device scanning · No bank login · No autopay". The on-device claim is
+// gone (2026-08-06): we no longer sell local-only storage, since items now back
+// up to the account. The other two are about what Tadah will never DO — touch
+// your bank or charge you — which stays true and is the real reassurance.
 
 private struct PrivacyBanner: View {
     var body: some View {
-        Text("On-device scanning · No bank login · No autopay")
+        Text("No bank login · No autopay")
             .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faded)
             .padding(.vertical, 14).padding(.horizontal, 18)
             .frame(maxWidth: .infinity, alignment: .leading)

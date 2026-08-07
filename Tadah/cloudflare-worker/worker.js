@@ -18,8 +18,14 @@
 //     kinds accepted, INSERT OR IGNORE so re-sends never duplicate.
 //   • The final $ ceiling is the OpenAI spending cap (dashboard) — keep it set.
 
-const ALLOWED_MODELS = new Set(["gpt-4o", "gpt-4o-mini"]);
-const MAX_TOKENS = 2000; // hard ceiling AND the default when the client sends none
+// gpt-4o stays listed even though the app moved to gpt-5-mini: builds already on
+// testers' phones still ask for it, and dropping it would 400 every scan they make.
+// Remove it only once those builds are gone.
+const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
+// Hard ceiling AND the default when the client sends none. 4000 (not 2000)
+// because reasoning models spend part of this budget on hidden reasoning tokens
+// before writing any JSON — too low a ceiling truncates the answer.
+const MAX_TOKENS = 4000;
 
 // Per-install AI-call caps. Deliberately ~3x the app's own scan quota (10/day,
 // 50/month) because guides also call the AI — honest users should never see
@@ -96,9 +102,14 @@ async function handleChat(request, env) {
     } catch { /* fail open */ }
   }
 
-  // Cap tokens even if the client omitted max_tokens (the previously-broken cap).
-  const requested = Number(body.max_tokens);
-  body.max_tokens = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
+  // Cap tokens even if the client omitted the field (the previously-broken cap).
+  // Cap whichever field this client used — reasoning models (gpt-5) take
+  // max_completion_tokens, the 4o family takes max_tokens — so old builds and new
+  // ones are both bounded. Never write the field the client DIDN'T send: OpenAI
+  // rejects max_tokens on a reasoning model.
+  const field = body.max_completion_tokens !== undefined ? "max_completion_tokens" : "max_tokens";
+  const requested = Number(body[field]);
+  body[field] = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
 
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
