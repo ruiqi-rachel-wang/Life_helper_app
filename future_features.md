@@ -223,9 +223,14 @@ and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can c
   copies can't drift. `legal/app-store-privacy-label.md` gained a **Linked-to-Identity**
   section (User ID / user content / Purchases) — the old label declared everything as
   not-linked, which stopped being true with accounts.
-  - ⚠️ **Still to do (Rachel):** (a) `wrangler pages deploy docs --project-name cuevi-legal`
-    — as of 2026-08-07 the LIVE pages still show the June/July text, so the deploy has
-    not landed; (b) enter the revised answers in App Store Connect → App Privacy.
+  - ✅ **Published 2026-08-07** — https://cuevi-legal.pages.dev/privacy and /terms both
+    live and verified showing "Last updated: August 7, 2026", the account/sync and
+    one-device disclosures, RevenueCat in the third-party table, and no leaked dev
+    banner. *(Note for next time: the production URL can serve a stale edge-cached copy
+    for a minute or two after `pages deploy` — re-check with `?v=<timestamp>` before
+    concluding a deploy failed.)*
+  - ⚠️ **Still to do (Rachel):** enter the revised answers in App Store Connect →
+    App Privacy (the Linked-to-Identity rows in `legal/app-store-privacy-label.md`).
 - **Positioning decision (Rachel, 2026-08-06): stop selling "on-device / local" as a
   feature.** Keep the capability, drop the marketing. Removed the guides "Stays on your
   device" badge and reworded the Profile guest card, sign-out confirmation, and Sign-in
