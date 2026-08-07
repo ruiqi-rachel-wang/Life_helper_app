@@ -4,7 +4,7 @@
 //  structured ExtractionResult. Uses gpt-4o (not 4o-mini) because users need
 //  real REASONING — explain *why* they got this, find the root cause, and give
 //  conditional next steps — not just field extraction. ~$0.003–0.006/scan;
-//  affordable because scans are rate-limited (see ScanQuota: 10/day, 50/month).
+//  affordable because scans+guides are rate-limited (see ScanQuota: 10/day, 20 per 30 days).
 //
 //  WEEK 5: calls api.openai.com DIRECTLY with the dev key in APIKeys.swift.
 //  Safe because this only runs on the Simulator. Before TestFlight the URL +
