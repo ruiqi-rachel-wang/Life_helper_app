@@ -49,4 +49,31 @@ struct SchemaVersioningTests {
         #expect(fetched.first?.steps.count == 1)
         #expect(fetched.first?.notes == ["June statement"])
     }
+
+    // V2 (sync foundation) adds ActionItem.updatedAt + the TaskTombstone model.
+    // Confirm the versioned container stores and reads back BOTH models.
+    @MainActor
+    @Test func v2ContainerStoresTasksAndTombstones() throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("v2-\(UUID().uuidString).store")
+        defer {
+            for suffix in ["", "-shm", "-wal"] {
+                try? FileManager.default.removeItem(atPath: url.path + suffix)
+            }
+        }
+        let container = try TadahApp.versionedContainer(url: url)
+        let context = ModelContext(container)
+        let item = ActionItem(title: "Rent", category: .housing)
+        context.insert(item)
+        let deletedID = UUID()
+        context.insert(TaskTombstone(id: deletedID))
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<ActionItem>()).count == 1)
+        let stones = try context.fetch(FetchDescriptor<TaskTombstone>())
+        #expect(stones.count == 1)
+        #expect(stones.first?.id == deletedID)
+        // updatedAt is stamped at creation.
+        #expect(abs(item.updatedAt.timeIntervalSinceNow) < 5)
+    }
 }

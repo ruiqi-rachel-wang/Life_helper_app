@@ -32,3 +32,34 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   count      INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (install_id, period)
 );
+
+-- ── Account task sync (Part 3) ───────────────────────────────────────────────
+-- The server-side backup + cross-device copy of a signed-in user's tasks. One
+-- row per (user, item). user_id is the Sign-in-with-Apple `sub` (verified by the
+-- Worker, never trusted from the client). payload is the app's TaskDTO JSON —
+-- the server treats it as opaque and only reasons about updated_at (last-writer-
+-- wins) and deleted_at (soft delete; NULL = live). Photos are NOT synced here.
+CREATE TABLE IF NOT EXISTS tasks (
+  user_id     TEXT NOT NULL,      -- verified Apple `sub`
+  item_id     TEXT NOT NULL,      -- the ActionItem UUID
+  payload     TEXT NOT NULL,      -- TaskDTO JSON (opaque to the server; "" for a tombstone)
+  updated_at  TEXT NOT NULL,      -- ISO-8601; the LWW comparison key
+  deleted_at  TEXT,               -- ISO-8601 soft-delete stamp, or NULL when live
+  PRIMARY KEY (user_id, item_id)
+);
+-- Sync pulls "everything for this user changed since <cursor>".
+CREATE INDEX IF NOT EXISTS idx_tasks_user_updated ON tasks(user_id, updated_at);
+
+-- Login sessions. One per (user, device) sign-in. The free tier keeps ONE active
+-- (non-revoked) session per user — a new device sign-in revokes the others;
+-- Plus keeps many. A revoked session makes /sync return 401 (the "signed out on
+-- another device" signal). Tokens are opaque random strings, never a password.
+CREATE TABLE IF NOT EXISTS sessions (
+  token       TEXT PRIMARY KEY,   -- opaque random session token
+  user_id     TEXT NOT NULL,      -- verified Apple `sub`
+  device_id   TEXT NOT NULL,      -- the app's anonymous Install.id
+  created_at  TEXT NOT NULL,      -- ISO-8601
+  last_seen   TEXT NOT NULL,      -- ISO-8601, bumped on each /sync
+  revoked     INTEGER NOT NULL DEFAULT 0   -- 1 = taken over by another device / signed out
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);

@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import RevenueCat
 
 @main
 struct TadahApp: App {
@@ -15,6 +16,8 @@ struct TadahApp: App {
     @State private var router = AppRouter()
     @State private var tourGuide = TourGuide()
     @State private var account = AccountStore()
+    @State private var plus = PlusStore()
+    @State private var sync = SyncCoordinator.shared
     private let container: ModelContainer
     private let notificationDelegate = NotificationDelegate()
 
@@ -22,6 +25,12 @@ struct TadahApp: App {
         // Carry testers' metrics consent + install identity across the
         // Cuevi→Tadah UserDefaults-key rename before anything reads them.
         Metrics.migrateLegacyKeysIfNeeded()
+
+        // RevenueCat (Tadah Plus billing). This is the RevenueCat *test-store*
+        // key — fine for development. Before shipping paid Plus, swap it for the
+        // public Apple key ("appl_…") from RevenueCat → Project → API Keys.
+        Purchases.logLevel = .warn
+        Purchases.configure(withAPIKey: "test_uBThfzDeOxcOcoWghcfurizGBKe")
 
         // One shared container, used by the UI and the notification delegate.
         let container = Self.makeContainer()
@@ -45,14 +54,14 @@ struct TadahApp: App {
             if let fresh = try? versionedContainer() { return fresh }
             // Last resort so launch never crashes: an in-memory store.
             return try! ModelContainer(
-                for: ActionItem.self,
+                for: ActionItem.self, TaskTombstone.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         }
     }
 
     // Shared with SchemaVersioningTests (which points it at a temp file).
     static func versionedContainer(url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: TadahSchemaV1.self)
+        let schema = Schema(versionedSchema: TadahSchemaV2.self)
         let config = url.map { ModelConfiguration(schema: schema, url: $0) }
             ?? ModelConfiguration(schema: schema)
         return try ModelContainer(for: schema,
@@ -74,6 +83,8 @@ struct TadahApp: App {
                 .environment(router)
                 .environment(tourGuide)
                 .environment(account)
+                .environment(plus)
+                .environment(sync)
                 .onAppear { notificationDelegate.attach(router: router) }
                 .task {
                     // Notification permission is now requested through the
@@ -81,12 +92,20 @@ struct TadahApp: App {
                     // RootTabView), not silently here.
                     refreshAllReminders()
                     Metrics.flush()   // send any metric events not yet uploaded
+                    // Lets edits made anywhere (ItemActions, the editors) nudge a
+                    // sync without threading the store through every call site.
+                    sync.configure(context: container.mainContext, account: account)
+                    await sync.syncNow(context: container.mainContext, account: account)
                 }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
                         refreshAllReminders()
+                        // Pick up anything changed on another device while away.
+                        Task { await sync.syncNow(context: container.mainContext, account: account) }
                     } else if phase == .background {
                         Metrics.flush()   // catch events logged during this session
+                        // Push this session's edits before we lose foreground time.
+                        Task { await sync.syncNow(context: container.mainContext, account: account) }
                     }
                 }
         }

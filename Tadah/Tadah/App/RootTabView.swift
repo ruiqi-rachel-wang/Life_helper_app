@@ -18,6 +18,9 @@ import UserNotifications
 struct RootTabView: View {
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
+    @Environment(SyncCoordinator.self) private var sync
+    @Environment(AccountStore.self) private var account
+    @Environment(\.modelContext) private var context
     // Whether we've shown the first-launch notification explainer yet.
     @AppStorage("didAskNotifications") private var didAskNotifications = false
     // Whether the first-run tour has been seen (the empty Inbox can call
@@ -27,6 +30,7 @@ struct RootTabView: View {
 
     var body: some View {
         @Bindable var router = router
+        @Bindable var sync = sync
         return TabView(selection: $router.selectedTab) {
             InboxView()
                 .tabItem { Label("To-Do", systemImage: "checklist") }
@@ -48,6 +52,38 @@ struct RootTabView: View {
         .environment(router)
         .sheet(isPresented: $showNotificationPrimer) {
             NotificationPrimerView { didAskNotifications = true; showNotificationPrimer = false }
+        }
+        // Signing into an account that already has tasks, on a device that also
+        // has some. A backup was written first, so neither answer loses data.
+        .alert("You already have tasks on this device",
+               isPresented: Binding(get: { sync.pendingReconciliation != nil },
+                                    set: { if !$0 { sync.pendingReconciliation = nil } }),
+               presenting: sync.pendingReconciliation) { r in
+            Button("Add them to my account") {
+                Task {
+                    if let id = account.account?.userID {
+                        await sync.keepLocalTasks(context: context, userID: id)
+                    }
+                }
+            }
+            Button("Use my account's tasks", role: .destructive) {
+                Task {
+                    if let id = account.account?.userID {
+                        await sync.useAccountTasks(context: context, userID: id)
+                    }
+                }
+            }
+        } message: { r in
+            // Plural handled by the String Catalog (en one/other), not an inline
+            // "s" — languages like 中文 don't pluralize and a mid-sentence %@ can't
+            // be translated cleanly.
+            Text("This device has \(r.localCount) tasks that aren't in your account yet. Add them to your account, or use your account's tasks instead? (A backup is saved either way.)")
+        }
+        // Free accounts are one device at a time — the server revoked this session.
+        .alert("Signed out on this device", isPresented: $sync.signedOutRemotely) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("You signed in on another device. A free account can be used on one device at a time — Tadah Plus lets you use more. Your tasks are still saved here.")
         }
         .task {
             // Skip both one-time moments under UI tests (a system alert / a cover
@@ -94,4 +130,7 @@ struct RootTabView: View {
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
         .environment(TourGuide())
+        .environment(AccountStore())
+        .environment(PlusStore())
+        .environment(SyncCoordinator())
 }

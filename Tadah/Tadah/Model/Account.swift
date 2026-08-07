@@ -77,9 +77,11 @@ final class AccountStore {
     }
 
     // Clear the identity only — the local SwiftData items are untouched, so the
-    // user's data is still here when they sign back in.
+    // user's data is still here when they sign back in. Also drops the server
+    // session credential (Part 3); RevenueCat is logged out at the UI layer.
     func signOut() {
         account = nil
+        SessionStore.clear()
         save()
     }
 
@@ -93,9 +95,11 @@ final class AccountStore {
     }
 
     // For the free, local tier there's no server record to delete — "delete
-    // account" just forgets the stored identity on this device.
+    // account" just forgets the stored identity on this device (and the server
+    // session credential; RevenueCat is logged out at the UI layer).
     func deleteAccount() {
         account = nil
+        SessionStore.clear()
         save()
     }
 

@@ -44,4 +44,11 @@ nonisolated enum BackendConfig {
     static var eventsEndpoint: URL? {
         workerURL?.appendingPathComponent("events")
     }
+
+    // Account task sync (Part 3). Both nil until a Worker is configured, so the
+    // app stays fully local (no auth, no sync) in that case.
+    //   /auth/apple — exchange a Sign-in-with-Apple token for a session.
+    //   /sync       — push local changes + pull the account's.
+    static var authEndpoint: URL? { workerURL?.appendingPathComponent("auth/apple") }
+    static var syncEndpoint: URL? { workerURL?.appendingPathComponent("sync") }
 }

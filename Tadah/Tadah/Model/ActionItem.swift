@@ -181,6 +181,9 @@ final class ActionItem {
     // reminders (so a tutorial item can't nag the user) and aren't real user data.
     var isExample: Bool = false
     var createdAt: Date = Date.now
+    // Last time this item meaningfully changed. Basis for last-writer-wins sync
+    // (Part 3, cross-device). Stamped at creation; bump with touch() on edits.
+    var updatedAt: Date = Date.now
 
     // Rich detail from AI extraction (Week 6). All optional with defaults, so
     // adding them is a lightweight SwiftData migration and manual items just
@@ -295,6 +298,10 @@ final class ActionItem {
         if t.contains("appointment") || category == .medical { return 1 }
         return 2
     }
+
+    // Mark this item as changed now, so cross-device sync uploads it (LWW on
+    // updatedAt). Call from the mutation points (status changes, edit commits).
+    func touch() { updatedAt = .now }
 
     // MARK: derived (no UI, no formatting — just facts)
 
@@ -427,15 +434,23 @@ final class ActionItem {
     // friendly body. Used to seed the editable list.
     func defaultReminders(now: Date = .now, calendar: Calendar = .current) -> [ReminderItem] {
         Self.defaultReminders(dueDate: dueDate, dueHasTime: dueHasTime,
-                              leadHours: reminderLeadHours, now: now, calendar: calendar)
+                              leadHours: reminderLeadHours,
+                              defaultMinutes: AppSettings.defaultReminderMinutes,
+                              now: now, calendar: calendar)
     }
 
+    // `defaultMinutes` = the user's default reminder time (minutes past midnight)
+    // applied to non-exact (plain-date) reminders. Defaults to 9:00am so tests and
+    // any caller that doesn't pass it keep the old behavior.
     static func defaultReminders(dueDate: Date?, dueHasTime: Bool, leadHours: Int,
+                                 defaultMinutes: Int = AppSettings.fallbackReminderMinutes,
                                  now: Date = .now,
                                  calendar: Calendar = .current) -> [ReminderItem] {
         reminderSchedule(dueDate: dueDate, dueHasTime: dueHasTime, leadHours: leadHours,
                          now: now, calendar: calendar).compactMap { r in
-            let fire = r.exactTime ? r.date : calendar.date(bySettingHour: 9, minute: 0, second: 0, of: r.date)
+            let fire = r.exactTime ? r.date
+                : calendar.date(bySettingHour: defaultMinutes / 60, minute: defaultMinutes % 60,
+                                second: 0, of: r.date)
             return fire.map { ReminderItem(date: $0) }
         }
         // Only suggest times still ahead — so a near due date gives 1–2 useful

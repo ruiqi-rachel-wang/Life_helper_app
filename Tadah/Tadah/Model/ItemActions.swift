@@ -22,7 +22,11 @@ enum ItemActions {
         guard item.status != .done else { return }
         Metrics.record(.completed, itemID: item.id, onTime: item.doneOnTime())
         item.status = .done
+        item.touch()
         ReminderScheduler.shared.cancel(itemID: item.id)
+        // Before the recurring-spawn guard below, so a plain (non-recurring)
+        // completion syncs too. The debounce coalesces this with the spawn.
+        SyncCoordinator.shared.noteLocalChange()
         guard let next = item.makeNextOccurrence() else { return }
         item.seriesID = item.effectiveSeriesID          // link parent + new cycle
         next.seriesID = item.effectiveSeriesID
@@ -37,15 +41,26 @@ enum ItemActions {
     static func reopen(_ item: ActionItem) {
         guard item.status == .done else { return }
         item.status = .todo
+        item.touch()
         ReminderScheduler.shared.reschedule(for: item)
+        SyncCoordinator.shared.noteLocalChange()
     }
 
     // Delete an item and cancel its pending reminders. (Single occurrence — the
     // recurring "just this one vs. all future" choice stays on the Detail screen,
-    // where there's room to ask.)
+    // where there's room to ask.) Leaves a tombstone so the deletion syncs.
     static func delete(_ item: ActionItem, in context: ModelContext) {
         ReminderScheduler.shared.cancel(itemID: item.id)
+        tombstone(item, in: context)
         context.delete(item)
+        SyncCoordinator.shared.noteLocalChange()
+    }
+
+    // Record that a real item was deleted, so cross-device sync can propagate it.
+    // Examples aren't user data and never sync, so they get no tombstone.
+    static func tombstone(_ item: ActionItem, in context: ModelContext) {
+        guard !item.isExample else { return }
+        context.insert(TaskTombstone(id: item.id))
     }
 
     // Keep a recurring series to one active + one done, deleting the rest.
@@ -54,6 +69,7 @@ enum ItemActions {
         guard let members = try? context.fetch(descriptor) else { return }
         for redundant in ActionItem.redundantInSeries(members) {
             ReminderScheduler.shared.cancel(itemID: redundant.id)
+            tombstone(redundant, in: context)
             context.delete(redundant)
         }
     }

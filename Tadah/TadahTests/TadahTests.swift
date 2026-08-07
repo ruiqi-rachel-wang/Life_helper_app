@@ -74,6 +74,39 @@ struct ActionItemTests {
         #expect(schedule[2].date == due)
     }
 
+    // MARK: default reminder time (configurable)
+
+    @Test func defaultReminderTimeAppliesToPlainDates() {
+        let reminders = ActionItem.defaultReminders(
+            dueDate: day(10), dueHasTime: false, leadHours: 2, defaultMinutes: 8 * 60 + 30)
+        #expect(!reminders.isEmpty)
+        let cal = Calendar.current
+        for r in reminders {
+            let c = cal.dateComponents([.hour, .minute], from: r.date)
+            #expect(c.hour == 8 && c.minute == 30)
+        }
+    }
+
+    @Test func defaultReminderTimeIgnoredForExactTimedReminder() {
+        let cal = Calendar.current
+        let due = cal.date(bySettingHour: 14, minute: 15, second: 0, of: day(10))!
+        let reminders = ActionItem.defaultReminders(
+            dueDate: due, dueHasTime: true, leadHours: 3, defaultMinutes: 8 * 60)
+        // The "hours before" reminder is exact (due − 3h = 11:15) — it must NOT
+        // snap to the 08:00 default.
+        #expect(reminders.contains { r in
+            let c = cal.dateComponents([.hour, .minute], from: r.date)
+            return c.hour == 11 && c.minute == 15
+        })
+    }
+
+    @Test func reminderTimeFallsBackTo9amWhenUnset() {
+        let reminders = ActionItem.defaultReminders(
+            dueDate: day(10), dueHasTime: false, leadHours: 2)   // no defaultMinutes
+        let cal = Calendar.current
+        #expect(reminders.allSatisfy { cal.component(.hour, from: $0.date) == 9 })
+    }
+
     // MARK: Inbox urgency bucketing
 
     @Test func groupsItemsIntoCorrectBuckets() {
@@ -547,7 +580,7 @@ struct MetricsTests {
     }
 }
 
-// MARK: - Scan rate limit (10/day, 50/month)
+// MARK: - Scan/guide rate limit (10/day + 20 per rolling 30 days, one shared pool)
 
 struct ScanQuotaTests {
     private func freshDefaults() -> UserDefaults {
@@ -565,16 +598,31 @@ struct ScanQuotaTests {
         #expect(ScanQuota.canScan(now: tomorrow, d))   // daily counter rolled over
     }
 
-    @Test func blocksAtMonthlyLimitAcrossDays() {
+    @Test func blocksAtRollingWindowThenFreesUpAfter30Days() {
         let d = freshDefaults()
         let cal = Calendar.current
-        var day = cal.date(from: DateComponents(year: 2026, month: 3, day: 1))!
-        // 5 scans/day for 10 days = 50 — under the daily cap each day, hits monthly.
-        for _ in 0..<10 {
+        let start = cal.date(from: DateComponents(year: 2026, month: 3, day: 1))!
+        var day = start
+        // 5 a day for 4 days = 20 — under the daily cap each day, hits the 30-day cap.
+        for _ in 0..<4 {
             for _ in 0..<5 { ScanQuota.record(now: day, d) }
             day = cal.date(byAdding: .day, value: 1, to: day)!
         }
-        #expect(ScanQuota.usedThisMonth(now: day, d) == ScanQuota.perMonth)
-        #expect(!ScanQuota.canScan(now: day, d))   // monthly cap blocks even on a fresh day
+        // 'day' is now Mar 5 — all 20 fall within the last 30 days.
+        #expect(ScanQuota.usedLast30Days(now: day, d) == ScanQuota.perWindow)
+        #expect(!ScanQuota.canScan(now: day, d))       // window cap blocks even on a fresh day
+        // 31 days past the first batch, the earliest events age out of the window.
+        let later = cal.date(byAdding: .day, value: 31, to: start)!
+        #expect(ScanQuota.usedLast30Days(now: later, d) < ScanQuota.perWindow)
+        #expect(ScanQuota.canScan(now: later, d))
+    }
+
+    @Test func plusRaisesTheDailyCap() {
+        let d = freshDefaults()
+        let today = Date()
+        for _ in 0..<ScanQuota.perDay { ScanQuota.record(now: today, d) }
+        #expect(!ScanQuota.canScan(now: today, d))                    // free blocked at 10
+        #expect(ScanQuota.canScan(plus: true, now: today, d))         // Plus keeps going to 60
+        #expect(ScanQuota.blockedReason(plus: true, now: today, d) == nil)
     }
 }
