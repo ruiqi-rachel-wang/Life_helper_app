@@ -1,8 +1,13 @@
 # Tadah — Next-Version Roadmap (post-first-TestFlight)
 
-> Parking lot for work deferred out of the first-TestFlight scope in `build_plan.md`.
-> Move things here when we decide "not now, but yes later," so the build plan stays
-> focused on shipping. Created 2026-06-16.
+> **This is the CURRENT plan — the work actually being built.**
+> Anything pushed further out lives in **`later_ideas.md`** (created 2026-08-07):
+> instant push notifications, photo backup, usage display, server-side scan quota,
+> Google/email sign-in. Nothing in that file may be advertised to users until it
+> moves back here and gets built.
+>
+> Originally a parking lot for work deferred out of the first-TestFlight scope in
+> `build_plan.md`. Created 2026-06-16.
 >
 > **Reorganized 2026-06-23 into numbered Parts.** Beta testing has started, so
 > everything here is the **next version** (testers don't have it yet — see the
@@ -174,9 +179,12 @@ the 3 seeded example items were **replaced** by a real first-run walkthrough.
   Policy + Terms), a centered **Log out**, **HELP** (Send feedback → mailto), and the
   legal disclaimer + version footer. The long inline language list is now a single row
   → a Language sheet (the main declutter win Rachel asked for).
-- **Next phases (not started):** Google + email sign-in (needs GoogleSignIn SPM / a
-  backend); then family sharing (multi-profile) + Tadah Plus paywall via RevenueCat +
-  cloud sync (multi-device / new-phone) — these are the paid line.
+- **Next phase — NOW IN PROGRESS: family sharing (multi-profile).** Plan at
+  `~/.claude/plans/snug-singing-moore.md`. Decided 2026-08-07: ONE Apple sign-in per
+  family, profiles switched in-app, 8 profiles / 8 devices; **instant push deferred**
+  to `later_ideas.md` — family deadline reminders already work via sync + the existing
+  reminder system, so v1 uses a catch-up banner on open.
+  *(Google + email sign-in moved to `later_ideas.md`.)*
 - **Family Plus screen — mockup captured, BUILD WITH THE PLUS PHASE (not reachable
   until a Plus/family state exists):** identity shows "Family Plus · N family members";
   a **FAMILY** section (Family members, Shared tasks, Family notifications) —
@@ -237,20 +245,8 @@ and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can c
   screen copy to sell **backup** instead of device-only storage. Rationale: the product
   is growing into account backup + cross-device sync, so a "never leaves your phone"
   guarantee is a promise we'd have to break. Keep options open, don't advertise them.
-- **TODO (not built) — photo backup as an OPTION:** photos are the one thing still not
-  synced, so on a second device a task shows no document image. Rachel wants this
-  available but **not** framed as a privacy guarantee either way. Plan: Cloudflare **R2**
-  (same account, egress-free), keyed by item id, gated behind a Settings toggle
-  (off by default), reusing the existing session auth. Cost is negligible — task caps
-  bound it (Free 20 tasks ≈ 40 MB, Plus 100 ≈ 200 MB per user); R2's 10 GB free tier
-  covers ~250 free users, then $0.015/GB-month (~$0.45/mo at 1,000 users). Needs an R2
-  bucket created + a `wrangler.toml` binding. **Requires the privacy policy update above
-  to ship first.**
-- **TODO (not built) — show usage on Profile:** a small "X of N scans/guides used
-  this month · Y of Z tasks" readout on the Profile screen so users see where they
-  stand and feel the ceiling before they hit it (doubles as a soft Plus nudge for
-  free users). Reads `ScanQuota.usedLast30Days` / `usedToday` + `TaskLimit.count`
-  against the tier caps.
+- **Moved to `later_ideas.md` (2026-08-07):** photo backup to the account (R2,
+  opt-in) and the Profile usage readout. Both are deferred, not cancelled.
 - **Paid plan ("Tadah Plus")** — subscription via Apple In-App Purchase, managed
   through **RevenueCat** *(decided 2026-07-01)*: entitlements, upgrade/downgrade/
   restore, receipt validation, configurable paywall. Free to $2.5k/mo tracked revenue,
