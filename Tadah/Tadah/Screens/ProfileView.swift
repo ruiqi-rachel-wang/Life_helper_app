@@ -29,6 +29,7 @@ struct ProfileView: View {
     @Environment(AccountStore.self) private var account
     @Environment(PlusStore.self) private var plus
     @Environment(SyncCoordinator.self) private var sync
+    @Environment(ProfileStore.self) private var profiles
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
     @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
@@ -44,6 +45,7 @@ struct ProfileView: View {
     @State private var confirmSignOut = false
     @State private var showPlusComingSoon = false
     @State private var showPaywall = false
+    @State private var showFamilySharing = false
 
     // Which legal document the in-app sheet is showing.
     private enum LegalDoc: Int, Identifiable { case privacy, terms; var id: Int { rawValue } }
@@ -98,6 +100,7 @@ struct ProfileView: View {
         .sheet(isPresented: $showAccountDetails) { AccountDetailsView() }
         .sheet(isPresented: $showLanguageSheet) { languageSheet }
         .sheet(isPresented: $showPaywall) { PaywallView() }
+        .sheet(isPresented: $showFamilySharing) { FamilySharingView() }
         .alert("Family sharing is coming with Tadah Plus", isPresented: $showPlusComingSoon) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -131,8 +134,7 @@ struct ProfileView: View {
                             avatar(initials: account.initials)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(account.displayName).font(.cardTitle).foregroundStyle(Color.ink)
-                                Text(plus.isPlus ? "Tadah Plus" : "Free plan")
-                                    .font(.subline).foregroundStyle(Color.faded)
+                                Text(planLabel).font(.subline).foregroundStyle(Color.faded)
                                 if !account.email.isEmpty {
                                     Text(account.email).font(.subline).foregroundStyle(Color.faded)
                                 }
@@ -145,6 +147,13 @@ struct ProfileView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+
+                    // Whose list am I looking at — only worth showing once there's
+                    // more than one person on the account.
+                    if profiles.hasFamily {
+                        divider
+                        profileSwitcherStrip
+                    }
 
                     divider
 
@@ -175,6 +184,64 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    // "Free plan" / "Tadah Plus" / "Family Plus · 3 people" — the last only once
+    // there's actually a family, so a solo Plus user isn't told about one.
+    private var planLabel: String {
+        guard plus.isPlus else { return String(localized: "Free plan") }
+        guard profiles.hasFamily else { return String(localized: "Tadah Plus") }
+        return String(localized: "Family Plus · \(profiles.profiles.count) people")
+    }
+
+    // MARK: profile switcher — a row of faces under the identity row
+    //
+    // Tapping a face changes whose to-dos the whole app shows, so it deliberately
+    // sits at the top of Profile where it's easy to find, and the selected one
+    // carries a ring.
+
+    private var profileSwitcherStrip: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("VIEWING").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+                Spacer()
+                Button { showFamilySharing = true } label: {
+                    Text("Manage").font(.subline.weight(.semibold)).foregroundStyle(Color.accent)
+                }
+                .buttonStyle(.plain)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(profiles.profiles) { profile in
+                        Button { profiles.setActive(profile.id) } label: {
+                            VStack(spacing: 5) {
+                                ProfileAvatar(initials: profile.initials,
+                                              colorIndex: profile.colorIndex,
+                                              size: 44,
+                                              isSelected: profile.id == profiles.activeProfileID)
+                                Text(profile.displayName)
+                                    .font(.eyebrow).tracking(0.3)
+                                    .foregroundStyle(profile.id == profiles.activeProfileID
+                                                     ? Color.ink : Color.faded)
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 60)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Button { showFamilySharing = true } label: {
+                        VStack(spacing: 5) {
+                            AddProfileCircle(size: 44)
+                            Text("Add").font(.eyebrow).tracking(0.3).foregroundStyle(Color.faded)
+                        }
+                        .frame(width: 60)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.vertical, 2)
+            }
+        }
+        .padding(.vertical, 14)
     }
 
     // A round monogram avatar, shared with Account Details.
@@ -224,28 +291,39 @@ struct ProfileView: View {
         return String(localized: "Backed up \(f.localizedString(for: at, relativeTo: .now))")
     }
 
+    // Names once there are some ("Jing, Mom, Dad"), an invitation before that.
+    private var familySubtitle: String {
+        guard profiles.hasFamily else {
+            return String(localized: "Add someone like a parent and manage their letters from here.")
+        }
+        return profiles.profiles.map(\.displayName).joined(separator: ", ")
+    }
+
     // MARK: Tadah Plus upgrade — a row inside the account card, under the email
 
     @ViewBuilder
     private var plusUpgradeRow: some View {
         if plus.isPlus {
-            // Already Plus: show it as active, no upgrade prompt.
-            HStack(spacing: 12) {
-                Image(systemName: "sparkles").font(.system(size: 17)).foregroundStyle(Color.accent)
-                    .frame(width: 24)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Tadah Plus").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
-                    Text("Your family members and all your devices are covered.")
-                        .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
+            // Already Plus: the row becomes the way INTO family management, since
+            // that's the thing Plus actually unlocks day to day.
+            Button { showFamilySharing = true } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "person.2.fill").font(.system(size: 16)).foregroundStyle(Color.accent)
+                        .frame(width: 24)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Family").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
+                        Text(familySubtitle)
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13)).foregroundStyle(Color.faint)
                 }
-                Spacer(minLength: 8)
-                Text("ACTIVE")
-                    .font(.eyebrow).tracking(0.8).foregroundStyle(Color.ok)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(Capsule().fill(Color.ok.opacity(0.12)))
+                .padding(.top, 14)
+                .contentShape(Rectangle())
             }
-            .padding(.top, 14)
+            .buttonStyle(.plain)
         } else {
             Button { showPaywall = true } label: {
                 HStack(spacing: 12) {
@@ -618,4 +696,5 @@ struct ProfileView: View {
         .environment(AccountStore())
         .environment(PlusStore())
         .environment(SyncCoordinator.shared)
+        .environment(ProfileStore())
 }
