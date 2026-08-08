@@ -133,4 +133,5 @@ struct RootTabView: View {
         .environment(AccountStore())
         .environment(PlusStore())
         .environment(SyncCoordinator())
+        .environment(ProfileStore())
 }

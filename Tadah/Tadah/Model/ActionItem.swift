@@ -184,6 +184,10 @@ final class ActionItem {
     // Last time this item meaningfully changed. Basis for last-writer-wins sync
     // (Part 3, cross-device). Stamped at creation; bump with touch() on edits.
     var updatedAt: Date = Date.now
+    // Which family profile this belongs to (Part 3, family sharing). Optional so
+    // items saved before profiles existed stay valid — ProfileStore adopts those
+    // orphans onto the owner profile at launch.
+    var profileID: UUID?
 
     // Rich detail from AI extraction (Week 6). All optional with defaults, so
     // adding them is a lightweight SwiftData migration and manual items just
@@ -387,6 +391,7 @@ final class ActionItem {
         next.reminderLeadHours = reminderLeadHours
         next.recurrenceAnchorDay = recurrenceAnchorDay
         next.seriesID = effectiveSeriesID   // child joins this series
+        next.profileID = profileID          // stays with the same family member
         return next
     }
 

@@ -293,6 +293,7 @@ private struct CreateForm: View {
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
     @Environment(PlusStore.self) private var plus
+    @Environment(ProfileStore.self) private var profiles
 
     @State private var title = ""
     @State private var category: ItemCategory = .other
@@ -597,7 +598,10 @@ private struct CreateForm: View {
     }
 
     private func save() {
-        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus) { limitMessage = reason; return }
+        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus,
+                                                profileID: profiles.activeProfileID) {
+            limitMessage = reason; return
+        }
         let cleanSteps = steps
             .map { ChecklistStep(text: $0.text.trimmingCharacters(in: .whitespaces), done: $0.done) }
             .filter { !$0.text.isEmpty }
@@ -619,6 +623,7 @@ private struct CreateForm: View {
             item.reminders = reminders
             item.remindersCustomized = true
         }
+        item.profileID = profiles.activeProfileID   // whose list you're viewing
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)
         ReminderScheduler.shared.reschedule(for: item)   // schedule reminders
@@ -636,4 +641,5 @@ private struct CreateForm: View {
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
         .environment(PlusStore())
+        .environment(ProfileStore())
 }

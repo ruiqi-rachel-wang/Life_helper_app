@@ -15,7 +15,18 @@ struct InboxView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
-    @Query(sort: \ActionItem.createdAt, order: .reverse) private var items: [ActionItem]
+    @Environment(ProfileStore.self) private var profiles
+    @Query(sort: \ActionItem.createdAt, order: .reverse) private var allItems: [ActionItem]
+
+    // Only the profile you're currently viewing. Filtered in memory rather than
+    // with a dynamic @Query: TaskLimit caps the store at ~100 items per profile
+    // (800 for a full family), so this is trivial, and the list is already grouped
+    // in memory below. Items with no profile yet are the owner's (see ProfileStore).
+    private var items: [ActionItem] {
+        guard let active = profiles.activeProfileID else { return allItems }
+        let isOwner = profiles.active?.isOwner == true
+        return allItems.filter { $0.profileID == active || (isOwner && $0.profileID == nil) }
+    }
 
     // Urgency buckets — computed by the pure, tested grouping function.
     private var buckets: InboxBuckets { items.groupedForInbox() }
@@ -437,4 +448,5 @@ private struct PrivacyBanner: View {
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(AppRouter())
         .environment(TourGuide())
+        .environment(ProfileStore())
 }

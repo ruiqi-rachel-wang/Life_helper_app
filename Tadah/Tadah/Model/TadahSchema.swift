@@ -30,11 +30,27 @@ nonisolated enum TadahSchemaV2: VersionedSchema {
     static var models: [any PersistentModel.Type] { [ActionItem.self, TaskTombstone.self] }
 }
 
+// V3 (family sharing): adds the Profile model and ActionItem.profileID. Both are
+// additive — profileID is optional, so existing rows migrate untouched and are
+// adopted onto the owner profile at launch by ProfileStore.ensureOwnerProfile.
+// (Doing the backfill in the app rather than a custom migration stage keeps the
+// migration lightweight and the backfill re-runnable if it's ever interrupted.)
+nonisolated enum TadahSchemaV3: VersionedSchema {
+    static let versionIdentifier = Schema.Version(3, 0, 0)
+    static var models: [any PersistentModel.Type] {
+        [ActionItem.self, TaskTombstone.self, Profile.self]
+    }
+}
+
 nonisolated enum TadahMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] { [TadahSchemaV1.self, TadahSchemaV2.self] }
-    static var stages: [MigrationStage] { [migrateV1toV2] }
+    static var schemas: [any VersionedSchema.Type] {
+        [TadahSchemaV1.self, TadahSchemaV2.self, TadahSchemaV3.self]
+    }
+    static var stages: [MigrationStage] { [migrateV1toV2, migrateV2toV3] }
 
     // Additive only (new field with a default + new model) → lightweight.
     static let migrateV1toV2 = MigrationStage.lightweight(
         fromVersion: TadahSchemaV1.self, toVersion: TadahSchemaV2.self)
+    static let migrateV2toV3 = MigrationStage.lightweight(
+        fromVersion: TadahSchemaV2.self, toVersion: TadahSchemaV3.self)
 }

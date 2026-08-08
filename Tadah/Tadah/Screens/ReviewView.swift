@@ -40,6 +40,7 @@ struct ReviewView: View {
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
     @Environment(PlusStore.self) private var plus
+    @Environment(ProfileStore.self) private var profiles
 
     @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
@@ -593,7 +594,10 @@ struct ReviewView: View {
     }
 
     private func addToInbox() {
-        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus) { limitMessage = reason; return }
+        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus,
+                                                profileID: profiles.activeProfileID) {
+            limitMessage = reason; return
+        }
         if !includeDue { draft.dueDate = nil }
         // Drop blank steps, keeping each step's detail aligned by index so nothing
         // the user removed comes back (and added/edited steps stick).
@@ -618,6 +622,7 @@ struct ReviewView: View {
             item.reminders = draft.reminders
             item.remindersCustomized = true
         }
+        item.profileID = profiles.activeProfileID   // whose list you're viewing
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
@@ -717,9 +722,9 @@ struct ReviewView: View {
 
     private func addSelected() {
         let chosen = items.indices.filter { selected.contains($0) }
-        let room = TaskLimit.remaining(context, plus: plus.isPlus)
+        let room = TaskLimit.remaining(context, plus: plus.isPlus, profileID: profiles.activeProfileID)
         guard room > 0 else {
-            limitMessage = TaskLimit.blockedReason(context, plus: plus.isPlus)
+            limitMessage = TaskLimit.blockedReason(context, plus: plus.isPlus, profileID: profiles.activeProfileID)
             return
         }
         // Add what fits, oldest-selected first; tell the user if some didn't fit.
@@ -727,6 +732,7 @@ struct ReviewView: View {
         let img = scanImageData
         for i in toAdd {
             let item = ActionItem(from: items[i], imageData: img, source: source)
+            item.profileID = profiles.activeProfileID
             context.insert(item)
             Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
             ReminderScheduler.shared.reschedule(for: item)

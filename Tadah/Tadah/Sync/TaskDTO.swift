@@ -32,6 +32,7 @@ struct TaskDTO: Codable, Equatable {
     var isExample: Bool
     var createdAt: Date
     var updatedAt: Date
+    var profileID: UUID?
     var summary: String
     var documentType: String
     var sender: String
@@ -63,6 +64,7 @@ struct TaskDTO: Codable, Equatable {
         isExample = item.isExample
         createdAt = item.createdAt
         updatedAt = item.updatedAt
+        profileID = item.profileID
         summary = item.summary
         documentType = item.documentType
         sender = item.sender
@@ -107,6 +109,7 @@ struct TaskDTO: Codable, Equatable {
         item.isExample = isExample
         item.createdAt = createdAt
         item.updatedAt = updatedAt
+        item.profileID = profileID
         item.summary = summary
         item.documentType = documentType
         item.sender = sender
@@ -125,7 +128,7 @@ struct TaskDTO: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id, title, category, amount, currency, dueDate, note, status, steps
-        case recurrence, seriesID, recurrenceAnchorDay, isExample, createdAt, updatedAt
+        case recurrence, seriesID, recurrenceAnchorDay, isExample, createdAt, updatedAt, profileID
         case summary, documentType, sender, senderShort, dueHasTime, siteURL
         case otherIDs, notes, source, reminderLeadHours, reminders, remindersCustomized
     }
@@ -147,6 +150,7 @@ struct TaskDTO: Codable, Equatable {
         isExample = try c.decodeIfPresent(Bool.self, forKey: .isExample) ?? false
         createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? .now
+        profileID = try c.decodeIfPresent(UUID.self, forKey: .profileID)
         summary = try c.decodeIfPresent(String.self, forKey: .summary) ?? ""
         documentType = try c.decodeIfPresent(String.self, forKey: .documentType) ?? ""
         sender = try c.decodeIfPresent(String.self, forKey: .sender) ?? ""

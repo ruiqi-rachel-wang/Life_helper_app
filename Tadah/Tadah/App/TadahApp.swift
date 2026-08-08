@@ -18,6 +18,7 @@ struct TadahApp: App {
     @State private var account = AccountStore()
     @State private var plus = PlusStore()
     @State private var sync = SyncCoordinator.shared
+    @State private var profiles = ProfileStore()
     private let container: ModelContainer
     private let notificationDelegate = NotificationDelegate()
 
@@ -59,14 +60,14 @@ struct TadahApp: App {
             if let fresh = try? versionedContainer() { return fresh }
             // Last resort so launch never crashes: an in-memory store.
             return try! ModelContainer(
-                for: ActionItem.self, TaskTombstone.self,
+                for: ActionItem.self, TaskTombstone.self, Profile.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         }
     }
 
     // Shared with SchemaVersioningTests (which points it at a temp file).
     static func versionedContainer(url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: TadahSchemaV2.self)
+        let schema = Schema(versionedSchema: TadahSchemaV3.self)
         let config = url.map { ModelConfiguration(schema: schema, url: $0) }
             ?? ModelConfiguration(schema: schema)
         return try ModelContainer(for: schema,
@@ -90,8 +91,13 @@ struct TadahApp: App {
                 .environment(account)
                 .environment(plus)
                 .environment(sync)
+                .environment(profiles)
                 .onAppear { notificationDelegate.attach(router: router) }
                 .task {
+                    // Every account has one owner profile; this creates it on first
+                    // run and adopts any items saved before profiles existed.
+                    profiles.ensureOwnerProfile(container.mainContext,
+                                                name: account.account?.displayName ?? "")
                     // Notification permission is now requested through the
                     // first-launch explainer (NotificationPrimerView via
                     // RootTabView), not silently here.
