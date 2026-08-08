@@ -17,6 +17,7 @@
 
 import Foundation
 import Observation
+import RevenueCat
 
 // A signed-in identity from one auth provider. `name`/`email` can be empty —
 // Sign in with Apple only hands them over on the FIRST authorization, so we store
@@ -77,12 +78,47 @@ final class AccountStore {
     }
 
     // Clear the identity only — the local SwiftData items are untouched, so the
-    // user's data is still here when they sign back in. Also drops the server
-    // session credential (Part 3); RevenueCat is logged out at the UI layer.
+    // user's data is still here when they sign back in. LocalDataOwner keeps
+    // pointing at this account, which is what lets the next sign-in notice if a
+    // DIFFERENT person signs in on the same phone.
+    //
+    // Synchronous, for the paths that can't await (and as the local half of
+    // signOutEverywhere). Prefer signOutEverywhere: this leaves the server session
+    // alive until it expires.
     func signOut() {
         account = nil
         SessionStore.clear()
         save()
+    }
+
+    // Sign out properly: revoke the session on the SERVER first, then clear it
+    // locally, then tell RevenueCat this device is no longer that user.
+    //
+    // The local sign-out happens even if the network call fails — someone who taps
+    // "log out" must end up logged out on the device regardless. Revocation is
+    // retried implicitly by the session's own expiry.
+    func signOutEverywhere() async {
+        try? await AuthService.logout()
+        signOut()
+        // RevenueCat keeps the identified user until told otherwise, so without
+        // this the next person on this phone can inherit the previous user's
+        // entitlement (or the previous user's purchases follow a new account).
+        _ = try? await Purchases.shared.logOut()
+    }
+
+    // Delete the whole account: server data first (tasks, profiles, sessions), then
+    // the local identity. Throws when the server couldn't be reached, so the caller
+    // can say "we couldn't delete your account" instead of falsely confirming it —
+    // the old version only ever cleared this device and reported success.
+    //
+    // Local items are NOT deleted here; the confirmation copy says so, and the
+    // caller offers erasing them as a separate explicit choice.
+    func deleteAccountEverywhere() async throws {
+        try await AuthService.deleteAccount()
+        account = nil
+        SessionStore.clear()
+        save()
+        _ = try? await Purchases.shared.logOut()
     }
 
     // Let the user edit their own name/email on the Account Details screen.
@@ -94,10 +130,10 @@ final class AccountStore {
         save()
     }
 
-    // For the free, local tier there's no server record to delete — "delete
-    // account" just forgets the stored identity on this device (and the server
-    // session credential; RevenueCat is logged out at the UI layer).
-    func deleteAccount() {
+    // Local-only half of deletion, kept for the no-backend case (simulator dev with
+    // no Worker configured, where there is genuinely nothing on a server).
+    // Everything else must go through deleteAccountEverywhere.
+    func forgetLocally() {
         account = nil
         SessionStore.clear()
         save()

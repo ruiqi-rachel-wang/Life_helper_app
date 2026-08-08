@@ -38,6 +38,18 @@ enum SyncService {
         var pushedDeletes = 0
         var appliedChanges = 0
         var appliedDeletes = 0
+        // The server had more rows than one page holds — the caller should sync
+        // again immediately rather than wait for the next lifecycle event.
+        var hasMore = false
+    }
+
+    // An incoming deletion, WITH its timestamp. The timestamp is the whole point:
+    // a deletion is a write like any other and only wins if it's newer than what's
+    // on this device. Reducing these to bare UUIDs is what let a stale server
+    // tombstone erase a newer local edit.
+    struct Removal: Equatable {
+        let id: UUID
+        let deletedAt: Date
     }
 
     // MARK: - cursors (per user, so switching accounts can't cross streams)
@@ -94,6 +106,20 @@ enum SyncService {
         }
         let outDeletes = stones.map { Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt)) }
 
+        // Family profiles ride the same request — a profile and the to-dos inside
+        // it must never land on a device one without the other.
+        let localProfiles = (try? context.fetch(FetchDescriptor<Profile>())) ?? []
+        let changedProfiles = localProfiles.filter { $0.updatedAt > mark }
+        let profileStones = (try? context.fetch(FetchDescriptor<ProfileTombstone>())) ?? []
+        let outProfiles: [Wire.Change] = changedProfiles.compactMap { profile in
+            guard let data = try? encoder.encode(ProfileDTO(profile)),
+                  let payload = String(data: data, encoding: .utf8) else { return nil }
+            return Wire.Change(id: profile.id.uuidString, payload: payload, updatedAt: iso(profile.updatedAt))
+        }
+        let outProfileDeletes = profileStones.map {
+            Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt))
+        }
+
         // ── talk to the Worker ───────────────────────────────────────────────
         var req = URLRequest(url: endpoint)
         req.httpMethod = "POST"
@@ -102,7 +128,9 @@ enum SyncService {
         if !BackendConfig.proxyToken.isEmpty {
             req.setValue(BackendConfig.proxyToken, forHTTPHeaderField: "X-Cuevi-Token")
         }
-        req.httpBody = try encoder.encode(Wire.Request(since: since, changes: outChanges, deletes: outDeletes))
+        req.httpBody = try encoder.encode(Wire.Request(
+            since: since, changes: outChanges, deletes: outDeletes,
+            profiles: outProfiles, profileDeletes: outProfileDeletes))
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw SyncError.server(-1) }
@@ -111,21 +139,91 @@ enum SyncService {
         guard let payload = try? JSONDecoder().decode(Wire.Response.self, from: data) else { throw SyncError.decode }
 
         // ── apply what came back ─────────────────────────────────────────────
+        //
+        // ALL-OR-NOTHING. These used to be compactMap, which dropped any record
+        // that failed to decode and then advanced the cursor past it anyway — so a
+        // single malformed row meant that task was never seen again on this device.
+        // Now one bad record fails the whole page: the cursor doesn't move, nothing
+        // is half-applied, and the next sync retries the same page.
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-        let incoming: [TaskDTO] = payload.changes.compactMap {
-            guard let d = $0.payload.data(using: .utf8) else { return nil }
-            return try? decoder.decode(TaskDTO.self, from: d)
+        let incoming: [TaskDTO] = try payload.changes.map {
+            guard let d = $0.payload.data(using: .utf8),
+                  let dto = try? decoder.decode(TaskDTO.self, from: d) else { throw SyncError.decode }
+            return dto
         }
-        let removals: [UUID] = payload.deletes.compactMap { UUID(uuidString: $0.id) }
+        let removals: [Removal] = try payload.deletes.map {
+            guard let id = UUID(uuidString: $0.id),
+                  let at = date(from: $0.deletedAt) else { throw SyncError.decode }
+            return Removal(id: id, deletedAt: at)
+        }
         let applied = apply(changes: incoming, deletes: removals, in: context)
+
+        let incomingProfiles: [ProfileDTO] = try (payload.profiles ?? []).map {
+            guard let d = $0.payload.data(using: .utf8),
+                  let dto = try? decoder.decode(ProfileDTO.self, from: d) else { throw SyncError.decode }
+            return dto
+        }
+        let profileRemovals: [Removal] = try (payload.profileDeletes ?? []).map {
+            guard let id = UUID(uuidString: $0.id),
+                  let at = date(from: $0.deletedAt) else { throw SyncError.decode }
+            return Removal(id: id, deletedAt: at)
+        }
+        applyProfiles(changes: incomingProfiles, deletes: profileRemovals, in: context)
 
         // ── commit progress (only now that the server has confirmed) ─────────
         defaults.set(payload.cursor, forKey: cursorKey(userID))
         defaults.set(attemptedAt, forKey: watermarkKey(userID))
-        for stone in stones { context.delete(stone) }   // server has them now
+        for stone in stones { context.delete(stone) }              // server has them now
+        for stone in profileStones { context.delete(stone) }
 
         return Outcome(pushedChanges: outChanges.count, pushedDeletes: outDeletes.count,
-                       appliedChanges: applied.changes, appliedDeletes: applied.deletes)
+                       appliedChanges: applied.changes, appliedDeletes: applied.deletes,
+                       hasMore: payload.more ?? false)
+    }
+
+    // Merge family profiles, same last-writer-wins rule as tasks.
+    //
+    // A pulled profile deletion removes the person AND their to-dos on this device,
+    // matching what the device that did the removing saw. Those items are deleted
+    // directly (not via ItemActions) — the removing device already sent tombstones
+    // for them, so writing more here would echo the same deletions back.
+    @discardableResult
+    static func applyProfiles(changes: [ProfileDTO],
+                              deletes: [Removal],
+                              in context: ModelContext) -> (changes: Int, deletes: Int) {
+        let existing = (try? context.fetch(FetchDescriptor<Profile>())) ?? []
+        var byID = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        var appliedChanges = 0, appliedDeletes = 0
+
+        for dto in changes {
+            if let local = byID[dto.id] {
+                guard dto.updatedAt > local.updatedAt else { continue }   // local is newer
+                dto.apply(to: local)
+            } else {
+                let profile = dto.makeProfile()
+                context.insert(profile)
+                byID[dto.id] = profile
+            }
+            appliedChanges += 1
+        }
+
+        for removal in deletes {
+            guard let local = byID[removal.id] else { continue }
+            // Same last-writer-wins guard as tasks: a stale removal must not wipe a
+            // profile someone just renamed on this device.
+            guard removal.deletedAt > local.updatedAt else { continue }
+            let id = removal.id
+            let owned = (try? context.fetch(FetchDescriptor<ActionItem>(
+                predicate: #Predicate { $0.profileID == id }))) ?? []
+            for item in owned {
+                ReminderScheduler.shared.cancel(itemID: item.id)
+                context.delete(item)
+            }
+            context.delete(local)
+            byID[removal.id] = nil
+            appliedDeletes += 1
+        }
+        return (appliedChanges, appliedDeletes)
     }
 
     // MARK: - apply (pure enough to unit-test without a network)
@@ -134,7 +232,7 @@ enum SyncService {
     // much actually landed (a stale server copy is skipped, not applied).
     @discardableResult
     static func apply(changes: [TaskDTO],
-                      deletes: [UUID],
+                      deletes: [Removal],
                       in context: ModelContext) -> (changes: Int, deletes: Int) {
         let existing = (try? context.fetch(FetchDescriptor<ActionItem>())) ?? []
         var byID = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -154,13 +252,20 @@ enum SyncService {
             appliedChanges += 1
         }
 
-        for id in deletes {
-            guard let local = byID[id] else { continue }
-            ReminderScheduler.shared.cancel(itemID: id)
+        for removal in deletes {
+            guard let local = byID[removal.id] else { continue }
+            // LAST-WRITER-WINS applies to deletions too. This used to delete
+            // unconditionally, which lost real work: another device deletes a task,
+            // you edit that same task here while the sync is in flight, and the
+            // OLDER server deletion erased your NEWER edit. Keeping the local item
+            // also re-pushes it (its updatedAt is past the watermark), so the edit
+            // wins on the server and the other device gets it back.
+            guard removal.deletedAt > local.updatedAt else { continue }
+            ReminderScheduler.shared.cancel(itemID: removal.id)
             // context.delete directly — NOT ItemActions.delete, which would write a
             // tombstone and echo this deletion back to the server.
             context.delete(local)
-            byID[id] = nil
+            byID[removal.id] = nil
             appliedDeletes += 1
         }
         return (appliedChanges, appliedDeletes)
@@ -177,10 +282,30 @@ enum SyncService {
     // the server compares these as plain strings, and ISO-8601 sorts lexically.
     static func iso(_ date: Date) -> String { isoFormatter.string(from: date) }
 
+    // The inverse. Accepts a stamp without fractional seconds too, since the
+    // Worker writes its own `now` (plain ISO) when it clamps a skewed client clock.
+    private static let isoPlainFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+    static func date(from string: String) -> Date? {
+        isoFormatter.date(from: string) ?? isoPlainFormatter.date(from: string)
+    }
+
     enum Wire {
         struct Change: Codable { let id: String; let payload: String; let updatedAt: String }
         struct Delete: Codable { let id: String; let deletedAt: String }
-        struct Request: Encodable { let since: String; let changes: [Change]; let deletes: [Delete] }
-        struct Response: Decodable { let changes: [Change]; let deletes: [Delete]; let cursor: String }
+        struct Request: Encodable {
+            let since: String; let changes: [Change]; let deletes: [Delete]
+            let profiles: [Change]; let profileDeletes: [Delete]
+        }
+        // profiles/profileDeletes are optional so a client still works against a
+        // Worker that hasn't been redeployed with family support yet.
+        struct Response: Decodable {
+            let changes: [Change]; let deletes: [Delete]; let cursor: String
+            let profiles: [Change]?; let profileDeletes: [Delete]?
+            let more: Bool?
+        }
     }
 }

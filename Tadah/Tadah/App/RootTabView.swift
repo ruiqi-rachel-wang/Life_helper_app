@@ -16,6 +16,11 @@ import SwiftData
 import UserNotifications
 
 struct RootTabView: View {
+    // The saved store couldn't be opened, so this session is running in memory and
+    // nothing typed now will persist. The file on disk is untouched (TadahApp
+    // deliberately never deletes it), so the right advice is "update, don't retype".
+    var storeLoadFailed = false
+
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
     @Environment(SyncCoordinator.self) private var sync
@@ -50,23 +55,37 @@ struct RootTabView: View {
         }
         .tint(Color.accent)
         .environment(router)
+        // Loud, because the alternative is someone re-entering everything and
+        // losing it again at the next launch.
+        .alert("Your saved to-dos couldn't be opened", isPresented: $showStoreFailure) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Nothing has been deleted — your to-dos are still saved on this phone, but this version of Tadah can't read them. Anything you add right now will not be kept. Please update to the latest version, and contact support if this keeps happening.")
+        }
         .sheet(isPresented: $showNotificationPrimer) {
             NotificationPrimerView { didAskNotifications = true; showNotificationPrimer = false }
         }
-        // Signing into an account that already has tasks, on a device that also
-        // has some. A backup was written first, so neither answer loses data.
-        .alert("You already have tasks on this device",
+        // Signing in on a device that already has tasks. A backup was written
+        // first, so neither answer loses data. Two different questions share this
+        // alert — see Reconciliation.Kind.
+        .alert(sync.pendingReconciliation?.kind == .differentOwner
+               ? "These to-dos belong to another account"
+               : "You already have tasks on this device",
                isPresented: Binding(get: { sync.pendingReconciliation != nil },
                                     set: { if !$0 { sync.pendingReconciliation = nil } }),
                presenting: sync.pendingReconciliation) { r in
-            Button("Add them to my account") {
+            Button(r.kind == .differentOwner
+                   ? "Move them to this account"
+                   : "Add them to my account") {
                 Task {
                     if let id = account.account?.userID {
                         await sync.keepLocalTasks(context: context, userID: id)
                     }
                 }
             }
-            Button("Use my account's tasks", role: .destructive) {
+            Button(r.kind == .differentOwner
+                   ? "Start fresh on this account"
+                   : "Use my account's tasks", role: .destructive) {
                 Task {
                     if let id = account.account?.userID {
                         await sync.useAccountTasks(context: context, userID: id)
@@ -77,7 +96,14 @@ struct RootTabView: View {
             // Plural handled by the String Catalog (en one/other), not an inline
             // "s" — languages like 中文 don't pluralize and a mid-sentence %@ can't
             // be translated cleanly.
-            Text("This device has \(r.localCount) tasks that aren't in your account yet. Add them to your account, or use your account's tasks instead? (A backup is saved either way.)")
+            if r.kind == .differentOwner {
+                // Nothing has been uploaded at this point, and nothing will be
+                // unless the person picks the first button. Say so — they may be
+                // holding someone else's phone.
+                Text("The \(r.localCount) to-dos on this device were saved under a different account. They have not been uploaded. Move them to this account, or leave them out and start fresh? (A backup is saved either way.)")
+            } else {
+                Text("This device has \(r.localCount) tasks that aren't in your account yet. Add them to your account, or use your account's tasks instead? (A backup is saved either way.)")
+            }
         }
         // Free accounts are one device at a time — the server revoked this session.
         .alert("Signed out on this device", isPresented: $sync.signedOutRemotely) {

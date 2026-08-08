@@ -465,7 +465,13 @@ struct ProfileView: View {
                                 .background(RoundedRectangle(cornerRadius: 10).stroke(Color.hairD, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
-                        Button { confirmSignOut = false; account.signOut() } label: {
+                        // signOutEverywhere, not signOut: revoke the session on the
+                        // server too, so the token really stops working (and the
+                        // privacy policy's "signing out ends the session" is true).
+                        Button {
+                            confirmSignOut = false
+                            Task { await account.signOutEverywhere() }
+                        } label: {
                             Text("Log out").font(.body14.weight(.semibold)).foregroundStyle(Color.paper)
                                 .frame(maxWidth: .infinity).padding(.vertical, 10)
                                 .background(RoundedRectangle(cornerRadius: 10).fill(Color.bad))

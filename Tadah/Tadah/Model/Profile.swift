@@ -57,3 +57,57 @@ final class Profile {
     // UI-free — the index maps to a real Color in the theme layer.
     static let paletteCount = 6
 }
+
+// Records that a profile was removed, so the removal reaches the family's other
+// devices. Same job as TaskTombstone: a hard delete erases the id, and without
+// this the next pull would resurrect the person we just removed.
+@Model
+final class ProfileTombstone {
+    @Attribute(.unique) var id: UUID = UUID()
+    var deletedAt: Date = Date.now
+
+    init(id: UUID, deletedAt: Date = .now) {
+        self.id = id
+        self.deletedAt = deletedAt
+    }
+}
+
+// The wire form of a Profile — what actually travels to the account. Mirrors
+// TaskDTO: decoding is tolerant so an older app's payload still reads.
+struct ProfileDTO: Codable, Equatable {
+    var id: UUID
+    var name: String
+    var colorIndex: Int
+    var isOwner: Bool
+    var createdAt: Date
+    var updatedAt: Date
+
+    init(_ p: Profile) {
+        id = p.id; name = p.name; colorIndex = p.colorIndex
+        isOwner = p.isOwner; createdAt = p.createdAt; updatedAt = p.updatedAt
+    }
+
+    func makeProfile() -> Profile {
+        let p = Profile(name: name, colorIndex: colorIndex, isOwner: isOwner, id: id)
+        p.createdAt = createdAt
+        p.updatedAt = updatedAt
+        return p
+    }
+
+    func apply(to p: Profile) {
+        p.name = name; p.colorIndex = colorIndex; p.isOwner = isOwner
+        p.createdAt = createdAt; p.updatedAt = updatedAt
+    }
+
+    enum CodingKeys: String, CodingKey { case id, name, colorIndex, isOwner, createdAt, updatedAt }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        colorIndex = try c.decodeIfPresent(Int.self, forKey: .colorIndex) ?? 0
+        isOwner = try c.decodeIfPresent(Bool.self, forKey: .isOwner) ?? false
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? .now
+    }
+}

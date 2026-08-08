@@ -126,6 +126,7 @@ final class ProfileStore {
         let owned = (try? context.fetch(FetchDescriptor<ActionItem>(
             predicate: #Predicate { $0.profileID == pid }))) ?? []
         for item in owned { ItemActions.delete(item, in: context) }
+        context.insert(ProfileTombstone(id: pid))   // so the removal syncs
         context.delete(profile)
         reload(context)
     }

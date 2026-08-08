@@ -4,9 +4,14 @@
 //  avatar, name, email, and Delete account. It does NOT repeat Language /
 //  Notifications / Privacy / App rows — those live on the main Profile screen.
 //
-//  "Delete account" on the free, local tier just forgets the stored identity on
-//  this device; your saved items stay put. Server-side deletion arrives with
-//  cloud sync (the Tadah Plus phase).
+//  "Delete account" deletes the ACCOUNT — the server copy of the to-dos, the
+//  family profiles, and every session — then forgets the identity on this device.
+//  Apple requires an in-app path that deletes the account and its data, so this
+//  cannot be a local-only gesture (which is all it used to be).
+//
+//  What it deliberately does NOT do is erase the to-dos saved on this phone: they
+//  are the user's own copy and they were there before the account existed. The
+//  confirmation says so plainly.
 //
 
 import SwiftUI
@@ -18,6 +23,8 @@ struct AccountDetailsView: View {
     @State private var name = ""
     @State private var email = ""
     @State private var confirmDelete = false
+    @State private var isDeleting = false
+    @State private var deleteError: String?
 
     var body: some View {
         NavigationStack {
@@ -47,10 +54,41 @@ struct AccountDetailsView: View {
             email = account.account?.email ?? ""
         }
         .confirmationDialog("Delete account?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete account", role: .destructive) { account.deleteAccount(); dismiss() }
+            Button("Delete account", role: .destructive) { delete() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This removes your account from this device. Your saved items stay on the device.")
+            Text("This permanently deletes your account and everything backed up to it — on every device. Your saved items stay on this phone. This can't be undone.")
+        }
+        // Never dismiss on failure: saying nothing here is how someone walks away
+        // believing their data is gone when the server still has it.
+        .alert("Couldn't delete your account",
+               isPresented: Binding(get: { deleteError != nil },
+                                    set: { if !$0 { deleteError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your account was not deleted. Please check your connection and try again. If it keeps failing, contact support and we'll delete it for you.")
+        }
+    }
+
+    private func delete() {
+        isDeleting = true
+        Task {
+            defer { isDeleting = false }
+            do {
+                try await account.deleteAccountEverywhere()
+                // The device's own to-dos stay, but they're no longer any account's
+                // — so the next person to sign in here isn't asked to adopt them.
+                LocalDataOwner.release()
+                dismiss()
+            } catch AuthService.AuthError.notConfigured {
+                // No Worker configured (simulator dev): there is genuinely no
+                // server record, so forgetting the local identity IS the deletion.
+                account.forgetLocally()
+                LocalDataOwner.release()
+                dismiss()
+            } catch {
+                deleteError = error.localizedDescription
+            }
         }
     }
 
@@ -96,10 +134,12 @@ struct AccountDetailsView: View {
                         .frame(width: 22)
                     Text("Delete account").font(.body14).foregroundStyle(Color.bad)
                     Spacer()
+                    if isDeleting { ProgressView().controlSize(.small) }
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .disabled(isDeleting)
         }
     }
 

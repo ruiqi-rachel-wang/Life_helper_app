@@ -20,6 +20,9 @@ struct TadahApp: App {
     @State private var sync = SyncCoordinator.shared
     @State private var profiles = ProfileStore()
     private let container: ModelContainer
+    // True when the on-disk store couldn't be opened and this session is running
+    // in memory. The file is left intact — see makeContainer.
+    private let storeLoadFailed: Bool
     private let notificationDelegate = NotificationDelegate()
 
     init() {
@@ -39,30 +42,34 @@ struct TadahApp: App {
         Purchases.configure(withAPIKey: "appl_NkpoJAXKXycQKzzekTUOmXaxedM")
 
         // One shared container, used by the UI and the notification delegate.
-        let container = Self.makeContainer()
+        let (container, failed) = Self.makeContainer()
         self.container = container
+        self.storeLoadFailed = failed
 
         ReminderScheduler.shared.registerCategories()
         notificationDelegate.container = container
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
 
-    // Versioned container (TadahSchemaV1 + migration plan): future model changes
-    // become a V2 schema + a migration stage, so updates carry tester data
-    // forward. The wipe-and-recreate fallback stays as a last resort against a
-    // corrupt store file, but with versioned migrations a schema change should
-    // never trigger it anymore.
-    private static func makeContainer() -> ModelContainer {
-        do {
-            return try versionedContainer()
-        } catch {
-            deleteStore()
-            if let fresh = try? versionedContainer() { return fresh }
-            // Last resort so launch never crashes: an in-memory store.
-            return try! ModelContainer(
-                for: ActionItem.self, TaskTombstone.self, Profile.self,
-                configurations: ModelConfiguration(isStoredInMemoryOnly: true))
-        }
+    // Versioned container (TadahSchemaV1…V3 + migration plan): a model change
+    // becomes a new Vn + a migration stage, so updates carry tester data forward.
+    //
+    // NOTHING HERE DELETES THE STORE. It used to: a failure to open wiped the file
+    // and started fresh, which turns "this build has a migration bug" into "every
+    // tester silently lost all their to-dos" — the one outcome the app must never
+    // produce, and one nobody can undo. A store we can't open is kept untouched so
+    // a later build can still migrate it, and the app runs on an in-memory store
+    // for the session with a banner explaining what happened.
+    //
+    // `storeLoadFailed` drives that banner (RootTabView).
+    private static func makeContainer() -> (container: ModelContainer, failed: Bool) {
+        if let container = try? versionedContainer() { return (container, false) }
+        // Do NOT touch the file on disk. In-memory keeps the app usable this
+        // session; the real data is still there for a build that can open it.
+        let memory = try! ModelContainer(
+            for: ActionItem.self, TaskTombstone.self, Profile.self, ProfileTombstone.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        return (memory, true)
     }
 
     // Shared with SchemaVersioningTests (which points it at a temp file).
@@ -75,17 +82,9 @@ struct TadahApp: App {
                                   configurations: [config])
     }
 
-    private static func deleteStore() {
-        let base = URL.applicationSupportDirectory.appending(path: "default.store")
-        for suffix in ["", "-shm", "-wal"] {
-            try? FileManager.default.removeItem(
-                at: URL(fileURLWithPath: base.path + suffix))
-        }
-    }
-
     var body: some Scene {
         WindowGroup {
-            RootTabView()
+            RootTabView(storeLoadFailed: storeLoadFailed)
                 .environment(router)
                 .environment(tourGuide)
                 .environment(account)
@@ -103,6 +102,15 @@ struct TadahApp: App {
                     // RootTabView), not silently here.
                     refreshAllReminders()
                     Metrics.flush()   // send any metric events not yet uploaded
+                    // Re-identify an ALREADY signed-in user to RevenueCat. Only the
+                    // sign-in screen used to call logIn, so on every later launch
+                    // RevenueCat fell back to an anonymous id — entitlements and the
+                    // Worker's tier lookup then disagreed about who this is.
+                    // Awaited before syncing, since /sync re-checks the tier.
+                    if let userID = account.account?.userID {
+                        _ = try? await Purchases.shared.logIn(userID)
+                        await plus.refresh()
+                    }
                     // Lets edits made anywhere (ItemActions, the editors) nudge a
                     // sync without threading the store through every call site.
                     sync.configure(context: container.mainContext, account: account)

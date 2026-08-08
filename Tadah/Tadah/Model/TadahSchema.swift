@@ -30,7 +30,7 @@ nonisolated enum TadahSchemaV2: VersionedSchema {
     static var models: [any PersistentModel.Type] { [ActionItem.self, TaskTombstone.self] }
 }
 
-// V3 (family sharing): adds the Profile model and ActionItem.profileID. Both are
+// V3 (family sharing): adds Profile + ProfileTombstone and ActionItem.profileID. Both are
 // additive — profileID is optional, so existing rows migrate untouched and are
 // adopted onto the owner profile at launch by ProfileStore.ensureOwnerProfile.
 // (Doing the backfill in the app rather than a custom migration stage keeps the
@@ -38,7 +38,7 @@ nonisolated enum TadahSchemaV2: VersionedSchema {
 nonisolated enum TadahSchemaV3: VersionedSchema {
     static let versionIdentifier = Schema.Version(3, 0, 0)
     static var models: [any PersistentModel.Type] {
-        [ActionItem.self, TaskTombstone.self, Profile.self]
+        [ActionItem.self, TaskTombstone.self, Profile.self, ProfileTombstone.self]
     }
 }
 

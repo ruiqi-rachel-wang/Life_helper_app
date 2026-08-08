@@ -45,10 +45,14 @@ nonisolated enum BackendConfig {
         workerURL?.appendingPathComponent("events")
     }
 
-    // Account task sync (Part 3). Both nil until a Worker is configured, so the
+    // Account task sync (Part 3). All nil until a Worker is configured, so the
     // app stays fully local (no auth, no sync) in that case.
-    //   /auth/apple — exchange a Sign-in-with-Apple token for a session.
-    //   /sync       — push local changes + pull the account's.
+    //   /auth/apple     — exchange a Sign-in-with-Apple token for a session.
+    //   /auth/logout    — revoke this device's session.
+    //   /account/delete — erase the account's server data entirely.
+    //   /sync           — push local changes + pull the account's.
     static var authEndpoint: URL? { workerURL?.appendingPathComponent("auth/apple") }
+    static var logoutEndpoint: URL? { workerURL?.appendingPathComponent("auth/logout") }
+    static var accountDeleteEndpoint: URL? { workerURL?.appendingPathComponent("account/delete") }
     static var syncEndpoint: URL? { workerURL?.appendingPathComponent("sync") }
 }

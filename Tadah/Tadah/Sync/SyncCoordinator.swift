@@ -27,8 +27,16 @@ final class SyncCoordinator {
 
     // A pending "what should we do with this device's tasks?" question.
     struct Reconciliation: Identifiable {
+        // Which question we're actually asking. They read similarly but the stakes
+        // differ: `sameOwner` is merging your own two copies, `differentOwner` is
+        // about to hand one person's tasks to another person's account.
+        enum Kind: Equatable {
+            case sameOwner          // this account's own tasks, on a device that also has some
+            case differentOwner     // the device's tasks belong to a DIFFERENT account
+        }
         let id = UUID()
         let localCount: Int
+        let kind: Kind
     }
 
     // One app-wide instance so the central mutation points (ItemActions, which
@@ -39,6 +47,9 @@ final class SyncCoordinator {
     private(set) var isSyncing = false
     private(set) var lastError: String?
     private(set) var lastSyncedAt: Date?
+    // Set when a sync is requested while one is running, or when the server says it
+    // has more pages. Drives one more pass instead of losing the request.
+    private var needsAnotherPass = false
     var pendingReconciliation: Reconciliation?
     // Set when the server revoked this session (free = one device at a time).
     var signedOutRemotely = false
@@ -73,9 +84,23 @@ final class SyncCoordinator {
 
     func afterSignIn(session: AuthService.Session, context: ModelContext) async {
         let userID = session.userID
+        let localCount = localTaskCount(in: context)
+
+        // FIRST, before anything can push: do these items belong to someone else?
+        // Local tasks aren't account-scoped, and sign-out leaves them on the device
+        // on purpose, so "the device has tasks" does NOT mean "this account's
+        // tasks". Auto-seeding here is how one person's to-dos ended up in the next
+        // person's cloud backup. Never push without an explicit answer.
+        if localCount > 0, LocalDataOwner.belongsToSomeoneElse(than: userID) {
+            _ = try? TaskBackup.snapshot(from: context)
+            pendingReconciliation = Reconciliation(localCount: localCount, kind: .differentOwner)
+            return
+        }
 
         guard session.hasServerData else {
-            // Brand-new account: everything on this device becomes its starting set.
+            // Brand-new account, and the local items are either this account's or
+            // unclaimed guest data: they become its starting set.
+            LocalDataOwner.claim(userID)
             SyncService.resetWatermark(userID)
             await run(context: context, userID: userID)
             return
@@ -85,23 +110,27 @@ final class SyncCoordinator {
         // If the snapshot fails we still continue — but only down the additive
         // path (merge), never a destructive one.
         let backedUp = (try? TaskBackup.snapshot(from: context)) != nil
-        let localCount = localTaskCount(in: context)
 
         if localCount == 0 {
+            LocalDataOwner.claim(userID)
             await run(context: context, userID: userID)      // nothing to lose: just pull
         } else if backedUp {
-            pendingReconciliation = Reconciliation(localCount: localCount)
+            pendingReconciliation = Reconciliation(localCount: localCount, kind: .sameOwner)
         } else {
             // Couldn't back up → refuse to offer "replace"; merge is safe.
+            LocalDataOwner.claim(userID)
             SyncService.resetWatermark(userID)
             await run(context: context, userID: userID)
         }
     }
 
     // "Add my tasks to the account" — push everything local, pull everything
-    // remote, keep both. Purely additive.
+    // remote, keep both. Purely additive. When the tasks came from a different
+    // account this is the moment the person consented to moving them, so the claim
+    // moves with them.
     func keepLocalTasks(context: ModelContext, userID: String) async {
         pendingReconciliation = nil
+        LocalDataOwner.claim(userID)
         SyncService.resetWatermark(userID)
         await run(context: context, userID: userID)
     }
@@ -119,6 +148,7 @@ final class SyncCoordinator {
         for stone in (try? context.fetch(FetchDescriptor<TaskTombstone>())) ?? [] {
             context.delete(stone)      // don't echo pre-sign-in deletes at the account
         }
+        LocalDataOwner.claim(userID)
         SyncService.suppressPush(userID)
         SyncService.resetCursor(userID)
         await run(context: context, userID: userID)
@@ -135,23 +165,37 @@ final class SyncCoordinator {
     // MARK: - internals
 
     private func run(context: ModelContext, userID: String, account: AccountStore? = nil) async {
-        guard !isSyncing else { return }
+        // A sync is already in flight. Don't just drop this request — remember that
+        // something changed and run once more when the current pass finishes.
+        // Dropping it meant an edit made during a long sync sat unsynced until the
+        // next launch or backgrounding.
+        guard !isSyncing else { needsAnotherPass = true; return }
         isSyncing = true
         defer { isSyncing = false }
-        do {
-            _ = try await SyncService.sync(context: context, userID: userID)
-            lastError = nil
-            lastSyncedAt = .now
-        } catch SyncService.SyncError.unauthorized {
-            // Session revoked — this device was signed in elsewhere.
-            SessionStore.clear()
-            account?.signOut()
-            signedOutRemotely = true
-        } catch SyncService.SyncError.notConfigured, SyncService.SyncError.noSession {
-            // No backend configured / not signed in yet: stay local, stay quiet.
-        } catch {
-            lastError = error.localizedDescription
-        }
+
+        repeat {
+            needsAnotherPass = false
+            do {
+                let outcome = try await SyncService.sync(context: context, userID: userID)
+                lastError = nil
+                lastSyncedAt = .now
+                // The server had more than one page — keep going rather than leave
+                // the device holding a partial view of the account.
+                if outcome.hasMore { needsAnotherPass = true }
+            } catch SyncService.SyncError.unauthorized {
+                // Session revoked — this device was signed in elsewhere.
+                SessionStore.clear()
+                account?.signOut()
+                signedOutRemotely = true
+                return
+            } catch SyncService.SyncError.notConfigured, SyncService.SyncError.noSession {
+                // No backend configured / not signed in yet: stay local, stay quiet.
+                return
+            } catch {
+                lastError = error.localizedDescription
+                return          // don't spin on a failing server
+            }
+        } while needsAnotherPass
     }
 
     private func localTasks(in context: ModelContext) -> [ActionItem] {
