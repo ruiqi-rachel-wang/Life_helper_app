@@ -20,6 +20,16 @@
 import Foundation
 import SwiftData
 
+// ⚠️ V1 and V2 both point at the CURRENT ActionItem type. That is a known
+// weakness, not a design: `ActionItem` has since gained `updatedAt` and
+// `profileID`, so "V1" no longer describes what build 2 actually shipped, and a
+// test that builds its fixture from these can't prove a build-2 store migrates.
+//
+// The honest check is therefore NOT "does V1 round-trip" but "does a store
+// written by the build-2 MODEL SHAPE open under the current plan" —
+// SchemaVersioningTests does that with `LegacyV1ActionItem`, an independent
+// frozen copy of the build-2 properties that this file can never accidentally
+// change. Freeze future versions by copying the model, not by re-pointing here.
 nonisolated enum TadahSchemaV1: VersionedSchema {
     static let versionIdentifier = Schema.Version(1, 0, 0)
     static var models: [any PersistentModel.Type] { [ActionItem.self] }

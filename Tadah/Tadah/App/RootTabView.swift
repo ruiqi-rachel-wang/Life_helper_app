@@ -32,6 +32,7 @@ struct RootTabView: View {
     // tourGuide.start() directly to replay it via "Show me how Tadah works").
     @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
     @State private var showNotificationPrimer = false
+    @State private var showStoreFailure = false
 
     var body: some View {
         @Bindable var router = router
@@ -115,6 +116,8 @@ struct RootTabView: View {
             // Skip both one-time moments under UI tests (a system alert / a cover
             // block automation).
             guard !ProcessInfo.processInfo.arguments.contains("-uitest") else { return }
+            // Ahead of the tour/primer: this one matters more than onboarding.
+            if storeLoadFailed { showStoreFailure = true; return }
             // One thing at a time: the notification primer (a modal sheet) first;
             // the tour's first hint starts right away only when no sheet is coming,
             // otherwise when the sheet is dismissed (onChange below).

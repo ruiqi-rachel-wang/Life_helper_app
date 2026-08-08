@@ -11,7 +11,7 @@ enum LegalContent {
     static let privacyPolicy = #"""
 # Privacy Policy for Tadah
 
-**Effective date:** June 18, 2026 **Last updated:** August 7, 2026
+**Effective date:** June 18, 2026 **Last updated:** August 8, 2026
 
 Tadah ("Tadah", "we", "us") is an iOS app that helps you understand letters, bills, and official documents and turn them into reminders and checklists. This policy explains what data the app handles and what happens to it.
 
@@ -45,6 +45,7 @@ Signing in is optional. It exists so your items survive signing out, a reinstall
 - **How you sign in.** Tadah uses **Sign in with Apple**. Apple gives us a **user identifier** that is specific to Tadah — a random-looking string, not your Apple ID or password. If you choose to share your name and email with Apple's prompt, those are stored **on your device only** and are not sent to our backend. You may use Apple's "Hide My Email" relay address.
 - **What is backed up to your account.** The content of your items: **title, category, amount, due date, notes, checklist steps and their details, reminder times, and any reference numbers you save** (for example a claim, policy, or case number). **This can include personal and sensitive information**, because it is whatever your document or your own notes contain. It is stored on our backend (a Cloudflare database) with your Tadah user identifier.
 - **What is NOT backed up.** Your **scanned photos**, and the raw recognized text of a document.
+- **Family profiles — information about other people.** Tadah Plus lets you add profiles for family members (for example a parent), so each person's letters stay in their own list. For each profile we store **only the name you type and a colour** — no email, phone number, date of birth, or any contact details — plus the to-dos you file under that person, which can contain personal information about them. Please add only names you have a good reason to keep, and remember these are **labels inside your account, not accounts of their own**: the person named does not get a login, is not contacted by us, and anyone signed into your account can see every profile. Removing a profile deletes that person's to-dos from your account. An account can hold up to **8 profiles** and be signed in on up to **8 devices**.
 - **Devices and sessions.** We store a **session record** for each signed-in device: a random session token, your Tadah user identifier, the app's random install identifier, and timestamps. A **free account is used on one device at a time** — signing in on another device ends the earlier device's session. Tadah Plus allows more devices.
 - **We do not read your items.** They are stored so we can give them back to you; we do not use their content for advertising, profiling, or model training.
 - **Signing out** removes the session from that device. Your items remain on that device and remain in your account until you delete them.
@@ -80,7 +81,7 @@ This is **first-party** data, used only to improve Tadah. It is **not** advertis
 | Provider | What they process | Why |
 |---|---|---|
 | **OpenAI** | The full recognized text of any document you scan/upload (may include sensitive personal info), plus non-sensitive guide checklists. May be retained ~30 days for abuse monitoring; not used for training. | To generate the summary, steps, and translations |
-| **Cloudflare** | Your IP address (transiently, when proxying the AI request); the anonymous usage statistics we store; and — **if you sign in** — your backed-up items and your session records | To proxy the AI request without shipping the OpenAI key, to store anonymous usage stats, and to host your account backup |
+| **Cloudflare** | Your IP address (transiently, when proxying the AI request); the anonymous usage statistics we store; and — **if you sign in** — your backed-up items, your family profiles, and your session records | To proxy the AI request without shipping the OpenAI key, to store anonymous usage stats, and to host your account backup |
 | **Apple** | Sign in with Apple (they give us a Tadah-specific user identifier); device storage, on-device OCR, local notifications; App Store purchases | Sign-in, standard iOS functionality, and subscription billing |
 | **RevenueCat** | Your Tadah user identifier and your subscription status | To manage Tadah Plus subscriptions and tell the app (and our backend) whether your account is Plus |
 
@@ -93,7 +94,8 @@ We are not responsible for these providers' own practices; please review their p
 - **On-device data** stays until you delete the item or uninstall the app. You are in control.
 - **AI requests** are processed in transit and returned; we keep no server copy. OpenAI's retention of API data is governed by their policy.
 - **Backed-up items (signed-in accounts)** are kept for as long as your account exists, so we can restore them to you. Deleting an item in the app removes it from your account on the next sync. To have the whole account and its items deleted, email us (see *Your choices and rights*).
-- **Session records** are kept while a device is signed in, and for a short period afterwards for security; ended sessions are marked revoked.
+- **Family profiles** are kept for as long as your account exists, or until you remove the person or delete the account.
+- **Session records** are kept while a device is signed in, and for a short period afterwards for security; ended sessions are marked revoked and cleaned up. Sessions also expire on their own, so a device left unused eventually has to sign in again.
 - **Anonymous usage statistics** are stored on our backend (Cloudflare) until we no longer need them for product analysis. They contain no personal identifiers and aren't linked to you. Turning the setting off stops new data from being sent.
 
 ---
@@ -102,12 +104,14 @@ We are not responsible for these providers' own practices; please review their p
 
 - **Use Tadah without an account** — signing in is optional. Signed out, nothing you save is backed up to us.
 - **Delete anytime** — delete an item to remove it from this device and, on the next sync, from your account. Uninstalling removes the local copy.
-- **Delete your account and its backup** — **Profile → your name → Delete account** removes the account from that device. To have the copy on our backend erased as well, email **support.tadah@gmail.com** from the address linked to your account, or include your name as shown in the app; we will delete your stored items and session records.
+- **Delete your account and its backup, from inside the app** — **Profile → your name → Delete account**. This erases what we hold on our backend: your saved items, your family profiles, and your session records. It does not delete the copy on your phone; the app tells you that and lets you remove those separately. If it can't reach us it says so rather than pretending it worked, so you can try again.
+- **Remove one family member** — Profile → Family → long-press a person → Remove. Their to-dos are deleted from the account too.
+- **Sign out on this device** — Profile → Log out. This ends the session on our side straight away, rather than leaving it valid until it expires.
 - **Don't want text sent to OpenAI?** Use the manual-entry option instead of scanning, or use the sensitive guides, which are generated on your device.
 - **Don't want photos kept?** Switch off **Profile → Privacy → Save uploaded photos**. (Photos are never uploaded to your account either way.)
 - **Turn off usage statistics** — go to **Profile → Privacy** and switch off *Share anonymous usage data*; the app stops sending new usage events.
 
-**California (CCPA) and EU/UK (GDPR):** if you are signed in, we hold your Tadah user identifier and the items you have saved, and you have the right to access, correct, port, or delete them — email us at the address above and we will action it. We do **not** sell or share personal information, and we do not use it for advertising or cross-context behavioural profiling. If you never sign in, we hold no personal data about you at all.
+**California (CCPA) and EU/UK (GDPR):** if you are signed in, we hold your Tadah user identifier, the items you have saved, and any family-profile names you have entered, and you have the right to access, correct, port, or delete them — email us at the address above and we will action it. We do **not** sell or share personal information, and we do not use it for advertising or cross-context behavioural profiling. If you never sign in, we hold no personal data about you at all.
 
 ---
 
@@ -142,7 +146,7 @@ We may update this policy as the app evolves (for example, if we add accounts, s
     static let terms = #"""
 # Terms of Service & Disclaimers for Tadah
 
-**Effective date:** June 18, 2026 **Last updated:** August 7, 2026
+**Effective date:** June 18, 2026 **Last updated:** August 8, 2026
 
 By downloading or using **Tadah** ("the app"), you agree to these Terms. If you do not agree, do not use the app.
 

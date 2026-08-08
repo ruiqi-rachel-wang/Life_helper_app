@@ -32,9 +32,12 @@ final class TadahUITests: XCTestCase {
         app.tabBars.buttons["Add"].tap()
         XCTAssertTrue(app.staticTexts["Scan a document"].waitForExistence(timeout: 3))
 
-        // Profile → the wired language picker.
+        // Profile. The long inline "EXPLAIN DOCUMENTS IN" list this used to assert
+        // on was replaced by a single Language row opening a sheet, so assert on
+        // the screen's own masthead plus that row.
         app.tabBars.buttons["Profile"].tap()
-        XCTAssertTrue(app.staticTexts["EXPLAIN DOCUMENTS IN"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["My Settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Language"].waitForExistence(timeout: 3))
 
         // Guides → the library.
         app.tabBars.buttons["Guides"].tap()

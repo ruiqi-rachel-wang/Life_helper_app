@@ -1,7 +1,7 @@
 # Terms of Service & Disclaimers for Tadah
 
 **Effective date:** June 18, 2026
-**Last updated:** August 7, 2026
+**Last updated:** August 8, 2026
 
 > ⚠️ **Template — not legal advice.** This draft reflects how Tadah actually
 > handles data today, but you should have a lawyer review it before a paid or

@@ -85,6 +85,17 @@ backend under a Tadah-specific Apple user identifier. For those users the data i
 > sent to our backend, so they are not declared as collected. If that ever changes,
 > declare **Contact Info → Name / Email Address**, linked.
 
+**Family profiles (added 2026-08-08).** Tadah Plus lets a user add profiles for family
+members. Each profile stores **a name they type and a colour** — nothing else, no contact
+details — but that name is **another person's name**, and it is sent to our backend.
+Declare it under the **Contact Info → Name** row above (Collected · App Functionality ·
+**Linked** · not used for tracking); the to-dos filed under a profile are already covered
+by the User Content rows.
+
+> Worth being precise with Apple here: these are labels inside one account, not user
+> accounts. The named person gets no login, is never contacted by us, and we hold no
+> way to reach them. That's the difference between this and a contact-sharing feature.
+
 ### NOT collected
 - **Photos or Videos** — the photo is read on-device (OCR) and **is not uploaded**,
   including for signed-in accounts (photos are excluded from sync). So Photos are

@@ -46,3 +46,7 @@ testing files/
 *.p8
 AuthKey_*
 SubscriptionKey_*
+
+# Wrangler's local cache. Holds the Cloudflare account id and personal email —
+# not a credential, but not something to publish either. Untracked 2026-08-08.
+.wrangler/
