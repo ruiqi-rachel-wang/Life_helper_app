@@ -1,99 +1,113 @@
 # Tadah Plus paywall — copy to paste into RevenueCat
 
-> Written 2026-08-08, checked line by line against the code. Edit this in
-> RevenueCat → Paywalls; it takes effect without an app release.
->
-> **The rule:** every bullet here is something the app does **today**. The
-> published paywall previously promised family spaces, shared tasks and alerts
-> when none of the three existed — Apple's review checks that an in-app purchase
-> delivers what it advertises (guideline 3.1.2), and it's the kind of thing that
-> produces refunds and one-star reviews.
+> Rewritten 2026-08-09 **in the voice of the paywall you already wrote** — warm,
+> benefit-first, no jargon. Only the untrue parts changed. Edit in
+> RevenueCat → Paywalls; takes effect with no app release.
+
+## What was wrong with the published version
+
+| Bullet | Problem |
+|---|---|
+| 更多扫描次数 / More scans | ✅ fine — just made the numbers concrete |
+| 家庭成员空间 / Spaces for family | ✅ **now true** — reworded to sell the shared list too |
+| 共享任务与提醒 / Shared tasks **and alerts** | ❌ "有人新增…你都能及时收到提醒" is **not built**. There is no push notification. Replaced with the multi-device benefit, which is real. |
+| 不限量记录 / **Unlimited** tracking | ❌ "不再受数量限制" is false — Plus is **100 per person**. Replaced with the real number. |
 
 ---
 
-## What changed since the current published version
+## 中文 (the version you're looking at)
 
-| Current bullet | Status | Action |
-|---|---|---|
-| More scans | ✅ true (60/day + 300/30d vs 10 + 20) | keep |
-| Spaces for each family member | ✅ **now true** — profiles + a shared family list | keep, reworded |
-| Shared tasks and alerts | ⚠️ **tasks yes, alerts no** — the family list is real and shared across devices, and a to-do can be for everyone; instant "Mom added a task" alerts are NOT built (deferred, see `later_ideas.md`) | **keep the sharing, drop "alerts"** |
-| Unlimited tracking | ❌ false — Plus is 100 to-dos **per person** | **rewrite — say the number** |
+**标题**
+更多空间管理资料，自己用或和家人一起用
 
----
+**副标题**
+免费版支持 1 台设备，并提供有限的扫描次数。升级 Tadah Plus 后，可获得更多扫描额度，还能为家人创建独立空间，把全家要办的事放在一个清单里。
 
-## Headline
+**1 · 更多扫描次数**
+每天 60 次、每 30 天 300 次的扫描与指南额度，不必担心很快达到免费版上限。
 
-**More room, and room for your family**
+**2 · 家庭成员空间**
+为每位家人创建独立空间。一个页面就能看到全家要办的事，每条都标明是谁的，也可以只看自己的。
 
-## Subhead
+**3 · 多台设备同步**
+最多 8 台设备，全家的更新随时保持一致。免费账户一次只能在一台设备上使用。
 
-Free covers one person on one device, with a limited number of scans. Tadah Plus
-opens it up to the people you look after.
-
-## Bullets
-
-**One family list, and a list for each person**
-Add up to 8 people — a parent, a partner. See everything the family owes and
-owns in one place, with each to-do marked whose it is, or switch to just yours.
-
-**More scans and guides**
-60 a day and 300 a month, instead of 10 a day and 20 a month.
-
-**More to-dos, for each person**
-Up to 100 at a time per person, instead of 20.
-
-**All your devices, in sync**
-Use Tadah on up to 8 devices and everything stays up to date. A free account
-works on one device at a time.
+**4 · 每人更多记录**
+每位家人最多可保存 100 条账单、任务和截止日期，免费版为 20 条。
 
 ---
 
-## 中文
+## English
 
-**标题：** 更多空间，也为家人准备
+**Title**
+More room for your paperwork — on your own, or with family
 
-**副标题：** 免费版仅限一人一台设备，扫描次数也有限。Tadah Plus 让你也能照顾家人。
+**Subtitle**
+The free plan covers one device and a limited number of scans. Tadah Plus raises
+the limits, gives each family member their own space, and puts everything the
+family has to do in one list.
 
-- **一份家庭清单，也有各自的清单** — 最多添加 8 人（父母、伴侣）。在一个页面看到全家要办的事，每条都标明是谁的；也可以只看自己的。
-- **更多扫描与指南** — 每天 60 次、每月 300 次（免费版为每天 10 次、每月 20 次）。
-- **每人更多待办事项** — 每人最多 100 条（免费版为 20 条）。
-- **多设备同步** — 最多 8 台设备，内容始终保持同步。免费账户一次只能在一台设备上使用。
+**1 · More scans**
+60 scans and guides a day, 300 every 30 days — so you stop running into the free
+plan's ceiling.
+
+**2 · A space for each family member**
+Give a parent or partner their own space. See everything the family has to do in
+one list, each to-do marked whose it is — or switch to just yours.
+
+**3 · All your devices, in step**
+Use Tadah on up to 8 devices and everyone stays up to date. A free account works
+on one device at a time.
+
+**4 · More to-dos for each person**
+Keep up to 100 bills, tasks and due dates per person, instead of 20.
+
+---
 
 ## Español
 
-**Título:** Más espacio, y espacio para tu familia
+**Título**
+Más espacio para tus papeles — para ti, o para toda la familia
 
-**Subtítulo:** El plan gratuito cubre a una persona en un dispositivo, con escaneos
-limitados. Tadah Plus lo abre a las personas que cuidas.
+**Subtítulo**
+El plan gratuito cubre un dispositivo y un número limitado de escaneos. Tadah Plus
+amplía los límites, da su propio espacio a cada familiar y reúne en una sola lista
+todo lo que la familia tiene que hacer.
 
-- **Una lista familiar, y una para cada persona** — añade hasta 8 personas (un padre,
-  tu pareja). Ve todo lo de la familia en un solo lugar, con cada tarea marcada de
-  quién es, o cambia a ver solo las tuyas.
-- **Más escaneos y guías** — 60 al día y 300 al mes, en lugar de 10 y 20.
-- **Más tareas, para cada persona** — hasta 100 a la vez por persona, en lugar de 20.
-- **Todos tus dispositivos, sincronizados** — usa Tadah en hasta 8 dispositivos. Una
-  cuenta gratuita se usa en un dispositivo a la vez.
+**1 · Más escaneos**
+60 escaneos y guías al día, 300 cada 30 días, para que no choques con el límite
+del plan gratuito.
+
+**2 · Un espacio para cada familiar**
+Dale su propio espacio a un padre o a tu pareja. Ve en una sola lista todo lo que
+la familia tiene que hacer, con cada tarea marcada de quién es, o cambia a ver
+solo las tuyas.
+
+**3 · Todos tus dispositivos, al día**
+Usa Tadah en hasta 8 dispositivos y todos se mantienen al día. Una cuenta gratuita
+se usa en un dispositivo a la vez.
+
+**4 · Más tareas para cada persona**
+Guarda hasta 100 facturas, tareas y fechas límite por persona, en lugar de 20.
 
 ---
 
-## Add back later
+## Add back when it exists
 
-When instant push notifications ship (`later_ideas.md` §1), add:
+Instant push notifications are deferred (`later_ideas.md` §1). When they ship, the
+old bullet becomes true again and can return:
 
-**Know when something changes**
-Get a notification the moment someone in your family adds or finishes a to-do.
+> **共享任务与提醒** — 有人新增、更新或完成任务时，你都能及时收到提醒。
+> **Shared tasks and alerts** — Get told the moment someone adds or finishes a to-do.
 
-Until then the app only catches up when it's opened, so this bullet would be
-overselling it. Note that **family deadline reminders already work** — once a
-to-do syncs, every device schedules its own reminders for it — that's just not a
-push-notification feature, so it belongs in the "in sync" bullet rather than its
-own.
+Until then it would be selling something the app can't do. Note that family
+**deadline** reminders already work — once a to-do syncs, every device schedules
+its own — which is covered by the "devices in step" bullet.
 
-## Also check in the dashboard
+## Also check in the builder
 
-- Prices shown on the paywall come from the Offering, so confirm they match what
-  you set in App Store Connect (the template's $9.99 / $79.99 are placeholders
-  until real products are attached).
-- Add localizations for **en / zh-Hans / es** — `PaywallView` passes the user's
-  picked language, and a missing one silently falls back to English.
+- The prices shown ($9.99 / $79.99) come from the Offering. Confirm they match the
+  products you created in App Store Connect before publishing.
+- Do all three languages — `PaywallView` passes the user's chosen language, and a
+  missing one silently falls back to English, for exactly the audience this is for.
+- Then **Publish changes** (top right) — a draft isn't live.
