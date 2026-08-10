@@ -29,8 +29,10 @@ enum SyncService {
         case notConfigured      // no Worker set (simulator dev) — stay local
         case noSession          // not signed in / no token yet
         case unauthorized       // 401: session revoked → signed out on another device
+        case accountChanged     // signed out / switched account mid-request — abandon this pass
         case server(Int)
-        case decode
+        case decode             // a record the server sent could not be read
+        case encode             // a local record could not be serialized — never drop it
     }
 
     struct Outcome: Equatable {
@@ -85,6 +87,10 @@ enum SyncService {
                      defaults: UserDefaults = .standard) async throws -> Outcome {
         guard let endpoint = BackendConfig.syncEndpoint else { throw SyncError.notConfigured }
         guard let token = SessionStore.token else { throw SyncError.noSession }
+        // The session must belong to the account this pass was started for.
+        // Without this, signing out of A and into B mid-request would send A's
+        // cursor with B's token and merge one account's data into the other's.
+        guard SessionStore.userID == userID else { throw SyncError.accountChanged }
 
         // Captured BEFORE gathering: anything edited during the request keeps a
         // stamp newer than this and is caught on the next pass.
@@ -98,11 +104,18 @@ enum SyncService {
         let changed = localItems.filter { $0.updatedAt > mark }
         let stones = (try? context.fetch(FetchDescriptor<TaskTombstone>())) ?? []
 
+        // THROWING, not compactMap+try?. A record that fails to encode used to be
+        // dropped from the push while the watermark advanced past it anyway — the
+        // edit was then never sent again, so the user's change was lost silently.
+        // Now an encode failure aborts the whole pass and nothing is committed.
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
-        let outChanges: [Wire.Change] = changed.compactMap { item in
-            guard let data = try? encoder.encode(TaskDTO(item)),
-                  let payload = String(data: data, encoding: .utf8) else { return nil }
-            return Wire.Change(id: item.id.uuidString, payload: payload, updatedAt: iso(item.updatedAt))
+        func wire<T: Encodable>(_ dto: T, id: UUID, updatedAt: Date) throws -> Wire.Change {
+            guard let data = try? encoder.encode(dto),
+                  let payload = String(data: data, encoding: .utf8) else { throw SyncError.encode }
+            return Wire.Change(id: id.uuidString, payload: payload, updatedAt: iso(updatedAt))
+        }
+        let outChanges: [Wire.Change] = try changed.map {
+            try wire(TaskDTO($0), id: $0.id, updatedAt: $0.updatedAt)
         }
         let outDeletes = stones.map { Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt)) }
 
@@ -111,10 +124,8 @@ enum SyncService {
         let localProfiles = (try? context.fetch(FetchDescriptor<Profile>())) ?? []
         let changedProfiles = localProfiles.filter { $0.updatedAt > mark }
         let profileStones = (try? context.fetch(FetchDescriptor<ProfileTombstone>())) ?? []
-        let outProfiles: [Wire.Change] = changedProfiles.compactMap { profile in
-            guard let data = try? encoder.encode(ProfileDTO(profile)),
-                  let payload = String(data: data, encoding: .utf8) else { return nil }
-            return Wire.Change(id: profile.id.uuidString, payload: payload, updatedAt: iso(profile.updatedAt))
+        let outProfiles: [Wire.Change] = try changedProfiles.map {
+            try wire(ProfileDTO($0), id: $0.id, updatedAt: $0.updatedAt)
         }
         let outProfileDeletes = profileStones.map {
             Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt))
@@ -138,37 +149,42 @@ enum SyncService {
         guard (200..<300).contains(http.statusCode) else { throw SyncError.server(http.statusCode) }
         guard let payload = try? JSONDecoder().decode(Wire.Response.self, from: data) else { throw SyncError.decode }
 
-        // ── apply what came back ─────────────────────────────────────────────
+        // ── decode EVERYTHING before applying ANYTHING ───────────────────────
         //
-        // ALL-OR-NOTHING. These used to be compactMap, which dropped any record
-        // that failed to decode and then advanced the cursor past it anyway — so a
-        // single malformed row meant that task was never seen again on this device.
-        // Now one bad record fails the whole page: the cursor doesn't move, nothing
-        // is half-applied, and the next sync retries the same page.
+        // Truly all-or-nothing. Decoding tasks and applying them before profiles
+        // were even parsed meant a malformed PROFILE left the task mutations
+        // already written to the store while the cursor stayed put — so the next
+        // pass replayed them on top of a half-changed store. All four collections
+        // are decoded up front; a single bad record throws before any mutation.
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-        let incoming: [TaskDTO] = try payload.changes.map {
-            guard let d = $0.payload.data(using: .utf8),
-                  let dto = try? decoder.decode(TaskDTO.self, from: d) else { throw SyncError.decode }
-            return dto
+        func decodeAll<T: Decodable>(_ wire: [Wire.Change], as: T.Type) throws -> [T] {
+            try wire.map {
+                guard let d = $0.payload.data(using: .utf8),
+                      let dto = try? decoder.decode(T.self, from: d) else { throw SyncError.decode }
+                return dto
+            }
         }
-        let removals: [Removal] = try payload.deletes.map {
-            guard let id = UUID(uuidString: $0.id),
-                  let at = date(from: $0.deletedAt) else { throw SyncError.decode }
-            return Removal(id: id, deletedAt: at)
+        func removals(_ wire: [Wire.Delete]) throws -> [Removal] {
+            try wire.map {
+                guard let id = UUID(uuidString: $0.id),
+                      let at = date(from: $0.deletedAt) else { throw SyncError.decode }
+                return Removal(id: id, deletedAt: at)
+            }
         }
-        let applied = apply(changes: incoming, deletes: removals, in: context)
+        let incoming = try decodeAll(payload.changes, as: TaskDTO.self)
+        let taskRemovals = try removals(payload.deletes)
+        let incomingProfiles = try decodeAll(payload.profiles ?? [], as: ProfileDTO.self)
+        let profileRemovals = try removals(payload.profileDeletes ?? [])
 
-        let incomingProfiles: [ProfileDTO] = try (payload.profiles ?? []).map {
-            guard let d = $0.payload.data(using: .utf8),
-                  let dto = try? decoder.decode(ProfileDTO.self, from: d) else { throw SyncError.decode }
-            return dto
-        }
-        let profileRemovals: [Removal] = try (payload.profileDeletes ?? []).map {
-            guard let id = UUID(uuidString: $0.id),
-                  let at = date(from: $0.deletedAt) else { throw SyncError.decode }
-            return Removal(id: id, deletedAt: at)
-        }
+        // The session can be revoked, or the user can sign out, while the request
+        // is in flight. Re-check before touching the store so another account's
+        // response can never be merged into it.
+        guard SessionStore.userID == userID else { throw SyncError.accountChanged }
+
+        // ── apply (nothing above here has mutated the store) ─────────────────
+        // Profiles FIRST: a task referencing a new profile should find it there.
         applyProfiles(changes: incomingProfiles, deletes: profileRemovals, in: context)
+        let applied = apply(changes: incoming, deletes: taskRemovals, in: context)
 
         // ── commit progress (only now that the server has confirmed) ─────────
         defaults.set(payload.cursor, forKey: cursorKey(userID))
@@ -212,10 +228,26 @@ enum SyncService {
             // Same last-writer-wins guard as tasks: a stale removal must not wipe a
             // profile someone just renamed on this device.
             guard removal.deletedAt > local.updatedAt else { continue }
+            // NEVER delete the owner. The account always has exactly one owner
+            // profile; the server can't enforce that (profile payloads are opaque
+            // to it), so this is the only place that knows. A tombstone for the
+            // owner is a corrupt or hostile record — ignore it rather than leave
+            // the device with no owner and every task orphaned.
+            guard !local.isOwner else { continue }
+
             let id = removal.id
             let owned = (try? context.fetch(FetchDescriptor<ActionItem>(
                 predicate: #Predicate { $0.profileID == id }))) ?? []
             for item in owned {
+                // Per-task last-writer-wins, not a blanket cascade. Removing a
+                // person on another device must not silently destroy a to-do of
+                // theirs that someone edited here more recently. A survivor is
+                // reassigned to the family (nil) so it stays visible and isn't
+                // stranded pointing at a profile that no longer exists.
+                if item.updatedAt > removal.deletedAt {
+                    item.profileID = nil
+                    continue
+                }
                 ReminderScheduler.shared.cancel(itemID: item.id)
                 context.delete(item)
             }

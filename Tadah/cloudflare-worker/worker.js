@@ -393,9 +393,14 @@ async function handleLogout(request, env) {
   return json({ ok: true }, 200);
 }
 
-// Delete the ENTIRE account: every task, every profile, and every session for the
-// user. Apple requires an in-app path that deletes the account and its data, not
-// just the local copy of the identity.
+// Delete the ENTIRE account. Apple requires an in-app path that deletes the
+// account and its data — and, for apps using Sign in with Apple, that the token
+// grant is REVOKED too (Apple TN3194). Deleting only our own rows leaves Tadah
+// listed under Settings ▸ Apple ID ▸ Sign in with Apple, which is not deletion.
+//
+// Order matters: revoke the third-party state FIRST, while we still have the ids
+// to do it with, and only drop our rows once that has succeeded. Deleting our
+// rows first would leave no way to retry the revocation.
 //
 // Rows are removed outright rather than tombstoned — there is no other device left
 // to propagate a deletion to once all sessions are revoked, and keeping tombstones
@@ -408,12 +413,115 @@ async function handleAccountDelete(request, env) {
   if (!session) return json({ error: "Session invalid" }, 401);
   const userID = session.user_id;
 
+  let body = {};
+  try { body = await request.json(); } catch { /* body is optional-ish; checked below */ }
+  const authorizationCode = clamp(body && body.authorizationCode, 512);
+
+  // 1) Revoke the Sign in with Apple grant.
+  if (!appleRevocationConfigured(env)) {
+    // Refuse rather than half-delete. A 501 tells the app to say "we couldn't
+    // delete your account" instead of falsely confirming — the same rule the
+    // client applies to every other failure here.
+    return json({ error: "not_configured",
+                  message: "Account deletion is temporarily unavailable. Please contact support." }, 501);
+  }
+  if (!authorizationCode) return json({ error: "authorization_required" }, 400);
+  try {
+    await revokeAppleGrant(authorizationCode, env);
+  } catch {
+    return json({ error: "revoke_failed",
+                  message: "We couldn't fully disconnect your Apple ID. Nothing was deleted; please try again." }, 502);
+  }
+
+  // 2) Delete the RevenueCat subscriber, so no purchase history stays keyed to
+  //    this user id. Purchases.logOut() only changes the SDK's local identity —
+  //    it deletes nothing. Best-effort: a subscriber that never existed 404s, and
+  //    that must not block the deletion the user asked for.
+  await deleteRevenueCatSubscriber(userID, env);
+
+  // 3) Now our own rows.
   await env.DB.batch([
     env.DB.prepare("DELETE FROM tasks WHERE user_id = ?").bind(userID),
     env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userID),
     env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userID),
   ]);
   return json({ ok: true }, 200);
+}
+
+// Apple token revocation needs a client secret: an ES256 JWT signed with the
+// private key from the Apple Developer portal. All four must be set:
+//   APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY (the .p8 contents), APPLE_AUDIENCE.
+function appleRevocationConfigured(env) {
+  return !!(env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY && env.APPLE_AUDIENCE);
+}
+
+// Exchange the authorization code for a refresh token, then revoke it. Apple
+// wants the token revoked, not just the local session dropped.
+async function revokeAppleGrant(authorizationCode, env) {
+  const secret = await appleClientSecret(env);
+
+  const tokenRes = await fetch("https://appleid.apple.com/auth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.APPLE_AUDIENCE,
+      client_secret: secret,
+      code: authorizationCode,
+      grant_type: "authorization_code",
+    }),
+  });
+  if (!tokenRes.ok) throw new Error("apple token exchange failed");
+  const tokens = await tokenRes.json();
+  // Prefer the refresh token: revoking it invalidates the whole grant.
+  const token = tokens.refresh_token || tokens.access_token;
+  const hint = tokens.refresh_token ? "refresh_token" : "access_token";
+  if (!token) throw new Error("no token to revoke");
+
+  const revokeRes = await fetch("https://appleid.apple.com/auth/revoke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.APPLE_AUDIENCE,
+      client_secret: secret,
+      token,
+      token_type_hint: hint,
+    }),
+  });
+  if (!revokeRes.ok) throw new Error("apple revoke failed");
+}
+
+// ES256 JWT signed with the Apple .p8 key — Apple's "client secret".
+async function appleClientSecret(env) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "ES256", kid: env.APPLE_KEY_ID, typ: "JWT" };
+  const payload = {
+    iss: env.APPLE_TEAM_ID,
+    iat: now,
+    exp: now + 300,                 // short-lived; minted per request
+    aud: APPLE_ISS,
+    sub: env.APPLE_AUDIENCE,
+  };
+  const signingInput =
+    `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;
+
+  const key = await crypto.subtle.importKey(
+    "pkcs8", pemToBytes(env.APPLE_PRIVATE_KEY),
+    { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(signingInput));
+  return `${signingInput}.${b64urlFromBytes(new Uint8Array(sig))}`;
+}
+
+// RevenueCat keeps a subscriber record keyed by the app user id (our Apple sub).
+// Deleting the account must delete that too, or purchase history outlives it.
+async function deleteRevenueCatSubscriber(userID, env) {
+  if (!env.REVENUECAT_SECRET) return;
+  try {
+    await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userID)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${env.REVENUECAT_SECRET}` },
+    });
+  } catch { /* best-effort; never block the user's deletion on it */ }
 }
 
 // Bounded retention for rows nothing reads anymore. Runs opportunistically off

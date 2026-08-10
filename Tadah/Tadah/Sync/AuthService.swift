@@ -61,21 +61,36 @@ enum AuthService {
     static func logout() async throws {
         guard let endpoint = BackendConfig.logoutEndpoint else { throw AuthError.notConfigured }
         guard let token = SessionStore.token else { return }   // nothing to revoke
-        _ = try await send(to: endpoint, session: token)
+        // 401 is FINE here: it means the session is already dead server-side, which
+        // is exactly what logging out is trying to achieve.
+        _ = try await send(to: endpoint, session: token, treat401AsDone: true)
     }
 
-    // Delete the account and ALL of its server data (tasks, profiles, sessions).
-    // Apple requires an in-app path that deletes the account itself, not just the
-    // local copy of it, so unlike logout this one's failure MUST be surfaced —
-    // telling someone their account is gone when the server still has it is worse
-    // than telling them to try again.
-    static func deleteAccount() async throws {
+    // Delete the account and ALL of its server data (tasks, profiles, sessions),
+    // and revoke the Sign-in-with-Apple grant. Apple requires an in-app path that
+    // deletes the account itself, not just the local copy of it.
+    //
+    // `authorizationCode` comes from the fresh Apple re-authorization the delete
+    // flow performs; the Worker exchanges it with Apple and calls Apple's token
+    // revocation endpoint. Deletion is refused without it, because "delete my
+    // account" that leaves Tadah listed under Settings ▸ Apple ID ▸ Sign in with
+    // Apple hasn't actually deleted the connection.
+    static func deleteAccount(authorizationCode: String) async throws {
         guard let endpoint = BackendConfig.accountDeleteEndpoint else { throw AuthError.notConfigured }
         guard let token = SessionStore.token else { throw AuthError.noSession }
-        _ = try await send(to: endpoint, session: token)
+        // 401 is NOT success here. An expired or already-revoked session means the
+        // server authenticated nobody and therefore deleted NOTHING — reporting
+        // that as done would tell someone their data is gone while we still hold
+        // all of it. Make them re-authenticate instead.
+        _ = try await send(to: endpoint, session: token,
+                           body: ["authorizationCode": authorizationCode],
+                           treat401AsDone: false)
     }
 
-    private static func send(to endpoint: URL, session: String) async throws -> Data {
+    private static func send(to endpoint: URL,
+                             session: String,
+                             body: [String: String] = [:],
+                             treat401AsDone: Bool) async throws -> Data {
         var req = URLRequest(url: endpoint)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -83,15 +98,12 @@ enum AuthService {
         if !BackendConfig.proxyToken.isEmpty {
             req.setValue(BackendConfig.proxyToken, forHTTPHeaderField: "X-Cuevi-Token")
         }
-        req.httpBody = Data("{}".utf8)
+        req.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw AuthError.server(-1) }
-        // 401 means the session is already gone server-side — for both logout and
-        // delete that's the desired end state, not a failure to report.
-        guard (200..<300).contains(http.statusCode) || http.statusCode == 401 else {
-            throw AuthError.server(http.statusCode)
-        }
+        if http.statusCode == 401 && treat401AsDone { return data }
+        guard (200..<300).contains(http.statusCode) else { throw AuthError.server(http.statusCode) }
         return data
     }
 

@@ -44,12 +44,24 @@ final class SyncCoordinator {
     // ReminderScheduler.shared. The UI still receives it via .environment().
     static let shared = SyncCoordinator()
 
+    // What actually happened when someone signed in. Sign-in has two halves that
+    // can succeed independently, and the UI must not claim the second one until it
+    // is genuinely done — "backed up" shown before the first sync completed was a
+    // promise the app hadn't kept yet.
+    enum SignInOutcome: Equatable {
+        case backedUp                  // session AND a full sync round trip completed
+        case signedInLocally           // session obtained but sync didn't complete
+        case awaitingReconciliation    // waiting for the user to answer the merge question
+    }
+
     private(set) var isSyncing = false
     private(set) var lastError: String?
     private(set) var lastSyncedAt: Date?
     // Set when a sync is requested while one is running, or when the server says it
     // has more pages. Drives one more pass instead of losing the request.
     private var needsAnotherPass = false
+    // Which account the in-flight pass belongs to (nil when idle).
+    private var syncingUserID: String?
     var pendingReconciliation: Reconciliation?
     // Set when the server revoked this session (free = one device at a time).
     var signedOutRemotely = false
@@ -82,19 +94,23 @@ final class SyncCoordinator {
 
     // MARK: - sign-in reconciliation
 
-    func afterSignIn(session: AuthService.Session, context: ModelContext) async {
+    @discardableResult
+    func afterSignIn(session: AuthService.Session, context: ModelContext) async -> SignInOutcome {
         let userID = session.userID
-        let localCount = localTaskCount(in: context)
+        // Counts PROFILES too. Family profiles are other people's names — they're
+        // personal data just like tasks, so a device holding only profiles (or only
+        // tasks) still has something that must not silently cross accounts.
+        let localCount = localPersonalDataCount(in: context)
 
         // FIRST, before anything can push: do these items belong to someone else?
-        // Local tasks aren't account-scoped, and sign-out leaves them on the device
+        // Local data isn't account-scoped, and sign-out leaves it on the device
         // on purpose, so "the device has tasks" does NOT mean "this account's
         // tasks". Auto-seeding here is how one person's to-dos ended up in the next
         // person's cloud backup. Never push without an explicit answer.
         if localCount > 0, LocalDataOwner.belongsToSomeoneElse(than: userID) {
             _ = try? TaskBackup.snapshot(from: context)
             pendingReconciliation = Reconciliation(localCount: localCount, kind: .differentOwner)
-            return
+            return .awaitingReconciliation
         }
 
         guard session.hasServerData else {
@@ -102,8 +118,7 @@ final class SyncCoordinator {
             // unclaimed guest data: they become its starting set.
             LocalDataOwner.claim(userID)
             SyncService.resetWatermark(userID)
-            await run(context: context, userID: userID)
-            return
+            return await run(context: context, userID: userID) ? .backedUp : .signedInLocally
         }
 
         // Existing account. Snapshot BEFORE anything can overwrite local state.
@@ -113,14 +128,16 @@ final class SyncCoordinator {
 
         if localCount == 0 {
             LocalDataOwner.claim(userID)
-            await run(context: context, userID: userID)      // nothing to lose: just pull
+            // nothing to lose: just pull
+            return await run(context: context, userID: userID) ? .backedUp : .signedInLocally
         } else if backedUp {
             pendingReconciliation = Reconciliation(localCount: localCount, kind: .sameOwner)
+            return .awaitingReconciliation
         } else {
             // Couldn't back up → refuse to offer "replace"; merge is safe.
             LocalDataOwner.claim(userID)
             SyncService.resetWatermark(userID)
-            await run(context: context, userID: userID)
+            return await run(context: context, userID: userID) ? .backedUp : .signedInLocally
         }
     }
 
@@ -148,6 +165,17 @@ final class SyncCoordinator {
         for stone in (try? context.fetch(FetchDescriptor<TaskTombstone>())) ?? [] {
             context.delete(stone)      // don't echo pre-sign-in deletes at the account
         }
+        // PROFILES TOO. Leaving them behind meant "start fresh on this account"
+        // kept the previous account's family members — other people's names — and
+        // pushed them into the new account on the first sync. The owner profile is
+        // recreated by ProfileStore.ensureOwnerProfile, and the account's own
+        // profiles arrive in the pull below.
+        for profile in (try? context.fetch(FetchDescriptor<Profile>())) ?? [] {
+            context.delete(profile)
+        }
+        for stone in (try? context.fetch(FetchDescriptor<ProfileTombstone>())) ?? [] {
+            context.delete(stone)
+        }
         LocalDataOwner.claim(userID)
         SyncService.suppressPush(userID)
         SyncService.resetCursor(userID)
@@ -164,44 +192,67 @@ final class SyncCoordinator {
 
     // MARK: - internals
 
-    private func run(context: ModelContext, userID: String, account: AccountStore? = nil) async {
+    // Returns whether a full pass actually completed against the server, so
+    // sign-in can say "backed up" only when it truly is.
+    @discardableResult
+    private func run(context: ModelContext, userID: String, account: AccountStore? = nil) async -> Bool {
         // A sync is already in flight. Don't just drop this request — remember that
         // something changed and run once more when the current pass finishes.
         // Dropping it meant an edit made during a long sync sat unsynced until the
         // next launch or backgrounding.
-        guard !isSyncing else { needsAnotherPass = true; return }
+        guard !isSyncing else { needsAnotherPass = true; return false }
+        // Which account this whole loop belongs to. Signing out (or into another
+        // account) mid-flight must abandon it rather than apply one account's
+        // response to the other's store.
+        syncingUserID = userID
         isSyncing = true
-        defer { isSyncing = false }
+        defer { isSyncing = false; syncingUserID = nil }
 
+        var succeeded = false
         repeat {
             needsAnotherPass = false
             do {
                 let outcome = try await SyncService.sync(context: context, userID: userID)
                 lastError = nil
                 lastSyncedAt = .now
+                succeeded = true
                 // The server had more than one page — keep going rather than leave
                 // the device holding a partial view of the account.
                 if outcome.hasMore { needsAnotherPass = true }
+            } catch SyncService.SyncError.accountChanged {
+                // The user signed out or switched accounts while this was in the
+                // air. Nothing was applied; just stop. Not an error to show.
+                return false
             } catch SyncService.SyncError.unauthorized {
                 // Session revoked — this device was signed in elsewhere.
                 SessionStore.clear()
                 account?.signOut()
                 signedOutRemotely = true
-                return
+                return false
             } catch SyncService.SyncError.notConfigured, SyncService.SyncError.noSession {
                 // No backend configured / not signed in yet: stay local, stay quiet.
-                return
+                return false
             } catch {
                 lastError = error.localizedDescription
-                return          // don't spin on a failing server
+                return false    // don't spin on a failing server
             }
         } while needsAnotherPass
+        return succeeded
     }
 
     private func localTasks(in context: ModelContext) -> [ActionItem] {
         (try? context.fetch(FetchDescriptor<ActionItem>(predicate: #Predicate { !$0.isExample }))) ?? []
     }
-    private func localTaskCount(in context: ModelContext) -> Int {
-        (try? context.fetchCount(FetchDescriptor<ActionItem>(predicate: #Predicate { !$0.isExample }))) ?? 0
+    // Everything on this device that is personal and account-scoped: the user's
+    // to-dos AND the family profiles (other people's names). Reconciliation counts
+    // both, because either one crossing accounts is the same privacy failure.
+    private func localPersonalDataCount(in context: ModelContext) -> Int {
+        let tasks = (try? context.fetchCount(
+            FetchDescriptor<ActionItem>(predicate: #Predicate { !$0.isExample }))) ?? 0
+        // Only NON-owner profiles count: every account auto-creates its own owner,
+        // so an owner-only device has nothing of anyone else's on it.
+        let people = ((try? context.fetch(FetchDescriptor<Profile>())) ?? [])
+            .filter { !$0.isOwner }.count
+        return tasks + people
     }
 }
