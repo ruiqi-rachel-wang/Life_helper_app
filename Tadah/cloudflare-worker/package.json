@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "wrangler": "^4.119.0"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
   }
 }

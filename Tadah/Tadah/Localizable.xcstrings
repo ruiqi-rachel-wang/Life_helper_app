@@ -6576,18 +6576,19 @@
         }
       }
     },
-    "Give each person their own list, so a parent's letters don't mix with yours. Tap someone to see their to-dos.": {
+    "Give each person their own list, so a parent's letters don't mix with yours. Tap someone to switch to them — new to-dos are filed under whoever is selected.": {
+      "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "为每个人建立单独的清单，父母的信件就不会和你的混在一起。点按某人即可查看他们的待办事项。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dale a cada persona su propia lista, para que las cartas de un padre no se mezclen con las tuyas. Toca a alguien para ver sus tareas."
+            "value": "Dale a cada persona su propia lista, para que las cartas de un padre no se mezclen con las tuyas. Toca a alguien para cambiar a esa persona: las nuevas tareas se guardan bajo quien esté seleccionado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为每个人建立各自的清单，这样父母的信件就不会和你的混在一起。点按某人即可切换到他/她——新的待办事项会记在当前选中的人名下。"
           }
         }
       }

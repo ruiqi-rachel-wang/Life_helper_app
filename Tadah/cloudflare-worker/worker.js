@@ -1002,3 +1002,21 @@ function json(obj, status) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+// ── exported for tests ───────────────────────────────────────────────────────
+// The Workers runtime only ever uses the `export default` handler above; these
+// named exports exist so the pure logic (cursors, validation, request shaping)
+// can be unit-tested without a network or a D1 binding. See worker.test.js.
+export {
+  parseCursor,
+  formatCursor,
+  validID,
+  validStamp,
+  sanitizeMessages,
+  clamp,
+  pemToBytes,
+  MAX_MESSAGES,
+  MAX_MESSAGE_CHARS,
+  MAX_PROFILES,
+  FREE_PROFILES,
+};

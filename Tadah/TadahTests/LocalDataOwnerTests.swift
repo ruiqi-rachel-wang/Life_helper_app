@@ -54,13 +54,28 @@ struct LocalDataOwnerTests {
         #expect(LocalDataOwner.belongsToSomeoneElse(than: "userA", d))
     }
 
-    // After deleting an account the leftover items are nobody's, so the next
-    // person to sign in on this phone isn't asked to adopt a stranger's to-dos.
+    // Releasing is only for when the items are erased at the same time — it makes
+    // whatever is left look like guest data.
     @Test func releaseReturnsDataToUnclaimed() {
         let d = freshDefaults()
         LocalDataOwner.claim("userA", d)
-        LocalDataOwner.release(d)
+        LocalDataOwner.releaseAfterErasingItems(d)
         #expect(LocalDataOwner.current(d) == nil)
         #expect(!LocalDataOwner.belongsToSomeoneElse(than: "userB", d))
+    }
+
+    // DELETING AN ACCOUNT MUST NOT RELEASE THE CLAIM. Deletion deliberately leaves
+    // the to-dos on the phone, so releasing would mark real personal data as
+    // unclaimed guest data — and the next account to sign in would upload it
+    // automatically, which is the leak this whole file exists to prevent.
+    //
+    // Keeping the claim also gets the friendly case right: the SAME person signing
+    // back in (their Apple id is unchanged) is recognised and simply merges.
+    @Test func deletedAccountKeepsItsClaimSoLeftoverItemsCannotBeAdopted() {
+        let d = freshDefaults()
+        LocalDataOwner.claim("userA", d)
+        // …account deleted on the server; items stay on the device; no release call.
+        #expect(LocalDataOwner.belongsToSomeoneElse(than: "userB", d))
+        #expect(!LocalDataOwner.belongsToSomeoneElse(than: "userA", d))
     }
 }

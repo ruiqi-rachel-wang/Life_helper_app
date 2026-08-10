@@ -132,6 +132,63 @@ struct SyncServiceTests {
         #expect(try ctx.fetch(FetchDescriptor<ActionItem>()).count == 1)
     }
 
+    // Removing a family member on another device must not destroy a to-do of
+    // theirs that was edited MORE RECENTLY here. The cascade used to delete every
+    // child task unconditionally once the profile deletion won, so a newer edit
+    // was lost even though last-writer-wins should have saved it. Survivors become
+    // family to-dos (nil) rather than pointing at a profile that no longer exists.
+    @Test func profileDeletionSparesTasksEditedAfterIt() throws {
+        let ctx = try context()
+        let mom = Profile(name: "Mom", colorIndex: 1)
+        mom.updatedAt = Date(timeIntervalSince1970: 1000)
+        ctx.insert(mom)
+
+        let stale = item("old one of hers", updated: Date(timeIntervalSince1970: 1000))
+        stale.profileID = mom.id
+        let fresh = item("edited here just now", updated: Date(timeIntervalSince1970: 9000))
+        fresh.profileID = mom.id
+        ctx.insert(stale); ctx.insert(fresh)
+        try ctx.save()
+
+        let applied = SyncService.applyProfiles(
+            changes: [],
+            deletes: [SyncService.Removal(id: mom.id, deletedAt: Date(timeIntervalSince1970: 5000))],
+            in: ctx)
+        try ctx.save()
+
+        #expect(applied.deletes == 1)
+        #expect(try ctx.fetch(FetchDescriptor<Profile>()).isEmpty)
+        let survivors = try ctx.fetch(FetchDescriptor<ActionItem>())
+        #expect(survivors.count == 1)
+        #expect(survivors.first?.title == "edited here just now")
+        #expect(survivors.first?.profileID == nil)     // reassigned to the family
+    }
+
+    // The account always has exactly one owner. The server can't enforce that —
+    // profile payloads are opaque to it — so a tombstone naming the owner is
+    // corrupt or hostile and must be ignored, or the device is left with no owner
+    // and every task orphaned.
+    @Test func ownerProfileCannotBeDeletedByAServerTombstone() throws {
+        let ctx = try context()
+        let owner = Profile(name: "Jing", colorIndex: 0, isOwner: true)
+        owner.updatedAt = Date(timeIntervalSince1970: 1000)
+        ctx.insert(owner)
+        let mine = ActionItem(title: "my bill", category: .utility)
+        mine.profileID = owner.id
+        ctx.insert(mine)
+        try ctx.save()
+
+        let applied = SyncService.applyProfiles(
+            changes: [],
+            deletes: [SyncService.Removal(id: owner.id, deletedAt: Date(timeIntervalSince1970: 9000))],
+            in: ctx)
+        try ctx.save()
+
+        #expect(applied.deletes == 0)
+        #expect(try ctx.fetch(FetchDescriptor<Profile>()).count == 1)
+        #expect(try ctx.fetch(FetchDescriptor<ActionItem>()).count == 1)
+    }
+
     @Test func deleteForUnknownItemIsIgnored() throws {
         let ctx = try context()
         let applied = SyncService.apply(

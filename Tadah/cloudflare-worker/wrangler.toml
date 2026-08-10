@@ -1,6 +1,11 @@
 name = "cuevi-ai"
 main = "worker.js"
-compatibility_date = "2024-11-01"
+compatibility_date = "2026-08-01"
+
+# Request/error sampling in the Cloudflare dashboard. Without it, a failing
+# /sync or a spike in AI spend is invisible until a tester reports it.
+[observability]
+enabled = true
 
 # Secrets are NOT here — set each with `wrangler secret put <NAME>` (never in git):
 #   OPENAI_API_KEY     — the OpenAI key the AI proxy adds server-side.
@@ -14,6 +19,13 @@ compatibility_date = "2024-11-01"
 #                        check was optional a valid Sign-in-with-Apple token from
 #                        ANY app would have authenticated here.
 #                        wrangler secret put APPLE_AUDIENCE
+# Account DELETION additionally needs Apple token revocation (Apple TN3194) —
+# without all three, /account/delete returns 501 and the app tells the user to
+# contact support rather than pretending the account was deleted:
+#   APPLE_TEAM_ID      — 10-char Team ID from the Apple Developer portal.
+#   APPLE_KEY_ID       — Key ID of a "Sign in with Apple" key.
+#   APPLE_PRIVATE_KEY  — the .p8 file's CONTENTS (paste the whole thing, headers
+#                        included; literal \n sequences are handled).
 # After adding the sync tables run once:
 #   wrangler d1 execute cuevi-metrics --remote --file=schema.sql
 # (Re-run it after pulling the session/nonce changes: `sessions` gains

@@ -57,6 +57,39 @@ struct ProfileTests {
         #expect(all.count == 4)
     }
 
+    // THE BACKFILL MUST BE ONE-TIME. `profileID == nil` has two meanings that look
+    // identical in the data: "saved before profiles existed" (backfill it onto the
+    // owner) and "filed under Everyone" (a shared family errand — leave it alone).
+    // Only the order of events tells them apart, so the backfill runs once and then
+    // never again.
+    //
+    // When it ran on every launch, every Everyone task was silently reassigned to
+    // the owner, so choosing Everyone never survived a relaunch.
+    @Test func everyoneTasksSurviveRelaunchAfterTheBackfillHasRun() throws {
+        let ctx = try context()
+        let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
+
+        // First launch after upgrading: an old item gets adopted onto the owner.
+        ctx.insert(ActionItem(title: "from before profiles", category: .utility))
+        try ctx.save()
+        let owner = ProfileStore(defaults: defaults).ensureOwnerProfile(ctx, name: "Jing")
+        try ctx.save()
+
+        // Now the user files a NEW to-do under Everyone (profileID stays nil).
+        let shared = ActionItem(title: "family errand", category: .other)
+        ctx.insert(shared)
+        try ctx.save()
+
+        // Relaunch — same defaults, so the backfill flag persists.
+        ProfileStore(defaults: defaults).ensureOwnerProfile(ctx, name: "Jing")
+        try ctx.save()
+
+        #expect(shared.profileID == nil)          // still Everyone's
+        let old = try #require(try ctx.fetch(FetchDescriptor<ActionItem>())
+            .first { $0.title == "from before profiles" })
+        #expect(old.profileID == owner.id)        // the one-time adoption held
+    }
+
     // MARK: caps
 
     @Test func freeAccountCannotAddASecondProfile() throws {

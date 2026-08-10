@@ -75,7 +75,12 @@ struct FamilySharingView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Everyone on this account")
                 .font(.cardTitle).foregroundStyle(Color.ink)
-            Text("Give each person their own list, so a parent's letters don't mix with yours. Tap someone to see their to-dos.")
+            // Says what tapping ACTUALLY does. The old copy ("Tap someone to see
+            // their to-dos") described a filter, but tapping sets who is using the
+            // phone — which also becomes the default person new to-dos are filed
+            // under. Someone following that sentence would have quietly started
+            // saving their own mail under Mom.
+            Text("Give each person their own list, so a parent's letters don't mix with yours. Tap someone to switch to them — new to-dos are filed under whoever is selected.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
         }
         .padding(.horizontal, 6)
