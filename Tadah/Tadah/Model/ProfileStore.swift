@@ -32,6 +32,10 @@ final class ProfileStore {
 
     private static let activeKey = "tadah.activeProfileID"
     private static let scopeKey = "tadah.inboxScope"
+    // Marks that the one-time "items from before profiles existed become the
+    // owner's" backfill has run. See adoptPreProfileItemsOnce — after this, a nil
+    // profileID means "Everyone", not "not yet migrated".
+    static let didBackfillKey = "tadah.didBackfillPreProfileItems"
     private let defaults: UserDefaults
 
     // Cached list: owner first, then by creation order — the order the avatar
@@ -89,30 +93,41 @@ final class ProfileStore {
     }
 
     // Every account has exactly one owner profile. Creates it on first run (and for
-    // testers upgrading from a build without profiles) and adopts any pre-profile
-    // items. Idempotent — safe on every launch.
+    // testers upgrading from a build without profiles). Idempotent — safe on every
+    // launch.
     @discardableResult
     func ensureOwnerProfile(_ context: ModelContext, name: String) -> Profile {
         reload(context)
         if let existing = owner {
             if existing.name.isEmpty, !name.isEmpty { existing.name = name }
-            adoptOrphanItems(context, into: existing)
+            adoptPreProfileItemsOnce(context, into: existing)
             return existing
         }
         let created = Profile(name: name, colorIndex: 0, isOwner: true)
         context.insert(created)
-        adoptOrphanItems(context, into: created)
+        adoptPreProfileItemsOnce(context, into: created)
         reload(context)
         return created
     }
 
-    // Items saved before profiles existed have profileID == nil. Stamp them onto
-    // the owner so nothing becomes invisible after the upgrade. Examples included —
-    // the tutorial items should show up on the owner's list like they always did.
-    private func adoptOrphanItems(_ context: ModelContext, into profile: Profile) {
+    // ONE-TIME upgrade step, and it must stay one-time.
+    //
+    // Items saved before profiles existed have profileID == nil, and on the upgrade
+    // they should become the owner's so nothing disappears. But `nil` has since
+    // taken on a SECOND meaning: a to-do filed under "Everyone" — a shared family
+    // errand. Re-running this on every launch therefore quietly reassigned every
+    // family to-do to the owner, so "Everyone" never survived a relaunch.
+    //
+    // The flag is what separates the two meanings: before it is set, nil means
+    // "predates profiles"; after, nil means "Everyone". Keyed in UserDefaults
+    // rather than inferred, because once the backfill has run the two cases are
+    // indistinguishable by looking at the data.
+    private func adoptPreProfileItemsOnce(_ context: ModelContext, into profile: Profile) {
+        guard !defaults.bool(forKey: Self.didBackfillKey) else { return }
         let orphans = (try? context.fetch(FetchDescriptor<ActionItem>(
             predicate: #Predicate { $0.profileID == nil }))) ?? []
         for item in orphans { item.profileID = profile.id }
+        defaults.set(true, forKey: Self.didBackfillKey)
     }
 
     // MARK: - switching

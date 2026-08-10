@@ -128,6 +128,9 @@ struct SignInView: View {
                 }
                 Text("We couldn't reach Tadah to set up your backup, so your to-dos are saved on this phone but not to your account yet. \(reason)")
                     .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                // "Try again" clears the state and puts the Apple button back —
+                // retrying means authorizing again, because the server consumes
+                // each sign-in nonce and a replay can never succeed.
                 HStack(spacing: 10) {
                     Button("Try again") { retryBackup() }
                         .font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
@@ -200,14 +203,23 @@ struct SignInView: View {
 
         do {
             let session = try await AuthService.authenticate(
-                identityToken: identityToken, deviceID: Install.id, nonce: nonce)
-            phase = .backedUp
+                identityToken: identityToken, deviceID: Device.id, nonce: nonce)
             // Reconciliation decides what happens to the to-dos already on THIS
             // device (seed a new account, or back up + ask before touching them).
-            await sync.afterSignIn(session: session, context: context)
-            // Only auto-dismiss once there's something to dismiss ABOUT. If
-            // reconciliation needs an answer, RootTabView's alert takes over.
-            dismiss()
+            // Its RESULT decides what we claim: a session alone is not a backup, so
+            // "your to-dos are backed up" waits for a completed sync round trip.
+            switch await sync.afterSignIn(session: session, context: context) {
+            case .backedUp:
+                phase = .backedUp
+                dismiss()
+            case .awaitingReconciliation:
+                // RootTabView's alert takes over; get out of its way.
+                dismiss()
+            case .signedInLocally:
+                // Signed in, but the first sync didn't complete — say exactly that
+                // rather than promising a backup that hasn't happened.
+                phase = .localOnly(String(localized: "You're signed in, but we couldn't finish backing up yet. It will retry on its own."))
+            }
         } catch AuthService.AuthError.notConfigured {
             // No Worker set (simulator dev). Local sign-in is the whole feature
             // there, so this isn't a failure worth alarming anyone about.
@@ -218,11 +230,16 @@ struct SignInView: View {
         }
     }
 
+    // Retry re-runs the WHOLE Apple authorization rather than replaying the stored
+    // token. The server burns each nonce on use, so a replay is guaranteed to fail
+    // with "nonce already used" — and if the original request did land, replaying
+    // it would be trying to mint a second session anyway. `pendingToken` is kept
+    // only so the sheet can tell a completed authorization from a fresh one.
     private func retryBackup() {
-        guard let token = pendingToken, let nonce = pendingNonce,
-              let userID = account.account?.userID else { return }
-        phase = .authorizing
-        Task { await authenticateBackup(token, nonce: nonce, appleUserID: userID) }
+        phase = .idle
+        errorMessage = nil
+        pendingToken = nil
+        pendingNonce = nil
     }
 
     private func reason(for error: Error) -> String {

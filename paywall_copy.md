@@ -21,7 +21,12 @@
 | 更多扫描次数 / More scans | ✅ fine as written |
 | 家庭成员空间 / Spaces for family | ✅ **now true** — reworded so it also sells the shared list |
 | 共享任务与提醒 / Shared tasks **and alerts** | ❌ "有人新增…你都能及时收到提醒" is **not built**. There is no push notification. Replaced with the multi-device benefit, which is real. |
-| 不限量记录 / **Unlimited** tracking | ❌ "不再受数量限制" is false — Plus is capped. Reworded to "much more room", no number. |
+| 不限量记录 / **Unlimited** tracking | ❌ "不再受数量限制" is false — Plus is capped. The higher to-do limit folded into bullet 1 (it was the same "you get more" idea as scans, said twice), freeing bullet 4 for something distinct. |
+
+**Bullet 4 is now "one subscription for everyone"** — true (one Plus subscription
+covers every profile on the account, no per-seat charge), and it answers the
+question a family actually asks: "do I have to pay again for Mom?" It also matches
+the line already on the Family screen.
 
 ---
 
@@ -33,8 +38,8 @@
 **副标题**
 免费版支持 1 台设备，并提供有限的扫描次数。升级 Tadah Plus 后，可获得更多扫描额度，还能为家人创建独立空间，把全家要办的事放在一个清单里。
 
-**1 · 更多扫描次数**
-大幅提高扫描和指南的使用额度，不必担心很快达到免费版上限。
+**1 · 更多扫描与记录空间**
+扫描、指南和待办事项的额度都大幅提高，不必担心很快达到免费版上限。
 
 **2 · 家庭成员空间**
 为每位家人创建独立空间。一个页面就能看到全家要办的事，每条都标明是谁的，也可以只看自己的。
@@ -42,8 +47,8 @@
 **3 · 多台设备同步**
 在你的多台设备上使用，全家的更新随时保持一致。免费账户一次只能在一台设备上使用。
 
-**4 · 更多记录空间**
-每位家人都能保存远多于免费版的账单、任务和截止日期。
+**4 · 一份订阅，全家可用**
+添加的每位家人都已包含在内，无需为每人额外付费。
 
 ---
 
@@ -57,8 +62,8 @@ The free plan covers one device and a limited number of scans. Tadah Plus raises
 the limits, gives each family member their own space, and puts everything the
 family has to do in one list.
 
-**1 · More scans**
-A much higher limit for scans and guides, so you stop bumping into the free
+**1 · More scans, and more room**
+Higher limits for scans, guides and to-dos, so you stop bumping into the free
 plan's ceiling.
 
 **2 · A space for each family member**
@@ -69,9 +74,8 @@ one list, each to-do marked whose it is — or switch to just yours.
 Use Tadah on your other devices and everyone stays up to date. A free account
 works on one device at a time.
 
-**4 · More room for each person**
-Every family member gets far more bills, tasks and due dates than the free plan
-allows.
+**4 · One subscription for everyone**
+Everyone you add is covered — no extra charge per person.
 
 ---
 
@@ -85,8 +89,8 @@ El plan gratuito cubre un dispositivo y un número limitado de escaneos. Tadah P
 amplía los límites, da su propio espacio a cada familiar y reúne en una sola lista
 todo lo que la familia tiene que hacer.
 
-**1 · Más escaneos**
-Un límite mucho más alto para escaneos y guías, para que no choques con el tope
+**1 · Más escaneos y más espacio**
+Límites más altos para escaneos, guías y tareas, para que no choques con el tope
 del plan gratuito.
 
 **2 · Un espacio para cada familiar**
@@ -98,9 +102,8 @@ solo las tuyas.
 Usa Tadah en tus otros dispositivos y todos se mantienen al día. Una cuenta
 gratuita se usa en un dispositivo a la vez.
 
-**4 · Más espacio para cada persona**
-Cada familiar guarda muchas más facturas, tareas y fechas límite que en el plan
-gratuito.
+**4 · Una suscripción para toda la familia**
+Cada persona que añades está incluida, sin cargo adicional por persona.
 
 ---
 

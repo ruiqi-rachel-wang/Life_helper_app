@@ -37,9 +37,13 @@ enum LocalDataOwner {
         d.set(userID, forKey: key)
     }
 
-    // Back to unclaimed. Used when the local items are erased along with the
-    // account, so the next person starts genuinely fresh.
-    static func release(_ d: UserDefaults = .standard) {
+    // Back to unclaimed — ONLY safe when the local items are erased at the same
+    // time. Releasing while items remain on the device makes them look like guest
+    // data, and the next account to sign in uploads them automatically. That is
+    // exactly the leak this file exists to prevent, so deleting an account does
+    // NOT call this: the claim stays put, and a different account signing in later
+    // still gets the "these belong to another account" question.
+    static func releaseAfterErasingItems(_ d: UserDefaults = .standard) {
         d.removeObject(forKey: key)
     }
 

@@ -35,6 +35,14 @@ const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
 // before writing any JSON — too low a ceiling truncates the answer.
 const MAX_TOKENS = 4000;
 
+// INPUT bounds for the AI proxy. MAX_TOKENS only ever capped the response; the
+// prompt side was unbounded, and prompt tokens are most of the bill on a document
+// scan. A full page of OCR is a few KB, so 128 KB is generous for honest use.
+const MAX_CHAT_BYTES = 128 * 1024;
+const MAX_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 40_000;      // per message
+const ALLOWED_ROLES = new Set(["system", "user", "assistant"]);
+
 // Per-install AI-call caps — a COST backstop, not entitlement enforcement.
 // Entitlement is the app's job (ScanQuota.swift + PlusStore); this only bounds a
 // device that bypasses it (ScanQuota lives in UserDefaults, so a reinstall resets
@@ -84,6 +92,8 @@ const USAGE_TTL_DAYS = 60;
 // can't exceed 8 of either. Free is 1 profile / 1 device (see handleAppleAuth).
 const MAX_PROFILES = 8;
 const MAX_DEVICES = 8;
+// Free tier: one profile (you), one device. Must match ProfileStore.freeMax.
+const FREE_PROFILES = 1;
 const APPLE_ISS = "https://appleid.apple.com";
 // MUST match PlusStore.entitlementID in the app AND the Entitlement identifier in
 // the RevenueCat dashboard. If these drift, checkPlus() sees every user as free
@@ -138,10 +148,38 @@ export default {
 
 // ── AI proxy ────────────────────────────────────────────────────────────────
 async function handleChat(request, env) {
+  // Bound the REQUEST before reading it. The token cap only limited what OpenAI
+  // writes back; the input side was unbounded, so a caller could push megabytes of
+  // prompt (which is what actually costs money) through a single allowed call.
+  const declared = Number(request.headers.get("Content-Length") || 0);
+  if (Number.isFinite(declared) && declared > MAX_CHAT_BYTES) {
+    return json({ error: "Request too large" }, 413);
+  }
+  const raw = await request.text();
+  if (raw.length > MAX_CHAT_BYTES) return json({ error: "Request too large" }, 413);
+
   let body;
-  try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+  try { body = JSON.parse(raw); } catch { return json({ error: "Invalid JSON" }, 400); }
+  if (!body || typeof body !== "object") return json({ error: "Invalid JSON" }, 400);
 
   if (!ALLOWED_MODELS.has(body.model)) return json({ error: "Model not allowed" }, 400);
+
+  // Rebuild the request from a strict allow-list instead of forwarding whatever
+  // arrived. Passing the caller's object through meant any OpenAI parameter was
+  // reachable — `n: 50` (fifty completions), `stream`, tool definitions, an
+  // arbitrary `model` field on a nested object, future billable features — none of
+  // which the app ever sends. Only what Tadah actually uses gets through.
+  const messages = sanitizeMessages(body.messages);
+  if (!messages) return json({ error: "Invalid messages" }, 400);
+
+  const safeBody = { model: body.model, messages };
+  // The app relies on JSON mode for extraction; allow only that exact shape.
+  if (body.response_format && body.response_format.type === "json_object") {
+    safeBody.response_format = { type: "json_object" };
+  }
+  if (Number.isFinite(Number(body.temperature))) {
+    safeBody.temperature = Math.min(Math.max(Number(body.temperature), 0), 2);
+  }
 
   // Per-install quota (see header note at the top).
   //
@@ -157,19 +195,20 @@ async function handleChat(request, env) {
   const quotaKey = installID.length >= 8
     ? installID
     : `ip:${clamp(request.headers.get("CF-Connecting-IP") || "unknown")}`;
-  if (env.DB) {
-    // Fail CLOSED: a caller that can't be metered can't be allowed to spend. The
-    // earlier fail-open kept scans working through a D1 hiccup, but it also gave
-    // an attacker a trivial way to disable the cap by making the write fail.
-    let usage;
-    try {
-      usage = await bumpUsage(env.DB, quotaKey);
-    } catch {
-      return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
-    }
-    if (usage.day > AI_DAY_LIMIT || usage.month > AI_MONTH_LIMIT) {
-      return json({ error: "quota", message: "AI limit reached for this device" }, 429);
-    }
+  // Fail CLOSED, including when D1 isn't bound at all. Skipping the quota because
+  // storage is missing means a misconfigured deploy silently has NO spend cap —
+  // the one situation where you most want one.
+  if (!env.DB) {
+    return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
+  }
+  let usage;
+  try {
+    usage = await bumpUsage(env.DB, quotaKey);
+  } catch {
+    return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
+  }
+  if (usage.day > AI_DAY_LIMIT || usage.month > AI_MONTH_LIMIT) {
+    return json({ error: "quota", message: "AI limit reached for this device" }, 429);
   }
 
   // Cap tokens even if the client omitted the field (the previously-broken cap).
@@ -179,7 +218,7 @@ async function handleChat(request, env) {
   // rejects max_tokens on a reasoning model.
   const field = body.max_completion_tokens !== undefined ? "max_completion_tokens" : "max_tokens";
   const requested = Number(body[field]);
-  body[field] = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
+  safeBody[field] = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
 
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -187,13 +226,35 @@ async function handleChat(request, env) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${env.OPENAI_API_KEY}`,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(safeBody),   // the allow-listed copy, never the caller's object
   });
 
   return new Response(upstream.body, {
     status: upstream.status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+// Validate the chat messages, returning a clean copy or null if unusable.
+//
+// TEXT ONLY, on purpose. Tadah does OCR on the device and sends the recognized
+// text — it has never sent an image to the model. Accepting the multimodal array
+// form (`content: [{type:"image_url", …}]`) would open a far more expensive class
+// of request on an endpoint whose token is effectively public, so a non-string
+// content is rejected rather than passed along.
+function sanitizeMessages(messages) {
+  if (!Array.isArray(messages) || messages.length === 0) return null;
+  if (messages.length > MAX_MESSAGES) return null;
+
+  const out = [];
+  for (const m of messages) {
+    if (!m || typeof m !== "object") return null;
+    if (!ALLOWED_ROLES.has(m.role)) return null;
+    if (typeof m.content !== "string") return null;      // no images, no tool parts
+    if (m.content.length > MAX_MESSAGE_CHARS) return null;
+    out.push({ role: m.role, content: m.content });
+  }
+  return out;
 }
 
 // Count this call against the install's day + month windows and return the new
@@ -565,7 +626,13 @@ async function handleSync(request, env) {
   const since = clamp(body.since, 256) || "";
   const changes = Array.isArray(body.changes) ? body.changes : [];
   const deletes = Array.isArray(body.deletes) ? body.deletes : [];
-  if (changes.length + deletes.length > MAX_SYNC_BATCH) return json({ error: "Batch too large" }, 413);
+  // Count PROFILES in the batch limit too. They used to be parsed further down,
+  // after this check, so a request could carry any number of profile records and
+  // bypass the cap entirely — the limit only bounded half the payload.
+  const profiles = Array.isArray(body.profiles) ? body.profiles : [];
+  const profileDeletes = Array.isArray(body.profileDeletes) ? body.profileDeletes : [];
+  const batchSize = changes.length + deletes.length + profiles.length + profileDeletes.length;
+  if (batchSize > MAX_SYNC_BATCH) return json({ error: "Batch too large" }, 413);
 
   const now = new Date().toISOString();
   const stmts = [];
@@ -604,10 +671,10 @@ async function handleSync(request, env) {
   }
 
   // ── family profiles, same LWW contract as tasks ──────────────────────────
-  const profiles = Array.isArray(body.profiles) ? body.profiles : [];
-  const profileDeletes = Array.isArray(body.profileDeletes) ? body.profileDeletes : [];
+  // (`profiles` / `profileDeletes` were read above, so they count toward the
+  // batch limit.)
 
-  // Server-side cap: a client can lie, and profiles are what Plus is sold on.
+  // Server-side cap: a client can lie, and profiles are what Plus is SOLD on.
   // Only counts NEW ids — edits to existing profiles are always allowed through,
   // so hitting the cap can never freeze someone out of renaming what they have.
   if (profiles.length) {
@@ -621,8 +688,23 @@ async function handleSync(request, env) {
     const incomingNew = profiles
       .map((p) => validID(p && p.id))
       .filter((id) => id && !known.has(id));
-    if (known.size + new Set(incomingNew).size > MAX_PROFILES) {
-      return json({ error: "profile_limit", message: `An account can have at most ${MAX_PROFILES} profiles.` }, 409);
+    const total = known.size + new Set(incomingNew).size;
+
+    // The cap is PER TIER. Every authenticated account could previously create 8
+    // profiles regardless of subscription, so the paid feature wasn't actually
+    // gated anywhere the client couldn't bypass. The tier is re-read here rather
+    // than trusted from the session, and an UNKNOWN tier (RevenueCat unreachable)
+    // gets the Plus cap — never block a possible subscriber over an outage.
+    const { known: tierKnown, plus } = await checkPlus(userID, env);
+    const cap = (tierKnown && !plus) ? FREE_PROFILES : MAX_PROFILES;
+    if (total > cap) {
+      return json({
+        error: "profile_limit",
+        limit: cap,
+        message: cap === FREE_PROFILES
+          ? "Tadah Plus is needed to add family members."
+          : `An account can have at most ${MAX_PROFILES} profiles.`,
+      }, 409);
     }
   }
 
@@ -884,6 +966,28 @@ function b64urlToBytes(s) {
   return bytes;
 }
 function b64urlToString(s) { return new TextDecoder().decode(b64urlToBytes(s)); }
+
+// bytes/string → base64url (for MINTING the Apple client-secret JWT).
+function b64urlFromBytes(bytes) {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function b64url(str) { return b64urlFromBytes(new TextEncoder().encode(str)); }
+
+// "-----BEGIN PRIVATE KEY----- …" → the DER bytes WebCrypto wants. Tolerates the
+// literal "\n" sequences you get when a .p8 is pasted into `wrangler secret put`.
+function pemToBytes(pem) {
+  const body = String(pem)
+    .replace(/\\n/g, "\n")
+    .replace(/-----BEGIN [^-]+-----/, "")
+    .replace(/-----END [^-]+-----/, "")
+    .replace(/\s+/g, "");
+  const bin = atob(body);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
 
 function onTimeToInt(v) { return v === true ? 1 : v === false ? 0 : null; }
 

@@ -215,17 +215,27 @@ nonisolated enum Metrics {
     }
 }
 
-// Anonymous identity for the upload envelope. NO PII: the install id is a random
-// UUID minted once and kept in UserDefaults — it labels a device *install*, never
-// a person, and only Rachel-via-tester can ever map one back to someone.
+// Anonymous identity for the metrics upload envelope. NO PII: a random UUID
+// minted once and kept in UserDefaults — it labels a device *install*, never a
+// person.
+//
+// ⚠️ THIS MUST STAY SEPARATE FROM `Device.id`. It used to be the same value: the
+// analytics envelope sent it as `installID` while sign-in sent the identical
+// string as `deviceId`, which the Worker stores in `sessions` next to the Apple
+// user id. Anyone with both tables could join them and attach every "anonymous"
+// event to a named account — so the data was not anonymous, and the privacy
+// policy and manifest saying "not linked" were wrong. Two independent random ids
+// are what make that claim true, so never collapse these back into one.
 nonisolated enum Install {
     static let idKey = "tadah.metrics.installID"
 
-    static var id: String {
+    static var id: String { Self.stableID(forKey: idKey) }
+
+    fileprivate static func stableID(forKey key: String) -> String {
         let d = UserDefaults.standard
-        if let existing = d.string(forKey: idKey) { return existing }
+        if let existing = d.string(forKey: key) { return existing }
         let fresh = UUID().uuidString
-        d.set(fresh, forKey: idKey)
+        d.set(fresh, forKey: key)
         return fresh
     }
 
@@ -236,4 +246,15 @@ nonisolated enum Install {
         let b = info?["CFBundleVersion"] as? String ?? "?"
         return "\(v) (\(b))"
     }
+}
+
+// The id that identifies this DEVICE to the account backend: it goes in the
+// session row next to the Apple user id, and it's what the free "one device at a
+// time" rule counts. Deliberately a DIFFERENT random value from `Install.id` —
+// see the note there. This one is account-linked by design; the analytics one
+// must never be.
+nonisolated enum Device {
+    static let idKey = "tadah.account.deviceID"
+
+    static var id: String { Install.stableID(forKey: idKey) }
 }

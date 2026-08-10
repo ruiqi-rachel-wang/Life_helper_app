@@ -106,15 +106,20 @@ final class AccountStore {
         _ = try? await Purchases.shared.logOut()
     }
 
-    // Delete the whole account: server data first (tasks, profiles, sessions), then
-    // the local identity. Throws when the server couldn't be reached, so the caller
-    // can say "we couldn't delete your account" instead of falsely confirming it —
-    // the old version only ever cleared this device and reported success.
+    // Delete the whole account. `authorizationCode` is a FRESH Sign-in-with-Apple
+    // code (see AppleReauthorization): the backend exchanges it to revoke the Apple
+    // grant, deletes the RevenueCat subscriber, then deletes our rows.
+    //
+    // Throws when any of that fails, so the caller can say "we couldn't delete your
+    // account" instead of falsely confirming it. The local identity is cleared only
+    // AFTER the server confirms — clearing first would leave someone believing
+    // their data was gone while the backend still held all of it.
     //
     // Local items are NOT deleted here; the confirmation copy says so, and the
-    // caller offers erasing them as a separate explicit choice.
-    func deleteAccountEverywhere() async throws {
-        try await AuthService.deleteAccount()
+    // ownership claim deliberately stays (see LocalDataOwner) so a different
+    // account signing in later can't silently adopt them.
+    func deleteAccountEverywhere(authorizationCode: String) async throws {
+        try await AuthService.deleteAccount(authorizationCode: authorizationCode)
         account = nil
         SessionStore.clear()
         save()

@@ -57,7 +57,7 @@ struct AccountDetailsView: View {
             Button("Delete account", role: .destructive) { delete() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently deletes your account and everything backed up to it — on every device. Your saved items stay on this phone. This can't be undone.")
+            Text("This permanently deletes your account, everything backed up to it on every device, and disconnects your Apple ID from Tadah. You'll be asked to confirm with Apple. Your saved items stay on this phone. This can't be undone.")
         }
         // Never dismiss on failure: saying nothing here is how someone walks away
         // believing their data is gone when the server still has it.
@@ -66,7 +66,7 @@ struct AccountDetailsView: View {
                                     set: { if !$0 { deleteError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Your account was not deleted. Please check your connection and try again. If it keeps failing, contact support and we'll delete it for you.")
+            Text(deleteError ?? "")
         }
     }
 
@@ -75,21 +75,47 @@ struct AccountDetailsView: View {
         Task {
             defer { isDeleting = false }
             do {
-                try await account.deleteAccountEverywhere()
-                // The device's own to-dos stay, but they're no longer any account's
-                // — so the next person to sign in here isn't asked to adopt them.
-                LocalDataOwner.release()
+                // Re-authorize with Apple FIRST. Deleting the account has to revoke
+                // the Apple grant too, and that needs a fresh authorization code —
+                // the one from the original sign-in is single-use and long expired.
+                // It also makes the user confirm with Face ID before something
+                // irreversible.
+                let code = try await AppleReauthorization().authorizationCode()
+                try await account.deleteAccountEverywhere(authorizationCode: code)
+                // NOTE: LocalDataOwner is deliberately NOT released. The to-dos left
+                // on this phone still belong to the account that made them; marking
+                // them unclaimed would let the next account to sign in upload them
+                // automatically, which is the exact leak LocalDataOwner prevents.
                 dismiss()
+            } catch AppleReauthorization.ReauthError.cancelled {
+                // Backed out at the Apple sheet — not an error, just don't delete.
             } catch AuthService.AuthError.notConfigured {
                 // No Worker configured (simulator dev): there is genuinely no
                 // server record, so forgetting the local identity IS the deletion.
                 account.forgetLocally()
-                LocalDataOwner.release()
                 dismiss()
             } catch {
-                deleteError = error.localizedDescription
+                deleteError = message(for: error)
             }
         }
+    }
+
+    // Say which thing failed. "Couldn't delete" with no cause leaves someone unsure
+    // whether their data is gone, which is the worst possible state to leave them in.
+    private func message(for error: Error) -> String {
+        if case AuthService.AuthError.server(let code) = error {
+            switch code {
+            case 401:
+                return String(localized: "Your session has expired. Please sign out, sign in again, and retry.")
+            case 501:
+                return String(localized: "Account deletion isn't available right now. Please contact support and we'll delete it for you.")
+            case 502:
+                return String(localized: "We couldn't fully disconnect your Apple ID, so nothing was deleted. Please try again.")
+            default:
+                return String(localized: "Your account was not deleted. Please check your connection and try again.")
+            }
+        }
+        return String(localized: "Your account was not deleted. Please check your connection and try again.")
     }
 
     private var avatarHeader: some View {
