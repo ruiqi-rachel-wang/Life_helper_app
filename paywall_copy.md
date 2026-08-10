@@ -39,75 +39,66 @@ features coming" — that reads as a roadmap commitment, the same shape as the
 更多空间管理资料，自己用或和家人一起用
 
 **副标题**
-免费版支持 1 台设备，并提供有限的扫描次数。升级 Tadah Plus 后，可获得更多扫描额度，还能为家人创建独立空间，把全家要办的事放在一个清单里。
+免费版仅限 1 台设备、扫描次数有限。Tadah Plus 提高额度，为每位家人建立独立空间，全家的事集中在一个清单里。
 
 **1 · 家庭成员空间**
-为每位家人创建独立空间，全家共用一份订阅，无需为每人额外付费。一个页面就能看到全家要办的事，每条都标明是谁的。
+一份订阅覆盖全家，无需按人付费。全家的事在一个清单里，标明是谁的。
 
-**2 · 更多扫描与记录空间**
-扫描、指南和待办事项的额度都大幅提高，不必担心很快达到免费版上限。
+**2 · 更多扫描与空间**
+扫描、指南和待办事项的额度都大幅提高。
 
 **3 · 多台设备同步**
-在你的多台设备上使用，全家的更新随时保持一致。免费账户一次只能在一台设备上使用。
+各台设备随时保持一致。免费版一次仅限一台。
 
 **4 · 更多功能陆续加入**
-Tadah 仍在持续开发，后续新增的 Plus 功能都会包含在你的订阅中。
+后续新增的 Plus 功能都包含在订阅中。
 
 ---
 
 ## English
 
 **Title**
-More room for your paperwork — on your own, or with family
+More room for your paperwork, solo or with family
 
 **Subtitle**
-The free plan covers one device and a limited number of scans. Tadah Plus raises
-the limits, gives each family member their own space, and puts everything the
-family has to do in one list.
+Free covers one device and limited scans. Plus raises the limits, gives each
+person their own space, and keeps family tasks in one list.
 
-**1 · A space for each family member**
-Give a parent or partner their own space — one subscription covers everyone, with
-no extra charge per person. See everything the family has to do in one list,
-marked by person.
+**1 · A space for each person**
+One subscription covers everyone. Family tasks in one list, marked by person.
 
-**2 · More scans, and more room**
-Higher limits for scans, guides and to-dos, so you stop bumping into the free
-plan's ceiling.
+**2 · More scans and room**
+Higher limits for scans, guides and to-dos.
 
-**3 · All your devices, in step**
-Use Tadah on your other devices and stay up to date. A free account works on one
-device at a time.
+**3 · All your devices**
+Stay in step everywhere. Free is one device at a time.
 
-**4 · More to come, included**
-Tadah is still being built. New Plus features arrive as part of your subscription.
+**4 · More to come**
+New Plus features are included as they arrive.
 
 ---
 
 ## Español
 
 **Título**
-Más espacio para tus papeles — para ti, o para toda la familia
+Más espacio para tus papeles, solo o en familia
 
 **Subtítulo**
-El plan gratuito cubre un dispositivo y un número limitado de escaneos. Tadah Plus
-amplía los límites, da su propio espacio a cada familiar y reúne en una sola lista
-todo lo que la familia tiene que hacer.
+Gratis cubre un dispositivo y escaneos limitados. Plus amplía los límites, da su
+propio espacio a cada persona y reúne las tareas de la familia en una lista.
 
-**1 · Un espacio para cada familiar**
-Dale su propio espacio a un padre o a tu pareja: una suscripción cubre a todos, sin
-cargo adicional por persona. Ve en una sola lista todo lo que la familia tiene que
-hacer, marcado por persona.
+**1 · Un espacio para cada persona**
+Una suscripción cubre a todos. Las tareas de la familia en una lista, marcadas por
+persona.
 
-**2 · Más escaneos y más espacio**
-Límites más altos para escaneos, guías y tareas, para que no choques con el tope
-del plan gratuito.
+**2 · Más escaneos y espacio**
+Límites más altos para escaneos, guías y tareas.
 
-**3 · Todos tus dispositivos, al día**
-Usa Tadah en tus otros dispositivos y mantente al día. Una cuenta gratuita se usa
-en un dispositivo a la vez.
+**3 · Todos tus dispositivos**
+Todo al día en cada uno. Gratis: un dispositivo a la vez.
 
-**4 · Más por venir, incluido**
-Tadah sigue creciendo. Las nuevas funciones Plus llegan incluidas en tu suscripción.
+**4 · Más por venir**
+Las nuevas funciones Plus se incluyen según llegan.
 
 ---
 
@@ -129,3 +120,5 @@ schedules its own — which is covered by the "devices in step" bullet.
 - Do all three languages — `PaywallView` passes the user's chosen language, and a
   missing one silently falls back to English, for exactly the audience this is for.
 - Lead with the family bullet. It's the hook; "more room" is the weakest opener.
+- Kept short on purpose (2026-08-09): one short sentence per bullet, so all four
+  fit without scrolling. Longer copy pushed bullet 4 off-screen entirely.

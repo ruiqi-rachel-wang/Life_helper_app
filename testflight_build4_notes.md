@@ -35,6 +35,70 @@ or ship as-is and say so plainly in the notes (the draft below does).
 
 ---
 
+## Second review pass (2026-08-09)
+
+The first pass fixed the account/sync blockers; a follow-up review found more.
+Fixed here:
+
+- **Account deletion no longer lies.** A 401 was being treated as success, so an
+  expired session reported "deleted" while the server still held everything.
+  Deletion now also **revokes the Sign-in-with-Apple grant** (Apple TN3194 — new
+  `/auth/revoke` exchange in the Worker, needs the Apple key secrets below) and
+  **deletes the RevenueCat subscriber**. It asks the user to re-authorize with
+  Apple first, which supplies the authorization code and doubles as confirmation.
+  If any step fails, nothing is deleted and the app says which step failed.
+- **Deleting an account no longer arms the next leak.** It used to release the
+  local-data ownership claim while leaving the to-dos on the phone, so the next
+  account to sign in saw them as unclaimed guest data and uploaded them. The
+  claim now stays.
+- **Reconciliation covers family profiles.** It counted only tasks, and "use the
+  account's tasks" left profiles and profile tombstones behind — so one account's
+  family members could reach another account.
+- **A sync in flight can't mix accounts.** Passes are bound to a userID and
+  re-check the session identity before touching the store.
+- **Outbound encode failures abort the pass** instead of dropping the record while
+  the watermark advanced past it (silent loss of a user's edit).
+- **Inbound is now genuinely all-or-nothing** — everything is decoded before
+  anything is applied. Previously a malformed *profile* left task mutations
+  already written with the cursor unmoved.
+- **Profile deletion respects per-task timestamps** and can never delete the owner
+  profile. A removal used to cascade over every child task unconditionally.
+- **"Everyone" to-dos survive relaunch.** `profileID == nil` now means "for the
+  family", but the pre-profiles backfill still ran on *every* launch and
+  reassigned them all to the owner. It is now a one-time migration.
+- **Sign-in says "backed up" only after a sync round trip actually completes**, and
+  "Try again" re-runs the Apple authorization — replaying the stored token could
+  never work, since the server burns each nonce.
+- **Analytics are genuinely unlinked.** `Install.id` was sent both as the metrics
+  `installID` and as the auth `deviceId`, which the Worker stores beside the Apple
+  user id — so the two tables could be joined and every "anonymous" event tied to
+  a named account. There are now two independent random ids (`Install.id` for
+  metrics, `Device.id` for sessions).
+- **AI proxy input is bounded.** 128 KB request cap, max 12 messages, 40 K chars
+  each, text-only (no image/multimodal content), and the upstream body is rebuilt
+  from an allow-list instead of forwarding the caller's object — `n`, `stream`,
+  tools and any future billable parameter are no longer reachable. The quota also
+  fails closed when D1 is unbound.
+- **Profile cap is per tier** (free = 1) and enforced server-side; the sync batch
+  limit now counts profile records too.
+- **Worker tests exist** — `cd Tadah/cloudflare-worker && npm test` (15 tests,
+  Node's built-in runner, no new dependencies). Config: compatibility date
+  refreshed and observability enabled.
+
+**Verification:** clean **Release** build, no warnings in app code;
+**223/223** unit tests pass; **15/15** Worker tests pass; `wrangler deploy
+--dry-run` succeeds; `npm audit --omit=dev` reports 0 vulnerabilities.
+
+> The reviewed snapshot failed to compile because `AssigneeRow.swift` was
+> untracked — it was committed in `33f3917` and the Release build passes.
+> The four family strings reported missing (`Everyone`, `Just mine`, `For`,
+> `Who is this for?`) are present with es/zh-Hans translations.
+
+**Still open (in-progress feature work, deliberately not touched):** a
+reassignment control on DetailView, and the paywall/purchase decision below.
+
+---
+
 ## Build-4 review fixes (2026-08-08)
 
 An external review found the account/sync system could leak tasks between
@@ -99,6 +163,16 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
      with the bundle id `com.ruiqiwang.cuevi`. It is no longer optional:
      without it `/auth/apple` returns 503 and **nobody can sign in**. Deploying
      without setting it will break sign-in for everyone.
+   - ☐ **Set the three Apple revocation secrets** — account deletion has to revoke
+     the Sign-in-with-Apple grant, and Apple requires that of any app offering
+     account creation. Without them `/account/delete` returns 501 and the app
+     tells people to contact support:
+     `npx wrangler secret put APPLE_TEAM_ID` (10-char Team ID),
+     `npx wrangler secret put APPLE_KEY_ID` (Key ID of a Sign in with Apple key),
+     `npx wrangler secret put APPLE_PRIVATE_KEY` (paste the whole `.p8` contents).
+     Create the key at developer.apple.com → Certificates, Identifiers & Profiles
+     → Keys → **+** → enable "Sign in with Apple". **This is required for App
+     Store review**, not optional polish.
    - ☐ Re-run `npx wrangler d1 execute cuevi-metrics --remote --file=schema.sql`
      (adds `used_nonces` and `sessions.plus_checked_at`; the Worker also creates
      them lazily).
