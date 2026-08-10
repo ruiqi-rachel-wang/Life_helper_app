@@ -52,6 +52,9 @@ struct ReviewView: View {
     @State private var detailStep: ChecklistStep?        // tapped step → detail sheet
     @State private var showFullPhoto = false             // tapped photo → enlarge/translate
     @State private var limitMessage: String?             // task-list full
+    // Who the scanned/guided item is for; defaults to this phone's person.
+    @State private var assignee: UUID?
+    @State private var assigneeSeeded = false
 
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     private var explainLanguage: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
@@ -89,7 +92,10 @@ struct ReviewView: View {
         // Reaching Review IS the tour's next milestone, however the user got
         // here (scan, upload, or a guide from the Guides tab) — catch up so
         // the "Add to inbox" card shows once the result renders.
-        .onAppear { tourGuide.catchUp(to: .reviewAdd) }
+        .onAppear {
+            tourGuide.catchUp(to: .reviewAdd)
+            if !assigneeSeeded { assignee = profiles.activeProfileID; assigneeSeeded = true }
+        }
         .alert("List full", isPresented: Binding(
             get: { limitMessage != nil }, set: { if !$0 { limitMessage = nil } })) {
             Button("OK", role: .cancel) {}
@@ -250,6 +256,10 @@ struct ReviewView: View {
     private var resultCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             card { documentHead }
+            // Who it's for — right under the document, before the details, since
+            // filing a parent's letter under them is the whole point of scanning
+            // it on their behalf. Renders nothing when there's no family.
+            if profiles.hasFamily { card { AssigneeRow(profileID: $assignee) } }
             // Details (claim/policy/confirmation #) sit ABOVE steps — they're
             // what the user reaches for when a website/clerk asks.
             if !combinedIDs.isEmpty || siteURLToShow != nil || isEditing { card { detailsSection } }
@@ -595,7 +605,7 @@ struct ReviewView: View {
 
     private func addToInbox() {
         if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus,
-                                                profileID: profiles.activeProfileID) {
+                                                profileID: assignee) {
             limitMessage = reason; return
         }
         if !includeDue { draft.dueDate = nil }
@@ -622,7 +632,7 @@ struct ReviewView: View {
             item.reminders = draft.reminders
             item.remindersCustomized = true
         }
-        item.profileID = profiles.activeProfileID   // whose list you're viewing
+        item.profileID = assignee                    // who it's for
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
@@ -722,9 +732,9 @@ struct ReviewView: View {
 
     private func addSelected() {
         let chosen = items.indices.filter { selected.contains($0) }
-        let room = TaskLimit.remaining(context, plus: plus.isPlus, profileID: profiles.activeProfileID)
+        let room = TaskLimit.remaining(context, plus: plus.isPlus, profileID: assignee)
         guard room > 0 else {
-            limitMessage = TaskLimit.blockedReason(context, plus: plus.isPlus, profileID: profiles.activeProfileID)
+            limitMessage = TaskLimit.blockedReason(context, plus: plus.isPlus, profileID: assignee)
             return
         }
         // Add what fits, oldest-selected first; tell the user if some didn't fit.
@@ -732,7 +742,7 @@ struct ReviewView: View {
         let img = scanImageData
         for i in toAdd {
             let item = ActionItem(from: items[i], imageData: img, source: source)
-            item.profileID = profiles.activeProfileID
+            item.profileID = assignee
             context.insert(item)
             Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
             ReminderScheduler.shared.reschedule(for: item)

@@ -73,7 +73,12 @@ struct SyncServiceTests {
         ctx.insert(local)
         try ctx.save()
 
-        let applied = SyncService.apply(changes: [], deletes: [local.id], in: ctx)
+        // A tombstone stamped AFTER the local item's updatedAt — a genuinely newer
+        // deletion, so it should win.
+        let applied = SyncService.apply(
+            changes: [],
+            deletes: [SyncService.Removal(id: local.id, deletedAt: Date(timeIntervalSince1970: 2000))],
+            in: ctx)
         try ctx.save()
 
         #expect(applied.deletes == 1)
@@ -81,9 +86,58 @@ struct SyncServiceTests {
         #expect(try ctx.fetch(FetchDescriptor<TaskTombstone>()).isEmpty)   // no echo
     }
 
+    // THE REGRESSION THIS FILE EXISTS FOR. Deletions used to be applied
+    // unconditionally, so this sequence lost real work: another device deletes a
+    // task, you edit that same task here while the sync is in flight, and the
+    // OLDER server tombstone erased your NEWER edit. A delete is a write like any
+    // other — it only wins if it's newer.
+    @Test func staleServerDeleteDoesNotEraseNewerLocalEdit() throws {
+        let ctx = try context()
+        let local = item("edited while syncing", updated: Date(timeIntervalSince1970: 5000))
+        ctx.insert(local)
+        try ctx.save()
+
+        let applied = SyncService.apply(
+            changes: [],
+            deletes: [SyncService.Removal(id: local.id, deletedAt: Date(timeIntervalSince1970: 1000))],
+            in: ctx)
+        try ctx.save()
+
+        #expect(applied.deletes == 0)
+        let survivors = try ctx.fetch(FetchDescriptor<ActionItem>())
+        #expect(survivors.count == 1)
+        #expect(survivors.first?.title == "edited while syncing")
+    }
+
+    // Same rule for family profiles: a stale removal must not delete a profile
+    // (and everything inside it) that was just renamed here.
+    @Test func staleProfileDeleteDoesNotEraseNewerLocalProfile() throws {
+        let ctx = try context()
+        let mom = Profile(name: "Mom", colorIndex: 1)
+        mom.updatedAt = Date(timeIntervalSince1970: 5000)
+        ctx.insert(mom)
+        let hers = ActionItem(title: "her bill", category: .utility)
+        hers.profileID = mom.id
+        ctx.insert(hers)
+        try ctx.save()
+
+        let applied = SyncService.applyProfiles(
+            changes: [],
+            deletes: [SyncService.Removal(id: mom.id, deletedAt: Date(timeIntervalSince1970: 1000))],
+            in: ctx)
+        try ctx.save()
+
+        #expect(applied.deletes == 0)
+        #expect(try ctx.fetch(FetchDescriptor<Profile>()).count == 1)
+        #expect(try ctx.fetch(FetchDescriptor<ActionItem>()).count == 1)
+    }
+
     @Test func deleteForUnknownItemIsIgnored() throws {
         let ctx = try context()
-        let applied = SyncService.apply(changes: [], deletes: [UUID()], in: ctx)
+        let applied = SyncService.apply(
+            changes: [],
+            deletes: [SyncService.Removal(id: UUID(), deletedAt: .now)],
+            in: ctx)
         #expect(applied.deletes == 0)
     }
 
@@ -174,7 +228,10 @@ struct SyncServiceTests {
         ctx.insert(hers); ctx.insert(mine)
         try ctx.save()
 
-        let applied = SyncService.applyProfiles(changes: [], deletes: [mom.id], in: ctx)
+        let applied = SyncService.applyProfiles(
+            changes: [],
+            deletes: [SyncService.Removal(id: mom.id, deletedAt: .now)],
+            in: ctx)
         try ctx.save()
 
         #expect(applied.deletes == 1)

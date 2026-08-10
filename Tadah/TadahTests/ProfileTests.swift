@@ -15,7 +15,7 @@ struct ProfileTests {
 
     private func context() throws -> ModelContext {
         ModelContext(try ModelContainer(
-            for: ActionItem.self, TaskTombstone.self, Profile.self,
+            for: ActionItem.self, TaskTombstone.self, Profile.self, ProfileTombstone.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
     }
 
@@ -91,9 +91,9 @@ struct ProfileTests {
         let owner = s.ensureOwnerProfile(ctx, name: "Jing")
         let mom = try s.add(name: "Mom", plus: true, in: ctx)
 
-        #expect(s.active?.id == owner.id)      // defaults to the owner
+        #expect(s.me?.id == owner.id)      // defaults to the owner
         s.setActive(mom.id)
-        #expect(s.active?.id == mom.id)
+        #expect(s.me?.id == mom.id)
         #expect(s.activeProfileID == mom.id)
     }
 
@@ -119,7 +119,7 @@ struct ProfileTests {
         #expect(remaining.first?.title == "my bill")
         // Her deletion propagates to the family's other devices.
         #expect(try ctx.fetch(FetchDescriptor<TaskTombstone>()).count == 1)
-        #expect(s.active?.id == owner.id)      // active fell back
+        #expect(s.me?.id == owner.id)      // active fell back
     }
 
     @Test func ownerCannotBeDeleted() throws {
@@ -150,6 +150,60 @@ struct ProfileTests {
         #expect(TaskLimit.count(ctx, profileID: mom.id) == 0)   // Mom's list is her own
         // Mom has all 100 of her Plus allowance despite the owner's 5.
         #expect(TaskLimit.remaining(ctx, plus: true, profileID: mom.id) == TaskLimit.maxPlus)
+    }
+
+    // A shared errand belongs to nobody in particular. It must NOT be charged to
+    // every person's allowance — one family to-do eating four people's quota at
+    // once is how a family of four silently loses a quarter of what they paid for.
+    @Test func familyToDosAreTheirOwnBucket() throws {
+        let ctx = try context()
+        let s = store()
+        let owner = s.ensureOwnerProfile(ctx, name: "Jing")
+        let mom = try s.add(name: "Mom", plus: true, in: ctx)
+
+        let shared = ActionItem(title: "book family dentist", category: .medical)
+        shared.profileID = nil                      // for everyone
+        ctx.insert(shared)
+        try ctx.save()
+
+        #expect(TaskLimit.count(ctx, profileID: nil) == 1)
+        #expect(TaskLimit.count(ctx, profileID: owner.id) == 0)
+        #expect(TaskLimit.count(ctx, profileID: mom.id) == 0)
+    }
+
+    // MARK: what the Inbox shows
+
+    @Test func everyoneScopeShowsAllAndMineIncludesFamilyToDos() throws {
+        let ctx = try context()
+        let s = store()
+        let owner = s.ensureOwnerProfile(ctx, name: "Jing")
+        let mom = try s.add(name: "Mom", plus: true, in: ctx)
+        s.setActive(owner.id)
+
+        // Everyone: nothing is filtered out.
+        s.scope = .everyone
+        #expect(s.isVisible(profileID: owner.id))
+        #expect(s.isVisible(profileID: mom.id))
+        #expect(s.isVisible(profileID: nil))
+
+        // Just mine: my own AND the family's, but not Mom's.
+        s.scope = .mine
+        #expect(s.isVisible(profileID: owner.id))
+        #expect(s.isVisible(profileID: nil))        // shared errands are everyone's
+        #expect(!s.isVisible(profileID: mom.id))
+
+        // Switching who this phone belongs to switches what "mine" means.
+        s.setActive(mom.id)
+        #expect(s.isVisible(profileID: mom.id))
+        #expect(!s.isVisible(profileID: owner.id))
+    }
+
+    @Test func scopeDefaultsToEveryoneAndPersists() {
+        let d = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
+        #expect(ProfileStore(defaults: d).scope == .everyone)   // the family view is the default
+        let first = ProfileStore(defaults: d)
+        first.scope = .mine
+        #expect(ProfileStore(defaults: d).scope == .mine)       // survives a relaunch
     }
 
     // MARK: serialization

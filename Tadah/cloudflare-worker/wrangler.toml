@@ -8,10 +8,17 @@ compatibility_date = "2024-11-01"
 # Account task sync (Part 3) adds two more:
 #   REVENUECAT_SECRET  — RevenueCat REST *secret* key; the Worker checks Plus tier
 #                        authoritatively (GET /v1/subscribers/<appUserId>).
-#   APPLE_AUDIENCE     — the app's bundle id (com.ruiqiwang.cuevi); binds accepted
-#                        Sign-in-with-Apple tokens to THIS app. Strongly recommended.
+#   APPLE_AUDIENCE     — ⚠️ REQUIRED, not optional. The app's bundle id
+#                        (com.ruiqiwang.cuevi). Without it /auth/apple returns 503
+#                        and NOBODY CAN SIGN IN — deliberately, because when the
+#                        check was optional a valid Sign-in-with-Apple token from
+#                        ANY app would have authenticated here.
+#                        wrangler secret put APPLE_AUDIENCE
 # After adding the sync tables run once:
 #   wrangler d1 execute cuevi-metrics --remote --file=schema.sql
+# (Re-run it after pulling the session/nonce changes: `sessions` gains
+#  plus_checked_at and a `used_nonces` table appears. The Worker also creates
+#  these lazily, so the manual run is belt-and-braces.)
 
 # Anonymous tester metrics storage (Part 1). One-time setup:
 #   1) wrangler d1 create cuevi-metrics
@@ -24,10 +31,13 @@ binding = "DB"               # how worker.js refers to it: env.DB
 database_name = "cuevi-metrics"
 database_id = "5e803b6a-8d38-4388-a4b8-23a0e4fa3122"
 
-# Per-IP rate limit (worker-level, before any body parsing). 60 requests/min
-# per IP is far above honest app use (a scan = 1 call) and bounds bursts from
-# a leaked token. worker.js skips the check if this binding is missing, so
-# removing it degrades gracefully. `namespace_id` is just a local identifier
+# Rate limit (worker-level, before any body parsing). 60 requests/min is far above
+# honest app use (a scan = 1 call) and bounds bursts from a leaked token.
+#
+# worker.js keys this on the SESSION TOKEN, else the install id, else the IP —
+# IP-only keying punished everyone behind one carrier NAT or school network for
+# the noisiest person on it. worker.js skips the check if this binding is missing,
+# so removing it degrades gracefully. `namespace_id` is just a local identifier
 # (any unique int per limiter in this Worker).
 [[unsafe.bindings]]
 name = "RATE_LIMITER"

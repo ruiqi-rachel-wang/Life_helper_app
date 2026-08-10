@@ -33,14 +33,78 @@ or ship as-is and say so plainly in the notes (the draft below does).
 
 ---
 
+---
+
+## Build-4 review fixes (2026-08-08)
+
+An external review found the account/sync system could leak tasks between
+accounts, keep "deleted" account data, and lose newer edits. All of the
+**already-built** parts are now fixed (family sharing and the Plus paywall were
+still in progress and were deliberately left alone):
+
+- **Account deletion is real.** New Worker `POST /account/delete` erases the
+  account's tasks, profiles and sessions; the app calls it and, if it fails, says
+  the account was *not* deleted instead of falsely confirming. (Apple requires
+  in-app deletion of the account and its data.)
+- **Sign-out revokes the session server-side** (`POST /auth/logout`), so the
+  privacy policy's "signing out ends the session" is now true.
+- **A stale server tombstone can no longer erase a newer local edit** — deletions
+  carry `deletedAt` and obey last-writer-wins like any other write.
+- **Malformed server data is no longer skipped forever** — a page that fails to
+  decode now fails as a whole and is retried; the Worker *rejects* oversized
+  payloads instead of truncating JSON mid-value.
+- **A new account can no longer upload the previous user's to-dos.** Local data
+  now carries an owner marker; signing in as someone else prompts instead of
+  auto-seeding.
+- **⚠️ The build-2 → build-4 migration was genuinely BROKEN, not just untested.**
+  `TadahSchemaV1`/`V2` pointed at the live `ActionItem`, so a real build-2 store
+  matched no declared version and failed to open (`loadIssueModelContainer`) —
+  every existing tester would have hit it. V1/V2 now nest frozen copies of their
+  models, and `SchemaVersioningTests` writes a true build-2 store and reopens it.
+- **An unopenable store is never deleted.** The old fallback wiped it; now the
+  file is kept, the session runs in memory, and the user gets an explanatory alert.
+- **Sign-in distinguishes local Apple auth from confirmed backup**, with a retry.
+- **RevenueCat** `logIn` is awaited before the tier check, existing users are
+  identified at launch, and `logOut()` runs on sign-out/delete.
+- **Worker hardening**: install header required + quota fails closed (the AI cost
+  cap was bypassable by omitting a header), `APPLE_AUDIENCE` mandatory, single-use
+  sign-in nonces, session expiry, composite `(updated_at, id)` pull cursor
+  (the old one silently dropped rows sharing a timestamp), UUID/timestamp
+  validation, retention sweeps, and rate-limiting keyed on session/install before IP.
+- Privacy manifest now declares user content, user id, name, email and purchases
+  as **linked to identity**; anonymous analytics stay unlinked.
+- `.wrangler/` untracked and gitignored; stale Profile UI-test assertion fixed.
+
+**Verification:** clean Release-config build, no warnings in app code;
+**216/216 unit tests pass** (was 170/194 with a stalled runner).
+
+**Not touched (still in progress, per instruction):** family-sharing UI and its
+Plus benefit copy, the paywall/purchase decision below, Dynamic Type, contrast,
+dark mode, iPad/landscape, and new end-to-end UI tests.
+
+> The Spanish "days overdue" / "Due in … days" gap the review reported is **not
+> present** — all four deadline strings have translated `es` plural variations.
+
+---
+
 ## Checklist
 
-1. ☐ **Deploy the Worker** — the RevenueCat entitlement id was fixed in
-   `worker.js` (`PLUS_ENTITLEMENT = "Tadah Pro"`, was `plus`); without a deploy
-   the backend treats **every** account as free and applies the one-device limit
-   to Plus users.
+1. ☐ **Deploy the Worker** — now REQUIRED for more than the entitlement id:
+   account deletion, logout, the tombstone/cursor fixes and the quota fix all live
+   there. The RevenueCat entitlement id fix (`PLUS_ENTITLEMENT = "Tadah Pro"`,
+   was `plus`) still applies too.
    `cd Tadah/cloudflare-worker && npx wrangler deploy`
    *(Node 22 needed: `export PATH="/usr/local/opt/node@22/bin:$PATH"`.)*
+   - ☐ **Set `APPLE_AUDIENCE` first** — `npx wrangler secret put APPLE_AUDIENCE`
+     with the bundle id `com.ruiqiwang.cuevi`. It is no longer optional:
+     without it `/auth/apple` returns 503 and **nobody can sign in**. Deploying
+     without setting it will break sign-in for everyone.
+   - ☐ Re-run `npx wrangler d1 execute cuevi-metrics --remote --file=schema.sql`
+     (adds `used_nonces` and `sessions.plus_checked_at`; the Worker also creates
+     them lazily).
+   - ☐ Old app builds (build 2/3) will fail sign-in against the new Worker
+     because they don't send a nonce. That's intended — build 2 has no accounts
+     at all, so no shipped build is affected.
 2. ☐ **Publish the updated legal pages** — privacy policy + terms were rewritten
    for accounts/sync (Last updated **August 7, 2026**). `docs/privacy.html` and
    `docs/terms.html` are regenerated and must go live BEFORE submission:

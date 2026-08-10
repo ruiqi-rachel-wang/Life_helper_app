@@ -307,6 +307,10 @@ private struct CreateForm: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var imageData: Data?
     @State private var limitMessage: String?   // task-list full
+    // Who the to-do is for. Defaults to whoever is using this phone; the
+    // picker only appears once the account has family members.
+    @State private var assignee: UUID?
+    @State private var assigneeSeeded = false
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -353,6 +357,11 @@ private struct CreateForm: View {
             .dismissKeyboardOnTap()
         }
         .navigationBarHidden(true)
+        .onAppear {
+            // Seed once, not on every appear — otherwise reopening the keyboard
+            // would silently reset a choice the user just made.
+            if !assigneeSeeded { assignee = profiles.activeProfileID; assigneeSeeded = true }
+        }
         .alert("List full", isPresented: Binding(
             get: { limitMessage != nil }, set: { if !$0 { limitMessage = nil } })) {
             Button("OK", role: .cancel) {}
@@ -394,6 +403,17 @@ private struct CreateForm: View {
     // MARK: category (pick the type → drives the icon/color)
 
     private var categoryCard: some View {
+        VStack(spacing: 0) {
+            AssigneeRow(profileID: $assignee)
+            categoryPickerRow
+        }
+        .padding(16)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+    }
+
+    private var categoryPickerRow: some View {
         HStack {
             Text("Category").font(.system(size: 14)).foregroundStyle(Color.ink)
             Spacer()
@@ -409,10 +429,7 @@ private struct CreateForm: View {
                 }
             }
         }
-        .padding(16)
-        .background(Color.card)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+        .padding(.vertical, 6)
     }
 
     // MARK: amount (optional)
@@ -599,7 +616,7 @@ private struct CreateForm: View {
 
     private func save() {
         if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus,
-                                                profileID: profiles.activeProfileID) {
+                                                profileID: assignee) {
             limitMessage = reason; return
         }
         let cleanSteps = steps
@@ -623,7 +640,7 @@ private struct CreateForm: View {
             item.reminders = reminders
             item.remindersCustomized = true
         }
-        item.profileID = profiles.activeProfileID   // whose list you're viewing
+        item.profileID = assignee                    // who it's for
         context.insert(item)
         Metrics.record(.confirmed, itemID: item.id, source: ItemSource.custom.rawValue)
         ReminderScheduler.shared.reschedule(for: item)   // schedule reminders

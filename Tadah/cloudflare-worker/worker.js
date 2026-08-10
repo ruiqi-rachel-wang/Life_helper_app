@@ -17,9 +17,10 @@
 //     IP is the last resort only: whole schools and carrier NATs share one.
 //   • POST only; shared-secret header required IFF PROXY_TOKEN is set.
 //   • AI: model allow-list + a hard max_tokens cap on every request.
-//   • AI: per-install daily/monthly call caps in D1. The X-Cuevi-Install header is
-//     REQUIRED and the counter fails CLOSED — when it was optional and failed open,
-//     omitting or rotating the header disabled the cap entirely.
+//   • AI: per-install daily/monthly call caps in D1, and the counter fails CLOSED.
+//     A request with no X-Cuevi-Install header is metered by IP instead of being
+//     waved through — when a missing header skipped the check and storage errors
+//     failed open, omitting or rotating the header disabled the cap entirely.
 //   • /events: capped batch size, every stored string clamped, only known event
 //     kinds accepted, INSERT OR IGNORE so re-sends never duplicate.
 //   • /auth: APPLE_AUDIENCE is mandatory, nonces are single-use, sessions expire.
@@ -144,21 +145,25 @@ async function handleChat(request, env) {
 
   // Per-install quota (see header note at the top).
   //
-  // The install header is REQUIRED. It used to be optional "so old builds keep
-  // working", but that made the whole quota opt-in: anyone with the proxy token
-  // (which ships inside the app and must be assumed public) could simply omit the
-  // header, or rotate it per request, and spend the OpenAI budget freely. A
-  // missing/short id is now a 400 — old builds all send it, and the app has never
-  // shipped a version of the scan path that doesn't.
+  // A missing install header no longer SKIPS the quota — that made the whole cap
+  // opt-in, since the proxy token ships inside the app and must be assumed public:
+  // omitting the header (or rotating it per request) spent the OpenAI budget
+  // freely. Instead we fall back to metering by IP.
+  //
+  // Why fall back rather than reject: build 2 is what testers are running right
+  // now and it predates the header, so a hard 400 would break scanning for every
+  // current tester. The fallback keeps them working while still counting them.
   const installID = clamp(request.headers.get("X-Cuevi-Install") || "");
-  if (installID.length < 8) return json({ error: "Install id required" }, 400);
+  const quotaKey = installID.length >= 8
+    ? installID
+    : `ip:${clamp(request.headers.get("CF-Connecting-IP") || "unknown")}`;
   if (env.DB) {
     // Fail CLOSED: a caller that can't be metered can't be allowed to spend. The
     // earlier fail-open kept scans working through a D1 hiccup, but it also gave
     // an attacker a trivial way to disable the cap by making the write fail.
     let usage;
     try {
-      usage = await bumpUsage(env.DB, installID);
+      usage = await bumpUsage(env.DB, quotaKey);
     } catch {
       return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
     }

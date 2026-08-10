@@ -16,8 +16,8 @@
 | Current bullet | Status | Action |
 |---|---|---|
 | More scans | ✅ true (60/day + 300/30d vs 10 + 20) | keep |
-| Spaces for each family member | ✅ **now true** — profiles shipped | keep, reworded |
-| Shared tasks and alerts | ⚠️ **half true** — shared across devices yes; instant "Mom added a task" alerts are NOT built (deferred, see `later_ideas.md`) | **rewrite — drop "alerts"** |
+| Spaces for each family member | ✅ **now true** — profiles + a shared family list | keep, reworded |
+| Shared tasks and alerts | ⚠️ **tasks yes, alerts no** — the family list is real and shared across devices, and a to-do can be for everyone; instant "Mom added a task" alerts are NOT built (deferred, see `later_ideas.md`) | **keep the sharing, drop "alerts"** |
 | Unlimited tracking | ❌ false — Plus is 100 to-dos **per person** | **rewrite — say the number** |
 
 ---
@@ -33,9 +33,9 @@ opens it up to the people you look after.
 
 ## Bullets
 
-**Everyone gets their own list**
-Add up to 8 people — a parent, a partner — so their letters and bills stay in
-their own list instead of mixed into yours.
+**One family list, and a list for each person**
+Add up to 8 people — a parent, a partner. See everything the family owes and
+owns in one place, with each to-do marked whose it is, or switch to just yours.
 
 **More scans and guides**
 60 a day and 300 a month, instead of 10 a day and 20 a month.
@@ -55,7 +55,7 @@ works on one device at a time.
 
 **副标题：** 免费版仅限一人一台设备，扫描次数也有限。Tadah Plus 让你也能照顾家人。
 
-- **每个人都有自己的清单** — 最多添加 8 人（父母、伴侣），他们的信件和账单会单独归类，不会和你的混在一起。
+- **一份家庭清单，也有各自的清单** — 最多添加 8 人（父母、伴侣）。在一个页面看到全家要办的事，每条都标明是谁的；也可以只看自己的。
 - **更多扫描与指南** — 每天 60 次、每月 300 次（免费版为每天 10 次、每月 20 次）。
 - **每人更多待办事项** — 每人最多 100 条（免费版为 20 条）。
 - **多设备同步** — 最多 8 台设备，内容始终保持同步。免费账户一次只能在一台设备上使用。
@@ -67,8 +67,9 @@ works on one device at a time.
 **Subtítulo:** El plan gratuito cubre a una persona en un dispositivo, con escaneos
 limitados. Tadah Plus lo abre a las personas que cuidas.
 
-- **Cada persona con su propia lista** — añade hasta 8 personas (un padre, tu pareja)
-  para que sus cartas y facturas no se mezclen con las tuyas.
+- **Una lista familiar, y una para cada persona** — añade hasta 8 personas (un padre,
+  tu pareja). Ve todo lo de la familia en un solo lugar, con cada tarea marcada de
+  quién es, o cambia a ver solo las tuyas.
 - **Más escaneos y guías** — 60 al día y 300 al mes, en lugar de 10 y 20.
 - **Más tareas, para cada persona** — hasta 100 a la vez por persona, en lugar de 20.
 - **Todos tus dispositivos, sincronizados** — usa Tadah en hasta 8 dispositivos. Una

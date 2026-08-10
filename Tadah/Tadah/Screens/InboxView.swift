@@ -18,14 +18,14 @@ struct InboxView: View {
     @Environment(ProfileStore.self) private var profiles
     @Query(sort: \ActionItem.createdAt, order: .reverse) private var allItems: [ActionItem]
 
-    // Only the profile you're currently viewing. Filtered in memory rather than
-    // with a dynamic @Query: TaskLimit caps the store at ~100 items per profile
-    // (800 for a full family), so this is trivial, and the list is already grouped
-    // in memory below. Items with no profile yet are the owner's (see ProfileStore).
+    // Everyone's to-dos by default — seeing what's due across the family in one
+    // place is the point of adding family members. "Just mine" narrows it, and
+    // still includes family to-dos (nobody's in particular = everybody's).
+    //
+    // Filtered in memory rather than with a dynamic @Query: TaskLimit bounds the
+    // store to ~100 per person, and the list is already grouped in memory below.
     private var items: [ActionItem] {
-        guard let active = profiles.activeProfileID else { return allItems }
-        let isOwner = profiles.active?.isOwner == true
-        return allItems.filter { $0.profileID == active || (isOwner && $0.profileID == nil) }
+        allItems.filter { profiles.isVisible(profileID: $0.profileID) }
     }
 
     // Urgency buckets — computed by the pure, tested grouping function.
@@ -136,16 +136,40 @@ struct InboxView: View {
     // MARK: masthead
 
     private var masthead: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(dateLabel)
-                    .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
-                Text("To-Dos & Reminders")
-                    .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(dateLabel)
+                        .font(.eyebrow).tracking(1.4).foregroundStyle(Color.faded)
+                    Text("To-Dos & Reminders")
+                        .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
+                }
+                Spacer()
+                Text("\(buckets.activeCount) active")
+                    .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
+            }
+            // Only meaningful once there's more than one person on the account.
+            if profiles.hasFamily { scopeToggle }
+        }
+    }
+
+    // Everyone ⇄ just mine. A small segmented control rather than a hidden menu:
+    // which list you're looking at changes what "3 active" means, so it has to be
+    // visible at a glance.
+    private var scopeToggle: some View {
+        HStack(spacing: 6) {
+            ForEach([ProfileStore.Scope.everyone, .mine], id: \.self) { option in
+                let selected = profiles.scope == option
+                Button { withAnimation(.easeInOut(duration: 0.15)) { profiles.scope = option } } label: {
+                    Text(option == .everyone ? "Everyone" : "Just mine")
+                        .font(.eyebrow).tracking(0.6)
+                        .foregroundStyle(selected ? Color.paper : Color.faded)
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Capsule().fill(selected ? Color.ink : Color.bg))
+                }
+                .buttonStyle(.plain)
             }
             Spacer()
-            Text("\(buckets.activeCount) active")
-                .font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
         }
     }
 
@@ -263,6 +287,7 @@ enum SectionTone { case normal, bad }
 // button to tap. A horizontal-dominance guard keeps vertical scrolling working,
 // and VoiceOver actions expose the same choices.
 private struct SwipeRow: View {
+    @Environment(ProfileStore.self) private var profiles
     let item: ActionItem
     var done: Bool = false
     let onOpen: () -> Void
@@ -299,7 +324,11 @@ private struct SwipeRow: View {
                 title: item.title,
                 subtitle: done ? String(localized: "Completed") : item.inboxSubtitle,
                 subtitleColor: done ? Color.faded : item.dueColor,
-                done: done
+                done: done,
+                ownerName: profiles.profile(for: item.profileID)?.displayName,
+                ownerColorIndex: profiles.profile(for: item.profileID)?.colorIndex ?? 0,
+                // Only worth the extra line once there's a family to tell apart.
+                showOwner: profiles.hasFamily
             )
             .background(Color.card)   // opaque so the buttons stay hidden until revealed
             .contentShape(Rectangle())
@@ -391,6 +420,11 @@ private struct InboxRow: View {
     let subtitle: String
     var subtitleColor: Color = .faded
     var done: Bool = false
+    // Whose to-do this is. nil = a family to-do (nobody's in particular), which
+    // gets its own chip rather than none, so "unassigned" never reads as a bug.
+    var ownerName: String? = nil
+    var ownerColorIndex: Int = 0
+    var showOwner: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -411,6 +445,7 @@ private struct InboxRow: View {
                 Text(subtitle)
                     .font(.subline)
                     .foregroundStyle(subtitleColor)
+                if showOwner { ownerChip }
             }
 
             Spacer()
@@ -420,6 +455,17 @@ private struct InboxRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+    }
+
+    // A small tinted pill: the person's name, or "Everyone" for a family to-do.
+    private var ownerChip: some View {
+        let tint = ownerName == nil ? Color.faded : Color.profileTint(ownerColorIndex)
+        return Text(ownerName ?? String(localized: "Everyone"))
+            .font(.eyebrow).tracking(0.4)
+            .foregroundStyle(tint)
+            .padding(.horizontal, 7).padding(.vertical, 2)
+            .background(Capsule().fill(tint.opacity(0.12)))
+            .padding(.top, 1)
     }
 }
 

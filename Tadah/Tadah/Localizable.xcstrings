@@ -5348,6 +5348,22 @@
         }
       }
     },
+    "Everyone": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全家"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        }
+      }
+    },
     "Everyone on this account": {
       "localizations": {
         "zh-Hans": {
@@ -5964,6 +5980,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "首次办理、续期、转入等"
+          }
+        }
+      }
+    },
+    "For": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "给"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para"
           }
         }
       }
@@ -8061,6 +8093,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "只有我（个体经营）"
+          }
+        }
+      }
+    },
+    "Just mine": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只看我的"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo lo mío"
           }
         }
       }
@@ -15678,6 +15726,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "哪些水电费由你付、哪些由房东付，以及关于宠物和提前解约费的规定。"
+          }
+        }
+      }
+    },
+    "Who is this for?": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是给谁的？"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Para quién es esto?"
           }
         }
       }

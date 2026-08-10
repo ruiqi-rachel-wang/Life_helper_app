@@ -4,73 +4,27 @@
 //  store created by the model that BUILD 2 SHIPPED — i.e. what every tester's
 //  device actually has on disk — without losing data.
 //
-//  ⚠️ WHY THE FIXTURE IS A SEPARATE TYPE. The obvious version of this test builds
-//  its "legacy" store from `ActionItem` and calls that V1. That proves nothing:
-//  `ActionItem` is the CURRENT model and has gained `updatedAt` (V2) and
-//  `profileID` (V3) since build 2, and TadahSchemaV1.models points at it too — so
-//  the fixture silently moves forward with the code and the test passes no matter
-//  what. `LegacyV1ActionItem` below is a hand-frozen copy of build 2's stored
-//  properties under the same SwiftData entity name. Nothing in the app can change
-//  it, so it keeps describing build 2 forever.
+//  ⚠️ THE FIXTURE MUST BE THE FROZEN V1 MODEL, NOT `ActionItem`. The original
+//  version of this test built its "legacy" store from `ActionItem` — the CURRENT
+//  model — and called that V1. It proved nothing, because TadahSchemaV1 pointed at
+//  that same live type: the fixture moved forward with the code and the test
+//  passed no matter what.
 //
-//  If this test fails, DO NOT SHIP: testers' stores won't open, and TadahApp now
+//  Written honestly (against `TadahSchemaV1.ActionItem`, frozen at build 2's
+//  property set) it FAILED with `loadIssueModelContainer` — a real build-2 store
+//  matched no declared version and could not be opened at all. Fixing that meant
+//  giving V1/V2 their own frozen nested models; this test is what pins it.
+//
+//  If this test fails, DO NOT SHIP: testers' stores won't open. TadahApp now
 //  (correctly) refuses to delete an unopenable store, so they'd get an in-memory
-//  session and a "couldn't open your to-dos" alert instead of losing everything.
+//  session and a "couldn't open your to-dos" alert instead of losing everything —
+//  recoverable, but still a broken update.
 //
 
 import Testing
 import Foundation
 import SwiftData
 @testable import Tadah
-
-// A frozen replica of the schema BUILD 2 SHIPPED. The model is NESTED inside the
-// VersionedSchema (Apple's own pattern for pinning an old version) so its entity
-// name is still "ActionItem" — SwiftData matches entities by type name, so a
-// differently-named class would create a different table and test nothing.
-//
-// Keep these properties EXACTLY as build 2 had them: no `updatedAt`, no
-// `profileID`. Never "fix" this to match the current model — that is precisely
-// the drift that made the original test vacuous.
-enum BuildTwoSchema: VersionedSchema {
-    static let versionIdentifier = Schema.Version(1, 0, 0)
-    static var models: [any PersistentModel.Type] { [ActionItem.self] }
-
-    @Model
-    final class ActionItem {
-        var id: UUID = UUID()
-        var title: String = ""
-        var category: ItemCategory = ItemCategory.other
-        var amount: Decimal?
-        var currency: String = "USD"
-        var dueDate: Date?
-        var note: String = ""
-        @Attribute(.externalStorage) var imageData: Data?
-        var status: WorkStatus = WorkStatus.todo
-        var steps: [ChecklistStep] = []
-        var recurrence: Recurrence?
-        var seriesID: UUID?
-        var recurrenceAnchorDay: Int?
-        var isExample: Bool = false
-        var createdAt: Date = Date.now
-        var summary: String = ""
-        var documentType: String = ""
-        var sender: String = ""
-        var senderShort: String = ""
-        var dueHasTime: Bool = false
-        var siteURL: String = ""
-        var otherIDs: [DocID] = []
-        var notes: [String] = []
-        var source: ItemSource = ItemSource.custom
-        var reminderLeadHours: Int = 2
-        var reminders: [ReminderItem] = []
-        var remindersCustomized: Bool = false
-
-        init(title: String, category: ItemCategory) {
-            self.title = title
-            self.category = category
-        }
-    }
-}
 
 struct SchemaVersioningTests {
 
@@ -90,12 +44,11 @@ struct SchemaVersioningTests {
         // 1) Create + fill a store the way build 2 did: the OLD property set, in a
         //    plain UNversioned ModelContainer.
         do {
+            let v1 = Schema(versionedSchema: TadahSchemaV1.self)
             let legacy = try ModelContainer(
-                for: Schema(versionedSchema: BuildTwoSchema.self),
-                configurations: ModelConfiguration(
-                    schema: Schema(versionedSchema: BuildTwoSchema.self), url: url))
+                for: v1, configurations: ModelConfiguration(schema: v1, url: url))
             let context = ModelContext(legacy)
-            let item = BuildTwoSchema.ActionItem(title: "Electric bill", category: .utility)
+            let item = TadahSchemaV1.ActionItem(title: "Electric bill", category: .utility)
             item.amount = Decimal(string: "42.17")
             item.dueDate = .now.addingTimeInterval(86400)
             item.steps = [ChecklistStep(text: "Pay it")]

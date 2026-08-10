@@ -75,11 +75,14 @@ struct AccountStoreTests {
         #expect(store.account?.email == "new@example.com")
     }
 
-    @Test func deleteAccountForgetsIdentity() {
+    // The LOCAL half of deletion (the no-backend path). Full deletion goes through
+    // deleteAccountEverywhere, which erases the server copy first and throws if it
+    // can't — that path needs the Worker, so it isn't unit-tested here.
+    @Test func forgetLocallyForgetsIdentity() {
         let defaults = freshDefaults()
         let store = AccountStore(defaults: defaults)
         store.signIn(apple("u1", name: "Jing"))
-        store.deleteAccount()
+        store.forgetLocally()
         #expect(!store.isSignedIn)
         #expect(AccountStore(defaults: defaults).account == nil)
     }

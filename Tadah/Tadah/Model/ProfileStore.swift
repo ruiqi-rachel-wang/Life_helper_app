@@ -2,10 +2,17 @@
 //
 //  Owns the family's profiles and which one you're currently looking at.
 //
-//  The ACTIVE profile is per-device (UserDefaults), deliberately: "whose list am I
-//  viewing right now" is view state, not account data. Mom's phone and the
-//  daughter's phone can sit on different profiles at the same time, and syncing an
-//  active-profile pointer between them would fight the user.
+//  Two separate ideas, deliberately not the same thing:
+//
+//   • `me` — WHO IS USING THIS PHONE. Persists per device (UserDefaults), and is
+//     the default person a new to-do is filed under. Mom's phone says Mom.
+//   • `scope` — WHAT YOU'RE LOOKING AT: the whole family (the default) or just
+//     your own. Also per device; syncing a view filter between phones would
+//     fight the user.
+//
+//  A to-do with no person (profileID == nil) is FOR THE FAMILY — a shared
+//  errand, not an orphan. Those show up in everyone's "just mine" view too,
+//  because they're everyone's.
 //
 //  Cap (decided 2026-08-05): Free = 1 profile, Tadah Plus = 8. Checked here for a
 //  good error message; the server re-checks it, since a client can lie.
@@ -24,23 +31,48 @@ final class ProfileStore {
     static func cap(plus: Bool) -> Int { plus ? plusMax : freeMax }
 
     private static let activeKey = "tadah.activeProfileID"
+    private static let scopeKey = "tadah.inboxScope"
     private let defaults: UserDefaults
 
     // Cached list: owner first, then by creation order — the order the avatar
     // strip renders in.
     private(set) var profiles: [Profile] = []
     private(set) var activeID: UUID?
+    // What the Inbox shows. Everyone by default: the reason to add family members
+    // is to see what's due across the family in one place, so making people
+    // switch profiles to find that out defeats the feature.
+    var scope: Scope = .everyone {
+        didSet { defaults.set(scope.rawValue, forKey: Self.scopeKey) }
+    }
+
+    enum Scope: String { case everyone, mine }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         if let raw = defaults.string(forKey: Self.activeKey) { activeID = UUID(uuidString: raw) }
+        if let raw = defaults.string(forKey: Self.scopeKey), let s = Scope(rawValue: raw) { scope = s }
     }
 
     var owner: Profile? { profiles.first { $0.isOwner } ?? profiles.first }
-    var active: Profile? { profiles.first { $0.id == activeID } ?? owner }
-    // The id every new item should be stamped with.
-    var activeProfileID: UUID? { active?.id }
+    // Who's using this phone. Falls back to the owner.
+    var me: Profile? { profiles.first { $0.id == activeID } ?? owner }
+    var activeProfileID: UUID? { me?.id }
     var hasFamily: Bool { profiles.count > 1 }
+
+    // Does this item belong in the current view? Family items (no person) are
+    // everyone's, so they show in both scopes.
+    func isVisible(profileID: UUID?) -> Bool {
+        switch scope {
+        case .everyone: return true
+        case .mine:     return profileID == nil || profileID == activeProfileID
+        }
+    }
+
+    // The person a given item is filed under, or nil when it's a family to-do.
+    func profile(for id: UUID?) -> Profile? {
+        guard let id else { return nil }
+        return profiles.first { $0.id == id }
+    }
 
     // MARK: - loading
 

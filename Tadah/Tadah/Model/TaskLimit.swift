@@ -8,9 +8,10 @@
 //    • Plus: 100 items PER PROFILE — a family of four isn't fighting over one
 //      shared pool, and each person's list feels like their own.
 //
-//  Counting is scoped to a profile. `profileID: nil` means "the owner's list",
-//  which also covers items saved before profiles existed (ProfileStore adopts
-//  those onto the owner at launch).
+//  Counting is scoped to a BUCKET: one profile, or — for nil — the family list
+//  of to-dos that belong to nobody in particular. Items saved before profiles
+//  existed are adopted onto the owner at launch (ProfileStore), so nil after that
+//  genuinely means "for the whole family", not "unassigned leftover".
 //
 //  Recurrence's auto-generated next occurrences are deliberately NOT gated here:
 //  a repeating task must be able to roll forward even when the list is full.
@@ -25,13 +26,15 @@ nonisolated enum TaskLimit {
 
     static func cap(plus: Bool) -> Int { plus ? maxPlus : max }
 
-    // How many real items the given profile holds (examples excluded). Passing
-    // nil counts the owner's list, including any not-yet-adopted items.
+    // How many real items sit in one BUCKET (examples excluded). A bucket is
+    // exactly one profile — or, for nil, the family list that belongs to nobody
+    // in particular. Counting family items against every person would mean one
+    // shared errand eating four people's allowances at once.
     static func count(_ context: ModelContext, profileID: UUID? = nil) -> Int {
         let descriptor: FetchDescriptor<ActionItem>
         if let profileID {
             descriptor = FetchDescriptor(predicate: #Predicate {
-                !$0.isExample && ($0.profileID == profileID || $0.profileID == nil)
+                !$0.isExample && $0.profileID == profileID
             })
         } else {
             descriptor = FetchDescriptor(predicate: #Predicate {

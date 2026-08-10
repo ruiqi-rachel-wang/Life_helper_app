@@ -89,7 +89,7 @@ We are not responsible for these providers' own practices; please review their p
 
 - **On-device data** stays until you delete the item or uninstall the app. You are in control.
 - **AI requests** are processed in transit and returned; we keep no server copy. OpenAI's retention of API data is governed by their policy.
-- **Backed-up items (signed-in accounts)** are kept for as long as your account exists, so we can restore them to you. Deleting an item in the app removes it from your account on the next sync. To have the whole account and its items deleted, email us (see *Your choices and rights*).
+- **Backed-up items (signed-in accounts)** are kept for as long as your account exists, so we can restore them to you. Deleting an item in the app removes it from your account on the next sync. To delete the whole account and everything in it, use **Profile → your name → Delete account** in the app (see *Your choices and rights*); you can also email us if you'd rather we did it.
 - **Family profiles** are kept for as long as your account exists, or until you remove the person or delete the account.
 - **Session records** are kept while a device is signed in, and for a short period afterwards for security; ended sessions are marked revoked and cleaned up. Sessions also expire on their own, so a device left unused eventually has to sign in again.
 - **Anonymous usage statistics** are stored on our backend (Cloudflare) until we no longer need them for product analysis. They contain no personal identifiers and aren't linked to you. Turning the setting off stops new data from being sent.
@@ -100,7 +100,7 @@ We are not responsible for these providers' own practices; please review their p
 
 - **Use Tadah without an account** — signing in is optional. Signed out, nothing you save is backed up to us.
 - **Delete anytime** — delete an item to remove it from this device and, on the next sync, from your account. Uninstalling removes the local copy.
-- **Delete your account and its backup, from inside the app** — **Profile → your name → Delete account**. This erases what we hold on our backend: your saved items, your family profiles, and your session records. It does not delete the copy on your phone; the app tells you that and lets you remove those separately. If it can't reach us it says so rather than pretending it worked, so you can try again.
+- **Delete your account and its backup, from inside the app** — **Profile → your name → Delete account**. This erases what we hold on our backend: your saved items, your family profiles, and your session records, on every device. It does **not** delete the copy saved on your phone — the app says so before you confirm, and you can delete those items yourself, or uninstall, whenever you want. If it can't reach us it tells you the account was *not* deleted rather than pretending it worked, so you can try again.
 - **Remove one family member** — Profile → Family → long-press a person → Remove. Their to-dos are deleted from the account too.
 - **Sign out on this device** — Profile → Log out. This ends the session on our side straight away, rather than leaving it valid until it expires.
 - **Don't want text sent to OpenAI?** Use the manual-entry option instead of scanning, or use the sensitive guides, which are generated on your device.

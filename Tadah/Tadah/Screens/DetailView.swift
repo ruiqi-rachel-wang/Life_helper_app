@@ -15,6 +15,7 @@ import UIKit
 
 struct DetailView: View {
     @Bindable var item: ActionItem
+    @Environment(ProfileStore.self) private var profiles
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
