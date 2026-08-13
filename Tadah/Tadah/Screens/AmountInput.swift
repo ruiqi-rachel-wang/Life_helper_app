@@ -12,7 +12,7 @@ struct AmountInput: View {
     var body: some View {
         HStack(spacing: 2) {
             Text("$").font(.subline).foregroundStyle(Color.faded)
-            TextField("0.00", text: text)
+            TextField("Amount", text: text, prompt: fieldPrompt("0.00"))
                 .keyboardType(.decimalPad)
                 .font(.serifStat).foregroundStyle(Color.ink)
         }

@@ -2,7 +2,908 @@
   "sourceLanguage": "en",
   "strings": {
     "": {},
-    "$": {},
+  "Arrange the move — truck, container, or movers — and get boxes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organiza la mudanza —camión, contenedor o empresa de mudanzas— y consigue cajas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安排搬家方式——租货车、租集装箱或请搬家公司——并准备好纸箱。"
+          }
+        }
+      }
+    },
+  "Bring proof of identity, residency, and your current license; pass any vision test and pay the fee.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lleva pruebas de identidad y residencia, y tu licencia actual; pasa el examen de la vista si lo piden y paga la tarifa."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "携带身份证明、居住证明和现有驾照；如需视力测试请通过，并缴纳费用。"
+          }
+        }
+      }
+    },
+  "Changes the whole app — every screen, plus the explanations Tadah writes for your scans and guides.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambia toda la aplicación: todas las pantallas, además de las explicaciones que Tadah escribe para tus escaneos y guías."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会更改整个应用——所有页面，以及 Tadah 为你的扫描和指南所写的说明。"
+          }
+        }
+      }
+    },
+  "Check %@ DMV requirements and book an appointment online.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta los requisitos del DMV de %@ y reserva una cita en línea."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看 %@ 车管局（DMV）的要求，并在线预约。"
+          }
+        }
+      }
+    },
+  "Check whether %@ lets you renew online, by mail, or in person.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consulta si %@ permite renovar en línea, por correo o en persona."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看 %@ 是否可以在线、邮寄或亲自办理换证。"
+          }
+        }
+      }
+    },
+  "Complete Form I-9 (work authorization) and Form W-4 (tax withholding) for %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completa el Formulario I-9 (autorización de trabajo) y el Formulario W-4 (retención de impuestos) para %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为 %@ 填写 I-9 表（工作许可）和 W-4 表（税款预扣）。"
+          }
+        }
+      }
+    },
+  "Confirm the mailing setup with whoever you're living with.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirma cómo se recibe el correo con quien vives."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "与同住的人确认信件的收取方式。"
+          }
+        }
+      }
+    },
+  "Email": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo electrónico"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电子邮箱"
+          }
+        }
+      }
+    },
+  "Exchange your out-of-state license for a %@ license — often within ~30 days of becoming a resident.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambia tu licencia de otro estado por una licencia de %@: normalmente dentro de unos 30 días de haberte mudado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把外州驾照换成 %@ 的驾照——通常要在成为本州居民后约 30 天内办理。"
+          }
+        }
+      }
+    },
+  "Gather proof of identity, lawful presence, residency, and your SSN (or your state's accepted alternative).": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reúne pruebas de identidad, presencia legal y residencia, y tu SSN (o la alternativa que acepte tu estado)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备好身份证明、合法居留证明、居住证明，以及社会安全号（SSN）或你所在州认可的替代材料。"
+          }
+        }
+      }
+    },
+  "Gather your current license and proof of residency.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reúne tu licencia actual y un comprobante de residencia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备好现有驾照和居住证明。"
+          }
+        }
+      }
+    },
+  "Get renters insurance — many leases require it, and it's inexpensive.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contrata un seguro de inquilino: muchos contratos lo exigen y es barato."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "购买租客保险——很多租约都要求，而且并不贵。"
+          }
+        }
+      }
+    },
+  "Get your keys, mailbox key, and building access, and learn the trash, parking, and laundry rules.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recoge las llaves, la llave del buzón y el acceso al edificio, y entérate de las normas de basura, estacionamiento y lavandería."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拿到房门钥匙、信箱钥匙和楼宇门禁，并了解垃圾投放、停车和洗衣的规定。"
+          }
+        }
+      }
+    },
+  "Give your landlord written notice (check your lease — often 30–60 days).": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avisa a tu arrendador por escrito (revisa tu contrato: suele ser con 30–60 días de anticipación)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "书面通知房东（查看租约——通常需提前 30–60 天）。"
+          }
+        }
+      }
+    },
+  "If it was stolen, file a police report for your records.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si te la robaron, presenta una denuncia policial y guárdala."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果是被盗，请报警并保留报案记录。"
+          }
+        }
+      }
+    },
+  "Item": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elemento"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "项目"
+          }
+        }
+      }
+    },
+  "Name": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "姓名"
+          }
+        }
+      }
+    },
+  "Notify your mortgage lender, homeowners insurance, and HOA (if any).": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avisa a tu prestamista hipotecario, a tu seguro de vivienda y a la asociación de propietarios (HOA), si la hay."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知你的房贷机构、房屋保险公司和业主协会（HOA，如果有）。"
+          }
+        }
+      }
+    },
+  "OFFICIAL LINKS": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENLACES OFICIALES"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "官方链接"
+          }
+        }
+      }
+    },
+  "Once you have your new address, set up USPS mail forwarding at usps.com/move.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando tengas tu nueva dirección, activa el reenvío de correo del USPS en usps.com/move."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拿到新地址后，在 usps.com/move 办理 USPS 信件转寄。"
+          }
+        }
+      }
+    },
+  "Pass the road test, then pay the license fee.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprueba el examen de manejo y luego paga la tarifa de la licencia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过路考，然后缴纳驾照费用。"
+          }
+        }
+      }
+    },
+  "Pay the security deposit and first month's rent, and keep the receipts.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paga el depósito de garantía y el primer mes de renta, y guarda los recibos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支付押金和第一个月房租，并保留收据。"
+          }
+        }
+      }
+    },
+  "Photograph the unit's condition on move-in day — it protects your deposit when you leave.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotografía el estado de la vivienda el día que te mudes: protege tu depósito cuando te vayas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入住当天拍照记录房屋状况——退租时这能保护你的押金。"
+          }
+        }
+      }
+    },
+  "Register your car and get new %@ plates, and update your car insurance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra tu auto, saca placas nuevas de %@ y actualiza tu seguro de auto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为汽车办理登记、换领 %@ 的车牌，并更新车险。"
+          }
+        }
+      }
+    },
+  "Register your car and get plates with the %@ DMV.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra tu auto y saca las placas en el DMV de %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 %@ 车管局（DMV）为汽车办理登记并领取车牌。"
+          }
+        }
+      }
+    },
+  "Register your out-of-state vehicle in %@ (often within ~30 days) and update your car insurance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra en %@ tu vehículo de otro estado (normalmente dentro de unos 30 días) y actualiza tu seguro de auto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把外州车辆在 %@ 重新登记（通常需在约 30 天内办理），并更新车险。"
+          }
+        }
+      }
+    },
+  "Reminder note": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nota del recordatorio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提醒备注"
+          }
+        }
+      }
+    },
+  "Renew before your license expires so you're not driving on an expired one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renueva antes de que venza tu licencia para no manejar con una licencia vencida."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在驾照到期前完成换证，避免持过期驾照驾驶。"
+          }
+        }
+      }
+    },
+  "Report your new address to the %@ DMV — many states require this within ~10 days.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informa tu nueva dirección al DMV de %@: muchos estados lo exigen dentro de unos 10 días."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向 %@ 车管局（DMV）申报新地址——许多州要求在约 10 天内办理。"
+          }
+        }
+      }
+    },
+  "Request a replacement license online or at the %@ DMV.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solicita una licencia de reemplazo en línea o en el DMV de %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在线或前往 %@ 车管局（DMV）申请补办驾照。"
+          }
+        }
+      }
+    },
+  "Schedule the move-out inspection and photograph the unit's condition.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agenda la inspección de salida y fotografía el estado de la vivienda."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预约退租验房，并拍照记录房屋状况。"
+          }
+        }
+      }
+    },
+  "Send %@ a W-9 (not I-9/W-4) with your payment details.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envía a %@ un Formulario W-9 (no I-9/W-4) con tus datos de pago."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向 %@ 提交 W-9 表（不是 I-9/W-4），并附上你的收款信息。"
+          }
+        }
+      }
+    },
+  "Set up USPS mail forwarding at usps.com/move (~2 weeks ahead; small fee). Use the official site.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa el reenvío de correo del USPS en usps.com/move (con unas 2 semanas de anticipación; tiene un costo pequeño). Usa el sitio oficial."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 usps.com/move 办理 USPS 信件转寄（提前约 2 周；需付少量费用）。请使用官方网站。"
+          }
+        }
+      }
+    },
+  "Set up electricity, gas, water, and internet at the new place for your move-in date.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contrata luz, gas, agua e internet en el nuevo lugar para tu fecha de mudanza."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为入住日期在新住处开通电、燃气、自来水和网络。"
+          }
+        }
+      }
+    },
+  "Set up how you'll pay rent (autopay or the tenant portal) and save the account details.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Define cómo pagarás la renta (pago automático o el portal del inquilino) y guarda los datos de la cuenta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置房租支付方式（自动扣款或租客网站），并保存好账户信息。"
+          }
+        }
+      }
+    },
+  "Start or stop utilities and internet at both the old and new home.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Da de alta o de baja los servicios y el internet en la casa antigua y en la nueva."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在旧住处和新住处分别办理水电燃气和网络的开通或停用。"
+          }
+        }
+      }
+    },
+  "Study for and pass the written knowledge test.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estudia y aprueba el examen teórico escrito."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备考并通过笔试（交规知识考试）。"
+          }
+        }
+      }
+    },
+  "Take a new photo if required and pay the renewal fee.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tómate una foto nueva si la piden y paga la tarifa de renovación."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如需重新拍照请配合拍摄，并缴纳换证费用。"
+          }
+        }
+      }
+    },
+  "To-do": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarea"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待办"
+          }
+        }
+      }
+    },
+  "Tour the unit and read the lease before signing — note the rent, lease length, deposit, who pays which utilities, and any pet or early-termination fees.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visita la vivienda y lee el contrato antes de firmar: fíjate en la renta, la duración, el depósito, quién paga cada servicio y las tarifas por mascotas o por terminar antes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "签约前先看房并通读租约——留意租金、租期、押金、各项水电费由谁承担，以及宠物费和提前退租的费用。"
+          }
+        }
+      }
+    },
+  "Update or cancel your renters insurance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza o cancela tu seguro de inquilino."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新或取消租客保险。"
+          }
+        }
+      }
+    },
+  "Update the address on your car registration too.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza también la dirección en el registro de tu auto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同时更新车辆登记上的地址。"
+          }
+        }
+      }
+    },
+  "Update the address on your license/ID (a new card may be issued).": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza la dirección en tu licencia o identificación (puede que te emitan una tarjeta nueva)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新驾照/身份证件上的地址（可能会换发新卡）。"
+          }
+        }
+      }
+    },
+  "Update the mailing address for your property taxes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza la dirección postal de tus impuestos sobre la propiedad."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新房产税账单的邮寄地址。"
+          }
+        }
+      }
+    },
+  "Update your address with your bank, credit cards, and insurance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza tu dirección en el banco, las tarjetas de crédito y los seguros."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在银行、信用卡和保险公司更新你的地址。"
+          }
+        }
+      }
+    },
+  "Update your address with your employer and for tax mail.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza tu dirección con tu empleador y para el correo de impuestos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在雇主处更新地址，并确保能收到税务信件。"
+          }
+        }
+      }
+    },
+  "Update your license/ID address at the DMV.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza la dirección de tu licencia o identificación en el DMV."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在车管局（DMV）更新驾照/身份证件上的地址。"
+          }
+        }
+      }
+    },
+  "Update your license/ID and car registration address at the DMV.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza la dirección de tu licencia/identificación y del registro de tu auto en el DMV."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在车管局（DMV）更新驾照/身份证件和车辆登记上的地址。"
+          }
+        }
+      }
+    },
+  "Update your license/ID in %@ (often within 10–30 days — check the DMV).": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza tu licencia o identificación en %@ (normalmente en 10–30 días; consulta el DMV)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 %@ 更新驾照/身份证件（通常需在 10–30 天内办理——请查询车管局规定）。"
+          }
+        }
+      }
+    },
+  "Value": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容"
+          }
+        }
+      }
+    },
+  "Verify your identity and pay the replacement fee.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifica tu identidad y paga la tarifa de reposición."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验证身份并缴纳补办费用。"
+          }
+        }
+      }
+    },
+  "e.g. ID, account number, a form": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "p. ej. identificación, número de cuenta, un formulario"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如：身份证件、账号、某份表格"
+          }
+        }
+      }
+    },
+    " ": {},
+    "… PLUS List C (work): Social Security card or birth certificate.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "… MÁS Lista C (trabajo): tarjeta de Seguro Social o certificado de nacimiento."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "… 加 列表 C（工作）：社会安全卡或出生证明。"
+          }
+        }
+      }
+    },
     "%@ before": {
       "extractionState": "stale",
       "localizations": {
@@ -20,23 +921,23 @@
         }
       }
     },
-    "%lld": {},
-    "%lld THINGS FOUND": {
+    "%@ Your to-dos on this phone are untouched.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld ELEMENTOS"
-          }
-        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "找到 %lld 项"
+            "value": "%@ 这台手机上的待办事项不受影响。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Tus tareas en este teléfono no se han modificado."
           }
         }
       }
     },
+    "%lld": {},
     "%lld active": {
       "localizations": {
         "es": {
@@ -133,22 +1034,150 @@
         }
       }
     },
-    "%lld to-dos": {
+    "%lld THINGS FOUND": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ELEMENTOS"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld 项待办"
+            "value": "找到 %lld 项"
           }
-        },
+        }
+      }
+    },
+    "%lld to-dos": {
+      "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld tareas"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 项待办"
+          }
         }
       }
     },
+    "•": {},
+    "⚠ %lld DAYS OVERDUE": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "⚠ %lld DAY OVERDUE"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "⚠ %lld DAYS OVERDUE"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "⚠ %lld DÍA DE RETRASO"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "⚠ %lld DÍAS DE RETRASO"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠ 逾期 %lld 天"
+          }
+        }
+      }
+    },
+    "⚠︎ couldn't read clearly — review before adding": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠︎ no se leyó con claridad — revisa antes de añadir"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠︎ 识别不清 — 添加前请核对"
+          }
+        }
+      }
+    },
+    "⚠ DUE TODAY": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠ VENCE HOY"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠ 今日到期"
+          }
+        }
+      }
+    },
+    "✓ COMPLETED": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ COMPLETADO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ 已完成"
+          }
+        }
+      }
+    },
+    "👋 Welcome to Tadah": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "👋 Bienvenido a Tadah"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "👋 欢迎使用 Tadah"
+          }
+        }
+      }
+    },
+    "$": {},
     "0.00": {},
     "1099 forms for contract or gig income.": {
       "extractionState": "stale",
@@ -163,23 +1192,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "用于合同或零工收入的 1099 表。"
-          }
-        }
-      }
-    },
-    "A Special Enrollment Period usually gives you 60 days from the life event to enroll — after that you generally wait for open enrollment, so start now.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un Período Especial de Inscripción suele darte 60 días desde el evento para inscribirte; después, por lo general debes esperar a la inscripción abierta, así que empieza ya."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "特殊参保期通常给你从事件发生起 60 天来参保——过了这段时间一般就要等公开参保期，所以尽快开始。"
           }
         }
       }
@@ -523,6 +1535,23 @@
         }
       }
     },
+    "A Special Enrollment Period usually gives you 60 days from the life event to enroll — after that you generally wait for open enrollment, so start now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un Período Especial de Inscripción suele darte 60 días desde el evento para inscribirte; después, por lo general debes esperar a la inscripción abierta, así que empieza ya."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "特殊参保期通常给你从事件发生起 60 天来参保——过了这段时间一般就要等公开参保期，所以尽快开始。"
+          }
+        }
+      }
+    },
     "A step-by-step checklist for buying a home, from pre-approval to closing.": {
       "extractionState": "stale",
       "localizations": {
@@ -658,6 +1687,22 @@
         }
       }
     },
+    "Account": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuenta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账户"
+          }
+        }
+      }
+    },
     "ACCOUNT": {
       "extractionState": "stale",
       "localizations": {
@@ -671,6 +1716,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "账户"
+          }
+        }
+      }
+    },
+    "Account deletion isn't available right now. Please contact support and we'll delete it for you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La eliminación de cuentas no está disponible ahora. Contáctanos y la eliminaremos por ti."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前无法删除账户。请联系客服，我们会为你删除。"
           }
         }
       }
@@ -708,6 +1770,7 @@
       }
     },
     "ACTIVE": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -719,71 +1782,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "已开通"
-          }
-        }
-      }
-    },
-    "AI-generated — double-check important details against the original and the official source.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Generado por IA: verifica los datos importantes con el documento original y la fuente oficial."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "由 AI 生成——请对照原件和官方网站核对重要信息。"
-          }
-        }
-      }
-    },
-    "AMOUNT": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IMPORTE"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "金额"
-          }
-        }
-      }
-    },
-    "ATM network and out-of-network fees.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Red de cajeros y comisiones fuera de la red."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ATM 网络及网络外取款费用。"
-          }
-        }
-      }
-    },
-    "Account": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cuenta"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "账户"
           }
         }
       }
@@ -816,22 +1814,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "添加 %lld 项到待办"
-          }
-        }
-      }
-    },
-    "Add a To-Do & Reminder": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir tarea y recordatorio"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加到提醒待办"
           }
         }
       }
@@ -1000,6 +1982,22 @@
         }
       }
     },
+    "Add a To-Do & Reminder": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir tarea y recordatorio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加到提醒待办"
+          }
+        }
+      }
+    },
     "Add anything": {
       "localizations": {
         "es": {
@@ -1118,32 +2116,32 @@
     },
     "Add someone": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加成员"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Añadir a alguien"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加成员"
           }
         }
       }
     },
     "Add someone like a parent and manage their letters from here.": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加家人（例如父母），在这里帮他们管理信件。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Añade a alguien, como un padre, y gestiona sus cartas desde aquí."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加家人（例如父母），在这里帮他们管理信件。"
           }
         }
       }
@@ -1166,6 +2164,7 @@
       }
     },
     "Add them to my account": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -1350,6 +2349,22 @@
         }
       }
     },
+    "AI-generated — double-check important details against the original and the official source.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generado por IA: verifica los datos importantes con el documento original y la fuente oficial."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由 AI 生成——请对照原件和官方网站核对重要信息。"
+          }
+        }
+      }
+    },
     "All": {
       "comment": "Guides category filter: show all",
       "extractionState": "stale",
@@ -1402,6 +2417,23 @@
         }
       }
     },
+    "Already subscribed? Bring your Plus access to this phone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Ya te suscribiste? Trae tu acceso Plus a este teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已经订阅了？把你的 Plus 权益带到这台手机。"
+          }
+        }
+      }
+    },
     "Amount": {
       "extractionState": "manual",
       "localizations": {
@@ -1415,6 +2447,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "金额"
+          }
+        }
+      }
+    },
+    "AMOUNT": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IMPORTE"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金额"
+          }
+        }
+      }
+    },
+    "An accountant can help weigh the tax trade-offs.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un contador puede ayudarte a sopesar las ventajas fiscales."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会计师可以帮你权衡税务利弊。"
           }
         }
       }
@@ -1449,6 +2514,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "EIN 在 IRS.gov 上免费申请——绝不要通过第三方网站付费办理。"
+          }
+        }
+      }
+    },
+    "An email address to create your account.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una dirección de correo electrónico para crear tu cuenta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一个用来创建账户的电子邮箱。"
+          }
+        }
+      }
+    },
+    "An identification number the bank accepts — an SSN, ITIN, passport number, alien ID number, or another government-issued ID number.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un número de identificación que el banco acepte: un SSN, ITIN, número de pasaporte, número de identificación de extranjero u otro número de identificación emitido por el gobierno."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "银行接受的一种身份识别号码——SSN、ITIN、护照号码、外国人证件号码，或其他政府签发的证件号码。"
+          }
+        }
+      }
+    },
+    "An inspection finds problems before you're locked in. Go if you can, and use the report to negotiate repairs or a credit.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una inspección detecta problemas antes de comprometerte. Ve si puedes y usa el informe para negociar reparaciones o un crédito."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验房能在你被锁定之前发现问题。尽量到场，并用报告去协商维修或价格抵扣。"
           }
         }
       }
@@ -1538,23 +2654,6 @@
         }
       }
     },
-    "An SSN is for U.S. citizens and certain noncitizens who are work-authorized or have another valid reason; an ITIN is mainly for tax filing when you're not eligible for an SSN.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El SSN es para ciudadanos estadounidenses y ciertos no ciudadanos con autorización de trabajo u otra razón válida; el ITIN es principalmente para declarar impuestos cuando no reúnes los requisitos para un SSN."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSN 适用于美国公民以及某些有工作许可或其他正当理由的非公民；ITIN 主要用于在你不符合 SSN 资格时报税。"
-          }
-        }
-      }
-    },
     "An SSN is for people authorized to work; an ITIN is a tax ID for those who can't get an SSN.": {
       "extractionState": "stale",
       "localizations": {
@@ -1572,70 +2671,19 @@
         }
       }
     },
-    "An accountant can help weigh the tax trade-offs.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un contador puede ayudarte a sopesar las ventajas fiscales."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "会计师可以帮你权衡税务利弊。"
-          }
-        }
-      }
-    },
-    "An email address to create your account.": {
+    "An SSN is for U.S. citizens and certain noncitizens who are work-authorized or have another valid reason; an ITIN is mainly for tax filing when you're not eligible for an SSN.": {
       "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Una dirección de correo electrónico para crear tu cuenta."
+            "value": "El SSN es para ciudadanos estadounidenses y ciertos no ciudadanos con autorización de trabajo u otra razón válida; el ITIN es principalmente para declarar impuestos cuando no reúnes los requisitos para un SSN."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一个用来创建账户的电子邮箱。"
-          }
-        }
-      }
-    },
-    "An identification number the bank accepts — an SSN, ITIN, passport number, alien ID number, or another government-issued ID number.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un número de identificación que el banco acepte: un SSN, ITIN, número de pasaporte, número de identificación de extranjero u otro número de identificación emitido por el gobierno."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "银行接受的一种身份识别号码——SSN、ITIN、护照号码、外国人证件号码，或其他政府签发的证件号码。"
-          }
-        }
-      }
-    },
-    "An inspection finds problems before you're locked in. Go if you can, and use the report to negotiate repairs or a credit.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una inspección detecta problemas antes de comprometerte. Ve si puedes y usa el informe para negociar reparaciones o un crédito."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "验房能在你被锁定之前发现问题。尽量到场，并用报告去协商维修或价格抵扣。"
+            "value": "SSN 适用于美国公民以及某些有工作许可或其他正当理由的非公民；ITIN 主要用于在你不符合 SSN 资格时报税。"
           }
         }
       }
@@ -1724,19 +2772,18 @@
         }
       }
     },
-    "Apply at HealthCare.gov and report the life change, or start a new application.": {
-      "extractionState": "manual",
+    "Apple didn't return a sign-in token.": {
       "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solicita en HealthCare.gov e informa el cambio de vida, o inicia una nueva solicitud."
-          }
-        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 HealthCare.gov 上申请并报告这次人生变化，或开始一份新的申请。"
+            "value": "Apple 未返回登录令牌。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple no devolvió un token de inicio de sesión."
           }
         }
       }
@@ -1754,6 +2801,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "在 HealthCare.gov 申请——如果你所在州有自己的市场，它会把你转过去。公开参保期通常为 11 月 1 日至次年 1 月 15 日。"
+          }
+        }
+      }
+    },
+    "Apply at HealthCare.gov and report the life change, or start a new application.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solicita en HealthCare.gov e informa el cambio de vida, o inicia una nueva solicitud."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 HealthCare.gov 上申请并报告这次人生变化，或开始一份新的申请。"
           }
         }
       }
@@ -1928,40 +2992,6 @@
         }
       }
     },
-    "Ask HR for the benefits guide and your enrollment deadline.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pídele a Recursos Humanos la guía de beneficios y tu fecha límite de inscripción."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "向 HR 索取福利说明和你的参保截止日期。"
-          }
-        }
-      }
-    },
-    "Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pregunta a RR. HH. si eres empleado W-2 o contratista 1099: cambia qué formularios de impuestos presentas."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "向 HR 确认你是 W-2 雇员还是 1099 承包人——这会影响你报哪些税表。"
-          }
-        }
-      }
-    },
     "Ask about bus transportation, free/reduced meals, and after-school programs.": {
       "extractionState": "stale",
       "localizations": {
@@ -2060,6 +3090,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "询问最早可预约的时间，以及取消候补名单。"
+          }
+        }
+      }
+    },
+    "Ask HR for the benefits guide and your enrollment deadline.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pídele a Recursos Humanos la guía de beneficios y tu fecha límite de inscripción."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向 HR 索取福利说明和你的参保截止日期。"
+          }
+        }
+      }
+    },
+    "Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pregunta a RR. HH. si eres empleado W-2 o contratista 1099: cambia qué formularios de impuestos presentas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向 HR 确认你是 W-2 雇员还是 1099 承包人——这会影响你报哪些税表。"
           }
         }
       }
@@ -2251,6 +3315,23 @@
         }
       }
     },
+    "ATM network and out-of-network fees.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red de cajeros y comisiones fuera de la red."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ATM 网络及网络外取款费用。"
+          }
+        }
+      }
+    },
     "Attend and ask questions.": {
       "extractionState": "stale",
       "localizations": {
@@ -2313,54 +3394,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "返回"
-          }
-        }
-      }
-    },
-    "Backed up %@": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Respaldado %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已备份 %@"
-          }
-        }
-      }
-    },
-    "Backing up…": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Respaldando…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在备份…"
-          }
-        }
-      }
-    },
-    "Backup": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copia de seguridad"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备份"
           }
         }
       }
@@ -2820,142 +3853,6 @@
         }
       }
     },
-    "CDC — vaccines for school": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CDC: vacunas para la escuela"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CDC——入学疫苗"
-          }
-        }
-      }
-    },
-    "CFPB — Closing Disclosure explainer": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB: explicación del Closing Disclosure"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB——《成交披露》说明"
-          }
-        }
-      }
-    },
-    "CFPB — choosing a bank account": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB: cómo elegir una cuenta bancaria"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB——如何选择银行账户"
-          }
-        }
-      }
-    },
-    "CFPB — credit reports and scores": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB — informes y puntajes de crédito"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB — 信用报告与信用分"
-          }
-        }
-      }
-    },
-    "CFPB — mortgage closing scams": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB: estafas en el cierre hipotecario"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB——房贷过户诈骗"
-          }
-        }
-      }
-    },
-    "CFPB — owning a home": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB: comprar y tener vivienda"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB——购房与拥有住房"
-          }
-        }
-      }
-    },
-    "CFPB — renting a home": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB — alquilar una vivienda"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CFPB — 租房指南"
-          }
-        }
-      }
-    },
-    "CHECKLIST": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LISTA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清单"
-          }
-        }
-      }
-    },
     "Call and ask if they're taking new patients.": {
       "extractionState": "stale",
       "localizations": {
@@ -2973,23 +3870,6 @@
         }
       }
     },
-    "Call or use the patient portal to book your visit.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Llama o usa el portal del paciente para reservar tu cita."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打电话或用患者门户预约你的就诊。"
-          }
-        }
-      }
-    },
     "Call or use the patient portal to book — new-patient slots can take weeks.": {
       "extractionState": "stale",
       "localizations": {
@@ -3003,6 +3883,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "打电话或用患者门户预约——新患者的号可能要等几周。"
+          }
+        }
+      }
+    },
+    "Call or use the patient portal to book your visit.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llama o usa el portal del paciente para reservar tu cita."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打电话或用患者门户预约你的就诊。"
           }
         }
       }
@@ -3094,16 +3991,16 @@
     },
     "Can't add": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法添加"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "No se puede añadir"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法添加"
           }
         }
       }
@@ -3170,6 +4067,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "类别"
+          }
+        }
+      }
+    },
+    "CDC — vaccines for school": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CDC: vacunas para la escuela"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CDC——入学疫苗"
+          }
+        }
+      }
+    },
+    "CFPB — choosing a bank account": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: cómo elegir una cuenta bancaria"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——如何选择银行账户"
+          }
+        }
+      }
+    },
+    "CFPB — Closing Disclosure explainer": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: explicación del Closing Disclosure"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——《成交披露》说明"
+          }
+        }
+      }
+    },
+    "CFPB — credit reports and scores": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB — informes y puntajes de crédito"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB — 信用报告与信用分"
+          }
+        }
+      }
+    },
+    "CFPB — mortgage closing scams": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: estafas en el cierre hipotecario"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——房贷过户诈骗"
+          }
+        }
+      }
+    },
+    "CFPB — owning a home": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: comprar y tener vivienda"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB——购房与拥有住房"
+          }
+        }
+      }
+    },
+    "CFPB — renting a home": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB — alquilar una vivienda"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB — 租房指南"
           }
         }
       }
@@ -3394,23 +4410,6 @@
         }
       }
     },
-    "Check your EAD category (the (c)(#) code on your notice or prior card) — it determines the filing method, fee, fee waiver, and any automatic-extension rules.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Revisa tu categoría de EAD (el código (c)(#) en tu aviso o tarjeta anterior): determina el método de solicitud, la tarifa, la exención de tarifa y las reglas de extensión automática."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "查看你的 EAD 类别（你的通知或旧卡上的 (c)(#) 代码）——它决定申请方式、费用、费用豁免以及任何自动延期规则。"
-          }
-        }
-      }
-    },
     "Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).": {
       "extractionState": "stale",
       "localizations": {
@@ -3445,6 +4444,23 @@
         }
       }
     },
+    "Check your EAD category (the (c)(#) code on your notice or prior card) — it determines the filing method, fee, fee waiver, and any automatic-extension rules.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa tu categoría de EAD (el código (c)(#) en tu aviso o tarjeta anterior): determina el método de solicitud, la tarifa, la exención de tarifa y las reglas de extensión automática."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看你的 EAD 类别（你的通知或旧卡上的 (c)(#) 代码）——它决定申请方式、费用、费用豁免以及任何自动延期规则。"
+          }
+        }
+      }
+    },
     "Check your first paycheck — pay rate, taxes, and direct deposit.": {
       "extractionState": "manual",
       "localizations": {
@@ -3474,6 +4490,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "检查中…"
+          }
+        }
+      }
+    },
+    "CHECKLIST": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LISTA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清单"
           }
         }
       }
@@ -3935,6 +4968,22 @@
         }
       }
     },
+    "Continue anyway": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仍然继续"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar de todos modos"
+          }
+        }
+      }
+    },
     "Contractor / 1099": {
       "extractionState": "stale",
       "localizations": {
@@ -4019,22 +5068,6 @@
         }
       }
     },
-    "Couldn't back up — tap to try again": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudo respaldar: toca para reintentar"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备份失败——点按重试"
-          }
-        }
-      }
-    },
     "Couldn't complete the purchase. Please try again.": {
       "extractionState": "stale",
       "localizations": {
@@ -4048,6 +5081,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法完成购买。请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't delete your account": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos eliminar tu cuenta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法删除你的账户"
           }
         }
       }
@@ -4081,6 +5131,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "未能识别任何文字。请在光线充足处重拍更清晰的照片。"
+          }
+        }
+      }
+    },
+    "Couldn't remove": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo quitar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法移除"
           }
         }
       }
@@ -4269,12 +5335,12 @@
         }
       }
     },
-    "DATE": {
+    "Date": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "FECHA"
+            "value": "Fecha"
           }
         },
         "zh-Hans": {
@@ -4285,62 +5351,12 @@
         }
       }
     },
-    "DETAILS": {
+    "DATE": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "DETALLES"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "详情"
-          }
-        }
-      }
-    },
-    "DMV deadlines are state-specific — new residents often must transfer a license/registration within ~30 days.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los plazos del DMV varían por estado: los nuevos residentes suelen tener ~30 días para transferir la licencia/matrícula."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "车管所（DMV）的期限各州不同——新居民通常须在约 30 天内转换驾照／车辆登记。"
-          }
-        }
-      }
-    },
-    "DUE": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "VENCE"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "截止"
-          }
-        }
-      }
-    },
-    "Date": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fecha"
+            "value": "FECHA"
           }
         },
         "zh-Hans": {
@@ -4548,6 +5564,22 @@
         }
       }
     },
+    "DETAILS": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DETALLES"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "详情"
+          }
+        }
+      }
+    },
     "Direct deposit sends your pay straight to your bank account. You'll need your routing number and account number — both are on a check or in your banking app. Double-check them; a typo can delay your first pay.": {
       "extractionState": "manual",
       "localizations": {
@@ -4578,6 +5610,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "申请前对任何错误提出异议——错误可能让你拿不到更好的利率。"
+          }
+        }
+      }
+    },
+    "DMV deadlines are state-specific — new residents often must transfer a license/registration within ~30 days.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los plazos del DMV varían por estado: los nuevos residentes suelen tener ~30 días para transferir la licencia/matrícula."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "车管所（DMV）的期限各州不同——新居民通常须在约 30 天内转换驾照／车辆登记。"
           }
         }
       }
@@ -4616,23 +5665,6 @@
         }
       }
     },
-    "Do you have a Social Security number (SSN)?": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿Tienes un número de Seguro Social (SSN)?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你有社会安全号（SSN）吗？"
-          }
-        }
-      }
-    },
     "Do you have a car to update?": {
       "extractionState": "stale",
       "localizations": {
@@ -4663,6 +5695,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "你收到通知或有截止日期吗？（可选）"
+          }
+        }
+      }
+    },
+    "Do you have a Social Security number (SSN)?": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Tienes un número de Seguro Social (SSN)?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你有社会安全号（SSN）吗？"
           }
         }
       }
@@ -4952,6 +6001,23 @@
         }
       }
     },
+    "DUE": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VENCE"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "截止"
+          }
+        }
+      }
+    },
     "Due in %lld days": {
       "localizations": {
         "en": {
@@ -5047,69 +6113,53 @@
         }
       }
     },
-    "EIN": {
+    "e.g. 78701": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "p. ej., 78701"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如 78701"
+          }
+        }
+      }
+    },
+    "e.g. Aetna, Blue Cross, Kaiser": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "EIN"
+            "value": "p. ej. Aetna, Blue Cross, Kaiser"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "EIN（雇主识别号）"
+            "value": "例如 Aetna、Blue Cross、Kaiser"
           }
         }
       }
     },
-    "EMAIL": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CORREO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "电子邮箱"
-          }
-        }
-      }
-    },
-    "EXPLAIN DOCUMENTS IN": {
+    "e.g. primary care, dentist": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "EXPLICAR DOCUMENTOS EN"
+            "value": "p. ej. médico general, dentista"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用以下语言解释文件"
-          }
-        }
-      }
-    },
-    "EXPLANATION": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EXPLICACIÓN"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "说明"
+            "value": "例如全科医生、牙医"
           }
         }
       }
@@ -5181,6 +6231,23 @@
         }
       }
     },
+    "EIN": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EIN"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EIN（雇主识别号）"
+          }
+        }
+      }
+    },
     "Electricity — start service with your local electric company.": {
       "extractionState": "stale",
       "localizations": {
@@ -5194,6 +6261,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "电力——联系本地电力公司开通服务。"
+          }
+        }
+      }
+    },
+    "EMAIL": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CORREO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电子邮箱"
           }
         }
       }
@@ -5350,32 +6433,32 @@
     },
     "Everyone": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全家"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Todos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全家"
           }
         }
       }
     },
     "Everyone on this account": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此账户中的所有人"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Todos en esta cuenta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此账户中的所有人"
           }
         }
       }
@@ -5429,6 +6512,23 @@
         }
       }
     },
+    "EXPLAIN DOCUMENTS IN": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EXPLICAR DOCUMENTOS EN"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用以下语言解释文件"
+          }
+        }
+      }
+    },
     "Explain this step…": {
       "extractionState": "stale",
       "localizations": {
@@ -5446,35 +6546,35 @@
         }
       }
     },
-    "FULL DOCUMENT": {
-      "extractionState": "manual",
+    "EXPLANATION": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "DOCUMENTO COMPLETO"
+            "value": "EXPLICACIÓN"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完整文件"
+            "value": "说明"
           }
         }
       }
     },
     "Family": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "家人"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Familia"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家人"
           }
         }
       }
@@ -5498,32 +6598,32 @@
     },
     "Family Plus · %lld people": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Family Plus · %lld 人"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Family Plus · %lld personas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Family Plus · %lld 人"
           }
         }
       }
     },
     "Family profiles are part of Tadah Plus. Upgrade to add someone like a parent to your account.": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "家人清单是 Tadah Plus 的功能。升级后即可把家人（例如父母）添加到你的账户。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Los perfiles familiares son parte de Tadah Plus. Mejora tu plan para añadir a alguien, como un padre, a tu cuenta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家人清单是 Tadah Plus 的功能。升级后即可把家人（例如父母）添加到你的账户。"
           }
         }
       }
@@ -5545,22 +6645,6 @@
         }
       }
     },
-    "Family sharing is coming with Tadah Plus": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El uso compartido en familia llega con Tadah Plus"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "家庭共享将随 Tadah Plus 推出"
-          }
-        }
-      }
-    },
     "Federal licenses (only some industries).": {
       "extractionState": "stale",
       "localizations": {
@@ -5574,57 +6658,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "联邦执照（仅部分行业）。"
-          }
-        }
-      }
-    },
-    "File Form I-765, Application for Employment Authorization.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Presenta el formulario I-765, Solicitud de Autorización de Empleo."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提交 I-765 表（工作许可申请）。"
-          }
-        }
-      }
-    },
-    "File Form I-90 to renew or replace your green card.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Presenta el formulario I-90 para renovar o reemplazar tu green card."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提交 I-90 表以更新或补办你的绿卡。"
-          }
-        }
-      }
-    },
-    "File Form N-400, Application for Naturalization.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Presenta el formulario N-400, Solicitud de Naturalización."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提交 N-400 表（入籍申请）。"
           }
         }
       }
@@ -5710,6 +6743,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "符合条件可免费报税：使用 IRS Free File 在线报税，或到 VITA 站点获得免费的现场帮助。"
+          }
+        }
+      }
+    },
+    "File Form I-90 to renew or replace your green card.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenta el formulario I-90 para renovar o reemplazar tu green card."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提交 I-90 表以更新或补办你的绿卡。"
+          }
+        }
+      }
+    },
+    "File Form I-765, Application for Employment Authorization.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenta el formulario I-765, Solicitud de Autorización de Empleo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提交 I-765 表（工作许可申请）。"
+          }
+        }
+      }
+    },
+    "File Form N-400, Application for Naturalization.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenta el formulario N-400, Solicitud de Naturalización."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提交 N-400 表（入籍申请）。"
           }
         }
       }
@@ -5986,16 +7070,16 @@
     },
     "For": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "给"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Para"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "给"
           }
         }
       }
@@ -6113,6 +7197,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "自由职业 / 个人服务"
+          }
+        }
+      }
+    },
+    "FULL DOCUMENT": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DOCUMENTO COMPLETO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完整文件"
           }
         }
       }
@@ -6236,23 +7337,6 @@
         }
       }
     },
-    "Gather your documents: a government photo ID, proof of address, and your SSN or ITIN.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reúne tus documentos: una identificación oficial con foto, un comprobante de domicilio y tu SSN o ITIN."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "准备好你的证件：政府签发的带照片身份证件、地址证明，以及你的 SSN 或 ITIN。"
-          }
-        }
-      }
-    },
     "Gather your documents: a government photo ID, proof of address, and your Social Security number (SSN).": {
       "extractionState": "stale",
       "localizations": {
@@ -6266,6 +7350,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "准备好材料：政府签发的带照片身份证件、地址证明，以及你的社会安全号码（SSN）。"
+          }
+        }
+      }
+    },
+    "Gather your documents: a government photo ID, proof of address, and your SSN or ITIN.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reúne tus documentos: una identificación oficial con foto, un comprobante de domicilio y tu SSN o ITIN."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准备好你的证件：政府签发的带照片身份证件、地址证明，以及你的 SSN 或 ITIN。"
           }
         }
       }
@@ -6726,39 +7827,6 @@
         }
       }
     },
-    "HELP": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AYUDA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "帮助"
-          }
-        }
-      }
-    },
-    "HRSA — find a health center": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HRSA: encuentra un centro de salud"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HRSA——查找健康中心"
-          }
-        }
-      }
-    },
     "Has due date": {
       "localizations": {
         "es": {
@@ -6877,57 +7945,6 @@
         }
       }
     },
-    "HealthCare.gov is the official Marketplace — avoid look-alike sites. Some states run their own; it'll send you there if so.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HealthCare.gov es el Marketplace oficial: evita sitios que se le parezcan. Algunos estados tienen el suyo y te enviará allí."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HealthCare.gov 是官方市场——避免仿冒网站。部分州有自己的市场；若如此，它会把你转过去。"
-          }
-        }
-      }
-    },
-    "HealthCare.gov — Medicaid & CHIP": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HealthCare.gov: Medicaid y CHIP"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HealthCare.gov——Medicaid 与 CHIP"
-          }
-        }
-      }
-    },
-    "HealthCare.gov — Special Enrollment Period": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HealthCare.gov — Período Especial de Inscripción"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HealthCare.gov — 特殊参保期"
-          }
-        }
-      }
-    },
     "HealthCare.gov — coverage for immigrants": {
       "extractionState": "manual",
       "localizations": {
@@ -6992,6 +8009,73 @@
           "stringUnit": {
             "state": "translated",
             "value": "HealthCare.gov — 如何挑选计划"
+          }
+        }
+      }
+    },
+    "HealthCare.gov — Medicaid & CHIP": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthCare.gov: Medicaid y CHIP"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthCare.gov——Medicaid 与 CHIP"
+          }
+        }
+      }
+    },
+    "HealthCare.gov — Special Enrollment Period": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthCare.gov — Período Especial de Inscripción"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthCare.gov — 特殊参保期"
+          }
+        }
+      }
+    },
+    "HealthCare.gov is the official Marketplace — avoid look-alike sites. Some states run their own; it'll send you there if so.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthCare.gov es el Marketplace oficial: evita sitios que se le parezcan. Algunos estados tienen el suyo y te enviará allí."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthCare.gov 是官方市场——避免仿冒网站。部分州有自己的市场；若如此，它会把你转过去。"
+          }
+        }
+      }
+    },
+    "HELP": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AYUDA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帮助"
           }
         }
       }
@@ -7317,6 +8401,23 @@
         }
       }
     },
+    "HRSA — find a health center": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRSA: encuentra un centro de salud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRSA——查找健康中心"
+          }
+        }
+      }
+    },
     "Hybrid": {
       "extractionState": "stale",
       "localizations": {
@@ -7381,142 +8482,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "身份号码指南"
-          }
-        }
-      }
-    },
-    "IRS Free File": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS Free File"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS Free File（免费报税）"
-          }
-        }
-      }
-    },
-    "IRS — ITIN / Form W-7": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS: ITIN / Formulario W-7"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS——ITIN／W-7 表"
-          }
-        }
-      }
-    },
-    "IRS — Where's My Refund?": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS: Where's My Refund?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS——Where's My Refund?（查询退税）"
-          }
-        }
-      }
-    },
-    "IRS — apply for an EIN (free)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS: solicita un EIN (gratis)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS——申请 EIN（免费）"
-          }
-        }
-      }
-    },
-    "IRS — free help (VITA)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS: ayuda gratuita (VITA)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS——免费协助（VITA）"
-          }
-        }
-      }
-    },
-    "IRS — free in-person help (VITA)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS: ayuda gratuita en persona (VITA)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS——免费的现场报税帮助（VITA）"
-          }
-        }
-      }
-    },
-    "IRS — self-employed tax center": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS: centro tributario para autónomos"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IRS——自雇人士税务中心"
-          }
-        }
-      }
-    },
-    "ITIN (I can't get an SSN)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ITIN (no puedo obtener un SSN)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ITIN（我无法获得 SSN）"
           }
         }
       }
@@ -7810,6 +8775,52 @@
         }
       }
     },
+    "in %lld days": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld days"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %lld día"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %lld días"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 天后"
+          }
+        }
+      }
+    },
     "In a no-fault state, medical costs go through your own insurer (PIP), no matter who was at fault.": {
       "extractionState": "stale",
       "localizations": {
@@ -8014,6 +9025,125 @@
         }
       }
     },
+    "IRS — apply for an EIN (free)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS: solicita un EIN (gratis)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS——申请 EIN（免费）"
+          }
+        }
+      }
+    },
+    "IRS — free help (VITA)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS: ayuda gratuita (VITA)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS——免费协助（VITA）"
+          }
+        }
+      }
+    },
+    "IRS — free in-person help (VITA)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS: ayuda gratuita en persona (VITA)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS——免费的现场报税帮助（VITA）"
+          }
+        }
+      }
+    },
+    "IRS — ITIN / Form W-7": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS: ITIN / Formulario W-7"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS——ITIN／W-7 表"
+          }
+        }
+      }
+    },
+    "IRS — self-employed tax center": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS: centro tributario para autónomos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS——自雇人士税务中心"
+          }
+        }
+      }
+    },
+    "IRS — Where's My Refund?": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS: Where's My Refund?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS——Where's My Refund?（查询退税）"
+          }
+        }
+      }
+    },
+    "IRS Free File": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS Free File"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IRS Free File（免费报税）"
+          }
+        }
+      }
+    },
     "Is this your first U.S. school?": {
       "extractionState": "stale",
       "localizations": {
@@ -8048,6 +9178,23 @@
         }
       }
     },
+    "ITIN (I can't get an SSN)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ITIN (no puedo obtener un SSN)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ITIN（我无法获得 SSN）"
+          }
+        }
+      }
+    },
     "Job-based coverage usually has a short sign-up window — about 30 days from your start date. Miss it and you may wait until the company's yearly open enrollment.": {
       "extractionState": "manual",
       "localizations": {
@@ -8067,16 +9214,16 @@
     },
     "Just a name so you can tell the lists apart — it isn't an invitation or a separate login.": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只是一个便于区分清单的名称——这不是邀请，也不是另一个登录账号。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Solo un nombre para distinguir las listas: no es una invitación ni un inicio de sesión aparte."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只是一个便于区分清单的名称——这不是邀请，也不是另一个登录账号。"
           }
         }
       }
@@ -8100,16 +9247,16 @@
     },
     "Just mine": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只看我的"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Solo lo mío"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只看我的"
           }
         }
       }
@@ -8195,90 +9342,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "把你的保险计划名称、会员ID和会员服务电话放在手边——它们都在你的保险卡上，每次看病和去药房都会用到。"
-          }
-        }
-      }
-    },
-    "LIBRARY": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "BIBLIOTECA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "指南库"
-          }
-        }
-      }
-    },
-    "LINKS": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ENLACES"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "链接"
-          }
-        }
-      }
-    },
-    "LLC": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LLC (sociedad de responsabilidad limitada)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LLC（有限责任公司）"
-          }
-        }
-      }
-    },
-    "LLC: file with the state; can help separate personal and business liability if maintained properly.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LLC: se registra ante el estado; puede ayudar a separar la responsabilidad personal de la del negocio si se mantiene correctamente."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LLC：向州登记；如维护得当，有助于将个人与企业的责任分开。"
-          }
-        }
-      }
-    },
-    "LLC: file with the state; separates personal and business assets.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LLC: se registra ante el estado; separa los bienes personales y del negocio."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LLC：向州登记；隔离个人与公司资产。"
           }
         }
       }
@@ -8399,18 +9462,18 @@
         }
       }
     },
-    "Life Guides & Checklists": {
+    "LIBRARY": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Guías de vida paso a paso"
+            "value": "BIBLIOTECA"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "生活指南服务"
+            "value": "指南库"
           }
         }
       }
@@ -8427,6 +9490,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "人生大事总伴随成堆的文件。选择一个指南，Tadah 一步步带你完成。"
+          }
+        }
+      }
+    },
+    "Life Guides & Checklists": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guías de vida paso a paso"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生活指南服务"
           }
         }
       }
@@ -8465,6 +9544,23 @@
         }
       }
     },
+    "LINKS": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENLACES"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "链接"
+          }
+        }
+      }
+    },
     "List A (one): U.S. passport, OR permanent-resident card, OR a work permit.": {
       "extractionState": "stale",
       "localizations": {
@@ -8494,6 +9590,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "列表已满"
+          }
+        }
+      }
+    },
+    "LLC": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LLC (sociedad de responsabilidad limitada)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LLC（有限责任公司）"
+          }
+        }
+      }
+    },
+    "LLC: file with the state; can help separate personal and business liability if maintained properly.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LLC: se registra ante el estado; puede ayudar a separar la responsabilidad personal de la del negocio si se mantiene correctamente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LLC：向州登记；如维护得当，有助于将个人与企业的责任分开。"
+          }
+        }
+      }
+    },
+    "LLC: file with the state; separates personal and business assets.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LLC: se registra ante el estado; separa los bienes personales y del negocio."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LLC：向州登记；隔离个人与公司资产。"
           }
         }
       }
@@ -8618,16 +9765,16 @@
     },
     "Manage": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "管理"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Gestionar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "管理"
           }
         }
       }
@@ -8835,16 +9982,16 @@
     },
     "Mom": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "妈妈"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Mamá"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "妈妈"
           }
         }
       }
@@ -8979,6 +10126,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "把每笔收入的大约 25–30% 转入一个单独的储蓄'税金'账户。"
+          }
+        }
+      }
+    },
+    "Move them to this account": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moverlas a esta cuenta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移动到此账户"
           }
         }
       }
@@ -9150,88 +10314,6 @@
         }
       }
     },
-    "NEW ITEM": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NUEVO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新建"
-          }
-        }
-      }
-    },
-    "NEW TASK": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NUEVA TAREA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新任务"
-          }
-        }
-      }
-    },
-    "NOTE": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NOTA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备注"
-          }
-        }
-      }
-    },
-    "NOTES": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NOTAS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备注"
-          }
-        }
-      }
-    },
-    "NOTIFICATIONS": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NOTIFICACIONES"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "通知"
-          }
-        }
-      }
-    },
     "Name changed? Bring a marriage certificate or court order.": {
       "extractionState": "stale",
       "localizations": {
@@ -9334,6 +10416,22 @@
         }
       }
     },
+    "NEW ITEM": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NUEVO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建"
+          }
+        }
+      }
+    },
     "New job checklist": {
       "extractionState": "stale",
       "localizations": {
@@ -9381,6 +10479,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "新患者还是复诊？"
+          }
+        }
+      }
+    },
+    "NEW TASK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NUEVA TAREA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新任务"
           }
         }
       }
@@ -9452,53 +10566,70 @@
         }
       }
     },
-    "No SSN or ITIN? Apply for an ITIN with IRS Form W-7 — you can file your return at the same time.": {
+    "No — I need an ITIN": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "¿Sin SSN ni ITIN? Solicita un ITIN con el formulario W-7 del IRS; puedes presentar tu declaración al mismo tiempo."
+            "value": "No: necesito un ITIN"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有 SSN 或 ITIN？用 IRS W-7 表申请 ITIN——可以同时提交报税表。"
+            "value": "没有——我需要 ITIN"
           }
         }
       }
     },
-    "No SSN? Call a few banks first and ask what they accept — an ITIN, foreign passport, or consular ID. Apply for an ITIN only if you actually need one.": {
+    "No — I'll use an ITIN": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "¿No tienes SSN? Llama primero a varios bancos y pregunta qué aceptan: ITIN, pasaporte extranjero o identificación consular. Solicita un ITIN solo si realmente lo necesitas."
+            "value": "No: usaré un ITIN"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有 SSN？先打电话问几家银行接受什么——ITIN、外国护照或领事身份证。只有在确实需要时才申请 ITIN。"
+            "value": "没有——我会使用 ITIN"
           }
         }
       }
     },
-    "No U.S. credit history? A landlord may ask for a bigger deposit, a co-signer, or a few months up front — ask what proof they'll accept instead (pay stubs, a bank letter, or an offer letter).": {
-      "extractionState": "manual",
+    "No — needs a tow": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "¿Sin historial crediticio en EE. UU.? Un arrendador puede pedir un depósito mayor, un co-firmante o varios meses por adelantado; pregunta qué comprobantes aceptan en su lugar (recibos de pago, una carta del banco o una carta de oferta de empleo)."
+            "value": "No: necesita grúa"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有美国信用记录？房东可能要求更高的押金、担保人（co-signer）或预付几个月房租——问清楚他们可以接受哪些替代证明（工资单、银行证明信或工作录用信）。"
+            "value": "不能——需要拖车"
+          }
+        }
+      }
+    },
+    "No — transferring": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No: transferencia"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不是——转学"
           }
         }
       }
@@ -9634,70 +10765,53 @@
         }
       }
     },
-    "No — I need an ITIN": {
+    "No SSN or ITIN? Apply for an ITIN with IRS Form W-7 — you can file your return at the same time.": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No: necesito un ITIN"
+            "value": "¿Sin SSN ni ITIN? Solicita un ITIN con el formulario W-7 del IRS; puedes presentar tu declaración al mismo tiempo."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有——我需要 ITIN"
+            "value": "没有 SSN 或 ITIN？用 IRS W-7 表申请 ITIN——可以同时提交报税表。"
           }
         }
       }
     },
-    "No — I'll use an ITIN": {
+    "No SSN? Call a few banks first and ask what they accept — an ITIN, foreign passport, or consular ID. Apply for an ITIN only if you actually need one.": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No: usaré un ITIN"
+            "value": "¿No tienes SSN? Llama primero a varios bancos y pregunta qué aceptan: ITIN, pasaporte extranjero o identificación consular. Solicita un ITIN solo si realmente lo necesitas."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有——我会使用 ITIN"
+            "value": "没有 SSN？先打电话问几家银行接受什么——ITIN、外国护照或领事身份证。只有在确实需要时才申请 ITIN。"
           }
         }
       }
     },
-    "No — needs a tow": {
-      "extractionState": "stale",
+    "No U.S. credit history? A landlord may ask for a bigger deposit, a co-signer, or a few months up front — ask what proof they'll accept instead (pay stubs, a bank letter, or an offer letter).": {
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No: necesita grúa"
+            "value": "¿Sin historial crediticio en EE. UU.? Un arrendador puede pedir un depósito mayor, un co-firmante o varios meses por adelantado; pregunta qué comprobantes aceptan en su lugar (recibos de pago, una carta del banco o una carta de oferta de empleo)."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不能——需要拖车"
-          }
-        }
-      }
-    },
-    "No — transferring": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No: transferencia"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不是——转学"
+            "value": "没有美国信用记录？房东可能要求更高的押金、担保人（co-signer）或预付几个月房租——问清楚他们可以接受哪些替代证明（工资单、银行证明信或工作录用信）。"
           }
         }
       }
@@ -9714,6 +10828,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "暂不"
+          }
+        }
+      }
+    },
+    "Not now — sign out": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora no: cerrar sesión"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂不——退出登录"
           }
         }
       }
@@ -9819,6 +10950,23 @@
         }
       }
     },
+    "NOTE": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOTA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备注"
+          }
+        }
+      }
+    },
     "Note (optional) — shown in the alert": {
       "localizations": {
         "es": {
@@ -9865,6 +11013,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "记下你复诊的原因——新症状或加重、续药，或查看检查结果。"
+          }
+        }
+      }
+    },
+    "NOTES": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOTAS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备注"
+          }
+        }
+      }
+    },
+    "Nothing has been deleted — your to-dos are still saved on this phone, but this version of Tadah can't read them. Anything you add right now will not be kept. Please update to the latest version, and contact support if this keeps happening.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有任何内容被删除——你的待办事项仍保存在这台手机上，只是当前版本的 Tadah 无法读取它们。你现在添加的内容将不会被保留。请更新到最新版本；如果问题持续出现，请联系客服。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha eliminado nada: tus tareas siguen guardadas en este teléfono, pero esta versión de Tadah no puede leerlas. Lo que añadas ahora no se conservará. Actualiza a la última versión y, si el problema continúa, contacta con soporte."
           }
         }
       }
@@ -9917,6 +11097,23 @@
         }
       }
     },
+    "Nothing was changed on this device or in your account. Please try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se cambió nada en este dispositivo ni en tu cuenta. Inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备和你的账户均未发生更改。请重试。"
+          }
+        }
+      }
+    },
     "Notice, deposit, mail, change of address": {
       "extractionState": "stale",
       "localizations": {
@@ -9950,67 +11147,19 @@
         }
       }
     },
-    "OK": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "好的"
-          }
-        }
-      }
-    },
-    "OPTIONAL": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OPCIONAL"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可选"
-          }
-        }
-      }
-    },
-    "OR List B (identity): driver's license or state ID …": {
+    "NOTIFICATIONS": {
       "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Lista B (identidad): licencia de conducir o identificación estatal …"
+            "value": "NOTIFICACIONES"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "或 列表 B（身份）：驾照或州身份证 …"
-          }
-        }
-      }
-    },
-    "ORIGINAL DOCUMENT": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DOCUMENTO ORIGINAL"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "文件原件"
+            "value": "通知"
           }
         }
       }
@@ -10114,6 +11263,22 @@
         }
       }
     },
+    "OK": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好的"
+          }
+        }
+      }
+    },
     "On": {
       "localizations": {
         "es": {
@@ -10126,6 +11291,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "已开启"
+          }
+        }
+      }
+    },
+    "On — reminders will be delivered.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activado — se enviarán recordatorios."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开启 — 将发送提醒。"
           }
         }
       }
@@ -10143,22 +11324,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "自己购买（保险市场）"
-          }
-        }
-      }
-    },
-    "On — reminders will be delivered.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activado — se enviarán recordatorios."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已开启 — 将发送提醒。"
           }
         }
       }
@@ -10314,6 +11479,39 @@
         }
       }
     },
+    "OPTIONAL": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OPCIONAL"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选"
+          }
+        }
+      }
+    },
+    "OR List B (identity): driver's license or state ID …": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Lista B (identidad): licencia de conducir o identificación estatal …"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "或 列表 B（身份）：驾照或州身份证 …"
+          }
+        }
+      }
+    },
     "Original": {
       "extractionState": "manual",
       "localizations": {
@@ -10331,19 +11529,18 @@
         }
       }
     },
-    "Originals of each document": {
-      "extractionState": "stale",
+    "ORIGINAL DOCUMENT": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Originales de cada documento"
+            "value": "DOCUMENTO ORIGINAL"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "每份证件的原件"
+            "value": "文件原件"
           }
         }
       }
@@ -10361,6 +11558,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "原件——大多数证件不能用复印件"
+          }
+        }
+      }
+    },
+    "Originals of each document": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Originales de cada documento"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每份证件的原件"
           }
         }
       }
@@ -10483,6 +11697,23 @@
         }
       }
     },
+    "overdue": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "atrasado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已逾期"
+          }
+        }
+      }
+    },
     "Overdue — still not done": {
       "localizations": {
         "es": {
@@ -10512,39 +11743,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "自有住房"
-          }
-        }
-      }
-    },
-    "PRIVACY": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PRIVACIDAD"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隐私"
-          }
-        }
-      }
-    },
-    "PROFILE": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PERFIL"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "个人"
           }
         }
       }
@@ -10938,6 +12136,24 @@
         }
       }
     },
+    "Please check your connection and try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprueba tu conexión e inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请检查网络连接后重试。"
+          }
+        }
+      }
+    },
+    "PLUS": {},
     "Plus isn't available to purchase yet. Please check back soon.": {
       "extractionState": "stale",
       "localizations": {
@@ -11023,6 +12239,23 @@
         }
       }
     },
+    "PRIVACY": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRIVACIDAD"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私"
+          }
+        }
+      }
+    },
     "Privacy Policy": {
       "localizations": {
         "es": {
@@ -11051,6 +12284,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "我的"
+          }
+        }
+      }
+    },
+    "PROFILE": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PERFIL"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "个人"
           }
         }
       }
@@ -11258,87 +12507,6 @@
         }
       }
     },
-    "REFERENCE": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "REFERENCIA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编号"
-          }
-        }
-      }
-    },
-    "REMIND": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AVISAR"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提醒"
-          }
-        }
-      }
-    },
-    "REMINDERS": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RECORDATORIOS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提醒"
-          }
-        }
-      }
-    },
-    "REPEATS": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SE REPITE"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重复"
-          }
-        }
-      }
-    },
-    "REVIEW": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "REVISAR"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确认"
-          }
-        }
-      }
-    },
     "Read the whole report — roof, foundation, plumbing, electrical, HVAC.": {
       "extractionState": "stale",
       "localizations": {
@@ -11390,6 +12558,22 @@
         }
       }
     },
+    "REFERENCE": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REFERENCIA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编号"
+          }
+        }
+      }
+    },
     "Refund amount": {
       "extractionState": "stale",
       "localizations": {
@@ -11424,6 +12608,23 @@
         }
       }
     },
+    "REMIND": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AVISAR"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提醒"
+          }
+        }
+      }
+    },
     "Remind me later": {
       "localizations": {
         "es": {
@@ -11446,6 +12647,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recordatorio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提醒"
+          }
+        }
+      }
+    },
+    "REMINDERS": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECORDATORIOS"
           }
         },
         "zh-Hans": {
@@ -11525,32 +12742,32 @@
     },
     "Remove": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Quitar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除"
           }
         }
       }
     },
     "Remove %@": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除 %@"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Quitar a %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移除 %@"
           }
         }
       }
@@ -11573,32 +12790,32 @@
     },
     "Remove this person?": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "要移除此成员吗？"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "¿Quitar a esta persona?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要移除此成员吗？"
           }
         }
       }
     },
     "Rename": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重命名"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Cambiar nombre"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重命名"
           }
         }
       }
@@ -11756,6 +12973,22 @@
         }
       }
     },
+    "REPEATS": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SE REPITE"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重复"
+          }
+        }
+      }
+    },
     "Replacement (lost/stolen)": {
       "extractionState": "stale",
       "localizations": {
@@ -11825,7 +13058,6 @@
       }
     },
     "Restore purchases": {
-      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -11874,6 +13106,22 @@
         }
       }
     },
+    "REVIEW": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REVISAR"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认"
+          }
+        }
+      }
+    },
     "Review the health plans — premium, deductible, and whether your doctors are in-network.": {
       "extractionState": "stale",
       "localizations": {
@@ -11891,258 +13139,6 @@
         }
       }
     },
-    "SBA — apply for licenses & permits": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA: solicita licencias y permisos"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA——申请执照与许可"
-          }
-        }
-      }
-    },
-    "SBA — choose a business structure": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA: elige una estructura de negocio"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA——选择企业架构"
-          }
-        }
-      }
-    },
-    "SBA — choose your business name": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA: elige el nombre de tu negocio"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA——选择你的公司名"
-          }
-        }
-      }
-    },
-    "SBA — hire and manage employees": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA: contrata y gestiona empleados"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA——招聘与管理员工"
-          }
-        }
-      }
-    },
-    "SBA — open a business bank account": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA: abre una cuenta bancaria de empresa"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA——开设公司银行账户"
-          }
-        }
-      }
-    },
-    "SBA — write your business plan": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA: redacta tu plan de negocio"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SBA——撰写你的商业计划"
-          }
-        }
-      }
-    },
-    "SETTINGS": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AJUSTES"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置"
-          }
-        }
-      }
-    },
-    "SOON": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PRONTO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "敬请期待"
-          }
-        }
-      }
-    },
-    "SSA mails your card after processing your application; timing can vary.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La SSA envía tu tarjeta por correo tras procesar la solicitud; los plazos varían."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSA 在处理完申请后邮寄卡片；时间可能不一。"
-          }
-        }
-      }
-    },
-    "SSA — Social Security number & card": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSA: número y tarjeta de Seguro Social"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSA——社会安全号与卡"
-          }
-        }
-      }
-    },
-    "SSA — documents you'll need": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSA: documentos que necesitarás"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSA——所需证件"
-          }
-        }
-      }
-    },
-    "SSN (I can work in the U.S.)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSN (puedo trabajar en EE. UU.)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSN（我可以在美国工作）"
-          }
-        }
-      }
-    },
-    "SSN proof if you have one (SS card, W-2, or pay stub) — or your DMV's alternative.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prueba de SSN si lo tienes (tarjeta del SS, W-2 o nómina), o la alternativa que acepte tu DMV."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "有 SSN 的话提供证明（社保卡、W-2 或工资单）——或你车管所认可的替代证明。"
-          }
-        }
-      }
-    },
-    "STEP": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PASO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "步骤"
-          }
-        }
-      }
-    },
-    "STEPS": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PASOS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "步骤"
-          }
-        }
-      }
-    },
     "Same state": {
       "extractionState": "stale",
       "localizations": {
@@ -12156,6 +13152,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "同一州"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar"
           }
         }
       }
@@ -12375,6 +13387,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "如果情况紧急就说明——他们可能会更早安排。"
+          }
+        }
+      }
+    },
+    "SBA — apply for licenses & permits": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA: solicita licencias y permisos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA——申请执照与许可"
+          }
+        }
+      }
+    },
+    "SBA — choose a business structure": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA: elige una estructura de negocio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA——选择企业架构"
+          }
+        }
+      }
+    },
+    "SBA — choose your business name": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA: elige el nombre de tu negocio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA——选择你的公司名"
+          }
+        }
+      }
+    },
+    "SBA — hire and manage employees": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA: contrata y gestiona empleados"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA——招聘与管理员工"
+          }
+        }
+      }
+    },
+    "SBA — open a business bank account": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA: abre una cuenta bancaria de empresa"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA——开设公司银行账户"
+          }
+        }
+      }
+    },
+    "SBA — write your business plan": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA: redacta tu plan de negocio"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SBA——撰写你的商业计划"
           }
         }
       }
@@ -12746,6 +13860,23 @@
         }
       }
     },
+    "Set up — or transfer or stop — every utility your home uses; each has its own provider. Internet usually needs the most lead time, so start there. Aim to have them all on for your move-in date.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa, transfiere o cancela cada servicio público de tu hogar; cada uno tiene su propio proveedor. Internet suele necesitar más tiempo de anticipación, así que empieza por ahí. Intenta tenerlos todos listos para tu fecha de mudanza."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为你的新家开通、转移或停止每一项公用事业服务；每项服务都有各自的供应商。网络通常需要最长的提前时间，所以先从它开始。尽量让所有服务在搬入当天都已开通。"
+          }
+        }
+      }
+    },
     "Set up (or stop) electricity, gas, water, and internet. Internet usually needs the most lead time, so start there.": {
       "extractionState": "stale",
       "localizations": {
@@ -12831,23 +13962,6 @@
         }
       }
     },
-    "Set up — or transfer or stop — every utility your home uses; each has its own provider. Internet usually needs the most lead time, so start there. Aim to have them all on for your move-in date.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activa, transfiere o cancela cada servicio público de tu hogar; cada uno tiene su propio proveedor. Internet suele necesitar más tiempo de anticipación, así que empieza por ahí. Intenta tenerlos todos listos para tu fecha de mudanza."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "为你的新家开通、转移或停止每一项公用事业服务；每项服务都有各自的供应商。网络通常需要最长的提前时间，所以先从它开始。尽量让所有服务在搬入当天都已开通。"
-          }
-        }
-      }
-    },
     "Set your 401(k) contribution — at least enough to get any employer match.": {
       "extractionState": "stale",
       "localizations": {
@@ -12865,19 +13979,34 @@
         }
       }
     },
-    "Share Tadah with your family and use it everywhere.": {
-      "extractionState": "stale",
+    "Setting up your backup…": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在设置备份……"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurando tu copia de seguridad…"
+          }
+        }
+      }
+    },
+    "SETTINGS": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comparte Tadah con tu familia y úsalo en todas partes."
+            "value": "AJUSTES"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "与家人共享 Tadah，随处使用。"
+            "value": "设置"
           }
         }
       }
@@ -12911,6 +14040,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "分享匿名使用数据"
+          }
+        }
+      }
+    },
+    "Share Tadah with your family and use it everywhere.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparte Tadah con tu familia y úsalo en todas partes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "与家人共享 Tadah，随处使用。"
           }
         }
       }
@@ -13046,6 +14192,23 @@
         }
       }
     },
+    "Sign-in didn't finish": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El inicio de sesión no se completó"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录未完成"
+          }
+        }
+      }
+    },
     "Signed in": {
       "localizations": {
         "es": {
@@ -13058,6 +14221,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "已登录"
+          }
+        }
+      }
+    },
+    "Signed in on this phone only": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在这台手机上登录"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión iniciada solo en este teléfono"
+          }
+        }
+      }
+    },
+    "Signed in. Your to-dos are backed up.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已登录。你的待办事项已备份。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión iniciada. Tus tareas están respaldadas."
           }
         }
       }
@@ -13228,18 +14423,19 @@
         }
       }
     },
-    "Soon you'll be able to add family members (like a parent) and manage their mail from your account. We'll let you know when it's ready.": {
+    "SOON": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pronto podrás agregar familiares (como un padre o una madre) y gestionar su correo desde tu cuenta. Te avisaremos cuando esté listo."
+            "value": "PRONTO"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "很快你就能添加家庭成员（比如父母），并从你的账户管理他们的信件。准备就绪后我们会通知你。"
+            "value": "敬请期待"
           }
         }
       }
@@ -13256,6 +14452,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "指定时间"
+          }
+        }
+      }
+    },
+    "SSA — documents you'll need": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSA: documentos que necesitarás"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSA——所需证件"
+          }
+        }
+      }
+    },
+    "SSA — Social Security number & card": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSA: número y tarjeta de Seguro Social"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSA——社会安全号与卡"
+          }
+        }
+      }
+    },
+    "SSA mails your card after processing your application; timing can vary.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La SSA envía tu tarjeta por correo tras procesar la solicitud; los plazos varían."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSA 在处理完申请后邮寄卡片；时间可能不一。"
+          }
+        }
+      }
+    },
+    "SSN (I can work in the U.S.)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSN (puedo trabajar en EE. UU.)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSN（我可以在美国工作）"
+          }
+        }
+      }
+    },
+    "SSN proof if you have one (SS card, W-2, or pay stub) — or your DMV's alternative.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba de SSN si lo tienes (tarjeta del SS, W-2 o nómina), o la alternativa que acepte tu DMV."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有 SSN 的话提供证明（社保卡、W-2 或工资单）——或你车管所认可的替代证明。"
           }
         }
       }
@@ -13478,19 +14759,34 @@
         }
       }
     },
-    "Steps for your USCIS filing.": {
-      "extractionState": "stale",
+    "STEP": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pasos para tu trámite ante USCIS."
+            "value": "PASO"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "办理你的 USCIS 申请的步骤。"
+            "value": "步骤"
+          }
+        }
+      }
+    },
+    "STEPS": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PASOS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "步骤"
           }
         }
       }
@@ -13508,6 +14804,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "办理你驾照的步骤。"
+          }
+        }
+      }
+    },
+    "Steps for your USCIS filing.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasos para tu trámite ante USCIS."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "办理你的 USCIS 申请的步骤。"
           }
         }
       }
@@ -13596,40 +14909,23 @@
         }
       }
     },
-    "TITLE": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TÍTULO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "标题"
-          }
-        }
-      }
-    },
-    "TRANSLATION": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TRADUCCIÓN"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "翻译"
-          }
-        }
-      }
-    },
     "Tadah": {},
+    "Tadah is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah es solo informativo: no constituye asesoramiento legal, fiscal, migratorio, financiero ni médico. Usa IA, que puede cometer errores; verifica los datos importantes con fuentes oficiales o un profesional."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah 仅供参考——不构成法律、税务、移民、金融或医疗建议。它使用 AI，可能会出错；请向官方来源或专业人士核对重要信息。"
+          }
+        }
+      }
+    },
     "Tadah Plus": {
       "localizations": {
         "es": {
@@ -13648,32 +14944,33 @@
     },
     "Tadah Plus covers every profile on this account — no extra charge per person.": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tadah Plus 覆盖此账户下的所有成员——无需为每人额外付费。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Tadah Plus cubre todos los perfiles de esta cuenta, sin cargo adicional por persona."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah Plus 覆盖此账户下的所有成员——无需为每人额外付费。"
+          }
         }
       }
     },
-    "Tadah is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional.": {
+    "Tadah Plus is coming soon": {
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tadah es solo informativo: no constituye asesoramiento legal, fiscal, migratorio, financiero ni médico. Usa IA, que puede cometer errores; verifica los datos importantes con fuentes oficiales o un profesional."
+            "value": "Tadah Plus llegará pronto"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tadah 仅供参考——不构成法律、税务、移民、金融或医疗建议。它使用 AI，可能会出错；请向官方来源或专业人士核对重要信息。"
+            "value": "Tadah Plus 即将推出"
           }
         }
       }
@@ -13759,6 +15056,38 @@
         }
       }
     },
+    "Tap ＋ Add to scan a document — Tadah explains it and what to do.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca ＋ Añadir para escanear un documento: Tadah lo explica y te dice qué hacer."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按 ＋ 添加 来扫描文件 — Tadah 会解释它是什么以及该怎么做。"
+          }
+        }
+      }
+    },
+    "Tap ＋ below, then Scan — Tadah explains it and builds your steps.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca ＋ abajo y elige Escanear — Tadah lo explica y crea tus pasos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点下方的＋，选择扫描——Tadah 帮你看懂并生成步骤。"
+          }
+        }
+      }
+    },
     "Tap one to open it, or swipe it left to mark it done. You're all set.": {
       "localizations": {
         "es": {
@@ -13787,22 +15116,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "完成一步后，点按方框打勾。"
-          }
-        }
-      }
-    },
-    "Tap to back up your items now": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca para respaldar tus elementos ahora"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点按立即备份你的事项"
           }
         }
       }
@@ -13852,38 +15165,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "点按填写"
-          }
-        }
-      }
-    },
-    "Tap ＋ Add to scan a document — Tadah explains it and what to do.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca ＋ Añadir para escanear un documento: Tadah lo explica y te dice qué hacer."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点按 ＋ 添加 来扫描文件 — Tadah 会解释它是什么以及该怎么做。"
-          }
-        }
-      }
-    },
-    "Tap ＋ below, then Scan — Tadah explains it and builds your steps.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toca ＋ abajo y elige Escanear — Tadah lo explica y crea tus pasos."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点下方的＋，选择扫描——Tadah 帮你看懂并生成步骤。"
           }
         }
       }
@@ -14000,6 +15281,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "使用条款"
+          }
+        }
+      }
+    },
+    "The %lld to-dos on this device were saved under a different account. Nothing has been uploaded. Move them to this account, or sign out and leave them exactly as they are.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las %lld tareas de este dispositivo se guardaron en otra cuenta. No se ha subido nada. Muévelas a esta cuenta o cierra sesión y déjalas tal como están."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备上的 %lld 条待办事项保存在另一个账户下。尚未上传任何内容。你可以将它们移到此账户，或退出登录并原样保留。"
           }
         }
       }
@@ -14192,21 +15490,56 @@
     },
     "Their to-dos are deleted too. Yours aren't affected.": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "他们的待办事项也会被删除。你的不受影响。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Sus tareas también se eliminan. Las tuyas no se ven afectadas."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "他们的待办事项也会被删除。你的不受影响。"
+          }
+        }
+      }
+    },
+    "These to-dos belong to another account": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estas tareas pertenecen a otra cuenta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些待办事项属于另一个账户"
+          }
+        }
+      }
+    },
+    "This account is already signed in on the maximum number of devices.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta cuenta ya ha iniciado sesión en el número máximo de dispositivos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此账户已在最多允许的设备数量上登录。"
+          }
         }
       }
     },
     "This device has %lld tasks that aren't in your account yet. Add them to your account, or use your account's tasks instead? (A backup is saved either way.)": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "variations": {
@@ -14258,21 +15591,38 @@
     },
     "This list is full at %lld items. Delete one to add another.": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此清单已满（%lld 项）。删除一项才能再添加。"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Esta lista está llena con %lld elementos. Elimina uno para añadir otro."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此清单已满（%lld 项）。删除一项才能再添加。"
+          }
+        }
+      }
+    },
+    "This permanently deletes your account, everything backed up to it on every device, and disconnects your Apple ID from Tadah. You'll be asked to confirm with Apple. Your saved items stay on this phone. This can't be undone.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这将永久删除你的账户、所有设备上备份到该账户的全部内容，并断开你的 Apple ID 与 Tadah 的关联。系统会要求你通过 Apple 确认。你保存在这台手机上的内容会保留。此操作无法撤销。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esto elimina permanentemente tu cuenta, todo lo respaldado en ella desde cualquier dispositivo, y desconecta tu Apple ID de Tadah. Se te pedirá confirmarlo con Apple. Lo que tienes guardado en este teléfono se conserva. Esta acción no se puede deshacer."
+          }
         }
       }
     },
     "This removes your account from this device. Your saved items stay on the device.": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -14371,6 +15721,22 @@
         }
       }
     },
+    "TITLE": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TÍTULO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题"
+          }
+        }
+      }
+    },
     "To-Do": {
       "localizations": {
         "es": {
@@ -14399,6 +15765,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "提醒待办事项"
+          }
+        }
+      }
+    },
+    "today": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hoy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
           }
         }
       }
@@ -14535,6 +15917,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "翻译中…"
+          }
+        }
+      }
+    },
+    "TRANSLATION": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRADUCCIÓN"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻译"
           }
         }
       }
@@ -14724,158 +16123,6 @@
         }
       }
     },
-    "UPGRADE": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MEJORAR"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "升级"
-          }
-        }
-      }
-    },
-    "USCIS may extend your green card on the I-90 receipt notice — check the I-90 page.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS puede extender tu green card mediante el aviso de recibo del I-90: consulta la página del I-90."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS 可能会在 I-90 收据通知上延长你的绿卡有效期——请查看 I-90 页面。"
-          }
-        }
-      }
-    },
-    "USCIS paperwork": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trámites de USCIS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS 文件"
-          }
-        }
-      }
-    },
-    "USCIS — Form I-765 (work permit)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS: formulario I-765 (permiso de trabajo)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS——I-765 表（工作许可）"
-          }
-        }
-      }
-    },
-    "USCIS — Form I-90 (renew/replace green card)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS: formulario I-90 (renovar/reemplazar green card)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS——I-90 表（更新／补办绿卡）"
-          }
-        }
-      }
-    },
-    "USCIS — Form N-400 (citizenship)": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS: formulario N-400 (ciudadanía)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS——N-400 表（入籍）"
-          }
-        }
-      }
-    },
-    "USCIS — check case status": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS: consultar estado del caso"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS——查询案件状态"
-          }
-        }
-      }
-    },
-    "USCIS — file online": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS: presentar en línea"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USCIS——在线提交"
-          }
-        }
-      }
-    },
-    "USPS forwarding only moves your mail — update your bank, DMV, and employer separately.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El reenvío de USPS solo mueve tu correo: actualiza por separado tu banco, el DMV y tu empleador."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "USPS 转寄只转移你的邮件——请另行更新你的银行、车管所（DMV）和雇主信息。"
-          }
-        }
-      }
-    },
     "Understand your taxes — business income is taxed, and self-employed owners usually pay quarterly estimated taxes.": {
       "extractionState": "stale",
       "localizations": {
@@ -14928,16 +16175,16 @@
     },
     "Unnamed": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "未命名"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Sin nombre"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未命名"
           }
         }
       }
@@ -14976,6 +16223,22 @@
         }
       }
     },
+    "UPGRADE": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MEJORAR"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "升级"
+          }
+        }
+      }
+    },
     "Upload from Photos": {
       "extractionState": "stale",
       "localizations": {
@@ -14989,6 +16252,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "从相册上传"
+          }
+        }
+      }
+    },
+    "USCIS — check case status": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS: consultar estado del caso"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS——查询案件状态"
+          }
+        }
+      }
+    },
+    "USCIS — file online": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS: presentar en línea"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS——在线提交"
+          }
+        }
+      }
+    },
+    "USCIS — Form I-90 (renew/replace green card)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS: formulario I-90 (renovar/reemplazar green card)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS——I-90 表（更新／补办绿卡）"
+          }
+        }
+      }
+    },
+    "USCIS — Form I-765 (work permit)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS: formulario I-765 (permiso de trabajo)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS——I-765 表（工作许可）"
+          }
+        }
+      }
+    },
+    "USCIS — Form N-400 (citizenship)": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS: formulario N-400 (ciudadanía)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS——N-400 表（入籍）"
+          }
+        }
+      }
+    },
+    "USCIS may extend your green card on the I-90 receipt notice — check the I-90 page.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS puede extender tu green card mediante el aviso de recibo del I-90: consulta la página del I-90."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS 可能会在 I-90 收据通知上延长你的绿卡有效期——请查看 I-90 页面。"
+          }
+        }
+      }
+    },
+    "USCIS paperwork": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trámites de USCIS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USCIS 文件"
           }
         }
       }
@@ -15010,22 +16392,6 @@
         }
       }
     },
-    "Use my account's tasks": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar las tareas de mi cuenta"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用账户中的待办事项"
-          }
-        }
-      }
-    },
     "Use your state's official DMV site — not a paid look-alike.": {
       "extractionState": "stale",
       "localizations": {
@@ -15039,6 +16405,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "使用你所在州的官方车管所网站——不要用收费的仿冒站点。"
+          }
+        }
+      }
+    },
+    "USPS forwarding only moves your mail — update your bank, DMV, and employer separately.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reenvío de USPS solo mueve tu correo: actualiza por separado tu banco, el DMV y tu empleador."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USPS 转寄只转移你的邮件——请另行更新你的银行、车管所（DMV）和雇主信息。"
           }
         }
       }
@@ -15078,16 +16461,16 @@
     },
     "VIEWING": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "当前查看"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "VIENDO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前查看"
           }
         }
       }
@@ -15126,73 +16509,6 @@
         }
       }
     },
-    "WHAT THESE MEAN": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QUÉ SIGNIFICAN"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "这些词的意思"
-          }
-        }
-      }
-    },
-    "WHAT TO SAY": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QUÉ DECIR"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "可以这样说"
-          }
-        }
-      }
-    },
-    "WHAT YOU'LL NEED": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QUÉ NECESITARÁS"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你需要准备"
-          }
-        }
-      }
-    },
-    "WHO ARE YOU ADDING?": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "要添加谁？"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿A QUIÉN AÑADES?"
-          }
-        }
-      }
-    },
     "Water & sewer — set up with the city or your local water utility.": {
       "extractionState": "stale",
       "localizations": {
@@ -15210,6 +16526,107 @@
         }
       }
     },
+    "We couldn't find a subscription to restore on this Apple ID.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No encontramos ninguna suscripción para restaurar en este ID de Apple."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在此 Apple ID 上未找到可恢复的订阅。"
+          }
+        }
+      }
+    },
+    "We couldn't finish setting up your account on this phone. Please try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos terminar de configurar tu cuenta en este teléfono. Inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法在这台手机上完成账户设置。请重试。"
+          }
+        }
+      }
+    },
+    "We couldn't finish that": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos completar la acción"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法完成该操作"
+          }
+        }
+      }
+    },
+    "We couldn't load Tadah Plus": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos cargar Tadah Plus"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法加载 Tadah Plus"
+          }
+        }
+      }
+    },
+    "We couldn't reach Tadah to set up your backup, so your to-dos are saved on this phone but not to your account yet. %@": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们无法连接 Tadah 来设置备份，因此你的待办事项已保存在这台手机上，但尚未备份到你的账户。%@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos conectar con Tadah para configurar tu copia de seguridad, así que tus tareas se guardaron en este teléfono pero aún no en tu cuenta. %@"
+          }
+        }
+      }
+    },
+    "We couldn't reach the App Store. Please check your connection and try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos conectar con la App Store. Comprueba tu conexión e inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法连接 App Store。请检查网络连接后重试。"
+          }
+        }
+      }
+    },
     "We couldn't read this clearly, so the details might be wrong. Try retaking the photo in better light.": {
       "localizations": {
         "es": {
@@ -15222,6 +16639,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "我们没能清楚识别，详情可能有误。请在光线更好的地方重拍。"
+          }
+        }
+      }
+    },
+    "We couldn't remove that person. Nothing was changed — please try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos quitar a esa persona. No se cambió nada; inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们无法移除这个人。未做任何更改，请重试。"
+          }
+        }
+      }
+    },
+    "We're putting the finishing touches on it. Everything you use today stays free — we'll let you know the moment Plus is ready.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le estamos dando los últimos retoques. Todo lo que usas hoy seguirá siendo gratis; te avisaremos en cuanto Plus esté listo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们正在做最后的完善。你现在使用的功能将继续免费——Plus 一上线我们就会通知你。"
           }
         }
       }
@@ -15392,6 +16842,23 @@
         }
       }
     },
+    "WHAT THESE MEAN": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QUÉ SIGNIFICAN"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些词的意思"
+          }
+        }
+      }
+    },
     "What to bring — with or without an SSN": {
       "extractionState": "stale",
       "localizations": {
@@ -15422,6 +16889,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "车祸后该怎么做，从现场到修好车。"
+          }
+        }
+      }
+    },
+    "WHAT TO SAY": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QUÉ DECIR"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以这样说"
           }
         }
       }
@@ -15490,6 +16974,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "你的定价和主要成本。"
+          }
+        }
+      }
+    },
+    "WHAT YOU'LL NEED": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QUÉ NECESITARÁS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你需要准备"
           }
         }
       }
@@ -15731,18 +17232,34 @@
         }
       }
     },
-    "Who is this for?": {
+    "WHO ARE YOU ADDING?": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿A QUIÉN AÑADES?"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这是给谁的？"
+            "value": "要添加谁？"
           }
-        },
+        }
+      }
+    },
+    "Who is this for?": {
+      "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "¿Para quién es esto?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是给谁的？"
           }
         }
       }
@@ -15900,21 +17417,22 @@
     },
     "You": {
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你"
-          }
-        },
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Tú"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你"
+          }
         }
       }
     },
     "You already have tasks on this device": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -15943,6 +17461,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "你可以先以个体经营者身份立即开始赚钱，之后随着发展再成立 LLC。"
+          }
+        }
+      }
+    },
+    "You can try again now or later — nothing is lost either way.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你可以现在重试，也可以稍后再试——无论哪种方式都不会丢失任何内容。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes reintentarlo ahora o más tarde: no se pierde nada en ningún caso."
           }
         }
       }
@@ -15980,18 +17514,35 @@
         }
       }
     },
-    "You've reached the limit of %lld profiles on this account.": {
+    "You're signed in, but we couldn't finish backing up yet. It will retry on its own.": {
+      "extractionState": "manual",
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Has iniciado sesión, pero aún no pudimos completar la copia de seguridad. Se reintentará solo."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此账户已达到 %lld 个成员的上限。"
+            "value": "你已登录，但备份尚未完成。系统会自动重试。"
           }
-        },
+        }
+      }
+    },
+    "You've reached the limit of %lld profiles on this account.": {
+      "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Has alcanzado el límite de %lld perfiles en esta cuenta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此账户已达到 %lld 个成员的上限。"
           }
         }
       }
@@ -16062,36 +17613,37 @@
         }
       }
     },
-    "Your SSN or ITIN.": {
-      "extractionState": "stale",
+    "you@example.com": {},
+    "Your account was not deleted. Please check your connection and try again.": {
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tu SSN o ITIN."
+            "value": "Tu cuenta no se eliminó. Comprueba tu conexión e inténtalo de nuevo."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的 SSN 或 ITIN。"
+            "value": "你的账户未被删除。请检查网络连接后重试。"
           }
         }
       }
     },
-    "Your SSN, or an ITIN if you don't have an SSN.": {
-      "extractionState": "stale",
+    "Your account wasn't fully deleted. Tap Delete account again to finish — we'll pick up where we left off.": {
+      "extractionState": "manual",
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tu SSN, o un ITIN si no tienes SSN."
+            "value": "Tu cuenta no se eliminó por completo. Toca Eliminar cuenta otra vez para terminar: continuaremos donde lo dejamos."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的 SSN；如果没有 SSN，则用 ITIN。"
+            "value": "你的账户尚未完全删除。再次点按“删除账户”即可继续，我们会从中断处接着完成。"
           }
         }
       }
@@ -16131,6 +17683,7 @@
       }
     },
     "Your family members and all your devices are covered.": {
+      "extractionState": "stale",
       "localizations": {
         "es": {
           "stringUnit": {
@@ -16370,6 +17923,74 @@
         }
       }
     },
+    "Your saved to-dos couldn't be opened": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron abrir tus tareas guardadas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开已保存的待办事项"
+          }
+        }
+      }
+    },
+    "Your session has expired. Please sign out, sign in again, and retry.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu sesión ha caducado. Cierra sesión, vuelve a iniciarla e inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的登录已过期。请退出登录后重新登录并再试一次。"
+          }
+        }
+      }
+    },
+    "Your SSN or ITIN.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu SSN o ITIN."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 SSN 或 ITIN。"
+          }
+        }
+      }
+    },
+    "Your SSN, or an ITIN if you don't have an SSN.": {
+      "extractionState": "stale",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu SSN, o un ITIN si no tienes SSN."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 SSN；如果没有 SSN，则用 ITIN。"
+          }
+        }
+      }
+    },
     "Your symptoms and when they started.": {
       "extractionState": "stale",
       "localizations": {
@@ -16416,265 +18037,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "把你最想问的问题写下来。"
-          }
-        }
-      }
-    },
-    "e.g. 78701": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "p. ej., 78701"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "例如 78701"
-          }
-        }
-      }
-    },
-    "e.g. Aetna, Blue Cross, Kaiser": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "p. ej. Aetna, Blue Cross, Kaiser"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "例如 Aetna、Blue Cross、Kaiser"
-          }
-        }
-      }
-    },
-    "e.g. primary care, dentist": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "p. ej. médico general, dentista"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "例如全科医生、牙医"
-          }
-        }
-      }
-    },
-    "in %lld days": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "in %lld day"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "in %lld days"
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "en %lld día"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "en %lld días"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld 天后"
-          }
-        }
-      }
-    },
-    "overdue": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "atrasado"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已逾期"
-          }
-        }
-      }
-    },
-    "today": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "hoy"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天"
-          }
-        }
-      }
-    },
-    "you@example.com": {},
-    "•": {},
-    "… PLUS List C (work): Social Security card or birth certificate.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "… MÁS Lista C (trabajo): tarjeta de Seguro Social o certificado de nacimiento."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "… 加 列表 C（工作）：社会安全卡或出生证明。"
-          }
-        }
-      }
-    },
-    "⚠ %lld DAYS OVERDUE": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "⚠ %lld DAY OVERDUE"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "⚠ %lld DAYS OVERDUE"
-                }
-              }
-            }
-          }
-        },
-        "es": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "⚠ %lld DÍA DE RETRASO"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "⚠ %lld DÍAS DE RETRASO"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⚠ 逾期 %lld 天"
-          }
-        }
-      }
-    },
-    "⚠ DUE TODAY": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⚠ VENCE HOY"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⚠ 今日到期"
-          }
-        }
-      }
-    },
-    "⚠︎ couldn't read clearly — review before adding": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⚠︎ no se leyó con claridad — revisa antes de añadir"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⚠︎ 识别不清 — 添加前请核对"
-          }
-        }
-      }
-    },
-    "✓ COMPLETED": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "✓ COMPLETADO"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "✓ 已完成"
-          }
-        }
-      }
-    },
-    "👋 Welcome to Tadah": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "👋 Bienvenido a Tadah"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "👋 欢迎使用 Tadah"
           }
         }
       }

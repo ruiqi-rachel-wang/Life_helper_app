@@ -25,6 +25,13 @@ struct DetailView: View {
     @State private var detailStep: ChecklistStep?   // tapped step → detail sheet
     @State private var showFullPhoto = false         // tapped photo → full-screen viewer
 
+    // Which field the keyboard is in. Tapping "Add a step / detail / note" used to
+    // append a row whose only visible sign was an empty placeholder — testers read
+    // that as "the button didn't do anything". Focusing the new row instead raises
+    // the keyboard and puts a caret in it, so the tap is unmistakably acknowledged.
+    private enum Field: Hashable { case step(UUID), detailLabel(Int), note(Int) }
+    @FocusState private var focused: Field?
+
     // The reader's explanation language (Profile picker). The enlarged photo viewer
     // offers in-place translation only when it isn't English — an English reader of
     // an English doc doesn't need it.
@@ -104,7 +111,7 @@ struct DetailView: View {
                 Text(tagText).font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
 
                 if isEditing {
-                    TextField("Title", text: $item.title, axis: .vertical)
+                    TextField("Title", text: $item.title, prompt: fieldPrompt("Title"), axis: .vertical)
                         .font(.serifDetail).tracking(-0.4).foregroundStyle(Color.ink)
                 } else {
                     Text(item.title).font(.serifDetail).tracking(-0.4).foregroundStyle(Color.ink)
@@ -221,6 +228,7 @@ struct DetailView: View {
                 } else {
                     Button { item.dueDate = startOfToday } label: {
                         Label("Add date", systemImage: "plus.circle").font(.subline).foregroundStyle(Color.accent)
+                            .addRowTapTarget()
                     }
                     .buttonStyle(.plain)
                 }
@@ -233,6 +241,7 @@ struct DetailView: View {
                 // No date yet (e.g. a guide task) — let the user add one in read mode.
                 Button { item.dueDate = startOfToday; isEditing = true } label: {
                     Label("Add date", systemImage: "plus.circle").font(.subline).foregroundStyle(Color.accent)
+                        .addRowTapTarget()
                 }
                 .buttonStyle(.plain)
             }
@@ -261,8 +270,9 @@ struct DetailView: View {
                 ForEach($item.steps) { $step in
                     if isEditing {
                         HStack(alignment: .top, spacing: 10) {
-                            TextField("Step", text: $step.text, axis: .vertical)
+                            TextField("Step", text: $step.text, prompt: fieldPrompt("Step"), axis: .vertical)
                                 .font(.body14).foregroundStyle(Color.ink)
+                                .focused($focused, equals: .step(step.id))
                             // Add/edit a step's mini-checklist, explanation, etc. — lives
                             // here in the general edit page, not floating in the read list.
                             Button { detailStep = step } label: {
@@ -311,10 +321,15 @@ struct DetailView: View {
                 }
 
                 if isEditing {
-                    Button { item.steps.append(ChecklistStep(text: "")) } label: {
+                    Button {
+                        let new = ChecklistStep(text: "")
+                        item.steps.append(new)
+                        focus(.step(new.id))
+                    } label: {
                         Label("Add a step", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+                            .addRowTapTarget()
                     }
-                    .buttonStyle(.plain).padding(.top, 10)
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -378,8 +393,9 @@ struct DetailView: View {
                     VStack(alignment: .leading, spacing: 5) {
                         if isEditing {
                             HStack(spacing: 8) {
-                                TextField("Label", text: $item.otherIDs[i].label)
-                                    .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
+                                TextField("Label", text: $item.otherIDs[i].label, prompt: fieldPrompt("Label"))
+                                    .font(.eyebrow).tracking(0.5).foregroundStyle(Color.ink)
+                                    .focused($focused, equals: .detailLabel(i))
                                 Button { item.otherIDs.remove(at: i) } label: {
                                     Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                                 }.buttonStyle(.plain)
@@ -389,7 +405,8 @@ struct DetailView: View {
                                 .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded)
                         }
                         if isEditing {
-                            TextField("Tap to fill in", text: $item.otherIDs[i].value)
+                            TextField("Value", text: $item.otherIDs[i].value,
+                                      prompt: fieldPrompt("Tap to fill in"))
                                 .font(.body14).foregroundStyle(Color.ink)
                                 .padding(.horizontal, 10).padding(.vertical, 8)
                                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
@@ -402,9 +419,13 @@ struct DetailView: View {
                     }
                 }
                 if isEditing {
-                    Button { item.otherIDs.append(DocID(label: "", value: "")) } label: {
+                    Button {
+                        item.otherIDs.append(DocID(label: "", value: ""))
+                        focus(.detailLabel(item.otherIDs.count - 1))
+                    } label: {
                         Label("Add a detail", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-                    }.buttonStyle(.plain).padding(.top, 2)
+                            .addRowTapTarget()
+                    }.buttonStyle(.plain)
                 }
                 if let site = siteURLToShow {
                     Link(destination: site) {
@@ -434,16 +455,21 @@ struct DetailView: View {
                 if isEditing {
                     ForEach(item.notes.indices, id: \.self) { i in
                         HStack(alignment: .top, spacing: 8) {
-                            TextField("Note", text: $item.notes[i], axis: .vertical)
-                                .font(.body14).foregroundStyle(Color.faded)
+                            TextField("Note", text: $item.notes[i], prompt: fieldPrompt("Note"), axis: .vertical)
+                                .font(.body14).foregroundStyle(Color.ink)
+                                .focused($focused, equals: .note(i))
                             Button { item.notes.remove(at: i) } label: {
                                 Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                             }
                             .buttonStyle(.plain)
                         }
                     }
-                    Button { item.notes.append("") } label: {
+                    Button {
+                        item.notes.append("")
+                        focus(.note(item.notes.count - 1))
+                    } label: {
                         Label("Add a note", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+                            .addRowTapTarget()
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -618,6 +644,13 @@ struct DetailView: View {
     }
 
     // MARK: shared helpers
+
+    // Focus a row that was appended in this same tap. One runloop hop: the field
+    // doesn't exist yet when the button's action runs, and @FocusState silently
+    // ignores a value with no matching field.
+    private func focus(_ field: Field) {
+        Task { @MainActor in focused = field }
+    }
 
     private func card<C: View>(@ViewBuilder _ inner: () -> C) -> some View {
         inner()

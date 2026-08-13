@@ -371,7 +371,7 @@ nonisolated enum ExtractionJSON {
     }
 }
 
-// MARK: - Guide build (Week 7–8) — ONE AI call per guide
+// MARK: - Guide utilities lookup (the ONLY AI a guide uses)
 
 // One utility company that serves a ZIP, with whatever contact methods it offers.
 // The lookup's goal is the NAME; a website/phone/in-person is filled only when the
@@ -385,35 +385,37 @@ nonisolated struct LocalUtility {
 }
 
 extension OpenAIClient {
-    // Build a guide in a SINGLE AI call: reword the deterministic checklist to read
-    // naturally and — only when a valid ZIP is given — also look up the local
-    // utility companies, both in one JSON response. Best-effort: returns the base
-    // steps UNCHANGED and no providers on any failure (no key, offline, bad JSON),
-    // so a guide never blocks on the model. Uses the cheap polish model.
-    // The caller merges `providers` into its utilities step (see GuidesView).
-    func buildGuide(_ base: ExtractionResult,
-                    context: String,
-                    zip: String? = nil,
-                    language: ExplainLanguage = .english) async -> (result: ExtractionResult, providers: [LocalUtility]) {
-        guard canCall, !base.steps.isEmpty else { return (base, []) }
+    // Is this a real 5-digit US ZIP? Only then is the lookup worth a call — and
+    // only housing guides ever ask for a ZIP, so this is the one guide path that
+    // touches the network at all.
+    static func isLookupZip(_ zip: String?) -> Bool {
+        guard let z = zip?.trimmingCharacters(in: .whitespaces) else { return false }
+        return z.count == 5 && z.allSatisfy(\.isNumber)
+    }
 
-        // Only ask for utilities when the ZIP is a real 5-digit US ZIP (the ZIP
-        // question only appears on housing guides, so this is the only time we ask).
-        let z = zip?.trimmingCharacters(in: .whitespaces)
-        let wantsUtilities = z.map { $0.count == 5 && $0.allSatisfy(\.isNumber) } ?? false
+    // Which utility companies serve this ZIP. The one thing in a guide that can't
+    // be authored ahead of time or translated on-device.
+    //
+    // Best-effort by design: returns [] on any failure (no key, offline, bad JSON,
+    // rate limit) and the caller keeps the generic utilities step, so a guide is
+    // never blocked or degraded by the model being unavailable.
+    //
+    // Uses the FULL model, not the cheap one: naming real local companies needs
+    // real reasoning (which county is this ZIP in, does that company serve it) and
+    // the cheap model confidently named the wrong company for the area.
+    func localUtilities(forZip zip: String,
+                        context: String,
+                        language: ExplainLanguage = .english) async -> [LocalUtility] {
+        guard canCall, Self.isLookupZip(zip) else { return [] }
 
-        // Naming real local companies needs real reasoning (which county is this ZIP
-        // actually in, does that company really serve it) — the cheap polish model
-        // was confidently naming the WRONG company for the area. Only pay for the
-        // stronger model on the (less common) ZIP-lookup path; plain rewording stays cheap.
         let body = ChatRequest.make(
-            model: wantsUtilities ? model : polishModel, visibleTokens: 1200,
+            model: model, visibleTokens: 1200,
             messages: [
-                .init(role: "system", content: GuidePrompt.system(includeUtilities: wantsUtilities, language: language)),
-                .init(role: "user", content: GuidePrompt.user(context: context, steps: base.steps, zip: wantsUtilities ? z : nil)),
+                .init(role: "system", content: GuidePrompt.utilitiesSystem(language: language)),
+                .init(role: "user", content: GuidePrompt.utilitiesUser(context: context, zip: zip)),
             ])
 
-        guard let httpBody = try? JSONEncoder().encode(body) else { return (base, []) }
+        guard let httpBody = try? JSONEncoder().encode(body) else { return [] }
         let req = request(body: httpBody)
         guard let (data, resp) = try? await session.data(for: req),
               let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode),
@@ -421,33 +423,9 @@ extension OpenAIClient {
               let content = chat.choices.first?.message.content,
               let json = content.data(using: .utf8),
               let dict = (try? JSONSerialization.jsonObject(with: json)) as? [String: Any]
-        else { return (base, []) }
+        else { return [] }
 
-        // The model sometimes returns steps as objects ({"action":…}/{"step":…})
-        // instead of plain strings — coerce both so the rewrite isn't lost.
-        func stepStrings() -> [String] {
-            guard let arr = dict["steps"] as? [Any] else { return [] }
-            return arr.compactMap { el -> String? in
-                if let s = el as? String { return s.trimmingCharacters(in: .whitespaces) }
-                if let o = el as? [String: Any] {
-                    let v = (o["action"] ?? o["text"] ?? o["step"] ?? o["note"]) as? String
-                    return v?.trimmingCharacters(in: .whitespaces)
-                }
-                return nil
-            }.filter { !$0.isEmpty }
-        }
-        var out = base
-        let steps = stepStrings().map(ExtractionJSON.stripLeadingNumber)
-        // Only accept the rewrite if the COUNT is unchanged — otherwise the
-        // milestone↔detail alignment breaks and an authored (safety) step could
-        // silently vanish. On any mismatch keep the deterministic steps.
-        // Notes are left exactly as authored — the rewrite never adds its own.
-        if steps.count == base.steps.count, !steps.contains(where: { $0.isEmpty }) {
-            out.steps = steps
-        }
-
-        let providers = wantsUtilities ? Self.parseProviders(dict["providers"]) : []
-        return (out, providers)
+        return Self.parseProviders(dict["providers"])
     }
 
     // Coerce the model's "providers" array into [LocalUtility], dropping entries

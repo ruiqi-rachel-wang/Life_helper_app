@@ -33,6 +33,10 @@ struct RootTabView: View {
     @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
     @State private var showNotificationPrimer = false
     @State private var showStoreFailure = false
+    // The in-app language. Drives the whole UI, not just the AI's prose — see
+    // AppLanguage. Watched here (the root) so a change re-renders every screen.
+    @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
+    private var language: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
 
     var body: some View {
         @Bindable var router = router
@@ -66,45 +70,37 @@ struct RootTabView: View {
         .sheet(isPresented: $showNotificationPrimer) {
             NotificationPrimerView { didAskNotifications = true; showNotificationPrimer = false }
         }
-        // Signing in on a device that already has tasks. A backup was written
-        // first, so neither answer loses data. Two different questions share this
-        // alert — see Reconciliation.Kind.
-        .alert(sync.pendingReconciliation?.kind == .differentOwner
-               ? "These to-dos belong to another account"
-               : "You already have tasks on this device",
-               isPresented: Binding(get: { sync.pendingReconciliation != nil },
-                                    set: { if !$0 { sync.pendingReconciliation = nil } }),
+        // Signing in on a device that holds ANOTHER account's data. The only two
+        // answers are both non-destructive: take it with you, or back out and
+        // leave the phone untouched. (The old third option deleted everything
+        // local; it's gone — see SyncCoordinator.cancelSignIn.)
+        .alert("These to-dos belong to another account",
+               isPresented: $sync.isShowingReconciliation,
                presenting: sync.pendingReconciliation) { r in
-            Button(r.kind == .differentOwner
-                   ? "Move them to this account"
-                   : "Add them to my account") {
+            Button("Move them to this account") {
                 Task {
-                    if let id = account.account?.userID {
-                        await sync.keepLocalTasks(context: context, userID: id)
-                    }
+                    guard let id = account.account?.userID else { return }
+                    try? await sync.keepLocalTasks(context: context, userID: id)
                 }
             }
-            Button(r.kind == .differentOwner
-                   ? "Start fresh on this account"
-                   : "Use my account's tasks", role: .destructive) {
+            Button("Not now — sign out", role: .cancel) {
                 Task {
-                    if let id = account.account?.userID {
-                        await sync.useAccountTasks(context: context, userID: id)
-                    }
+                    guard let id = account.account?.userID else { return }
+                    await sync.cancelSignIn(userID: id)
                 }
             }
         } message: { r in
             // Plural handled by the String Catalog (en one/other), not an inline
             // "s" — languages like 中文 don't pluralize and a mid-sentence %@ can't
             // be translated cleanly.
-            if r.kind == .differentOwner {
-                // Nothing has been uploaded at this point, and nothing will be
-                // unless the person picks the first button. Say so — they may be
-                // holding someone else's phone.
-                Text("The \(r.localCount) to-dos on this device were saved under a different account. They have not been uploaded. Move them to this account, or leave them out and start fresh? (A backup is saved either way.)")
-            } else {
-                Text("This device has \(r.localCount) tasks that aren't in your account yet. Add them to your account, or use your account's tasks instead? (A backup is saved either way.)")
-            }
+            Text("The \(r.localCount) to-dos on this device were saved under a different account. Nothing has been uploaded. Move them to this account, or sign out and leave them exactly as they are.")
+        }
+        // The reconciliation choice couldn't be carried out. The question is still
+        // pending, so dismissing this puts it straight back.
+        .alert("We couldn't finish that", isPresented: $sync.reconciliationFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Nothing was changed on this device or in your account. Please try again.")
         }
         // Free accounts are one device at a time — the server revoked this session.
         .alert("Signed out on this device", isPresented: $sync.signedOutRemotely) {
@@ -139,6 +135,17 @@ struct RootTabView: View {
         .onChange(of: tourGuide.step) { old, new in
             if old != nil && new == nil { didShowWelcomeTour = true }
         }
+        // ── The in-app language, applied to the whole app ──────────────────
+        // `environment(\.locale)` is the door SwiftUI's Text(LocalizedStringKey)
+        // resolves through; AppLanguage.apply covers String(localized:) and
+        // NSLocalizedString. Both are needed — neither one alone gets every
+        // string on screen.
+        .environment(\.locale, Locale(identifier: language.lprojCode))
+        // Forces a full rebuild when the picker changes, so screens already
+        // rendered in the old language re-resolve their strings instead of
+        // waiting to be revisited. Without this the switch looks half-applied.
+        .id(language)
+        .onChange(of: explainLanguageRaw) { _, _ in AppLanguage.applyStoredPreference() }
     }
 
     // First launch: explain why reminders matter, THEN ask — after the walkthrough,

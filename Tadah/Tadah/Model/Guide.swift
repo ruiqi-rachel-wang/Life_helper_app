@@ -68,6 +68,38 @@ nonisolated struct GuideSource {
     }
 }
 
+// A guide step that has to splice in a value the user gave us — a state, an
+// employer. Written the obvious way ("… in \(state) …") the finished sentence is
+// what reaches the String Catalog, and no key can ever match it: these steps
+// stayed English in 中文 and Español no matter what the language picker said.
+//
+// So keep the two apart. `Guide.filled` stores the FORMAT (which IS a catalog
+// key) and the values, joined by a control character that can't occur in guide
+// text; `ExtractionResult.localized` translates the format and splices after.
+// Anything that never reaches `localized` still reads correctly — see `plain`.
+nonisolated enum StepFormat {
+    // ASCII unit separator: not typeable, not in any authored guide string.
+    static let separator = "\u{1F}"
+
+    static func packed(_ format: String, _ args: String...) -> String {
+        ([format] + args).joined(separator: separator)
+    }
+
+    // Split a packed step back into (format, args); `nil` for an ordinary step.
+    static func unpack(_ s: String) -> (format: String, args: [String])? {
+        guard s.contains(separator) else { return nil }
+        let parts = s.components(separatedBy: separator)
+        return (parts[0], Array(parts.dropFirst()))
+    }
+
+    // The finished sentence, with no translation. Used wherever a packed step
+    // could otherwise leak its separator to the screen or to the model.
+    static func plain(_ s: String) -> String {
+        guard let (format, args) = unpack(s) else { return s }
+        return String(format: format, arguments: args.map { $0 as CVarArg })
+    }
+}
+
 nonisolated struct Guide: Identifiable {
     let id: String
     let title: String
@@ -454,9 +486,9 @@ extension Guide {
             }
 
             if another {
-                steps.append("Update your license/ID in \(newState) (often within 10–30 days — check the DMV).")
+                steps.append(StepFormat.packed("Update your license/ID in %@ (often within 10–30 days — check the DMV).", newState))
                 if hasCar {
-                    steps.append("Register your car and get new \(newState) plates, and update your car insurance.")
+                    steps.append(StepFormat.packed("Register your car and get new %@ plates, and update your car insurance.", newState))
                 }
             } else {
                 if hasCar {
@@ -652,11 +684,11 @@ extension Guide {
             var steps = ["Save your offer letter and confirm your start date and first-day details."]
             if isContractor {
                 steps.append("Confirm the contract scope, rate, payment schedule, and how to invoice.")
-                steps.append("Send \(employer) a W-9 (not I-9/W-4) with your payment details.")
+                steps.append(StepFormat.packed("Send %@ a W-9 (not I-9/W-4) with your payment details.", employer))
                 steps.append("Set aside money for taxes — contractors usually pay quarterly.")
                 steps.append("Save the signed contract, and track your invoices and payment dates.")
             } else {
-                steps.append("Complete Form I-9 (work authorization) and Form W-4 (tax withholding) for \(employer).")
+                steps.append(StepFormat.packed("Complete Form I-9 (work authorization) and Form W-4 (tax withholding) for %@.", employer))
                 steps.append("Complete your state tax form, if any.")
                 steps.append("Set up direct deposit (voided check or bank details).")
                 steps.append("Get access to the HR, payroll, and benefits portals, and a work email.")
@@ -718,39 +750,39 @@ extension Guide {
             switch task {
             case "Renewal":
                 steps = [
-                    "Check whether \(state) lets you renew online, by mail, or in person.",
+                    StepFormat.packed("Check whether %@ lets you renew online, by mail, or in person.", state),
                     "Gather your current license and proof of residency.",
                     "Take a new photo if required and pay the renewal fee.",
                     "Renew before your license expires so you're not driving on an expired one.",
                 ]
             case "Address change":
                 steps = [
-                    "Report your new address to the \(state) DMV — many states require this within ~10 days.",
+                    StepFormat.packed("Report your new address to the %@ DMV — many states require this within ~10 days.", state),
                     "Update the address on your license/ID (a new card may be issued).",
                 ]
                 if hasCar { steps.append("Update the address on your car registration too.") }
             case "Replacement (lost/stolen)":
                 steps = [
-                    "Request a replacement license online or at the \(state) DMV.",
+                    StepFormat.packed("Request a replacement license online or at the %@ DMV.", state),
                     "Verify your identity and pay the replacement fee.",
                     "If it was stolen, file a police report for your records.",
                 ]
             case "Out-of-state transfer":
                 steps = [
-                    "Exchange your out-of-state license for a \(state) license — often within ~30 days of becoming a resident.",
+                    StepFormat.packed("Exchange your out-of-state license for a %@ license — often within ~30 days of becoming a resident.", state),
                     "Bring proof of identity, residency, and your current license; pass any vision test and pay the fee.",
                 ]
                 if hasCar {
-                    steps.append("Register your out-of-state vehicle in \(state) (often within ~30 days) and update your car insurance.")
+                    steps.append(StepFormat.packed("Register your out-of-state vehicle in %@ (often within ~30 days) and update your car insurance.", state))
                 }
             default: // First-time
                 steps = [
-                    "Check \(state) DMV requirements and book an appointment online.",
+                    StepFormat.packed("Check %@ DMV requirements and book an appointment online.", state),
                     "Gather proof of identity, lawful presence, residency, and your SSN (or your state's accepted alternative).",
                     "Study for and pass the written knowledge test.",
                     "Pass the road test, then pay the license fee.",
                 ]
-                if hasCar { steps.append("Register your car and get plates with the \(state) DMV.") }
+                if hasCar { steps.append(StepFormat.packed("Register your car and get plates with the %@ DMV.", state)) }
             }
 
             return ExtractionResult(

@@ -64,10 +64,15 @@ struct GuidesView: View {
                 case .questions(let id):
                     if let g = Guide.all.first(where: { $0.id == id }) {
                         GuideQuestionsView(guide: g) { answers in
-                            // Only general guides hit the AI (sensitive ones stay
-                            // on-device), so only those draw from the scan/guide
-                            // pool. Gate before the expensive build.
-                            if g.risk == .general, let reason = ScanQuota.blockedReason(plus: plus.isPlus) {
+                            // The gate must match what actually gets charged (see
+                            // ScanQuota.record in the load closure below). Since the
+                            // checklist is now built and translated entirely on the
+                            // device, the ONLY guide that draws from the scan pool is
+                            // a general housing guide with a real ZIP — the one case
+                            // that still makes an AI call. Blocking the free,
+                            // offline ones would charge a user for nothing.
+                            if g.risk == .general, OpenAIClient.isLookupZip(answers["zip"]),
+                               let reason = ScanQuota.blockedReason(plus: plus.isPlus) {
                                 quotaMessage = reason
                                 return
                             }
@@ -81,32 +86,43 @@ struct GuidesView: View {
                             load: {
                                 var base = g.build(answers)
                                 base.confidence = 1   // deterministic checklist — always certain
-                                // Sensitive topics (immigration, money, medical, legal) stay on the
-                                // device — we never send them to the AI polish pass (quietly). Note:
-                                // these stay in English even when another language is picked, since
-                                // they never reach the (translating) polish pass.
-                                // Sensitive guides skip the AI; translate their authored
-                                // content on-device via the String Catalog instead.
-                                guard g.risk == .general else { return [base.localized(language)] }
-                                // Remember the utilities step (if this guide has one) BEFORE the AI
-                                // rewords and .localized() regenerates sub-step IDs, so we can drop in
-                                // the ZIP-matched providers at the same index afterward.
+
+                                // Remember which step carries the generic utilities detail BEFORE
+                                // localizing (which rewrites the detail, so `== utilitiesDetail`
+                                // stops matching). Positions are stable, so the index still points
+                                // at the right step afterwards.
                                 let utilIdx = base.detailedSteps.firstIndex { $0.detail == Guide.utilitiesDetail }
+
+                                // TRANSLATE ON DEVICE, FIRST AND ALWAYS. Every guide, sensitive or
+                                // not, gets its title, summary, steps, notes and step details from
+                                // the String Catalog in the picked language — no network, nothing to
+                                // fail, same words every time.
+                                //
+                                // This used to be the AI's job for non-sensitive guides, and it was
+                                // the whole reason a guide could come back with a Chinese title, a
+                                // Chinese step detail and English steps: the model was the only
+                                // translator of the step list, so any slow/failed/rejected call left
+                                // that one field in English.
+                                var result = base.localized(language)
+
+                                // The one thing the catalog can't know: which real companies serve
+                                // this person's ZIP. Only housing guides ask for a ZIP, so every
+                                // other guide is now instant and works offline.
+                                let zip = answers["zip"]?.trimmingCharacters(in: .whitespaces) ?? ""
+                                guard g.risk == .general, let i = utilIdx,
+                                      OpenAIClient.isLookupZip(zip) else { return [result] }
+
                                 let context = "\(g.title). "
                                     + answers.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
-                                // ONE AI call per guide: rewords the steps and (if a ZIP was given)
-                                // looks up local utility companies in the same response.
-                                let (built, providers) = await OpenAIClient()
-                                    .buildGuide(base, context: context, zip: answers["zip"], language: language)
-                                ScanQuota.record()   // one built guide = one from the scan/guide pool
-                                // Rewrite (AI) is translated; .localized() then translates the static
-                                // summary/notes/detail on-device.
-                                var result = built.localized(language)
-                                // Replace the generic utilities detail with the named local companies
-                                // (already in the user's language from the same call). Best-effort: if
-                                // the lookup found nothing, keep the generic detail.
-                                if let i = utilIdx, let zip = answers["zip"]?.trimmingCharacters(in: .whitespaces),
-                                   let detail = Guide.utilitiesDetail(forZip: zip, providers: providers, language: language) {
+                                let providers = await OpenAIClient()
+                                    .localUtilities(forZip: zip, context: context, language: language)
+                                ScanQuota.record()   // one AI-backed guide = one from the scan/guide pool
+
+                                // Swap the generic utilities detail for the named local companies
+                                // (already in the user's language). Best-effort: a lookup that found
+                                // nothing keeps the generic detail.
+                                if let detail = Guide.utilitiesDetail(forZip: zip, providers: providers,
+                                                                     language: language) {
                                     result.detailedSteps[i].detail = detail
                                 }
                                 return [result]
@@ -323,9 +339,10 @@ struct GuideQuestionsView: View {
                     }
                 }
             case .text(let placeholder):
-                TextField(LocalizedStringKey(placeholder), text: Binding(
+                TextField("", text: Binding(
                     get: { answers[q.id] ?? "" },
-                    set: { answers[q.id] = $0 }))
+                    set: { answers[q.id] = $0 }),
+                          prompt: fieldPrompt(LocalizedStringKey(placeholder)))
                     .font(.body14).foregroundStyle(Color.ink)
                     .padding(.horizontal, 12).padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.bg))

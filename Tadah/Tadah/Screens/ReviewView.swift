@@ -56,6 +56,10 @@ struct ReviewView: View {
     @State private var assignee: UUID?
     @State private var assigneeSeeded = false
 
+    // Focus for rows appended by the "Add a …" buttons — see DetailView.Field.
+    private enum Field: Hashable { case step(Int), note(Int), detailLabel(Int) }
+    @FocusState private var focused: Field?
+
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     private var explainLanguage: ExplainLanguage { ExplainLanguage.resolve(stored: explainLanguageRaw) }
 
@@ -275,10 +279,10 @@ struct ReviewView: View {
                 .font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
 
             if isEditing {
-                TextField("Title", text: bind(\.title), axis: .vertical)
+                TextField("Title", text: bind(\.title), prompt: fieldPrompt("Title"), axis: .vertical)
                     .font(.serifModal).foregroundStyle(Color.ink)
-                TextField("Summary", text: bind(\.summary), axis: .vertical)
-                    .font(.body14).foregroundStyle(Color.faded)
+                TextField("Summary", text: bind(\.summary), prompt: fieldPrompt("Summary"), axis: .vertical)
+                    .font(.body14).foregroundStyle(Color.ink)
             } else {
                 if let title = draft.title { Text(title).font(.serifModal).foregroundStyle(Color.ink).lineSpacing(2) }
                 if let summary = draft.summary { Text(summary).font(.body14).foregroundStyle(Color.faded).lineSpacing(2) }
@@ -427,7 +431,9 @@ struct ReviewView: View {
                     Text("•").font(.body14).foregroundStyle(Color.faded)
                         .frame(width: 10, alignment: .leading).padding(.top, isEditing ? 8 : 0)
                     if isEditing {
-                        TextField("Step", text: $draft.steps[i], axis: .vertical).font(.body14).foregroundStyle(Color.ink)
+                        TextField("Step", text: $draft.steps[i], prompt: fieldPrompt("Step"), axis: .vertical)
+                            .font(.body14).foregroundStyle(Color.ink)
+                            .focused($focused, equals: .step(i))
                         // Add/edit this step's mini-checklist, explanation, etc. — same
                         // edit-mode pencil as the saved-item Detail page.
                         Button { openStepDetail(i) } label: {
@@ -455,7 +461,8 @@ struct ReviewView: View {
             if isEditing {
                 Button { addStep() } label: {
                     Label("Add a step", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-                }.buttonStyle(.plain).padding(.top, 4)
+                        .addRowTapTarget()
+                }.buttonStyle(.plain)
             }
         }
     }
@@ -471,6 +478,13 @@ struct ReviewView: View {
     private func addStep() {
         draft.steps.append("")
         if !draft.detailedSteps.isEmpty { draft.detailedSteps.append(ChecklistStep(text: "")) }
+        focus(.step(draft.steps.count - 1))
+    }
+
+    // One runloop hop — the appended row doesn't exist yet when this runs, and
+    // @FocusState silently drops a value with no matching field.
+    private func focus(_ field: Field) {
+        Task { @MainActor in focused = field }
     }
 
     // A scan's `detailedSteps` starts empty (only guides pre-author detail) — back
@@ -490,7 +504,9 @@ struct ReviewView: View {
                 HStack(alignment: .top, spacing: 8) {
                     Text("•").font(.body14).foregroundStyle(Color.faded)
                     if isEditing {
-                        TextField("Note", text: $draft.notes[i], axis: .vertical).font(.body14).foregroundStyle(Color.faded)
+                        TextField("Note", text: $draft.notes[i], prompt: fieldPrompt("Note"), axis: .vertical)
+                            .font(.body14).foregroundStyle(Color.ink)
+                            .focused($focused, equals: .note(i))
                         Button { draft.notes.remove(at: i) } label: {
                             Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                         }.buttonStyle(.plain)
@@ -500,9 +516,13 @@ struct ReviewView: View {
                 }
             }
             if isEditing {
-                Button { draft.notes.append("") } label: {
+                Button {
+                    draft.notes.append("")
+                    focus(.note(draft.notes.count - 1))
+                } label: {
                     Label("Add a note", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-                }.buttonStyle(.plain).padding(.top, 4)
+                        .addRowTapTarget()
+                }.buttonStyle(.plain)
             }
         }
     }
@@ -524,9 +544,9 @@ struct ReviewView: View {
                 VStack(alignment: .leading, spacing: 5) {
                     if isEditing {
                         HStack(spacing: 8) {
-                            TextField("", text: $draft.otherIDs[i].label,
-                                      prompt: Text("Label").foregroundStyle(Color.faded))
+                            TextField("Label", text: $draft.otherIDs[i].label, prompt: fieldPrompt("Label"))
                                 .font(.subline).foregroundStyle(Color.ink)
+                                .focused($focused, equals: .detailLabel(i))
                             Button { draft.otherIDs.remove(at: i) } label: {
                                 Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                             }.buttonStyle(.plain)
@@ -535,17 +555,20 @@ struct ReviewView: View {
                         Text(draft.otherIDs[i].label.uppercased())
                             .font(.subline).tracking(0.5).foregroundStyle(Color.faded)
                     }
-                    TextField("", text: $draft.otherIDs[i].value,
-                              prompt: Text("Tap to fill in").foregroundStyle(Color.faded))
+                    TextField("Value", text: $draft.otherIDs[i].value, prompt: fieldPrompt("Tap to fill in"))
                         .font(.body14).foregroundStyle(Color.ink)
                         .padding(.horizontal, 10).padding(.vertical, 8)
                         .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
                 }
             }
             if isEditing {
-                Button { draft.otherIDs.append(DocID(label: "", value: "")) } label: {
+                Button {
+                    draft.otherIDs.append(DocID(label: "", value: ""))
+                    focus(.detailLabel(draft.otherIDs.count - 1))
+                } label: {
                     Label("Add a detail", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-                }.buttonStyle(.plain).padding(.top, 2)
+                        .addRowTapTarget()
+                }.buttonStyle(.plain)
             }
             if let site = siteURLToShow {
                 Link(destination: site) {

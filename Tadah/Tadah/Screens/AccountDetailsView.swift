@@ -110,7 +110,11 @@ struct AccountDetailsView: View {
             case 501:
                 return String(localized: "Account deletion isn't available right now. Please contact support and we'll delete it for you.")
             case 502:
-                return String(localized: "We couldn't fully disconnect your Apple ID, so nothing was deleted. Please try again.")
+                // Deliberately vague about HOW far it got: deletion spans Apple,
+                // RevenueCat and our backend and can't be atomic, so the honest
+                // instruction is simply "tap it again" — the server resumes at the
+                // first unfinished step.
+                return String(localized: "Your account wasn't fully deleted. Tap Delete account again to finish — we'll pick up where we left off.")
             default:
                 return String(localized: "Your account was not deleted. Please check your connection and try again.")
             }
@@ -136,14 +140,14 @@ struct AccountDetailsView: View {
         card {
             VStack(alignment: .leading, spacing: 0) {
                 fieldLabel("NAME")
-                TextField("Your name", text: $name)
+                TextField("Name", text: $name, prompt: fieldPrompt("Your name"))
                     .font(.body14).foregroundStyle(Color.ink).textContentType(.name)
                     .padding(.vertical, 4)
 
                 Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
 
                 fieldLabel("EMAIL")
-                TextField("you@example.com", text: $email)
+                TextField("Email", text: $email, prompt: fieldPrompt("you@example.com"))
                     .font(.body14).foregroundStyle(Color.ink)
                     .textContentType(.emailAddress).keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()

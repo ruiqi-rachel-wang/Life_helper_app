@@ -15,6 +15,10 @@ struct StepDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
 
+    // Focus for rows appended by the "Add" buttons — see DetailView.Field.
+    private enum Field: Hashable { case subStep(Int), needed(Int) }
+    @FocusState private var focused: Field?
+
     // A non-optional view of the detail for editing; clears back to nil if emptied.
     private var detail: Binding<StepDetail> {
         Binding(get: { step.detail ?? StepDetail() },
@@ -56,7 +60,7 @@ struct StepDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("STEP").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 if isEditing {
-                    TextField("Step", text: $step.text, axis: .vertical)
+                    TextField("Step", text: $step.text, prompt: fieldPrompt("Step"), axis: .vertical)
                         .font(.serifModal).foregroundStyle(Color.ink)
                 } else {
                     Text(step.text).font(.serifModal).foregroundStyle(Color.ink).lineSpacing(2)
@@ -181,32 +185,51 @@ struct StepDetailView: View {
         section("CHECKLIST") {
             ForEach(items.wrappedValue.indices, id: \.self) { i in
                 HStack(alignment: .top, spacing: 8) {
-                    TextField("Add a small to-do", text: items[i].text, axis: .vertical).font(.body14).foregroundStyle(Color.ink)
+                    TextField("To-do", text: items[i].text,
+                              prompt: fieldPrompt("Add a small to-do"), axis: .vertical)
+                        .font(.body14).foregroundStyle(Color.ink)
+                        .focused($focused, equals: .subStep(i))
                     Button { items.wrappedValue.remove(at: i) } label: {
                         Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                     }.buttonStyle(.plain)
                 }
             }
-            Button { items.wrappedValue.append(SubStep(text: "")) } label: {
+            Button {
+                items.wrappedValue.append(SubStep(text: ""))
+                focus(.subStep(items.wrappedValue.count - 1))
+            } label: {
                 Label("Add", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-            }.buttonStyle(.plain).padding(.top, 2)
+                    .addRowTapTarget()
+            }.buttonStyle(.plain)
         }
     }
 
-    private func editList(_ title: String, _ items: Binding<[String]>, placeholder: String) -> some View {
+    private func editList(_ title: LocalizedStringKey, _ items: Binding<[String]>, placeholder: LocalizedStringKey) -> some View {
         section(title) {
             ForEach(items.wrappedValue.indices, id: \.self) { i in
                 HStack(alignment: .top, spacing: 8) {
-                    TextField(placeholder, text: items[i], axis: .vertical).font(.body14).foregroundStyle(Color.ink)
+                    TextField("Item", text: items[i], prompt: fieldPrompt(placeholder), axis: .vertical)
+                        .font(.body14).foregroundStyle(Color.ink)
+                        .focused($focused, equals: .needed(i))
                     Button { items.wrappedValue.remove(at: i) } label: {
                         Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                     }.buttonStyle(.plain)
                 }
             }
-            Button { items.wrappedValue.append("") } label: {
+            Button {
+                items.wrappedValue.append("")
+                focus(.needed(items.wrappedValue.count - 1))
+            } label: {
                 Label("Add", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
-            }.buttonStyle(.plain).padding(.top, 2)
+                    .addRowTapTarget()
+            }.buttonStyle(.plain)
         }
+    }
+
+    // One runloop hop — the appended row doesn't exist yet when the button's
+    // action runs, and @FocusState silently drops an unmatched value.
+    private func focus(_ field: Field) {
+        Task { @MainActor in focused = field }
     }
 
     // MARK: bits
@@ -219,7 +242,10 @@ struct StepDetailView: View {
         }
     }
 
-    private func section<C: View>(_ title: String, @ViewBuilder _ inner: () -> C) -> some View {
+    // LocalizedStringKey, not String: `Text(someStringVariable)` does NOT go
+    // through the String Catalog, so every heading on this sheet ("CHECKLIST",
+    // "WHAT YOU'LL NEED", …) stayed English in 中文 and Español.
+    private func section<C: View>(_ title: LocalizedStringKey, @ViewBuilder _ inner: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             inner()

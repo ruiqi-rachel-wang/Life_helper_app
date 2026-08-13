@@ -25,6 +25,7 @@ struct FamilySharingView: View {
     @State private var newName = ""
     @State private var showPaywall = false
     @State private var limitMessage: String?
+    @State private var removeFailed = false
 
     private let columns = [GridItem(.adaptive(minimum: 92), spacing: 18)]
 
@@ -66,6 +67,13 @@ struct FamilySharingView: View {
             get: { limitMessage != nil }, set: { if !$0 { limitMessage = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(limitMessage ?? "") }
+        // A failed removal used to be swallowed by `try?`. The person stayed in the
+        // grid with no explanation, which reads as the app ignoring the tap.
+        .alert("Couldn't remove", isPresented: $removeFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("We couldn't remove that person. Nothing was changed — please try again.")
+        }
         .onAppear { profiles.reload(context) }
     }
 
@@ -146,7 +154,7 @@ struct FamilySharingView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(profile == nil ? "WHO ARE YOU ADDING?" : "NAME")
                         .font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-                    TextField("Mom", text: $newName)
+                    TextField("Name", text: $newName, prompt: fieldPrompt("Mom"))
                         .font(.body14).foregroundStyle(Color.ink)
                         .textInputAutocapitalization(.words)
                         .padding(14)
@@ -212,7 +220,15 @@ struct FamilySharingView: View {
     }
 
     private func remove(_ profile: Profile) {
-        try? profiles.delete(profile, in: context)
+        // Both of `delete`'s throw points — the owner guard and the child-item
+        // fetch — happen BEFORE it mutates anything, so "nothing was changed" in
+        // the alert is literally true, and there is nothing to roll back here.
+        do {
+            try profiles.delete(profile, in: context)
+        } catch {
+            removeFailed = true
+            return                      // and DON'T nudge a sync for a no-op
+        }
         SyncCoordinator.shared.noteLocalChange()
     }
 

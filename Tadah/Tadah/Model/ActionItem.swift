@@ -285,14 +285,24 @@ final class ActionItem {
     // Map extraction steps → checklist steps. Guides supply `detailedSteps`
     // (with optional StepDetail); when their count matches the milestone strings
     // we sync the (possibly edited/polished) text but keep the authored detail.
+    //
+    // Every text goes through StepFormat.plain on the way in. Guide steps that
+    // splice in a value (a state, an employer) travel as format + values so they
+    // can be translated (see StepFormat); this is the last gate before they're
+    // saved, so a step that somehow skipped `ExtractionResult.localized` is
+    // finished here rather than showing its separator to the user.
     private static func mapSteps(_ r: ExtractionResult) -> [ChecklistStep] {
         if !r.detailedSteps.isEmpty {
             if r.detailedSteps.count == r.steps.count {
-                return zip(r.steps, r.detailedSteps).map { ChecklistStep(text: $0, detail: $1.detail) }
+                return zip(r.steps, r.detailedSteps).map {
+                    ChecklistStep(text: StepFormat.plain($0), detail: $1.detail)
+                }
             }
-            return r.detailedSteps
+            return r.detailedSteps.map {
+                ChecklistStep(text: StepFormat.plain($0.text), done: $0.done, detail: $0.detail)
+            }
         }
-        return r.steps.map { ChecklistStep(text: $0) }
+        return r.steps.map { ChecklistStep(text: StepFormat.plain($0)) }
     }
 
     // Smart default for how many hours before a timed event to remind.

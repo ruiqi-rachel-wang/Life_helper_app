@@ -41,6 +41,12 @@ struct TadahApp: App {
         Purchases.logLevel = .warn
         Purchases.configure(withAPIKey: "appl_NkpoJAXKXycQKzzekTUOmXaxedM")
 
+        // Point every string lookup — ours, Apple's, and RevenueCat's — at the
+        // picked language BEFORE the first view is built, otherwise launch renders
+        // in the phone's language and only corrects itself on the next re-render.
+        // Must follow Purchases.configure: the paywall locale override needs it.
+        AppLanguage.applyStoredPreference()
+
         // One shared container, used by the UI and the notification delegate.
         let (container, failed) = Self.makeContainer()
         self.container = container
@@ -93,10 +99,23 @@ struct TadahApp: App {
                 .environment(profiles)
                 .onAppear { notificationDelegate.attach(router: router) }
                 .task {
-                    // Every account has one owner profile; this creates it on first
-                    // run and adopts any items saved before profiles existed.
-                    profiles.ensureOwnerProfile(container.mainContext,
-                                                name: account.account?.displayName ?? "")
+                    // GATE FIRST. `ensureOwnerProfile` mutates local identity —
+                    // it can rename the owner and adopt unassigned items — so it
+                    // must not run before the reconciliation state has been
+                    // restored, or a device with an unanswered cross-account
+                    // question would have its identity reshaped for the signing-in
+                    // account before anyone consented.
+                    sync.configure(container: container, account: account, profiles: profiles)
+                    // …and SKIP identity work entirely while the gate is up.
+                    // Restoring the gate isn't enough on its own: this call can
+                    // rename the owner and adopt unassigned to-dos, so running it
+                    // anyway reshaped one account's data for another before anyone
+                    // had answered the question. It runs on the next launch, once
+                    // the answer has been given.
+                    if !sync.isBlockedPendingReconciliation {
+                        profiles.ensureOwnerProfile(container.mainContext,
+                                                    name: account.account?.displayName ?? "")
+                    }
                     // Notification permission is now requested through the
                     // first-launch explainer (NotificationPrimerView via
                     // RootTabView), not silently here.
@@ -111,9 +130,7 @@ struct TadahApp: App {
                         _ = try? await Purchases.shared.logIn(userID)
                         await plus.refresh()
                     }
-                    // Lets edits made anywhere (ItemActions, the editors) nudge a
-                    // sync without threading the store through every call site.
-                    sync.configure(context: container.mainContext, account: account)
+                    // (configure ran above, before any identity mutation.)
                     await sync.syncNow(context: container.mainContext, account: account)
                 }
                 .onChange(of: scenePhase) { _, phase in

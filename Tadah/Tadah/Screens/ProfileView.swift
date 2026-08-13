@@ -1,10 +1,9 @@
 //  ProfileView.swift
 //
-//  The 4th tab (was "Settings"). Two reachable states today: a GUEST ("No
-//  account") and a signed-in FREE account (Part 3, phase 1). The signed-in
-//  Family-Plus layout — a FAMILY section + more settings moved under Account —
-//  is drawn in the design mockups and lands with the Plus phase (see
-//  future_features.md Part 3), so it isn't built here yet.
+//  The 4th tab (was "Settings"). Three reachable states: a GUEST ("No account"),
+//  a signed-in FREE account, and a signed-in PLUS account — where the identity
+//  card grows a profile switcher and the upgrade row becomes the way into Family
+//  (all built; the "isn't built yet" note that used to sit here was stale).
 //
 //  Layout follows Rachel's mockup: an account summary card on top (identity, or a
 //  "create account" prompt), then compact grouped sections — SETTINGS, PRIVACY,
@@ -14,8 +13,12 @@
 //  The one control that affects behavior is the LANGUAGE picker: it stores the
 //  user's choice, threaded into the scan + guide AI calls. It defaults to the
 //  device language but can be overridden (an ESL user may have an English phone
-//  yet prefer 中文). Only the AI's prose respects this; the app's own UI chrome
-//  follows the iPhone's language (String Catalog), independent of this setting.
+//  yet prefer 中文).
+//
+//  As of 2026-08-13 this picker drives the ENTIRE app — every screen, Apple's own
+//  UI on the next launch, and the RevenueCat paywall — not just the AI's prose.
+//  See AppLanguage. It used to change only what the model wrote, which left a
+//  tester who picked 中文 with a half-Chinese app.
 //
 
 import SwiftUI
@@ -28,7 +31,6 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AccountStore.self) private var account
     @Environment(PlusStore.self) private var plus
-    @Environment(SyncCoordinator.self) private var sync
     @Environment(ProfileStore.self) private var profiles
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
@@ -43,7 +45,6 @@ struct ProfileView: View {
     @State private var showAccountDetails = false
     @State private var showLanguageSheet = false
     @State private var confirmSignOut = false
-    @State private var showPlusComingSoon = false
     @State private var showPaywall = false
     @State private var showFamilySharing = false
 
@@ -101,11 +102,6 @@ struct ProfileView: View {
         .sheet(isPresented: $showLanguageSheet) { languageSheet }
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .sheet(isPresented: $showFamilySharing) { FamilySharingView() }
-        .alert("Family sharing is coming with Tadah Plus", isPresented: $showPlusComingSoon) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Soon you'll be able to add family members (like a parent) and manage their mail from your account. We'll let you know when it's ready.")
-        }
     }
 
     // MARK: header
@@ -154,10 +150,6 @@ struct ProfileView: View {
                         divider
                         profileSwitcherStrip
                     }
-
-                    divider
-
-                    syncStatusRow
 
                     divider
 
@@ -253,43 +245,19 @@ struct ProfileView: View {
         .frame(width: 52, height: 52)
     }
 
-    // MARK: backup/sync status — plain reassurance that items are saved to the
-    // account, since that's the whole point of signing in. Tapping syncs now.
-
-    private var syncStatusRow: some View {
-        Button {
-            Task { await sync.syncNow(context: modelContext, account: account) }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: syncSymbol).font(.system(size: 15))
-                    .foregroundStyle(sync.lastError == nil ? Color.accent : Color.warn)
-                    .frame(width: 24)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Backup").font(.body14).foregroundStyle(Color.ink)
-                    Text(syncDetail).font(.subline).foregroundStyle(Color.faded)
-                }
-                Spacer(minLength: 8)
-                if sync.isSyncing { ProgressView().controlSize(.small) }
-            }
-            .padding(.vertical, 14)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(sync.isSyncing)
-    }
-
-    private var syncSymbol: String {
-        if sync.lastError != nil { return "exclamationmark.icloud" }
-        return sync.lastSyncedAt == nil ? "icloud" : "checkmark.icloud"
-    }
-
-    private var syncDetail: String {
-        if sync.isSyncing { return String(localized: "Backing up…") }
-        if sync.lastError != nil { return String(localized: "Couldn't back up — tap to try again") }
-        guard let at = sync.lastSyncedAt else { return String(localized: "Tap to back up your items now") }
-        let f = RelativeDateTimeFormatter(); f.unitsStyle = .full
-        return String(localized: "Backed up \(f.localizedString(for: at, relativeTo: .now))")
-    }
+    // NO BACKUP UI, deliberately (2026-08-13).
+    //
+    // There used to be a "Backup — Backed up 14 seconds ago" row here that also
+    // acted as a manual sync button. It's gone: backing up is supposed to be an
+    // invisible property of having an account, not a chore with a status light.
+    // Nothing about syncing is lost by removing it — `TadahApp` already syncs on
+    // launch and on every foreground/background transition, and a failed attempt
+    // retries on the next one, so the row was reporting on something the user was
+    // never required to manage.
+    //
+    // If a "last backed up" indicator is ever wanted again, `SyncCoordinator`
+    // still publishes `isSyncing`, `lastSyncedAt` and `lastError` — only the view
+    // was deleted, not the state behind it.
 
     // Names once there are some ("Jing, Mom, Dad"), an invitation before that.
     private var familySubtitle: String {
@@ -535,7 +503,25 @@ struct ProfileView: View {
                             VStack(alignment: .leading, spacing: 0) {
                                 ForEach(Array(ExplainLanguage.allCases.enumerated()), id: \.element) { index, lang in
                                     if index != 0 { divider }
-                                    Button { explainLanguageRaw = lang.rawValue } label: {
+                                    // Picking a language rebuilds the whole app in it
+                                    // (RootTabView's .id), which tears this sheet down
+                                    // anyway — so close it deliberately rather than
+                                    // letting it vanish mid-tap. The user lands back on
+                                    // a Profile page already in the new language, which
+                                    // is the confirmation that the setting took.
+                                    Button {
+                                        explainLanguageRaw = lang.rawValue
+                                        // Redirect string lookups HERE, at the
+                                        // source of the change. RootTabView also
+                                        // watches the setting, but its `.id()`
+                                        // rebuild makes it ambiguous whether that
+                                        // onChange survives the identity swap —
+                                        // and a language that doesn't apply is
+                                        // the whole bug. Idempotent, so both
+                                        // firing is fine.
+                                        AppLanguage.applyStoredPreference()
+                                        showLanguageSheet = false
+                                    } label: {
                                         HStack {
                                             Text(lang.displayName).font(.body14).foregroundStyle(Color.ink)
                                             Spacer()
@@ -544,15 +530,15 @@ struct ProfileView: View {
                                                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.accent)
                                             }
                                         }
-                                        .padding(.vertical, 13)
+                                        .frame(minHeight: 44)
                                         .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
                                 }
                             }
                         }
-                        Text(inPickedLanguage("Only changes the language Tadah uses to explain your scans and guides. The app itself follows your phone."))
-                            .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
+                        Text(inPickedLanguage("Changes the whole app — every screen, plus the explanations Tadah writes for your scans and guides."))
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                             .padding(.horizontal, 8)
                     }
                     .padding(.horizontal, 14)

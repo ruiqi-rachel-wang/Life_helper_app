@@ -202,4 +202,28 @@ extension View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         })
     }
+
+    // The tap target for every "Add a step / note / detail / reminder" row.
+    //
+    // These were bare `Label`s inside a `.plain` Button, so the only tappable
+    // area was the glyph and the words themselves — roughly 20pt tall, well
+    // under Apple's 44pt minimum, with the surrounding `.padding` sitting
+    // OUTSIDE the button and therefore dead. A tap a few points high or wide
+    // simply did nothing, which reads as "the button doesn't work sometimes".
+    // This makes the whole row width tappable at a full 44pt.
+    func addRowTapTarget() -> some View {
+        frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .contentShape(Rectangle())
+    }
+}
+
+// The placeholder for a text field, in the app's readable hint ink.
+//
+// ALWAYS pass this as `prompt:` rather than relying on `TextField`'s title as
+// the placeholder — the title renders in SwiftUI's default placeholder gray,
+// which is unreadable on Tadah's cream paper (see `Color.hint`). Keeping the
+// title as well leaves VoiceOver with a label to read.
+@MainActor
+func fieldPrompt(_ key: LocalizedStringKey) -> Text {
+    Text(key).foregroundStyle(Color.hint)
 }

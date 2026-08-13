@@ -441,4 +441,47 @@ struct GuideTests {
         #expect(i9?.hasDetail == true)
         #expect(i9?.detail?.links.contains { $0.url.contains("uscis.gov") } == true)
     }
+
+    // MARK: language — every guide, every step, on the device
+
+    // A step that splices in a value travels as format + value (StepFormat) so the
+    // FORMAT can be the catalog key. Localizing must put the value back.
+    @Test func packedStepsSpliceTheirValueBackInOnLocalize() {
+        let r = Guide.driversLicense
+            .build(["task": "Out-of-state transfer", "state": "New York", "car": "Yes"])
+            .localized(.english)
+        let steps = r.steps.joined(separator: "\n")
+        #expect(steps.contains("Exchange your out-of-state license for a New York license"))
+        #expect(steps.contains("Register your out-of-state vehicle in New York"))
+        #expect(!steps.contains(StepFormat.separator))
+    }
+
+    // Belt and braces: even a result that never went through `localized`, the
+    // separator must never reach storage (and therefore the screen).
+    @Test func savedItemNeverCarriesAFormatSeparator() {
+        for guide in Guide.all {
+            let answers = ["state": "Ohio", "newState": "Ohio", "employer": "Acme",
+                           "task": "First-time", "scope": "Another state", "car": "Yes"]
+            let item = ActionItem(from: guide.build(answers))
+            #expect(!item.steps.contains { $0.text.contains(StepFormat.separator) },
+                    "\(guide.id) leaked a step-format separator")
+        }
+    }
+
+    // THE regression test for the mixed-language guide (Chinese title, Chinese step
+    // details, English steps). Guide steps used to be translated only by the AI, so
+    // any slow or failed call left them in English. They now come from the String
+    // Catalog, so every step of every guide must contain Chinese characters.
+    @Test func everyGuideStepIsTranslatedIntoChinese() {
+        let answers = ["state": "Ohio", "newState": "Ohio", "employer": "Acme",
+                       "task": "First-time", "scope": "Another state", "car": "Yes",
+                       "home": "Renting", "knowAddress": "Yes"]
+        let hasChinese = { (s: String) in s.unicodeScalars.contains { (0x4E00...0x9FFF).contains($0.value) } }
+        for guide in Guide.all {
+            let r = guide.build(answers).localized(.chinese)
+            for step in r.steps {
+                #expect(hasChinese(step), "\(guide.id) step left untranslated: \(step)")
+            }
+        }
+    }
 }

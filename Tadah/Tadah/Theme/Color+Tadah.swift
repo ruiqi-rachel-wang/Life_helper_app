@@ -23,6 +23,15 @@ extension Color {
     static let hair  = Color(hex: 0x29261b, opacity: 0.12)
     static let hairD = Color(hex: 0x29261b, opacity: 0.22)
 
+    // The placeholder / "what goes in this field" ink. NOT `faded`, and never
+    // SwiftUI's default placeholder gray: on this cream paper the system gray
+    // measures ~2.3:1 and `faded` ~3.8:1, both under the 4.5:1 WCAG AA floor for
+    // 13–15pt text — testers reported twice that they couldn't read what a field
+    // was asking for. 0.68 measures 4.7:1 on `paper` and 5.0:1 on `bg` while
+    // staying visibly lighter than typed text (ink at 1.0 is ~13:1), so an empty
+    // field still reads as empty. Use it via `fieldPrompt(_:)`, never inline.
+    static let hint  = Color(hex: 0x29261b, opacity: 0.68)
+
     // Accents
     static let accent = Color(hex: 0xb14a2a)   // burnt sienna
     static let ok     = Color(hex: 0x1f6b4a)   // success / done

@@ -312,6 +312,16 @@ private struct CreateForm: View {
     @State private var assignee: UUID?
     @State private var assigneeSeeded = false
 
+    // Focus for rows appended by the "Add a …" buttons — see DetailView.Field.
+    private enum Field: Hashable { case step(UUID), note(Int) }
+    @FocusState private var focused: Field?
+
+    // One runloop hop — the appended row doesn't exist yet when the button's
+    // action runs, and @FocusState silently drops an unmatched value.
+    private func focus(_ field: Field) {
+        Task { @MainActor in focused = field }
+    }
+
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -390,7 +400,7 @@ private struct CreateForm: View {
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("TITLE").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
-            TextField("What needs doing?", text: $title, axis: .vertical)
+            TextField("Title", text: $title, prompt: fieldPrompt("What needs doing?"), axis: .vertical)
                 .font(.system(size: 17, weight: .medium)).foregroundStyle(Color.ink)
         }
         .padding(16)
@@ -440,7 +450,7 @@ private struct CreateForm: View {
             Spacer()
             HStack(spacing: 2) {
                 Text("$").font(.body14).foregroundStyle(Color.faded)
-                TextField("0.00", text: $amount)
+                TextField("Amount", text: $amount, prompt: fieldPrompt("0.00"))
                     .keyboardType(.decimalPad)
                     .font(.body14).foregroundStyle(Color.ink)
                     .multilineTextAlignment(.trailing)
@@ -491,8 +501,9 @@ private struct CreateForm: View {
 
             ForEach($steps) { $step in
                 HStack(alignment: .top, spacing: 10) {
-                    TextField("Step", text: $step.text, axis: .vertical)
+                    TextField("Step", text: $step.text, prompt: fieldPrompt("Step"), axis: .vertical)
                         .font(.body14).foregroundStyle(Color.ink)
+                        .focused($focused, equals: .step(step.id))
                     Button { steps.removeAll { $0.id == step.id } } label: {
                         Image(systemName: "minus.circle.fill")
                             .font(.system(size: 18)).foregroundStyle(Color.faint)
@@ -502,16 +513,20 @@ private struct CreateForm: View {
                 .padding(.vertical, 8)
             }
 
-            Button { steps.append(ChecklistStep(text: "")) } label: {
+            Button {
+                let new = ChecklistStep(text: "")
+                steps.append(new)
+                focus(.step(new.id))
+            } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "plus.circle").font(.system(size: 16))
                     Text(steps.isEmpty ? "Add a step (or leave empty for a reminder)"
                                        : "Add a step").font(.body14)
                 }
                 .foregroundStyle(Color.accent)
+                .addRowTapTarget()
             }
             .buttonStyle(.plain)
-            .padding(.top, 10)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
@@ -546,16 +561,21 @@ private struct CreateForm: View {
             ForEach(notes.indices, id: \.self) { i in
                 HStack(alignment: .top, spacing: 8) {
                     Text("•").font(.body14).foregroundStyle(Color.faded)
-                    TextField("Note", text: $notes[i], axis: .vertical)
+                    TextField("Note", text: $notes[i], prompt: fieldPrompt("Note"), axis: .vertical)
                         .font(.body14).foregroundStyle(Color.ink)
+                        .focused($focused, equals: .note(i))
                     Button { notes.remove(at: i) } label: {
                         Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            Button { notes.append("") } label: {
+            Button {
+                notes.append("")
+                focus(.note(notes.count - 1))
+            } label: {
                 Label("Add a note", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+                    .addRowTapTarget()
             }
             .buttonStyle(.plain)
 

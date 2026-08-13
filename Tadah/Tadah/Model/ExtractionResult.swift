@@ -111,10 +111,13 @@ nonisolated struct ExtractionResult: Equatable {
     // String(localized:) so a literal "%" never triggers format parsing, and a
     // missing key returns the original. On the English development locale (which is
     // what unit tests run in) every lookup returns the original, so tests are
-    // unaffected. Used for SENSITIVE guides, whose authored content is English in
-    // code and never goes to the AI (translating) polish pass — this gives them an
-    // on-device translation with no network and no privacy cost. Interpolated
-    // strings (e.g. a state name spliced in) won't have a catalog key and stay as-is.
+    // unaffected.
+    //
+    // This is now how EVERY guide gets its language, not just the sensitive ones:
+    // it runs before anything else, on the device, with no network. It used to run
+    // after an AI pass that was the sole translator of the step list, so a slow or
+    // failed call produced the mixed-language guide testers reported (Chinese
+    // title, Chinese step details, English steps).
     func localized(_ language: ExplainLanguage) -> ExtractionResult {
         // Look up in the PICKED language's bundle (not the phone locale), so the
         // explanation-language picker controls guide content. Falls back to the main
@@ -122,7 +125,16 @@ nonisolated struct ExtractionResult: Equatable {
         let bundle = Bundle.main.path(forResource: language.lprojCode, ofType: "lproj")
             .flatMap(Bundle.init(path:)) ?? .main
         func t(_ s: String) -> String {
-            s.isEmpty ? s : bundle.localizedString(forKey: s, value: s, table: nil)
+            guard !s.isEmpty else { return s }
+            // A step carrying spliced-in values (a state, an employer): translate
+            // the FORMAT — which is the catalog key — then splice. Doing it the
+            // other way round leaves a finished sentence no key can match, which
+            // is exactly why these steps used to stay English. See StepFormat.
+            guard let (format, args) = StepFormat.unpack(s) else {
+                return bundle.localizedString(forKey: s, value: s, table: nil)
+            }
+            let translated = bundle.localizedString(forKey: format, value: format, table: nil)
+            return String(format: translated, arguments: args.map { $0 as CVarArg })
         }
         var r = self
         r.title = title.map(t)

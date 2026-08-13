@@ -25,8 +25,13 @@ struct RemindersEditor: View {
                 Text("REMINDERS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 Spacer()
                 if isEditing {
+                    // The smallest tap target in the app before this — an 11.5pt
+                    // Label with no padding inside the button. contentShape +
+                    // 44pt makes it hittable.
                     Button { add() } label: {
-                        Label("Add", systemImage: "plus.circle").font(.eyebrow).foregroundStyle(Color.accent)
+                        Label("Add", systemImage: "plus.circle").font(.body14).foregroundStyle(Color.accent)
+                            .frame(minWidth: 72, minHeight: 44, alignment: .trailing)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -50,7 +55,8 @@ struct RemindersEditor: View {
                             .buttonStyle(.plain)
                         }
                         // Optional note shown in the notification banner.
-                        TextField("Note (optional) — shown in the alert", text: noteBinding(i))
+                        TextField("Reminder note", text: noteBinding(i),
+                                  prompt: fieldPrompt("Note (optional) — shown in the alert"))
                             .font(.subline).foregroundStyle(Color.ink)
                             .padding(.horizontal, 10).padding(.vertical, 7)
                             .background(RoundedRectangle(cornerRadius: 8).fill(Color.bg))
