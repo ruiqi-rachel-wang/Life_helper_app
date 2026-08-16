@@ -67,12 +67,15 @@ struct GuidesView: View {
                             // The gate must match what actually gets charged (see
                             // ScanQuota.record in the load closure below). Since the
                             // checklist is now built and translated entirely on the
-                            // device, the ONLY guide that draws from the scan pool is
-                            // a general housing guide with a real ZIP — the one case
-                            // that still makes an AI call. Blocking the free,
-                            // offline ones would charge a user for nothing.
-                            if g.risk == .general, OpenAIClient.isLookupZip(answers["zip"]),
-                               let reason = ScanQuota.blockedReason(plus: plus.isPlus) {
+                            // device, the only guides that draw from the scan pool
+                            // are the ones whose checklist contains a utilities step
+                            // for a real ZIP to personalize — the one case that still
+                            // makes an AI call. `usesScanQuota` asks the built
+                            // checklist rather than restating the rule, so the gate
+                            // can't drift from the charge again; blocking the free,
+                            // offline ones charged a user for nothing.
+                            if g.usesScanQuota(for: answers),
+                               let reason = ScanQuota.blockedReason(plus: plus.paidFeaturesUnlocked) {
                                 quotaMessage = reason
                                 return
                             }
@@ -199,7 +202,7 @@ private struct GuideCard: View {
                 Text(LocalizedStringKey(guide.title)).font(.cardTitle).foregroundStyle(Color.ink).lineLimit(1)
                 Text(LocalizedStringKey(guide.subtitle)).font(.subline).foregroundStyle(Color.faded).lineLimit(1)
                 Text(guide.category.displayName.uppercased())
-                    .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faint).padding(.top, 4)
+                    .font(.eyebrow).tracking(0.5).foregroundStyle(Color.faded).padding(.top, 4)
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(Color.faint)
@@ -287,7 +290,7 @@ struct GuideQuestionsView: View {
                         Text(s.label).font(.eyebrow).tracking(0.3).foregroundStyle(Color.faded)
                     }
                     Spacer()
-                    Text(s.reviewedLabel).font(.eyebrow).tracking(0.3).foregroundStyle(Color.faint)
+                    Text(s.reviewedLabel).font(.eyebrow).tracking(0.3).foregroundStyle(Color.faded)
                 }
             }
             .padding(.horizontal, 8).padding(.top, 8)

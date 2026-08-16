@@ -124,9 +124,45 @@ nonisolated struct Guide: Identifiable {
     // — e.g. "call 911 if this is an emergency" — so urgent help never hides inside
     // the checklist. nil for guides with no emergency dimension.
     var emergencyNote: String? = nil
+
+    // WILL BUILDING THIS GUIDE, WITH THESE ANSWERS, ACTUALLY MAKE AN AI CALL?
+    //
+    // The free-scan gate and the thing that spends a scan have to agree, and they
+    // used to agree only by coincidence: the gate asked "general guide + a valid
+    // ZIP?", while the charge also required a utilities step for the lookup to
+    // replace. "Buying a home" satisfied the first and not the second, so a free
+    // user could be turned away as over quota for a call that never happened and
+    // was never recorded.
+    //
+    // Asking the built checklist removes the coincidence — a guide that gains or
+    // loses a utilities step can't put the two out of step again. `build` is pure
+    // string assembly with no I/O, so running it here to answer the question is
+    // cheap and has no side effects.
+    // @MainActor because `utilitiesDetail` and `isLookupZip` are, and the only
+    // caller is a SwiftUI callback that already runs there.
+    @MainActor
+    func usesScanQuota(for answers: [String: String]) -> Bool {
+        guard risk == .general, OpenAIClient.isLookupZip(answers["zip"]) else { return false }
+        return build(answers).detailedSteps.contains { $0.detail == Guide.utilitiesDetail }
+    }
 }
 
 // US states + DC for the `.state` question kind.
+//
+// SCOPE, STATED ON PURPOSE: 50 states + DC. No U.S. territories.
+//
+// This was checked on 2026-08-16 and deliberately left as-is rather than
+// half-fixed. Adding Puerto Rico, the USVI, Guam, the CNMI and American Samoa to
+// the picker is one line; making the guides CORRECT for them is not. Only two of
+// the five have a motor-vehicle agency URL that could be verified (dtop.pr.gov
+// and bmv.vi.gov — Guam's DNS doesn't resolve, the CNMI's returns 401), the
+// business guide's copy assumes a Secretary of State that territories organise
+// differently, and putting a name in a picker while the checklist behind it is
+// wrong is worse than not listing it.
+//
+// The guides that ask for a state say so in a note. If territories are ever
+// added, do it with verified agency links per territory, not with the USA.gov
+// fallback — that portal is a state directory.
 nonisolated enum USStates {
     static let all = [
         "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -169,7 +205,7 @@ extension Guide {
 
     static let all: [Guide] = [
         moving.meta(source: fed("USPS", "usps.com", "https://www.usps.com/move")),
-        rentingNewPlace.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov/renting/")),
+        rentingNewPlace.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov/housing/")),
         buyingHome.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov/owning-a-home/")),
         bankAccount.meta(source: fed("Consumer Financial Protection Bureau", "consumerfinance.gov", "https://www.consumerfinance.gov"), risk: .sensitive),
         taxes.meta(source: fed("IRS", "irs.gov", "https://www.irs.gov"), risk: .sensitive),
@@ -204,7 +240,22 @@ extension Guide {
 
     // Official (government) DMV/licensing site per state — agencies, not
     // businesses, so safe to link directly. Best-effort; verify periodically as
-    // agencies rename pages. Unknown → the official USA.gov DMV portal (all 51 listed).
+    // agencies rename pages. Unknown → the official USA.gov DMV portal.
+    //
+    // LAST CHECKED 2026-08-16 (every URL fetched). Five were broken and fixed that
+    // day: Hawaii (hidmv.ehawaii.gov no longer resolves at all — Hawaii has no
+    // statewide DMV, licensing sits with HDOT and registration with each county),
+    // Louisiana (dps.louisiana.gov/omv → 404; OMV is expresslane.org), North Dakota
+    // (/dmv → 404), and Kansas (/dmv.html is a SOFT 404 — it returns 200 and serves
+    // an error page, which is why it survived earlier checks). Re-fetch these when
+    // you touch this table; a soft 404 will not show up as a status code.
+    //
+    // LOUISIANA points at the DPS home page, not the OMV. Louisiana's OMV really
+    // is at expresslane.org — the state's own site links there — but a `.org` DMV
+    // link is indistinguishable from the look-alike sites that charge for free
+    // services, and this app's users are exactly who those target. One extra click
+    // through a `.gov` beats teaching people that a `.org` DMV link is fine.
+    // `everyStateDMVLinkIsOfficial` pins the rule.
     static func dmvURL(_ state: String) -> String {
         let map: [String: String] = [
             "Alabama": "https://www.alea.gov/dps/driver-license",
@@ -218,14 +269,14 @@ extension Guide {
             "District of Columbia": "https://dmv.dc.gov",
             "Florida": "https://www.flhsmv.gov",
             "Georgia": "https://dds.georgia.gov",
-            "Hawaii": "https://hidmv.ehawaii.gov",
+            "Hawaii": "https://hidot.hawaii.gov/driverslicense/",
             "Idaho": "https://itd.idaho.gov/dmv/",
             "Illinois": "https://www.ilsos.gov",
             "Indiana": "https://www.in.gov/bmv/",
             "Iowa": "https://iowadot.gov/mvd",
-            "Kansas": "https://www.ksrevenue.gov/dmv.html",
+            "Kansas": "https://www.ksrevenue.gov/dovindex.html",
             "Kentucky": "https://drive.ky.gov",
-            "Louisiana": "https://www.dps.louisiana.gov/omv",
+            "Louisiana": "https://www.dps.louisiana.gov/",
             "Maine": "https://www.maine.gov/sos/bmv/",
             "Maryland": "https://mva.maryland.gov",
             "Massachusetts": "https://www.mass.gov/rmv",
@@ -241,7 +292,7 @@ extension Guide {
             "New Mexico": "https://www.mvd.newmexico.gov",
             "New York": "https://dmv.ny.gov",
             "North Carolina": "https://www.ncdot.gov/dmv",
-            "North Dakota": "https://www.dot.nd.gov/dmv",
+            "North Dakota": "https://www.dot.nd.gov/motor-vehicle",
             "Ohio": "https://www.bmv.ohio.gov",
             "Oklahoma": "https://oklahoma.gov/service.html",
             "Oregon": "https://www.oregon.gov/odot/dmv/",
@@ -273,7 +324,7 @@ extension Guide {
         if text.contains("utilities and internet") { return utilitiesDetail }
         if text.contains("driver's license") || text.contains("license/ID") {
             return StepDetail(
-                explanation: "Update your license/ID address at the DMV — many states require this within ~10–30 days.",
+                explanation: "Update your license/ID address at the DMV — deadlines vary by state.",
                 links: [StepLink(label: "Open your state's DMV", url: dmvURL(state))])
         }
         if text.contains("Arrange the move") { return movingOptionsDetail }
@@ -381,16 +432,16 @@ extension Guide {
         }
         if text.hasPrefix("Set aside money for taxes") {
             return StepDetail(
-                explanation: "As a 1099 contractor, no taxes are taken out of your pay — you handle them yourself. Set aside roughly 25–30% of each payment, and expect to pay the IRS four times a year.",
+                explanation: "As a 1099 contractor, no taxes are taken out of your pay — you handle them yourself. Set money aside from each payment, and check whether you need to make estimated tax payments during the year.",
                 miniChecklist: ["Move about 25–30% of each payment into a separate savings 'tax' bucket.",
                                 "Track your income and business expenses — expenses lower what you owe.",
-                                "Pay quarterly estimated taxes (federal, and state if it has income tax)."],
+                                "Check whether you need to pay quarterly estimated taxes (federal, and state if it has income tax) — you generally do if you'll owe $1,000 or more."],
                 links: [StepLink(label: "IRS — self-employed tax center", url: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center")])
         }
         return nil
     }
     static let i9Detail = StepDetail(
-        explanation: "Form I-9 proves you can work in the U.S. Bring EITHER one document from List A, OR one from List B plus one from List C.",
+        explanation: "Form I-9 verifies your identity and your authorization to work in the U.S. Bring EITHER one document from List A, OR one from List B plus one from List C.",
         miniChecklist: [
             "List A (one): U.S. passport, OR permanent-resident card, OR a work permit.",
             "OR List B (identity): driver's license or state ID …",
@@ -411,7 +462,7 @@ extension Guide {
         return nil
     }
     static let licenseDocsDetail = StepDetail(
-        explanation: "Requirements vary by state — check your DMV's exact accepted-documents list. Bring ORIGINALS, not copies. You generally prove identity / lawful presence, your SSN (or an alternative), and two proofs of residency.",
+        explanation: "Requirements vary by state — check your DMV's exact accepted-documents list before you go. Your DMV may ask for proof of residency, identity, Social Security or status documents, and name-change documents. Bring ORIGINALS, not copies.",
         miniChecklist: [
             "Identity / lawful presence: passport, green card, EAD, or I-94 — per your DMV's list.",
             "SSN proof if you have one (SS card, W-2, or pay stub) — or your DMV's alternative.",
@@ -421,7 +472,7 @@ extension Guide {
         needed: ["Originals of each document", "Payment for the fee"])
 
     static let benefitsDetail = StepDetail(
-        explanation: "Benefits enrollment is usually a one-time window (~30 days) when you start. Miss it and you may have to wait until the next year.",
+        explanation: "Your employer gives you an enrollment deadline when you start, and the window can be short. Check it in your first week — miss it and you may wait until the next enrollment period.",
         miniChecklist: [
             "Review the health plans — premium, deductible, and whether your doctors are in-network.",
             "Add dental and vision if they're offered.",
@@ -469,6 +520,17 @@ extension Guide {
             } else {
                 steps.append("Once you have your new address, set up USPS mail forwarding at usps.com/move.")
             }
+            // USPS FORWARDING DOES NOT REACH USCIS, and USCIS mail isn't forwarded.
+            // For this app's users that is one of the highest-cost things to miss —
+            // a missed notice on a pending case is not recoverable by re-reading it
+            // later. Shown to everyone rather than behind a question, because the
+            // people who most need it are the least likely to self-identify.
+            //
+            // OUTSIDE the if/else, which is where it was supposed to be all along:
+            // a misplaced brace had it inside the "don't know my address yet"
+            // branch, so the majority — everyone who knows where they're moving —
+            // never saw the warning this comment says is shown to everyone.
+            steps.append("Have a pending USCIS case, or required to report address changes to USCIS? Update your address with USCIS separately and promptly — USPS forwarding does NOT update USCIS, and USCIS mail is not forwarded.")
             steps.append("Arrange the move — truck, container, or movers — and get boxes.")
             steps.append("Update your address with your bank, credit cards, and insurance.")
             steps.append("Start or stop utilities and internet at both the old and new home.")
@@ -486,7 +548,7 @@ extension Guide {
             }
 
             if another {
-                steps.append(StepFormat.packed("Update your license/ID in %@ (often within 10–30 days — check the DMV).", newState))
+                steps.append(StepFormat.packed("Update your license/ID in %@ — deadlines vary by state and may differ for your vehicle registration, so check the DMV as soon as you move.", newState))
                 if hasCar {
                     steps.append(StepFormat.packed("Register your car and get new %@ plates, and update your car insurance.", newState))
                 }
@@ -519,12 +581,12 @@ extension Guide {
         if text.contains("electricity, gas, water, and internet") { return utilitiesDetail }
         if text.hasPrefix("Tour the unit and read the lease") {
             return StepDetail(
-                explanation: "The lease is a binding contract — once you sign, its terms hold. Read every line and ask about anything unclear before you sign. If a promise isn't written in the lease, it doesn't count.",
+                explanation: "The lease is a binding contract — once you sign, its terms hold. Read every line, ask about anything unclear before signing, and get important promises in writing.",
                 miniChecklist: ["Rent, the due date, late fees, and lease length.",
                                 "The deposit amount — and exactly what you must do to get it back.",
                                 "Which utilities you pay vs. the landlord, plus rules on pets and early-termination fees.",
-                                "No U.S. credit history? A landlord may ask for a bigger deposit, a co-signer, or a few months up front — ask what proof they'll accept instead (pay stubs, a bank letter, or an offer letter)."],
-                links: [StepLink(label: "CFPB — renting a home", url: "https://www.consumerfinance.gov/renting/")])
+                                "No U.S. credit history? Ask what other proof they accept — pay stubs, a bank letter, an offer letter, or a guarantor."],
+                links: [StepLink(label: "CFPB — housing", url: "https://www.consumerfinance.gov/housing/")])
         }
         if text.hasPrefix("Pay the security deposit and first month's rent") {
             return StepDetail(
@@ -532,12 +594,12 @@ extension Guide {
         }
         if text.hasPrefix("Photograph the unit's condition") {
             return StepDetail(
-                explanation: "Photos of any pre-existing damage are how you get your full deposit back — the landlord can't charge you for what was already there. Take them the day you get the keys, before you move anything in.",
+                explanation: "Photograph any pre-existing damage the day you move in and email the landlord a copy — it's your evidence against being charged for what was already there.",
                 miniChecklist: ["Note any existing damage in writing and give the landlord a copy."])
         }
         if text.hasPrefix("Get renters insurance") {
             return StepDetail(
-                explanation: "Renters insurance covers your belongings (theft, fire, water damage) and your liability — usually $10–20 a month. Your landlord's insurance does not cover your things.",
+                explanation: "Renters insurance can cover your belongings for events like theft, fire and some water damage, plus your liability — usually $10\u{2013}20 a month. Flooding normally needs separate cover. Your landlord's insurance does not cover your stuff.",
                 miniChecklist: ["Send proof to your landlord if the lease requires it."])
         }
         if text.hasPrefix("Set up how you'll pay rent") {
@@ -573,7 +635,7 @@ extension Guide {
             steps.append("Set up how you'll pay rent (autopay or the tenant portal) and save the account details.")
             steps.append("Get your keys, mailbox key, and building access, and learn the trash, parking, and laundry rules.")
 
-            var notes = ["A security deposit is usually about one month's rent; you should get it back (minus any damage) after you move out."]
+            var notes = ["Keep your lease, your deposit receipt and your move-in photos — they're how you show the unit's condition later. Deposit rules vary by state."]
             notes.append(referenceNote)
             return ExtractionResult(
                 title: "Renting checklist",
@@ -597,18 +659,57 @@ extension Guide {
         title: "Buying a home",
         subtitle: "Credit, pre-approval, agent, offer",
         category: .housing,
-        questions: [],
-        build: { _ in
-            let steps = [
-                "Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).",
-                "Get pre-approved for a mortgage — compare rates and fees from a few lenders.",
-                "Find a real estate agent and start touring homes in your price range.",
-                "Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.",
-            ]
+        // The ONLY guide that had no questions, while its first screen promised
+        // "a few quick questions so Tadah can tailor the checklist" — so it asked
+        // nothing and handed everyone the same four steps. Two questions, in the
+        // same shape as the other guides: where you are (drops work you've already
+        // done), and whether it's your first time (surfaces first-buyer help most
+        // people don't know exists).
+        //
+        // NO ZIP. It used to ask for one "for local first-time buyer programs" and
+        // then never read it — this guide is pre-offer, so it has no utilities step
+        // for the ZIP lookup to fill in, and the first-buyer step is already the
+        // right, state-level advice without one. Worse than useless: the free-quota
+        // gate saw a valid ZIP and could turn someone away for an AI call that was
+        // never going to happen.
+        questions: [
+            GuideQuestion(id: "stage", prompt: "Where are you up to?",
+                          kind: .choice(["Just starting", "Have pre-approval", "Working with an agent"])),
+            GuideQuestion(id: "firstTime", prompt: "Is this your first home?",
+                          kind: .choice(["Yes", "No"])),
+        ],
+        build: { a in
+            let stage = a["stage"] ?? ""
+            let firstTime = a["firstTime"] == "Yes"
+
+            // Drop what they've already done rather than making them scroll past
+            // it — a checklist that opens with finished work reads as generic.
+            var steps: [String] = []
+            if stage == "Just starting" || stage.isEmpty {
+                steps.append("Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).")
+            }
+            // Only "Have pre-approval" drops this step. Working with an agent does
+            // NOT imply you're pre-approved — plenty of people tour with an agent
+            // first — and dropping the single highest-leverage financing step on
+            // that assumption left them without it entirely.
+            if stage != "Have pre-approval" {
+                steps.append("Get pre-approved for a mortgage — compare rates and fees from a few lenders.")
+            }
+            if stage != "Working with an agent" {
+                steps.append("Find a real estate agent and start touring homes in your price range.")
+            }
+            if firstTime {
+                // The highest-value thing a first-time buyer doesn't know to ask.
+                // "You apply before making an offer" was stated as the rule; the
+                // timing actually varies by program, and some run through the
+                // lender as part of the loan rather than as a separate application.
+                steps.append("Check first-time buyer programs in your state — many offer down-payment help or a lower rate. Ask early how each one works and when to apply, since some need to be lined up before you make an offer.")
+            }
+            steps.append("Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.")
 
             var notes = [
                 "Closing costs are usually about 2–5% of the price, on top of your down payment — budget for that too.",
-                "Once your offer is accepted, come back to Guides and start a new checklist — inspection, appraisal, insurance, and closing all happen after this point.",
+                "After your offer is accepted, your next steps are the inspection, mortgage approval, appraisal, homeowners insurance, and closing.",
             ]
             notes.append(referenceNote)
             return ExtractionResult(
@@ -667,7 +768,7 @@ extension Guide {
         category: .work,
         questions: [
             GuideQuestion(id: "type", prompt: "What kind of role is this?",
-                          kind: .choice(["W-2 employee", "Contractor / 1099", "Internship", "Not sure"])),
+                          kind: .choice(["W-2 employee", "Contractor / 1099", "Unpaid", "Not sure"])),
             GuideQuestion(id: "employer", prompt: "What's the company's name?", kind: .text("Employer")),
             GuideQuestion(id: "work", prompt: "Where will you work?",
                           kind: .choice(["In-person", "Remote", "Hybrid", "Not sure"]),
@@ -679,12 +780,33 @@ extension Guide {
             let employer = val(a, "employer", default: "your employer")
             let work = a["work"] ?? ""
             let isContractor = type == "Contractor / 1099"
+            let isUnpaid = type == "Unpaid"
             let startDate = GuideDate.decode(a["startDate"])
 
             var steps = ["Save your offer letter and confirm your start date and first-day details."]
-            if isContractor {
+            if isUnpaid {
+                // UNPAID IS NOT A W-2 ROLE, and it used to fall into the branch
+                // below — handing an unpaid intern Form W-4 (tax withholding),
+                // direct deposit and "check your first paycheck — pay rate, taxes",
+                // while a note underneath told them there is no tax form and no
+                // pay. The checklist contradicted itself on the same screen.
+                //
+                // What an unpaid role actually needs is to pin down what it IS,
+                // because that determines everything else and is the thing people
+                // are least likely to ask about.
+                steps.append("Get in writing what the role is — unpaid intern, volunteer, or employee — and whether there's any stipend, expenses, or academic credit.")
+                steps.append("Complete whatever onboarding paperwork the organization asks for. There's no W-4 to file when there's no pay, and no paycheck to check.")
+                steps.append("If you're getting a stipend, ask how it will be reported — a stipend can be taxable income even when the role is called unpaid.")
+                steps.append("Sort out academic credit before you start if the role is for course credit — your school usually needs its own forms signed.")
+                if work == "Remote" || work == "Hybrid" {
+                    steps.append("Arrange your laptop/equipment and remote access (VPN, accounts).")
+                } else {
+                    steps.append("Confirm your first-day schedule, work location, badge, and parking.")
+                }
+                steps.append("Get access to the systems you'll need and a work email.")
+            } else if isContractor {
                 steps.append("Confirm the contract scope, rate, payment schedule, and how to invoice.")
-                steps.append(StepFormat.packed("Send %@ a W-9 (not I-9/W-4) with your payment details.", employer))
+                steps.append(StepFormat.packed("Send %@ a W-9 if they ask for one — it certifies your name and tax ID, not your bank details. Give them your payment details separately.", employer))
                 steps.append("Set aside money for taxes — contractors usually pay quarterly.")
                 steps.append("Save the signed contract, and track your invoices and payment dates.")
             } else {
@@ -702,14 +824,25 @@ extension Guide {
                 steps.append("Check your first paycheck — pay rate, taxes, and direct deposit.")
             }
 
-            var notes = ["I-9 verifies you can work in the U.S.; W-4 sets your tax withholding.",
-                         "Benefits enrollment usually closes ~30 days after you start — add a reminder.",
-                         "Submit your SSN, bank, and ID only through the official HR portal — never by email or text."]
+            var notes = ["Submit your SSN, bank, and ID only through the official HR portal — never by email or text."]
+            if !isUnpaid {
+                notes.insert("I-9 verifies you can work in the U.S.; W-4 sets your tax withholding.", at: 0)
+                notes.insert("Benefits enrollment usually closes ~30 days after you start — add a reminder.", at: 1)
+            }
             if type == "Not sure" {
                 notes.insert("Ask HR whether you're a W-2 employee or a 1099 contractor — it changes which tax forms you file.", at: 0)
             }
-            if type == "Internship" {
-                notes.insert("Paid internships usually get a W-2; unpaid ones have no tax forms. Confirm which yours is with HR.", at: 0)
+            if isUnpaid {
+                // DON'T STATE THE LEGAL TEST — this one is genuinely fact-specific.
+                // The old copy ("if you're doing the same work as paid staff, ask
+                // about pay") reads like the rule, and it isn't: for a for-profit
+                // employer the Department of Labor applies a multi-factor
+                // "primary beneficiary" test looking at who gains more from the
+                // arrangement, and the answer turns on the whole picture. Point at
+                // the real source and say what's at stake instead of paraphrasing
+                // a seven-factor test into one clause.
+                notes.insert("Unpaid roles have no tax forms — there's no W-2 or 1099 to expect.", at: 0)
+                notes.insert("Whether an unpaid internship is legal depends on the specific arrangement, not one rule of thumb. If it looks like a paid job with the pay removed, check the Department of Labor's guidance or ask them.", at: 1)
             }
             if isContractor { notes.append("Contractors usually don't get employee benefits (health, paid leave).") }
             notes.append(referenceNote)
@@ -757,7 +890,7 @@ extension Guide {
                 ]
             case "Address change":
                 steps = [
-                    StepFormat.packed("Report your new address to the %@ DMV — many states require this within ~10 days.", state),
+                    StepFormat.packed("Report your new address to the %@ DMV — check the deadline there, as it varies by state.", state),
                     "Update the address on your license/ID (a new card may be issued).",
                 ]
                 if hasCar { steps.append("Update the address on your car registration too.") }
@@ -769,11 +902,11 @@ extension Guide {
                 ]
             case "Out-of-state transfer":
                 steps = [
-                    StepFormat.packed("Exchange your out-of-state license for a %@ license — often within ~30 days of becoming a resident.", state),
+                    StepFormat.packed("Exchange your out-of-state license for a %@ license — check your state DMV for the deadline, as license and car-registration deadlines can be different.", state),
                     "Bring proof of identity, residency, and your current license; pass any vision test and pay the fee.",
                 ]
                 if hasCar {
-                    steps.append(StepFormat.packed("Register your out-of-state vehicle in %@ (often within ~30 days) and update your car insurance.", state))
+                    steps.append(StepFormat.packed("Register your out-of-state vehicle in %@ — check your state DMV for the deadline — and update your car insurance.", state))
                 }
             default: // First-time
                 steps = [
@@ -792,7 +925,8 @@ extension Guide {
                 summary: "Steps for your driver's license.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: state, licenseDetail),
-                notes: ["DMV deadlines are state-specific — new residents often must transfer a license/registration within ~30 days.",
+                notes: ["DMV deadlines are state-specific — check your state DMV for the deadline, as license and car-registration deadlines can be different.",
+                        "Covers the 50 states and DC. In Puerto Rico, the U.S. Virgin Islands, Guam, the CNMI, or American Samoa, check your territory's own motor-vehicle office — the rules and forms differ.",
                         referenceNote],
                 confidence: 1)
         })
@@ -805,23 +939,30 @@ extension Guide {
         category: .finance,
         questions: [
             GuideQuestion(id: "ssn", prompt: "Do you have a Social Security number (SSN)?",
-                          kind: .choice(["Yes", "No — I'll use an ITIN", "Not sure"])),
+                          kind: .choice(["Yes", "No SSN", "Not sure"])),
         ],
         build: { a in
             let ssn = a["ssn"] ?? ""
             let hasSSN = ssn == "Yes"
-            let useITIN = ssn == "No — I'll use an ITIN"
+            let useITIN = ssn == "No SSN"
             // First step reflects the answer — don't mention ITIN when they have an SSN.
             let firstStep = hasSSN
                 ? "Gather your documents: a government photo ID, proof of address, and your Social Security number (SSN)."
                 : useITIN
-                ? "Gather your documents: a government photo ID, proof of address, and your ITIN (apply for one first if you don't have it yet)."
-                : "Gather your documents: a government photo ID, proof of address, and your SSN or ITIN."
+                // NOT "apply for an ITIN first". The very next step, and CFPB, say
+                // an SSN or ITIN isn't required to open an account at many banks —
+                // so telling someone to go get a tax ID before they can start put
+                // a months-long detour in front of the thing they came to do.
+                ? "Gather your documents: a government photo ID and proof of address — plus an ITIN if you already have one."
+                : "Gather your documents: a government photo ID, proof of address, and your SSN or ITIN if you have one."
             var steps = [firstStep]
             if useITIN {
-                steps.append("No SSN? Call a few banks first and ask what they accept — an ITIN, foreign passport, or consular ID. Apply for an ITIN only if you actually need one.")
+                steps.append("No SSN? You do not need one to open an account at many banks and credit unions. Call a few first and ask what they accept — an ITIN, a foreign passport, or a consular ID. Apply for an ITIN only if you actually need one for taxes.")
             } else if ssn == "Not sure" {
-                steps.append("Not sure? Check old tax forms or call the IRS — you may not need an SSN.")
+                // SSA, not the IRS: Social Security numbers are the Social
+                // Security Administration's. Sending someone to the IRS to ask
+                // whether they have an SSN wastes a call they may find hard to make.
+                steps.append("Not sure? Check old tax forms or a Social Security card, or ask the Social Security Administration — and you may not need an SSN at all to open the account.")
             }
             steps.append("Compare banks/credit unions on fees, minimum balance, and ATMs — look for a no-fee, no-overdraft account.")
             steps.append("Open the account and make the opening deposit.")
@@ -885,13 +1026,45 @@ extension Guide {
             GuideQuestion(id: "task", prompt: "What do you need to do?",
                           kind: .choice(["Renew or replace green card", "Apply for citizenship",
                                          "Renew work permit (EAD)", "Check my case status"])),
+            // RENEW AND REPLACE ARE DIFFERENT FILINGS, and collapsing them was
+            // wrong in both directions. A 2-year card is CONDITIONAL residence, so
+            // an EXPIRING one needs I-751 (marriage) or I-829 (investor), not I-90
+            // — USCIS warns explicitly against filing I-90 there. But a conditional
+            // resident whose valid card was lost, stolen or damaged files I-90 like
+            // anyone else, and the old flow sent them to removal of conditions
+            // regardless. Ask why first, then which card.
+            GuideQuestion(id: "reason", prompt: "Is the card expiring, or lost/stolen/damaged?",
+                          kind: .choice(["Expiring or expired", "Lost, stolen, or damaged"]),
+                          showIf: { $0["task"] == "Renew or replace green card" }),
+            GuideQuestion(id: "cardYears", prompt: "Is your green card valid for 2 years or 10 years?",
+                          kind: .choice(["10 years", "2 years", "Not sure"]),
+                          showIf: { $0["task"] == "Renew or replace green card" }),
             GuideQuestion(id: "deadline", prompt: "Do you have a notice or deadline? (optional)", kind: .date),
         ],
         build: { a in
-            let task = val(a, "task", default: "Renew or replace green card")
+            var task = val(a, "task", default: "Renew or replace green card")
+            let cardYears = a["cardYears"] ?? ""
+            // Only an EXPIRING conditional card goes to removal of conditions.
+            // Replacing a lost/stolen/damaged card is I-90 whatever its term.
+            let replacing = a["reason"] == "Lost, stolen, or damaged"
+            if task == "Renew or replace green card" && cardYears == "2 years" && !replacing {
+                task = "Remove conditions"
+            }
             let deadline = GuideDate.decode(a["deadline"])
             var steps: [String]
             switch task {
+            case "Remove conditions":
+                steps = ["A 2-year green card is CONDITIONAL residence — you remove the conditions rather than renewing the card. Do NOT file Form I-90 for this.",
+                         // The 90-day window is the JOINT-filing rule, and stating
+                         // it flatly told waiver applicants they were already too
+                         // late or too early. USCIS accepts a waiver request at
+                         // other times, so name which rule is which.
+                         "Filing jointly with your spouse? File in the 90 days before your card expires — that window matters, and filing late can put your status at risk.",
+                         "Requesting a waiver of the joint filing requirement instead? The 90-day window doesn't apply the same way — check the I-751 page for when to file in your situation.",
+                         "Marriage-based? File Form I-751, Petition to Remove Conditions on Residence, normally jointly with your spouse. Waivers exist if that isn't possible.",
+                         "Investor-based? File Form I-829 instead.",
+                         "Check the official USCIS page for your form before you file — fees and filing addresses change.",
+                         "Keep the receipt notice: it usually extends your permanent-resident status while the case is pending."]
             case "Apply for citizenship":
                 steps = ["Check the official USCIS N-400 eligibility page — many apply after 5 years as a permanent resident (3 in some marriage-based cases), but exceptions exist.",
                          "Create or sign in to your free USCIS online account.",
@@ -910,7 +1083,19 @@ extension Guide {
                          "Sign in to your USCIS online account, or use the case-status tool.",
                          "Turn on case alerts so you're notified of updates."]
             default:
-                steps = ["Create or sign in to your free USCIS online account.",
+                steps = []
+                // "Not sure" MUST NOT quietly become I-90. A conditional resident
+                // sent down the renewal path loses a fee and months, and the whole
+                // reason the card-term question exists is that people don't know
+                // this distinction — so answering "Not sure" is exactly the case
+                // that needs telling, not defaulting.
+                if cardYears == "Not sure" && !replacing {
+                    steps.append("First check your card's two dates: a card valid for 2 years is CONDITIONAL residence and needs Form I-751 or I-829 (removing conditions), not Form I-90. A 10-year card is the renewal below.")
+                }
+                if replacing && cardYears == "2 years" {
+                    steps.append("Replacing a lost, stolen, or damaged card uses Form I-90 even for a 2-year conditional card. But if that card is also within 90 days of expiring, you need to remove conditions (I-751 or I-829) as well — check the I-751 page.")
+                }
+                steps += ["Create or sign in to your free USCIS online account.",
                          "File Form I-90 to renew or replace your green card.",
                          "Pay the filing fee and submit.",
                          "Go to your biometrics appointment if USCIS schedules one.",
@@ -997,7 +1182,7 @@ extension Guide {
                 steps.append("Move to safety if you can, and turn on your hazard lights.")
                 steps.append("Don't argue about fault at the scene — collect the facts and let the police and insurers sort it out.")
                 if hitRun {
-                    steps.append("Call the police and file a report now — you'll need it for a hit-and-run claim. Note the report number.")
+                    steps.append("Report a hit-and-run to the police as soon as you can and save the report number — your insurer or your state may require it.")
                     steps.append("Write down all you can about the other car: make, color, plate, and direction it went; ask any witnesses.")
                 } else {
                     steps.append("Call the police if anyone's hurt, damage is major, or your state requires it — note the report number.")
@@ -1010,7 +1195,10 @@ extension Guide {
             } else {
                 steps.append("Write down what you remember and photograph the damage now.")
                 steps.append(hitRun
-                    ? "File a police report as soon as you can — it's required for a hit-and-run claim."
+                    // Matches the at-the-scene wording above. "It's required for a
+                    // hit-and-run claim" is stated as universal and isn't: it
+                    // depends on the insurer and the state.
+                    ? "File a police report as soon as you can and save the report number — your insurer or your state may require it."
                     : "File a police report if you haven't — especially with any injury or major damage.")
             }
             if !drivable {
@@ -1019,9 +1207,19 @@ extension Guide {
 
             // The claim — by what happened, in neutral terms
             if hitRun {
-                steps.append("Start a claim with your own insurer under uninsured-motorist or collision coverage.")
+                // "If the other driver is uninsured" was the wrong condition: in a
+                // hit-and-run the other driver is UNIDENTIFIED, which tells you
+                // nothing about their insurance, and the old wording left the
+                // reader waiting on a fact they will probably never learn. It also
+                // never plainly said to call their own insurer — the one thing
+                // they can actually do.
+                // Deliberately names NO coverage: this is read minutes after a
+                // crash, and which coverage applies depends on the state and the
+                // policy. The action is what matters. The uninsured-motorist
+                // explanation lives in the notes below.
+                steps.append("Report it to your own insurer and ask which of your coverages applies — the other driver being unidentified doesn't stop you claiming.")
             } else if singleCar {
-                steps.append("Start a claim with your own insurer (collision or comprehensive).")
+                steps.append("Report the accident to your insurer and ask which of your coverages applies.")
             } else if what == "The other driver hit me" {
                 steps.append("Start a claim with the other driver's insurer, or with your own insurer (which can recover the cost).")
             } else if what == "I may have hit someone/something" {
@@ -1040,8 +1238,14 @@ extension Guide {
             var notes: [String] = []
             if otherInvolved {
                 notes.append("If the other driver is uninsured, your uninsured-motorist (UM) coverage can step in.")
+            } else if hitRun {
+                // `otherInvolved` deliberately excludes hit-and-run, so this note
+                // was missing from the one branch where UM matters most: most
+                // states treat an unidentified driver as uninsured for exactly
+                // this purpose.
+                notes.append("Most states let uninsured-motorist (UM) coverage apply when the other driver is never identified — ask your insurer whether yours does, and what it needs from you.")
             }
-            notes.append("In a no-fault state, medical costs go through your own insurer (PIP), no matter who was at fault.")
+            notes.append("Ask your insurer how your medical costs are handled — it depends on your state and your policy.")
             notes.append("If pain shows up hours or days later, see a doctor and save the records.")
             notes.append("Driving a rental, leased, rideshare, or company car? Tell that owner or company too.")
             notes.append(referenceNote)
@@ -1167,7 +1371,7 @@ extension Guide {
                 notes: insured ? ["In-network providers usually cost much less.",
                                   "Ask whether a telehealth (video) visit is an option — it can be faster.",
                                   referenceNote]
-                               : ["Community health centers charge on a sliding scale — you can be seen without insurance.",
+                               : ["Community health centers offer sliding-fee discounts based on your income and family size — you can be seen without insurance.",
                                   "Ask whether a telehealth (video) visit is an option — it can be faster.",
                                   referenceNote],
                 confidence: 1)
@@ -1311,7 +1515,7 @@ extension Guide {
         category: .government,
         questions: [
             GuideQuestion(id: "which", prompt: "Which do you need?",
-                          kind: .choice(["SSN (I can work in the U.S.)", "ITIN (I can't get an SSN)", "Not sure"])),
+                          kind: .choice(["SSN", "ITIN for U.S. taxes", "Not sure"])),
         ],
         build: { a in
             let which = val(a, "which", default: "Not sure")
@@ -1319,11 +1523,11 @@ extension Guide {
             if which == "Not sure" {
                 steps.append("An SSN is for U.S. citizens and certain noncitizens who are work-authorized or have another valid reason; an ITIN is mainly for tax filing when you're not eligible for an SSN.")
             }
-            if which != "ITIN (I can't get an SSN)" {
+            if which != "ITIN for U.S. taxes" {
                 steps.append("For an SSN: gather proof of identity, age, and work-authorized immigration status.")
-                steps.append("Apply for an SSN online, then bring your documents to a Social Security office — it's free.")
+                steps.append("Start your SSN application online — SSA will tell you whether you need to bring your documents to an office. It's free.")
             }
-            if which != "SSN (I can work in the U.S.)" {
+            if which != "SSN" {
                 steps.append("For an ITIN: apply with IRS Form W-7, usually with your tax return. A VITA site can help for free.")
             }
             steps.append("Share your number only when truly required — a job, bank, or taxes — and keep it private.")
@@ -1348,7 +1552,12 @@ extension Guide {
                                 "Proof of age (birth certificate or passport)."],
                 links: [StepLink(label: "SSA — documents you'll need", url: "https://www.ssa.gov/ssnumber/ss5doc.htm")])
         }
-        if text.hasPrefix("Apply for an SSN online") {
+        // Matches "Start your SSN application online…" — the step text as it is
+        // actually generated. This read `hasPrefix("Apply for an SSN online")`,
+        // wording the builder stopped producing, so the SSA link and explanation
+        // silently never attached to any step. A prefix matcher fails SILENTLY
+        // when the copy it mirrors is reworded; there is now a test pinning this.
+        if text.hasPrefix("Start your SSN application") {
             return StepDetail(
                 explanation: "SSA mails your card after processing your application; timing can vary.",
                 links: [StepLink(label: "SSA — Social Security number & card", url: "https://www.ssa.gov/number-card")])
@@ -1369,6 +1578,12 @@ extension Guide {
         subtitle: "Documents, residency, language help",
         category: .government,
         questions: [
+            // NO STATE QUESTION. It was asked and then never read: enrolment runs
+            // district by district, the first step already sends you to your
+            // district BY ADDRESS, and the step text is a String Catalog key, so a
+            // state name can't be interpolated into it without breaking Spanish and
+            // Chinese. A question whose answer changes nothing is just a step
+            // between the user and their checklist.
             GuideQuestion(id: "newcomer", prompt: "Is this your first U.S. school?",
                           kind: .choice(["Yes — new to the U.S.", "No — transferring"])),
             GuideQuestion(id: "iep", prompt: "Does your child get special-education services (IEP/504)?",
@@ -1376,7 +1591,7 @@ extension Guide {
         ],
         build: { a in
             let newcomer = a["newcomer"] != "No — transferring"
-            var steps = ["Find your assigned public school by your home address — it's set by where you live.",
+            var steps = ["Find your local school district by your home address, then check which public schools your child can enroll in — some districts offer choice, magnet or charter options.",
                          "Gather what you'll need: proof of your child's age (birth certificate, passport, or another document the school accepts), proof of your address, and immunization records.",
                          "Ask the enrollment office for an interpreter if you need one.",
                          "Fill out the enrollment forms and the Home Language Survey."]
@@ -1415,7 +1630,7 @@ extension Guide {
         }
         if text.hasPrefix("New to the U.S.?") {
             return StepDetail(
-                explanation: "Public schools must offer English-language help and can't turn your child away.",
+                explanation: "Public schools must offer English-language help, and cannot refuse to enroll your child because of your or your child's immigration status.",
                 links: [StepLink(label: "U.S. Dept. of Education — English Learner Family Toolkit", url: "https://ncela.ed.gov/family-toolkit")])
         }
         return nil
@@ -1428,6 +1643,11 @@ extension Guide {
         subtitle: "Marketplace, Medicaid, or a job plan",
         category: .medical,
         questions: [
+            // NO STATE QUESTION. Whether a state runs its own marketplace does
+            // matter — but the answer to that is already baked into the step
+            // ("Apply at HealthCare.gov — it routes you to your state's Marketplace
+            // if it runs one"), which is correct for all 51 without knowing which.
+            // Asked and never read, it was a question that bought the user nothing.
             GuideQuestion(id: "source", prompt: "How might you get coverage?",
                           kind: .choice(["Through a job", "On my own (Marketplace)", "Low income (Medicaid/CHIP)", "Not sure"])),
             GuideQuestion(id: "lifeEvent", prompt: "A recent change — lost coverage, moved, married, had a baby, or job change?",
@@ -1438,7 +1658,13 @@ extension Guide {
             let marketplace = source == "On my own (Marketplace)" || source == "Not sure"
             var steps: [String] = []
             if a["lifeEvent"] == "Yes" {
-                steps.append("A recent life change may open a Special Enrollment Period — you can sign up now, outside open enrollment.")
+                // "You can sign up now" states the outcome as settled. Whether a
+                // move, job change or coverage loss actually qualifies depends on
+                // the specifics (a move only counts in some circumstances; leaving
+                // a job matters differently from losing coverage), so this promises
+                // access the user may not have and dates a 60-day clock they may
+                // not be on.
+                steps.append("A recent life change may open a Special Enrollment Period, letting you sign up outside open enrollment — check whether yours qualifies, because not every move or job change does.")
             }
             if source == "Through a job" {
                 steps.append("Enroll through your job during your new-hire window or open enrollment.")
@@ -1449,7 +1675,8 @@ extension Guide {
             if source == "Low income (Medicaid/CHIP)" || source == "Not sure" {
                 steps.append("Low income? Apply for Medicaid or CHIP any time of year — if approved, when coverage starts depends on your state.")
             }
-            steps.append("Have your household size and income ready — that decides your options and any savings.")
+            steps.append("Have your household size and income ready — they're the main factors. Medicaid also depends on your state and circumstances like age, pregnancy, disability, and immigration status.")
+            steps.append("Free help is available — Marketplace navigators and licensed agents can compare plans with you at no cost, in person or by phone.")
             steps.append("Compare plans on premium, deductible, copays, out-of-pocket max, your doctors, and your prescriptions.")
             if marketplace {
                 steps.append("If you pick a Marketplace plan, pay the first premium — coverage doesn't start until you do.")
@@ -1485,7 +1712,7 @@ extension Guide {
         }
         if text.hasPrefix("A recent life change") {
             return StepDetail(
-                explanation: "A Special Enrollment Period usually gives you 60 days from the life event to enroll — after that you generally wait for open enrollment, so start now.",
+                explanation: "A Special Enrollment Period usually gives you 60 days from the life event to enroll, though the window varies by event — so start now. Medicaid and CHIP can be applied for at any time of year.",
                 miniChecklist: ["Qualifying changes include losing other coverage, moving, marriage, a new baby or adoption, or certain income or household changes.",
                                 "You may need to prove it — a coverage-loss letter, marriage or birth certificate, or a lease.",
                                 "Apply at HealthCare.gov and report the life change, or start a new application."],
@@ -1494,7 +1721,7 @@ extension Guide {
         }
         if text.hasPrefix("Enroll through your job") {
             return StepDetail(
-                explanation: "Job-based coverage usually has a short sign-up window — about 30 days from your start date. Miss it and you may wait until the company's yearly open enrollment.",
+                explanation: "Job-based coverage usually has a short sign-up window. Ask HR for your enrollment deadline as soon as you start — miss it and you may wait until the company's yearly open enrollment.",
                 miniChecklist: ["Ask HR for the benefits guide and your enrollment deadline.",
                                 "Compare the plans offered — premium, deductible, and whether your doctors are in-network.",
                                 "Add your spouse or children if you're covering them.",
@@ -1502,15 +1729,15 @@ extension Guide {
         }
         if text.hasPrefix("Have your household size and income ready") {
             return StepDetail(
-                explanation: "Your household size and income decide everything — whether you qualify for Medicaid and how large your Marketplace savings are. Lawfully present immigrants can use the Marketplace and often qualify for these savings; undocumented adults generally can't, though some states cover children and pregnancy regardless of status.",
+                explanation: "Household size and income are major factors. Medicaid eligibility also depends on your state and on circumstances such as age, pregnancy, disability, and immigration status. Many lawfully present immigrants can get Marketplace coverage — eligibility depends on your specific status and has changed recently, so check the current list on HealthCare.gov.",
                 miniChecklist: ["Household size and everyone's income — pay stubs or last year's tax return.",
                                 "Social Security numbers for anyone applying who has one.",
-                                "Immigration document numbers — green card, work permit (EAD), or I-94 — for anyone applying.",
+                                "Immigration document numbers — green card, work permit (EAD), or I-94 — for any applicant who isn't a U.S. citizen.",
                                 "A list of doctors you want to keep and prescriptions you take, to check they're covered.",
                                 "An email address to create your account."],
                 links: [StepLink(label: "HealthCare.gov — coverage for immigrants",
                                  url: "https://www.healthcare.gov/immigrants/")],
-                needed: ["Income for everyone in your household", "Immigration document numbers"])
+                needed: ["Income for everyone in your household"])
         }
         if text.hasPrefix("Compare plans") {
             return StepDetail(
@@ -1518,7 +1745,7 @@ extension Guide {
                 miniChecklist: ["Premium — what you pay every month, even with no visits.",
                                 "Deductible — what you pay yourself before the plan starts paying.",
                                 "Copay or coinsurance — your share at each visit or prescription.",
-                                "Out-of-pocket max — the most you'll pay in a year; after that the plan pays 100%.",
+                                "Out-of-pocket max — the most you'll pay in a year for covered, in-network care; after that the plan pays 100% of those costs.",
                                 "Check your doctors are in-network and your prescriptions are on the plan's drug list (formulary)."],
                 links: [StepLink(label: "HealthCare.gov — how to pick a plan",
                                  url: "https://www.healthcare.gov/choose-a-plan/comparing-plans/")])
@@ -1561,7 +1788,12 @@ extension Guide {
             let isSoleProp = structure == "Just me (sole proprietor)"
             let sellsGoods = kind == "Online store (e-commerce)" || kind == "Physical shop or restaurant"
             let physical = kind == "Physical shop or restaurant"
-            let hiring = a["employees"] == "Yes" || a["employees"] == "Not yet"
+            // "Not yet" is NOT "Yes". Folding them together handed someone with no
+            // staff a payroll-tax registration, a workers'-comp check and an I-9
+            // per employee — real work, for employees who don't exist. They get the
+            // heads-up instead, so it's on their radar without being on their list.
+            let hiring = a["employees"] == "Yes"
+            let hiringLater = a["employees"] == "Not yet"
 
             var steps: [String] = []
             steps.append("Write down your business idea, who your customers are, and how you'll make money — a one-page plan is enough to start.")
@@ -1570,15 +1802,18 @@ extension Guide {
             if isLLC {
                 steps.append("Form your LLC: file articles of organization with your state's Secretary of State and pay the filing fee.")
             } else if isSoleProp {
-                steps.append("As a sole proprietor there's usually no state formation filing — but file a DBA (\"doing business as\") if required by your state or local government to use a business name.")
+                steps.append("As a sole proprietor there's usually no state formation filing. If you'll trade under a name that isn't your own legal name, file a DBA (\"doing business as\") if your state or local government requires one.")
             } else {
                 steps.append("Choose your structure — sole proprietor (simplest) or LLC (can help separate personal and business liability, if maintained properly) — then register accordingly.")
             }
 
-            steps.append("Get a free EIN from the IRS — needed to hire or to open a business bank account (most LLCs get one). Sole proprietors can use their SSN, but an EIN keeps it private.")
+            steps.append("Get a free EIN from the IRS — needed to hire, and required by many business bank accounts (most LLCs get one). Sole proprietors may be able to use their SSN depending on the bank, but an EIN keeps your SSN off forms.")
             steps.append("Check which licenses and permits you need — federal, state, and city/county.")
             if sellsGoods {
-                steps.append("Apply for a state sales-tax permit so you can collect and send in sales tax.")
+                // Not universal: several states have no general sales tax at all,
+                // and where there is one the registration threshold and the rules
+                // for what's taxable vary. Say "check", not "apply".
+                steps.append("Check whether your state taxes what you sell — most do, and where it applies you register for a sales-tax permit before collecting it. A few states have no general sales tax.")
             }
             if physical {
                 steps.append("Get local permits for your location — a business license, zoning approval, and a health permit if you serve food.")
@@ -1587,19 +1822,22 @@ extension Guide {
             steps.append("Set up bookkeeping from day one — track income and expenses in a spreadsheet or accounting app.")
             steps.append("Understand your taxes — business income is taxed, and self-employed owners usually pay quarterly estimated taxes.")
             if hiring {
-                steps.append("Hiring? Register for state payroll taxes, get workers' comp insurance, and set up payroll and a Form I-9 for each employee.")
+                steps.append("Hiring? Register for required payroll taxes, check your state's workers' compensation requirements, set up payroll, and complete Form I-9 for each employee.")
+            } else if hiringLater {
+                steps.append("Planning to hire later? Before your first employee starts you'll need payroll-tax registration, a workers'-compensation check, payroll set up, and Form I-9 — worth knowing now, not worth doing yet.")
             }
             steps.append("Get business insurance (general liability is common) — especially if you have customers, a location, or employees.")
             steps.append("Save everything: your formation documents, EIN letter, licenses, and tax registrations.")
 
             var notes: [String] = []
             if isSoleProp {
-                notes.append("You can start earning as a sole proprietor right away, then form an LLC later as you grow.")
+                notes.append("A sole proprietorship needs the least formation paperwork — but check which licenses, permits and registrations your work and location need before you start. You can form an LLC later as you grow.")
             } else {
                 notes.append("An LLC can help separate personal and business liability, but only if you maintain it properly; a sole proprietorship is simpler but offers no such protection.")
             }
             notes.append("An EIN is free at IRS.gov — never pay a third-party site for one.")
             notes.append("State rules, fees, and license requirements vary — confirm the specifics with your state's Secretary of State.")
+            notes.append("Covers the 50 states and DC. In a U.S. territory, registration and licensing run through different offices — check your territory's business agency.")
             notes.append(referenceNote)
 
             return ExtractionResult(
