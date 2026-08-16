@@ -1,144 +1,210 @@
 //  SignInView.swift
 //
-//  Sign in / create account (Part 3, phase 1). Sign in with Apple is the whole
-//  flow for now: native, free, no password to manage, and the document never
-//  leaves the phone. Google + email
-//  are planned (see future_features.md Part 3) but need an SDK / a backend, so
-//  they're noted as coming, not shown as dead buttons.
+//  Create an account / sign in (Part 3b). EMAIL + PASSWORD, not Sign in with
+//  Apple.
 //
-//  Signing in is purely retention: it doesn't change what the app can do, it just
-//  means your saved items survive sign-out/sign-in (and, later, a new phone).
+//  WHY THE CHANGE (2026-08-15): Sign in with Apple authenticates the Apple ID on
+//  the DEVICE. On a family member's own iPhone it can therefore only ever create
+//  THEIR account — there is no way for them to reach the account holder's. That
+//  made "one account, several people, several devices" unbuildable, which is the
+//  entire point of the family feature. A shared email and password can be handed
+//  to someone; an Apple ID cannot.
+//
+//  The password never leaves the phone: PasswordCrypto derives a PBKDF2 key and
+//  only that is sent. See PasswordCrypto for why the expensive work is here and
+//  not on the Worker.
+//
+//  ONE HONEST DIFFERENCE FROM THE OLD SCREEN. With Apple, authorization could
+//  succeed locally while the backend half failed, leaving someone "signed in"
+//  with no account behind it — the dead end both code reviews flagged. Email
+//  auth has no local half: either the Worker created/returned an account or
+//  nothing happened at all. So that failure mode is gone by construction rather
+//  than by handling.
 //
 
 import SwiftUI
 import SwiftData
-import AuthenticationServices
-import CryptoKit
 import RevenueCat
 
 struct SignInView: View {
-    // Sign-in has two halves that can succeed independently, and conflating them
-    // is how the app came to claim "signed in" with no backup at all:
-    //   1. Apple authorizes you on THIS DEVICE (always works offline).
-    //   2. The Worker confirms it and issues a backup session (needs network).
-    // Only `backedUp` means your to-dos are actually going somewhere.
     private enum Phase: Equatable {
         case idle
-        case authorizing          // waiting on the Worker after Apple said yes
-        case backedUp             // signed in AND backup confirmed
-        case localOnly(String)    // signed in on this device; backup unavailable
+        case working              // deriving the key, then talking to the Worker
+        case done                 // account exists and the first sync finished
+        case failed(String)       // nothing happened; the message says why
+        // There is deliberately NO "signed in, but not backed up yet" phase.
+        //
+        // One existed, and nothing ever selected it — `.signedInLocally` dismisses,
+        // for the reason spelled out in `authenticate()`. A warning on the first
+        // attempt would fire for an ordinary network blip that fixes itself on the
+        // next foreground, and teaching someone to distrust the app over that is
+        // worse than saying nothing. A failure that DOESN'T fix itself is surfaced
+        // where it stays visible instead of on a sheet that's already closing:
+        // Profile's stuck-backup row (SyncCoordinator.backupIsStuck).
     }
 
     @Environment(AccountStore.self) private var account
     @Environment(SyncCoordinator.self) private var sync
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-    @State private var errorMessage: String?
+
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isCreating = true      // create-account is the common first visit
+    @State private var showReset = false
     @State private var phase: Phase = .idle
-    // Kept so "Try again" can retry the BACKUP half without making the person
-    // repeat the whole Apple authorization.
-    @State private var pendingToken: Data?
-    @State private var pendingNonce: String?
+    @FocusState private var focused: Field?
+
+    private enum Field: Hashable { case email, password }
+
+    private var trimmedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // Enough to submit. The server validates properly; this only stops obviously
+    // pointless round trips and the 600k-iteration derivation behind them.
+    private var canSubmit: Bool {
+        phase != .working
+            && trimmedEmail.contains("@")
+            && password.count >= PasswordCrypto.minimumPasswordLength
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
             Color.paper.ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 0) {
-                closeBar
-
-                Spacer(minLength: 12)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Sign in").font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
-                    Text("Create a free account so your items are never lost — they're backed up to your account and come with you to a new phone.")
-                        .font(.body14).foregroundStyle(Color.faded).lineSpacing(3)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    closeBar
+                    Spacer(minLength: 12)
+                    heading
+                    Spacer(minLength: 24)
+                    fields
+                    submitButton
+                    statusBanner
+                    forgotPassword
+                    Spacer(minLength: 20)
+                    modeSwitch
                 }
-                .padding(.horizontal, 6)
-
-                Spacer(minLength: 28)
-
-                SignInWithAppleButton(.signIn) { request in
-                    request.requestedScopes = [.fullName, .email]
-                    // Replay protection: Apple puts this hash in the identity
-                    // token, and the Worker checks it against the raw value and
-                    // then burns it, so the token can't be presented twice.
-                    let raw = Self.randomNonce()
-                    pendingNonce = raw
-                    request.nonce = Self.sha256(raw)
-                } onCompletion: { result in
-                    handle(result)
-                }
-                .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-                .frame(height: 50)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .disabled(phase == .authorizing)
-
-                statusBanner
-
-                if let errorMessage {
-                    Text(errorMessage)
-                        .font(.subline).foregroundStyle(Color.bad).lineSpacing(2)
-                        .padding(.top, 12)
-                }
-
-                Text("More ways to sign in (Google, email) are coming soon.")
-                    .font(.subline).foregroundStyle(Color.faint)
-                    .padding(.top, 14)
-
-                Spacer()
-
-                Text("Signing in is free. Your items are backed up to your account so you don't lose them, and a free account is used on one device at a time.")
-                    .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
-                    .padding(.bottom, 8)
+                .padding(.horizontal, 22)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 8)
+            .dismissKeyboardOnTap()
+        }
+        .sheet(isPresented: $showReset) {
+            PasswordResetView(initialEmail: trimmedEmail)
         }
     }
 
-    // Says which of the two halves actually happened. The old screen dismissed
-    // immediately no matter what, so a failed backup looked identical to a working
-    // one — the user believed their to-dos were safe when nothing had been saved.
+    // MARK: pieces
+
+    // Title only. This screen used to carry three separate blocks of explanation —
+    // a subtitle, a password note, and a footer — which is more reading than a
+    // sign-up form has any right to ask for. Why an account is worth having is
+    // already said on the Profile tab, where someone decides to tap through.
+    private var heading: some View {
+        Text(isCreating ? "Create an account" : "Sign in")
+            .font(.serifTitle).tracking(-0.8).foregroundStyle(Color.ink)
+            .padding(.horizontal, 6)
+    }
+
+    private var fields: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField("Email", text: $email, prompt: Text("you@example.com"))
+                .textContentType(.emailAddress)
+                .keyboardType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .focused($focused, equals: .email)
+                .submitLabel(.next)
+                .onSubmit { focused = .password }
+                .fieldBox()
+
+            // `.newPassword` on create and `.password` on sign-in is what lets the
+            // keychain offer to save it, and later to fill it. Getting this wrong
+            // is why some apps never prompt to save a password.
+            SecureField("Password", text: $password, prompt: Text("Password"))
+                .textContentType(isCreating ? .newPassword : .password)
+                .focused($focused, equals: .password)
+                .submitLabel(.go)
+                .onSubmit { if canSubmit { submit() } }
+                .fieldBox()
+
+            // The rule, and nothing else. Someone typing a password doesn't need
+            // advice about passphrases mid-form.
+            if isCreating {
+                Text("At least \(PasswordCrypto.minimumPasswordLength) characters")
+                    .font(.subline).foregroundStyle(Color.faded)
+                    .padding(.horizontal, 4)
+            }
+        }
+    }
+
+    private var submitButton: some View {
+        Button { submit() } label: {
+            HStack(spacing: 8) {
+                if phase == .working { ProgressView().controlSize(.small).tint(Color.paper) }
+                Text(isCreating ? "Create account" : "Sign in")
+                    .font(.body14.weight(.semibold))
+            }
+            .foregroundStyle(Color.paper)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .background(canSubmit ? Color.ink : Color.faded)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSubmit)
+        .padding(.top, 16)
+    }
+
+    // Only on the sign-in side: offering "forgot password" while someone is
+    // CREATING one is nonsense.
+    @ViewBuilder
+    private var forgotPassword: some View {
+        if !isCreating {
+            Button("Forgot password?") { showReset = true }
+                .font(.subline.weight(.semibold)).foregroundStyle(Color.accent)
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 14)
+        }
+    }
+
+    private var modeSwitch: some View {
+        HStack(spacing: 6) {
+            Text(isCreating ? "Already have an account?" : "New to Tadah?")
+                .font(.subline).foregroundStyle(Color.faded)
+            Button(isCreating ? "Sign in" : "Create one") {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    isCreating.toggle()
+                    phase = .idle          // a stale error from the other mode is confusing
+                }
+            }
+            .font(.subline.weight(.semibold)).foregroundStyle(Color.accent)
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // Says which half actually happened, rather than dismissing identically
+    // whether or not anything was saved.
     @ViewBuilder
     private var statusBanner: some View {
         switch phase {
-        case .idle:
+        case .idle, .working:
             EmptyView()
-        case .authorizing:
-            HStack(spacing: 8) {
-                ProgressView().controlSize(.small)
-                Text("Setting up your backup…").font(.subline).foregroundStyle(Color.faded)
-            }
-            .padding(.top, 12)
-        case .backedUp:
+        case .done:
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.ok)
                 Text("Signed in. Your to-dos are backed up.")
                     .font(.subline).foregroundStyle(Color.faded)
             }
             .padding(.top, 12)
-        case .localOnly(let reason):
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Color.warn)
-                    Text("Signed in on this phone only").font(.body14.weight(.semibold))
-                        .foregroundStyle(Color.ink)
-                }
-                Text("We couldn't reach Tadah to set up your backup, so your to-dos are saved on this phone but not to your account yet. \(reason)")
-                    .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
-                // "Try again" clears the state and puts the Apple button back —
-                // retrying means authorizing again, because the server consumes
-                // each sign-in nonce and a replay can never succeed.
-                HStack(spacing: 10) {
-                    Button("Try again") { retryBackup() }
-                        .font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
-                    Button("Continue anyway") { dismiss() }
-                        .font(.body14).foregroundStyle(Color.faded)
-                }
-            }
-            .padding(.top, 14)
+        case .failed(let reason):
+            Text(reason)
+                .font(.subline).foregroundStyle(Color.bad).lineSpacing(2)
+                .padding(.top, 12)
         }
     }
 
@@ -154,113 +220,92 @@ struct SignInView: View {
         .padding(.top, 8)
     }
 
-    private func handle(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let auth):
-            guard let cred = auth.credential as? ASAuthorizationAppleIDCredential else {
-                errorMessage = String(localized: "Couldn't sign in. Please try again.")
-                return
-            }
-            let name = [cred.fullName?.givenName, cred.fullName?.familyName]
-                .compactMap { $0 }.joined(separator: " ")
-            account.signIn(Account(userID: cred.user, provider: .apple,
-                                   name: name, email: cred.email ?? ""))
-            errorMessage = nil
-            pendingToken = cred.identityToken
+    // MARK: submit
 
-            guard let identityToken = cred.identityToken, let nonce = pendingNonce else {
-                phase = .localOnly(String(localized: "Apple didn't return a sign-in token."))
-                return
-            }
-            phase = .authorizing
-            Task { await authenticateBackup(identityToken, nonce: nonce, appleUserID: cred.user) }
-
-        case .failure(let error):
-            // A user-cancelled sheet isn't an error worth surfacing.
-            if let authError = error as? ASAuthorizationError, authError.code == .canceled {
-                errorMessage = nil
-            } else {
-                #if DEBUG
-                // Dev builds surface the real reason — the usual one is the
-                // "Sign in with Apple" capability not being enabled yet (error
-                // 1000 / "not handled"), which the CLI can't turn on.
-                errorMessage = String(localized: "Couldn't sign in.") + " (\(error.localizedDescription))"
-                #else
-                errorMessage = String(localized: "Couldn't sign in. Please try again.")
-                #endif
-            }
-        }
+    private func submit() {
+        focused = nil
+        phase = .working
+        Task { await authenticate() }
     }
 
-    // The BACKUP half of signing in. Kept separate so it can be retried on its own
-    // and so its failure is reported instead of swallowed by `try?`.
-    private func authenticateBackup(_ identityToken: Data, nonce: String, appleUserID: String) async {
-        // RevenueCat FIRST and AWAITED. The Worker asks RevenueCat what tier this
-        // Apple id is on, so if we don't finish identifying before /auth/apple
-        // runs, the lookup can miss the subscription and a paying user gets the
-        // free one-device treatment.
-        _ = try? await Purchases.shared.logIn(appleUserID)
-
+    private func authenticate() async {
+        let address = trimmedEmail.lowercased()
         do {
-            let session = try await AuthService.authenticate(
-                identityToken: identityToken, deviceID: Device.id, nonce: nonce)
-            // Reconciliation decides what happens to the to-dos already on THIS
-            // device (seed a new account, or back up + ask before touching them).
-            // Its RESULT decides what we claim: a session alone is not a backup, so
-            // "your to-dos are backed up" waits for a completed sync round trip.
-            switch await sync.afterSignIn(session: session, context: context) {
+            let session = isCreating
+                ? try await AuthService.register(email: address, password: password, deviceID: Device.id)
+                : try await AuthService.logIn(email: address, password: password, deviceID: Device.id)
+
+            // RevenueCat is identified with OUR account id now, not an Apple `sub`
+            // — the Worker asks RevenueCat about this same id when it checks the
+            // tier, so the two must agree or a paying user gets free-tier limits.
+            _ = try? await Purchases.shared.logIn(session.userID)
+
+            // `.email` provider — the enum already had the case waiting.
+            account.signIn(Account(userID: session.userID, provider: .email,
+                                   name: "", email: address))
+
+            // Reconciliation decides what happens to the to-dos already on this
+            // device. Its RESULT decides what we claim: a session is not a backup,
+            // so "backed up" waits for a completed round trip.
+            switch await sync.afterSignIn(session: session, context: context, account: account) {
             case .backedUp:
-                phase = .backedUp
+                phase = .done
                 dismiss()
             case .awaitingReconciliation:
-                // RootTabView's alert takes over; get out of its way.
-                dismiss()
+                dismiss()            // RootTabView's prompt takes over
+            case .failed:
+                phase = .failed(String(localized: "We couldn't finish setting up your account on this phone. Please try again."))
             case .signedInLocally:
-                // Signed in, but the first sync didn't complete — say exactly that
-                // rather than promising a backup that hasn't happened.
-                phase = .localOnly(String(localized: "You're signed in, but we couldn't finish backing up yet. It will retry on its own."))
+                // Signed in, first sync didn't complete — and that is NOT worth a
+                // warning HERE. It retries on its own (launch, foreground, next
+                // edit) and nothing is lost meanwhile. The banner existed when a
+                // profile-cap 409 could block sync indefinitely, which made the
+                // delay permanent; with that fixed (see worker.js — storage is no
+                // longer tier-gated) this is a transient network hiccup, and
+                // telling someone "it doesn't work" about something that fixes
+                // itself just teaches them to distrust the app.
+                //
+                // What this must NOT become is silence about a failure that never
+                // resolves — a rejected request or unparseable response fails the
+                // same way forever. That case is caught downstream, once it has
+                // proved itself permanent: Profile shows a stuck-backup row after
+                // three consecutive failures (SyncCoordinator.backupIsStuck).
+                dismiss()
             }
         } catch AuthService.AuthError.notConfigured {
-            // No Worker set (simulator dev). Local sign-in is the whole feature
-            // there, so this isn't a failure worth alarming anyone about.
-            phase = .backedUp
-            dismiss()
+            // No Worker configured (simulator dev builds). Nothing to sign into.
+            phase = .failed(String(localized: "Accounts aren't available in this build."))
         } catch {
-            phase = .localOnly(reason(for: error))
+            phase = .failed(message(for: error))
         }
     }
 
-    // Retry re-runs the WHOLE Apple authorization rather than replaying the stored
-    // token. The server burns each nonce on use, so a replay is guaranteed to fail
-    // with "nonce already used" — and if the original request did land, replaying
-    // it would be trying to mint a second session anyway. `pendingToken` is kept
-    // only so the sheet can tell a completed authorization from a fresh one.
-    private func retryBackup() {
-        phase = .idle
-        errorMessage = nil
-        pendingToken = nil
-        pendingNonce = nil
-    }
-
-    private func reason(for error: Error) -> String {
-        if case AuthService.AuthError.server(let code) = error, code == 409 {
-            return String(localized: "This account is already signed in on the maximum number of devices.")
+    // The server answers wrong-password and no-such-account IDENTICALLY, on
+    // purpose — telling them apart would let anyone test which addresses are
+    // registered. So this message covers both, and must not speculate.
+    private func message(for error: Error) -> String {
+        guard case AuthService.AuthError.server(let code) = error else {
+            return String(localized: "We couldn't reach Tadah. Check your connection and try again.")
         }
-        return String(localized: "You can try again now or later — nothing is lost either way.")
+        switch code {
+        case 401: return String(localized: "That email and password don't match an account.")
+        case 409 where isCreating: return String(localized: "There's already an account with that email. Try signing in instead.")
+        case 409: return String(localized: "This account is already signed in on the maximum number of devices.")
+        case 400: return String(localized: "Please check the email and password and try again.")
+        case 429: return String(localized: "Too many attempts. Please wait a moment and try again.")
+        default:  return String(localized: "Something went wrong. Please try again.")
+        }
     }
+}
 
-    // MARK: - nonce
-
-    // A random string; its SHA-256 goes into the authorization request and the raw
-    // value goes to the Worker, which re-derives the hash and compares.
-    private static func randomNonce(length: Int = 32) -> String {
-        let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._")
-        var bytes = [UInt8](repeating: 0, count: length)
-        _ = SecRandomCopyBytes(kSecRandomDefault, length, &bytes)
-        return String(bytes.map { charset[Int($0) % charset.count] })
-    }
-
-    private static func sha256(_ input: String) -> String {
-        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
+// The bordered box shared by both fields, so they line up exactly.
+private extension View {
+    func fieldBox() -> some View {
+        self
+            .font(.body14).foregroundStyle(Color.ink)
+            .padding(14)
+            .background(Color.card)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hair, lineWidth: 1))
     }
 }

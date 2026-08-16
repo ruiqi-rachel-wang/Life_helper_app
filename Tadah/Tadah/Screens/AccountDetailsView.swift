@@ -25,6 +25,8 @@ struct AccountDetailsView: View {
     @State private var confirmDelete = false
     @State private var isDeleting = false
     @State private var deleteError: String?
+    @State private var askPassword = false
+    @State private var deletePassword = ""
 
     var body: some View {
         NavigationStack {
@@ -54,10 +56,24 @@ struct AccountDetailsView: View {
             email = account.account?.email ?? ""
         }
         .confirmationDialog("Delete account?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete account", role: .destructive) { delete() }
+            // The password is asked for next — something irreversible needs proof
+            // it's really you, not just an unlocked phone.
+            Button("Delete account", role: .destructive) { askPassword = true }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently deletes your account, everything backed up to it on every device, and disconnects your Apple ID from Tadah. You'll be asked to confirm with Apple. Your saved items stay on this phone. This can't be undone.")
+            Text("This permanently deletes your account and everything backed up to it, on every device. Your saved items stay on this phone. This can't be undone.")
+        }
+        // The password step. Deliberately a second, separate confirmation rather
+        // than a field on the warning above — typing your password should be a
+        // deliberate act, not something done while reading what you're about to
+        // lose.
+        .alert("Confirm your password", isPresented: $askPassword) {
+            SecureField("Password", text: $deletePassword)
+                .textContentType(.password)
+            Button("Delete account", role: .destructive) { delete() }
+            Button("Cancel", role: .cancel) { deletePassword = "" }
+        } message: {
+            Text("Enter your password to confirm.")
         }
         // Never dismiss on failure: saying nothing here is how someone walks away
         // believing their data is gone when the server still has it.
@@ -73,22 +89,17 @@ struct AccountDetailsView: View {
     private func delete() {
         isDeleting = true
         Task {
-            defer { isDeleting = false }
+            // Never leave the typed password sitting in memory after the attempt,
+            // successful or not.
+            defer { isDeleting = false; deletePassword = "" }
             do {
-                // Re-authorize with Apple FIRST. Deleting the account has to revoke
-                // the Apple grant too, and that needs a fresh authorization code —
-                // the one from the original sign-in is single-use and long expired.
-                // It also makes the user confirm with Face ID before something
-                // irreversible.
-                let code = try await AppleReauthorization().authorizationCode()
-                try await account.deleteAccountEverywhere(authorizationCode: code)
+                // Re-authenticated with the password collected just above.
+                try await account.deleteAccountEverywhere(password: deletePassword)
                 // NOTE: LocalDataOwner is deliberately NOT released. The to-dos left
                 // on this phone still belong to the account that made them; marking
                 // them unclaimed would let the next account to sign in upload them
                 // automatically, which is the exact leak LocalDataOwner prevents.
                 dismiss()
-            } catch AppleReauthorization.ReauthError.cancelled {
-                // Backed out at the Apple sheet — not an error, just don't delete.
             } catch AuthService.AuthError.notConfigured {
                 // No Worker configured (simulator dev): there is genuinely no
                 // server record, so forgetting the local identity IS the deletion.
@@ -106,7 +117,11 @@ struct AccountDetailsView: View {
         if case AuthService.AuthError.server(let code) = error {
             switch code {
             case 401:
-                return String(localized: "Your session has expired. Please sign out, sign in again, and retry.")
+                // BOTH a wrong password and an expired session land here, and the
+                // server deliberately won't say which. Telling someone to sign out
+                // and back in when they simply mistyped is worse than useless — it
+                // sends them away from the fix.
+                return String(localized: "That password doesn't match, or your session has expired. Check the password, or sign out and back in.")
             case 501:
                 return String(localized: "Account deletion isn't available right now. Please contact support and we'll delete it for you.")
             case 502:
@@ -144,14 +159,24 @@ struct AccountDetailsView: View {
                     .font(.body14).foregroundStyle(Color.ink).textContentType(.name)
                     .padding(.vertical, 4)
 
-                Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
+                // EMAIL IS READ-ONLY. It's the address the account was created
+                // with and what you sign in as, so it isn't a display preference
+                // to be edited here — changing it means changing the credential,
+                // which needs its own verified flow.
+                //
+                // The caption used to say "From your Apple ID. Change it in iPhone
+                // Settings." That was true under Sign in with Apple and became
+                // false the moment accounts moved to email (2026-08-15) — it now
+                // just IS your address. Removed rather than reworded: the label
+                // above already says EMAIL.
+                if !email.isEmpty {
+                    Rectangle().fill(Color.hairD).frame(height: 1).padding(.vertical, 12)
 
-                fieldLabel("EMAIL")
-                TextField("Email", text: $email, prompt: fieldPrompt("you@example.com"))
-                    .font(.body14).foregroundStyle(Color.ink)
-                    .textContentType(.emailAddress).keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .padding(.vertical, 4)
+                    fieldLabel("EMAIL")
+                    Text(email)
+                        .font(.body14).foregroundStyle(Color.ink)
+                        .padding(.vertical, 4)
+                }
             }
         }
     }

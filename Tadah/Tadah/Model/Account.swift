@@ -106,9 +106,21 @@ final class AccountStore {
         _ = try? await Purchases.shared.logOut()
     }
 
-    // Delete the whole account. `authorizationCode` is a FRESH Sign-in-with-Apple
-    // code (see AppleReauthorization): the backend exchanges it to revoke the Apple
-    // grant, deletes the RevenueCat subscriber, then deletes our rows.
+    // Signed out WITHOUT the user asking: the server revoked this session (a free
+    // account signed in on another device), or sign-in setup failed and the
+    // session was handed back.
+    //
+    // These paths used to call the plain `signOut()`, which leaves RevenueCat still
+    // identified as the departed user — so the phone kept their Plus entitlement,
+    // and whoever used it next got paid features they never bought. The reason the
+    // session ended doesn't change what has to be cleaned up.
+    func signOutAfterSessionEnded() async {
+        signOut()
+        _ = try? await Purchases.shared.logOut()
+    }
+
+    // Delete the whole account: the backend verifies the password, deletes the
+    // RevenueCat subscriber, then deletes our rows.
     //
     // Throws when any of that fails, so the caller can say "we couldn't delete your
     // account" instead of falsely confirming it. The local identity is cleared only
@@ -118,8 +130,8 @@ final class AccountStore {
     // Local items are NOT deleted here; the confirmation copy says so, and the
     // ownership claim deliberately stays (see LocalDataOwner) so a different
     // account signing in later can't silently adopt them.
-    func deleteAccountEverywhere(authorizationCode: String) async throws {
-        try await AuthService.deleteAccount(authorizationCode: authorizationCode)
+    func deleteAccountEverywhere(password: String) async throws {
+        try await AuthService.deleteAccount(password: password, email: account?.email)
         account = nil
         SessionStore.clear()
         save()
