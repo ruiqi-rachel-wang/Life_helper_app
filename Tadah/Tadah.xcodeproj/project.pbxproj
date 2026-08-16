@@ -32,6 +32,7 @@
 		848BB8552FCA628300A938CE /* Tadah.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tadah.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		848BB8622FCA628800A938CE /* TadahTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TadahTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		848BB86C2FCA628800A938CE /* TadahUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TadahUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		84AA00112FCA700000A938CE /* Tadah.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Tadah.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +83,7 @@
 		848BB84C2FCA628300A938CE = {
 			isa = PBXGroup;
 			children = (
+				84AA00112FCA700000A938CE /* Tadah.storekit */,
 				848BB8572FCA628300A938CE /* Tadah */,
 				848BB8652FCA628800A938CE /* TadahTests */,
 				848BB86F2FCA628800A938CE /* TadahUITests */,

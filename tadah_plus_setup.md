@@ -56,13 +56,22 @@ Settings ▸ Subscriptions when managing it.
 
 ### A4. Subscription Prices
 
-**Your call** — I can't pick your price. Two common shapes for a utility app like
-this, both anchored so yearly reads as ~2 months free:
+**DECIDED 2026-08-13: $6.99 monthly / $59.99 yearly**, set by Rachel in App Store
+Connect. `Tadah.storekit` mirrors these so the Simulator paywall shows the real
+numbers — if the App Store Connect price ever changes, change that file too or
+the local preview quietly lies.
+
+Yearly works out at ~28% off — about 3.4 months free against the monthly rate,
+a deeper discount than the ~2-months-free anchor the options below assumed.
+
+<details><summary>Options originally offered (kept for history)</summary>
 
 | | Monthly | Yearly | Note |
 |---|---|---|---|
 | Lower-friction | $2.99 | $24.99 | Easier first yes for an ESL/immigrant audience |
 | Standard | $3.99 | $34.99 | Matches what you priced JobDrop Pro at |
+
+</details>
 
 Set the **US price**; App Store Connect auto-fills every other territory (you can
 override). Availability: leave **all territories** on unless you have a reason.

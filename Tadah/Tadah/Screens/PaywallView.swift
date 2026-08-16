@@ -84,7 +84,10 @@ struct PaywallView: View {
             case .notForSaleYet:
                 fallback(
                     title: String(localized: "Tadah Plus is coming soon"),
-                    body: String(localized: "We're putting the finishing touches on it. Everything you use today stays free — we'll let you know the moment Plus is ready."),
+                    // Don't promise to notify anyone: there is no mechanism to do
+                    // it (no push, and we don't email). Saying "check back" is the
+                    // version we can actually honour.
+                    body: String(localized: "We're putting the finishing touches on it. Everything you use today stays free — check back soon."),
                     canRetry: false)
             case .couldNotLoad:
                 fallback(
@@ -170,7 +173,7 @@ struct PaywallView: View {
                     .disabled(isRestoring)
 
                     Text("Already subscribed? Bring your Plus access to this phone.")
-                        .font(.subline).foregroundStyle(Color.faint)
+                        .font(.subline).foregroundStyle(Color.faded)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.bottom, 28)

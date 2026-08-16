@@ -1,0 +1,73 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "en_US",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
+  "identifier": "A1F3C2D4",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_failTransactionsEnabled": false
+  },
+  "subscriptionGroups": [
+    {
+      "id": "22294269",
+      "localizations": [],
+      "name": "Tadah Plus",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "6.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6F1A2B3C",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Family profiles and more devices",
+              "displayName": "Tadah Plus Monthly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.ruiqiwang.cuevi.plus.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Tadah Plus Monthly",
+          "subscriptionGroupID": "22294269",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "59.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "7A2B3C4D",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Family profiles and more devices",
+              "displayName": "Tadah Plus Yearly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.ruiqiwang.cuevi.plus.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Tadah Plus Yearly",
+          "subscriptionGroupID": "22294269",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
