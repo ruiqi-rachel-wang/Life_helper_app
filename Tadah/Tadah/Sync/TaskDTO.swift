@@ -1,17 +1,18 @@
 //  TaskDTO.swift
 //
-//  The wire / backup form of an ActionItem — a plain Codable value keyed by the
-//  item's stable `id`. Used by on-device backups (TaskBackup) now and by
-//  cross-device sync later (Part 3). Deliberately NOT the @Model itself, so the
-//  storage format is decoupled from SwiftData and can be versioned independently.
+//  The wire form of an ActionItem — a plain Codable value keyed by the item's
+//  stable `id`, used by cross-device sync (Part 3). Deliberately NOT the @Model
+//  itself, so the wire format is decoupled from SwiftData and can be versioned
+//  independently.
 //
 //  `imageData` is intentionally omitted: scanned photos are large external-storage
 //  blobs. Task metadata syncs cheaply; images (if ever) go via a blob store (R2),
-//  not inline JSON. A restore therefore keeps whatever photo is already on-device
-//  and never clobbers it with nil.
+//  not inline JSON. Applying a pulled DTO therefore keeps whatever photo is
+//  already on-device and never clobbers it with nil. The flip side, stated plainly
+//  in the privacy policy: photos are device-only and are NOT backed up.
 //
-//  Decoding is TOLERANT (decodeIfPresent + defaults) so a backup written by an
-//  older app version — before some field existed — still restores cleanly.
+//  Decoding is TOLERANT (decodeIfPresent + defaults) so a record written by an
+//  older app version — before some field existed — still applies cleanly.
 //
 
 import Foundation
@@ -165,3 +166,14 @@ struct TaskDTO: Codable, Equatable {
         remindersCustomized = try c.decodeIfPresent(Bool.self, forKey: .remindersCustomized) ?? false
     }
 }
+
+// Lets SyncService overwrite a pulled DTO's timestamp with the SERVER-VALIDATED
+// one from the wire envelope, and check its identity against the validated id.
+// See the note in SyncService's decodeAll: the payload is stored opaquely and can
+// disagree with the envelope the server actually vetted.
+protocol SyncEnvelopeBacked: Decodable {
+    var id: UUID { get }
+    var updatedAt: Date { get set }
+}
+
+extension TaskDTO: SyncEnvelopeBacked {}

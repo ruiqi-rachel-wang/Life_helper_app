@@ -54,6 +54,17 @@ enum SyncService {
         let deletedAt: Date
     }
 
+    // How many records one push may carry. MUST stay <= the Worker's
+    // MAX_SYNC_BATCH, which is itself sized for D1 Free's 50-queries-per-
+    // invocation ceiling (each record is one statement, plus the route's own
+    // reads/writes). Paging here is what stops a device with hundreds of pending
+    // edits from building a request the server can never accept.
+    static let maxRecordsPerPush = 25
+
+    // How far ahead of now a local timestamp may legitimately sit before it's
+    // treated as a broken clock. Matches the Worker's own skew allowance.
+    static let maxClockSkew: TimeInterval = 5 * 60
+
     // MARK: - cursors (per user, so switching accounts can't cross streams)
 
     private static func cursorKey(_ userID: String) -> String { "sync.cursor.\(userID)" }
@@ -62,29 +73,129 @@ enum SyncService {
     static func cursor(_ userID: String, _ d: UserDefaults = .standard) -> String {
         d.string(forKey: cursorKey(userID)) ?? ""
     }
-    static func watermark(_ userID: String, _ d: UserDefaults = .standard) -> Date {
-        (d.object(forKey: watermarkKey(userID)) as? Date) ?? .distantPast
+    // The push watermark is COMPOSITE — (timestamp, id) — for the same reason the
+    // pull cursor is.
+    //
+    // A bare timestamp cannot page safely across ties. With 26 records all stamped
+    // T, the first push sends 25 and sets the mark to T; the next pass filters
+    // `updatedAt > T` and record 26 is excluded FOREVER. Ties are not exotic here:
+    // a bulk reassignment or a migration touches many rows in the same instant.
+    // The id breaks the tie, so paging is exact.
+    struct Watermark: Equatable {
+        var at: Date
+        var id: UUID?          // nil = "everything at `at` is still pending"
+
+        // Strictly after the mark, in (timestamp, id) order.
+        func isBefore(_ stamp: Date, _ itemID: UUID) -> Bool {
+            if stamp != at { return stamp > at }
+            guard let id else { return true }
+            return itemID.uuidString > id.uuidString
+        }
     }
+
+    private static func watermarkIDKey(_ userID: String) -> String { "sync.pushedID.\(userID)" }
+
+    // TASKS AND PROFILES GET THEIR OWN WATERMARKS.
+    //
+    // They shared one, and the page budget was spent in category order — profiles
+    // first. So 25 changed profiles plus one changed task meant every single pass
+    // sent the same 25 profiles, sent zero tasks, and then refused to advance the
+    // shared mark (because the task stream had sent nothing). The task was starved
+    // forever: never uploaded, on any pass, ever.
+    //
+    // With independent marks each stream advances on its own progress, so a busy
+    // stream can no longer hold the other hostage.
+    enum Stream: String {
+        case tasks, profiles
+        fileprivate var suffix: String { self == .tasks ? "" : ".profiles" }
+    }
+
+    // Stored as ONE value, not a timestamp key plus an id key.
+    //
+    // Two writes can tear: a crash between them leaves the stamp advanced with a
+    // stale (or missing) id, which is precisely the state that lets tied records
+    // be skipped — the bug the composite watermark exists to prevent. A single
+    // dictionary either lands or it doesn't.
+    static func watermark(_ userID: String,
+                          _ stream: Stream = .tasks,
+                          _ d: UserDefaults = .standard) -> Watermark {
+        let key = watermarkKey(userID) + stream.suffix
+        if let raw = d.dictionary(forKey: key) {
+            let at = (raw["at"] as? Date) ?? .distantPast
+            let id = (raw["id"] as? String).flatMap(UUID.init(uuidString:))
+            return Watermark(at: at, id: id)
+        }
+        // Migration: a watermark written by the previous two-key format. Read the
+        // stamp only and drop the id — re-sending one already-applied page is
+        // harmless under last-writer-wins, whereas trusting a possibly-torn pair
+        // is not.
+        if let at = d.object(forKey: key) as? Date { return Watermark(at: at, id: nil) }
+        return Watermark(at: .distantPast, id: nil)
+    }
+
+    static func setWatermark(_ mark: Watermark,
+                             _ userID: String,
+                             _ stream: Stream = .tasks,
+                             _ d: UserDefaults = .standard) {
+        var raw: [String: Any] = ["at": mark.at]
+        if let id = mark.id { raw["id"] = id.uuidString }
+        d.set(raw, forKey: watermarkKey(userID) + stream.suffix)
+        d.removeObject(forKey: watermarkIDKey(userID) + stream.suffix)   // legacy
+    }
+
     // Push everything local on the next sync (used when seeding a new account or
     // keeping local items after signing into an existing one).
     static func resetWatermark(_ userID: String, _ d: UserDefaults = .standard) {
-        d.set(Date.distantPast, forKey: watermarkKey(userID))
+        for stream in [Stream.tasks, .profiles] {
+            setWatermark(Watermark(at: .distantPast, id: nil), userID, stream, d)
+        }
     }
-    // Pull everything from the server on the next sync (used by "replace local").
-    static func resetCursor(_ userID: String, _ d: UserDefaults = .standard) {
-        d.set("", forKey: cursorKey(userID))
-    }
-    // Push nothing local on the next sync (the other half of "replace local").
+    // Push NOTHING that exists right now — future edits push as normal.
+    //
+    // Removed on 2026-08-13 as dead code (it was half of the old "replace my
+    // tasks with the account's"), and deliberately brought back on 2026-08-15 for
+    // a different job: work done while SIGNED OUT must not travel to the account
+    // when you sign back in. Advancing the watermark to now is exactly that — the
+    // account keeps what it had, and the device keeps what it has.
+    //
+    // Note it does NOT delete anything, which is why it's safe to have around
+    // again: the old danger was `resetCursor` beside it, wiping local state to
+    // take the server's copy. That one stays gone.
     static func suppressPush(_ userID: String, _ d: UserDefaults = .standard) {
-        d.set(Date.now, forKey: watermarkKey(userID))
+        for stream in [Stream.tasks, .profiles] {
+            setWatermark(Watermark(at: .now, id: nil), userID, stream, d)
+        }
     }
 
     // MARK: - one full round trip
 
+    // Takes the CONTAINER, not a context, and does all of its work in a private
+    // one.
+    //
+    // The apply stage rolls back on failure, and rollback discards a context's
+    // ENTIRE pending set — so sharing the main context meant a failed sync threw
+    // away whatever the user had typed while the request was in flight. Their
+    // edits are not ours to discard. A private context contains the rollback to
+    // sync's own changes; SwiftData propagates the save to the main context, so
+    // the UI still updates.
     @discardableResult
-    static func sync(context: ModelContext,
+    static func sync(container: ModelContainer,
                      userID: String,
                      defaults: UserDefaults = .standard) async throws -> Outcome {
+        // FLUSH THE MAIN CONTEXT FIRST. A private context sees only what is
+        // PERSISTED — not what is merely pending on the main one. The normal
+        // create/edit/delete paths nudge a sync without saving, so the isolated
+        // pass would look at an empty store, push nothing, and then advance the
+        // watermark past the very edit it never saw. That edit is then never sent
+        // again. Persisting first is what makes the isolation safe rather than
+        // lossy.
+        if container.mainContext.hasChanges {
+            try container.mainContext.save()
+        }
+
+        let context = ModelContext(container)
+        // Never write the user's in-flight edits on sync's behalf.
+        context.autosaveEnabled = false
         guard let endpoint = BackendConfig.syncEndpoint else { throw SyncError.notConfigured }
         guard let token = SessionStore.token else { throw SyncError.noSession }
         // The session must belong to the account this pass was started for.
@@ -96,13 +207,35 @@ enum SyncService {
         // stamp newer than this and is caught on the next pass.
         let attemptedAt = Date.now
         let since = cursor(userID, defaults)
-        let mark = watermark(userID, defaults)
+        let taskMark = watermark(userID, .tasks, defaults)
+        let profileMark = watermark(userID, .profiles, defaults)
 
         // ── gather local work ────────────────────────────────────────────────
-        let localItems = (try? context.fetch(FetchDescriptor<ActionItem>(
-            predicate: #Predicate { !$0.isExample }))) ?? []
-        let changed = localItems.filter { $0.updatedAt > mark }
-        let stones = (try? context.fetch(FetchDescriptor<TaskTombstone>())) ?? []
+        //
+        // THROWING fetches. These were `try? … ?? []`, which turned a storage
+        // failure into "this device has nothing to push" — the request then
+        // succeeded and the watermark advanced past edits that were never sent.
+        // A read failure must abort the pass, not silently redefine the work.
+        let localItems = try context.fetch(FetchDescriptor<ActionItem>(
+            predicate: #Predicate { !$0.isExample }))
+        // REPAIR POISONED LOCAL STAMPS BEFORE SENDING.
+        //
+        // A device with a badly skewed clock can stamp a record in the year 9999.
+        // The Worker clamps the envelope to now — but the LOCAL record kept its
+        // future date, so the clamped copy coming back always LOST last-writer-wins
+        // against it. The record stayed newer than the watermark, was resent every
+        // pass, and could never be corrected by any other device: permanently
+        // frozen and permanently re-uploading. Clamping locally, once, ends it.
+        let horizon = Date.now.addingTimeInterval(maxClockSkew)
+        for item in localItems where item.updatedAt > horizon {
+            item.updatedAt = .now
+        }
+        for profile in try context.fetch(FetchDescriptor<Profile>()) where profile.updatedAt > horizon {
+            profile.updatedAt = .now
+        }
+
+        let changed = localItems.filter { taskMark.isBefore($0.updatedAt, $0.id) }
+        let stones = try context.fetch(FetchDescriptor<TaskTombstone>())
 
         // THROWING, not compactMap+try?. A record that fails to encode used to be
         // dropped from the push while the watermark advanced past it anyway — the
@@ -114,20 +247,65 @@ enum SyncService {
                   let payload = String(data: data, encoding: .utf8) else { throw SyncError.encode }
             return Wire.Change(id: id.uuidString, payload: payload, updatedAt: iso(updatedAt))
         }
-        let outChanges: [Wire.Change] = try changed.map {
-            try wire(TaskDTO($0), id: $0.id, updatedAt: $0.updatedAt)
-        }
-        let outDeletes = stones.map { Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt)) }
-
         // Family profiles ride the same request — a profile and the to-dos inside
         // it must never land on a device one without the other.
-        let localProfiles = (try? context.fetch(FetchDescriptor<Profile>())) ?? []
-        let changedProfiles = localProfiles.filter { $0.updatedAt > mark }
-        let profileStones = (try? context.fetch(FetchDescriptor<ProfileTombstone>())) ?? []
-        let outProfiles: [Wire.Change] = try changedProfiles.map {
+        let localProfiles = try context.fetch(FetchDescriptor<Profile>())
+        let changedProfiles = localProfiles.filter { profileMark.isBefore($0.updatedAt, $0.id) }
+        let profileStones = try context.fetch(FetchDescriptor<ProfileTombstone>())
+
+        // ── PAGE the push ────────────────────────────────────────────────────
+        //
+        // The server can only accept maxRecordsPerPush records per request,
+        // because every record becomes one D1 statement and D1 Free allows 50
+        // queries per invocation. Sending everything at once meant a device with a
+        // few hundred pending edits produced a request the server could NEVER
+        // accept — it failed, the watermark never advanced, and the same doomed
+        // request retried forever. That is a backup that silently never happens.
+        //
+        // Oldest-first, so progress is monotonic: each pass commits a watermark
+        // past the records it actually sent, and `hasMore` brings the caller
+        // straight back for the next slice.
+        //
+        // Profiles are taken FIRST within the budget: a task can reference a
+        // profile, and the profile should not lag behind its tasks.
+        // SEPARATE BUDGETS, not one shared pot spent in category order. Sharing it
+        // meant a stream with a full page of work consumed the whole budget every
+        // pass and the other stream never sent a single record.
+        var taskBudget = maxRecordsPerPush / 2 + maxRecordsPerPush % 2
+        var profileBudget = maxRecordsPerPush / 2
+        func takeTasks<T>(_ items: [T]) -> [T] {
+            let slice = Array(items.prefix(taskBudget)); taskBudget -= slice.count; return slice
+        }
+        func takeProfiles<T>(_ items: [T]) -> [T] {
+            let slice = Array(items.prefix(profileBudget)); profileBudget -= slice.count; return slice
+        }
+        // Sorted by (stamp, id) — the SAME order the composite watermark advances
+        // in, so "everything at or below the mark has been sent" is exactly true.
+        func byStampThenID(_ a: (Date, UUID), _ b: (Date, UUID)) -> Bool {
+            a.0 != b.0 ? a.0 < b.0 : a.1.uuidString < b.1.uuidString
+        }
+        let pageProfileStones = takeProfiles(profileStones.sorted {
+            byStampThenID(($0.deletedAt, $0.id), ($1.deletedAt, $1.id)) })
+        let pageProfiles = takeProfiles(changedProfiles.sorted {
+            byStampThenID(($0.updatedAt, $0.id), ($1.updatedAt, $1.id)) })
+        let pageStones = takeTasks(stones.sorted {
+            byStampThenID(($0.deletedAt, $0.id), ($1.deletedAt, $1.id)) })
+        let pageChanged = takeTasks(changed.sorted {
+            byStampThenID(($0.updatedAt, $0.id), ($1.updatedAt, $1.id)) })
+
+        let morePending = pageProfileStones.count < profileStones.count
+            || pageProfiles.count < changedProfiles.count
+            || pageStones.count < stones.count
+            || pageChanged.count < changed.count
+
+        let outChanges: [Wire.Change] = try pageChanged.map {
+            try wire(TaskDTO($0), id: $0.id, updatedAt: $0.updatedAt)
+        }
+        let outDeletes = pageStones.map { Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt)) }
+        let outProfiles: [Wire.Change] = try pageProfiles.map {
             try wire(ProfileDTO($0), id: $0.id, updatedAt: $0.updatedAt)
         }
-        let outProfileDeletes = profileStones.map {
+        let outProfileDeletes = pageProfileStones.map {
             Wire.Delete(id: $0.id.uuidString, deletedAt: iso($0.deletedAt))
         }
 
@@ -157,10 +335,34 @@ enum SyncService {
         // pass replayed them on top of a half-changed store. All four collections
         // are decoded up front; a single bad record throws before any mutation.
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
-        func decodeAll<T: Decodable>(_ wire: [Wire.Change], as: T.Type) throws -> [T] {
-            try wire.map {
-                guard let d = $0.payload.data(using: .utf8),
-                      let dto = try? decoder.decode(T.self, from: d) else { throw SyncError.decode }
+
+        // THE ENVELOPE IS AUTHORITATIVE, not the payload.
+        //
+        // The server validates and, where necessary, REWRITES the envelope's id and
+        // updatedAt — it rejects non-UUID ids and clamps future-dated stamps back
+        // to now — while the payload is stored opaquely, exactly as the sending
+        // device wrote it. Decoding only the payload therefore threw away the
+        // server's corrections and reintroduced three bugs:
+        //
+        //   • sub-second ordering: the payload's ISO encoding drops fractional
+        //     seconds, so two edits in the same second became a tie under LWW,
+        //     while the envelope keeps the precision that separates them;
+        //   • clamping: a device with a year-9999 clock had its envelope clamped,
+        //     but the original future stamp still sat inside the payload and would
+        //     have frozen that record forever;
+        //   • identity: nothing checked that the payload's id matched the
+        //     validated envelope id.
+        //
+        // So the envelope's values win, and a payload that disagrees on identity is
+        // treated as corrupt rather than quietly preferred.
+        func decodeAll<T: SyncEnvelopeBacked>(_ wire: [Wire.Change], as: T.Type) throws -> [T] {
+            try wire.map { record in
+                guard let d = record.payload.data(using: .utf8),
+                      var dto = try? decoder.decode(T.self, from: d),
+                      let envelopeID = UUID(uuidString: record.id),
+                      let envelopeStamp = date(from: record.updatedAt) else { throw SyncError.decode }
+                guard dto.id == envelopeID else { throw SyncError.decode }
+                dto.updatedAt = envelopeStamp      // server-validated, full precision
                 return dto
             }
         }
@@ -182,34 +384,105 @@ enum SyncService {
         guard SessionStore.userID == userID else { throw SyncError.accountChanged }
 
         // ── apply (nothing above here has mutated the store) ─────────────────
-        // Profiles FIRST: a task referencing a new profile should find it there.
-        applyProfiles(changes: incomingProfiles, deletes: profileRemovals, in: context)
-        let applied = apply(changes: incoming, deletes: taskRemovals, in: context)
+        //
+        // ORDER IS LOad-BEARING, in three stages:
+        //   1. profile CHANGES  — so a task arriving alongside a new person finds
+        //                         that person already in the store.
+        //   2. task changes/deletes — every incoming edit lands at its real stamp.
+        //   3. profile DELETIONS — the cascade now sees the FINAL task state.
+        //
+        // Stage 3 must come last. When deletions ran first they had to guess at the
+        // incoming tasks, and reassigning a survivor called `touch()` — which made
+        // the local copy newer than the very DTO about to be applied, so stage 2
+        // skipped it and the newer edit from the other device was silently lost.
+        //
+        // ALL OF IT ROLLS BACK TOGETHER. These stages mutate the ModelContext
+        // without saving, so a throw partway through used to leave half-applied
+        // changes sitting in the context — the coordinator caught the error, and
+        // the next save (from anywhere in the app) would quietly persist that
+        // partial state. `rollback()` discards the whole pending set so a failed
+        // pass leaves the store exactly as it was.
+        let applied: (changes: Int, deletes: Int)
+        let rescheduled: [ActionItem]
+        let toCancel: [UUID]
+        do {
+            let canonicalOwner = Profile.ownerID(forAccount: userID)
+            try applyProfileChanges(incomingProfiles, canonicalOwner: canonicalOwner, in: context)
+            let result = try apply(changes: incoming, deletes: taskRemovals, in: context)
+            let profileResult = try applyProfileDeletions(profileRemovals, in: context)
+            applied = (result.changes, result.deletes)
+            rescheduled = result.needsReminderRefresh
+            toCancel = result.cancel + profileResult.cancel
+        } catch {
+            context.rollback()
+            throw error
+        }
 
-        // ── commit progress (only now that the server has confirmed) ─────────
+        // Only the tombstones we actually SENT are cleared; the rest go next page.
+        for stone in pageStones { context.delete(stone) }          // server has them now
+        for stone in pageProfileStones { context.delete(stone) }
+
+        // Each stream advances on ITS OWN progress. A shared mark meant one busy
+        // stream could hold the other's records hostage forever (25 profiles + 1
+        // task: the task was never sent, and the mark never moved because the task
+        // stream had sent nothing). Composite (stamp, id) so a tie can't strand a
+        // record either.
+        //
+        // A stream that sent everything jumps to `attemptedAt`; a stream that was
+        // cut short lands exactly on the last record it sent.
+        func advanced(sent: Int, of total: Int, last: (Date, UUID)?, from mark: Watermark) -> Watermark {
+            guard sent < total else { return Watermark(at: attemptedAt, id: nil) }
+            guard let last else { return mark }        // sent none — don't move
+            return Watermark(at: last.0, id: last.1)
+        }
+        let newTaskMark = advanced(
+            sent: pageChanged.count, of: changed.count,
+            last: pageChanged.last.map { ($0.updatedAt, $0.id) }, from: taskMark)
+        let newProfileMark = advanced(
+            sent: pageProfiles.count, of: changedProfiles.count,
+            last: pageProfiles.last.map { ($0.updatedAt, $0.id) }, from: profileMark)
+
+        // ── persist, THEN commit progress ────────────────────────────────────
+        // The cursor and watermark used to be written before the store was saved.
+        // A save failure (or a crash in between) left the device claiming it had
+        // consumed a page it had actually dropped — the classic way to lose data
+        // permanently, since the server never sends it again. Save first; if that
+        // throws, nothing advances and the same page is retried next pass.
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
         defaults.set(payload.cursor, forKey: cursorKey(userID))
-        defaults.set(attemptedAt, forKey: watermarkKey(userID))
-        for stone in stones { context.delete(stone) }              // server has them now
-        for stone in profileStones { context.delete(stone) }
+        setWatermark(newTaskMark, userID, .tasks, defaults)
+        setWatermark(newProfileMark, userID, .profiles, defaults)
+
+        // Reminders are touched only AFTER the save has committed — in BOTH
+        // directions. A rolled-back pass used to leave iOS holding notifications
+        // for items that never landed, and (worse) to have already cancelled
+        // notifications for items that still exist: rollback restores the store,
+        // but it cannot un-cancel a notification.
+        for id in toCancel { ReminderScheduler.shared.cancel(itemID: id) }
+        for item in rescheduled { ReminderScheduler.shared.reschedule(for: item) }
 
         return Outcome(pushedChanges: outChanges.count, pushedDeletes: outDeletes.count,
                        appliedChanges: applied.changes, appliedDeletes: applied.deletes,
-                       hasMore: payload.more ?? false)
+                       // More to send, or more to pull — either way, come straight back.
+                       hasMore: (payload.more ?? false) || morePending)
     }
 
-    // Merge family profiles, same last-writer-wins rule as tasks.
-    //
-    // A pulled profile deletion removes the person AND their to-dos on this device,
-    // matching what the device that did the removing saw. Those items are deleted
-    // directly (not via ItemActions) — the removing device already sent tombstones
-    // for them, so writing more here would echo the same deletions back.
+    // MARK: - profiles (two stages; see the ordering note in sync())
+
+    // STAGE 1 — upserts. Runs BEFORE task changes, so a task arriving alongside a
+    // new person finds that person already present.
     @discardableResult
-    static func applyProfiles(changes: [ProfileDTO],
-                              deletes: [Removal],
-                              in context: ModelContext) -> (changes: Int, deletes: Int) {
-        let existing = (try? context.fetch(FetchDescriptor<Profile>())) ?? []
+    static func applyProfileChanges(_ changes: [ProfileDTO],
+                                    canonicalOwner: UUID? = nil,
+                                    in context: ModelContext) throws -> Int {
+        let existing = try context.fetch(FetchDescriptor<Profile>())
         var byID = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        var appliedChanges = 0, appliedDeletes = 0
+        var applied = 0
 
         for dto in changes {
             if let local = byID[dto.id] {
@@ -220,8 +493,50 @@ enum SyncService {
                 context.insert(profile)
                 byID[dto.id] = profile
             }
-            appliedChanges += 1
+            applied += 1
         }
+
+        // Exactly ONE owner. Older devices pushed randomly-keyed owner profiles, so
+        // a pull can legitimately deliver several.
+        //
+        // The CANONICAL id wins when it's present — picking merely the oldest could
+        // demote the account-derived owner in favour of a legacy random one, which
+        // would then be re-promoted on the next migration and flip-flop forever.
+        // Losers are demoted, not deleted: a duplicate may carry a real person's
+        // name and their to-dos.
+        let owners = byID.values.filter(\.isOwner)
+        if owners.count > 1 {
+            let keeper = canonicalOwner.flatMap { id in owners.first { $0.id == id } }
+                ?? owners.min(by: { $0.createdAt < $1.createdAt })
+            if let keeper {
+                for extra in owners where extra.id != keeper.id {
+                    extra.isOwner = false
+                    extra.touch()          // so the demotion propagates to the family
+                }
+            }
+        }
+        return applied
+    }
+
+    // STAGE 3 — deletions. Runs AFTER task changes have been applied, so the
+    // cascade below compares against each task's FINAL state.
+    //
+    // A pulled profile deletion removes the person AND their to-dos on this device,
+    // matching what the device that did the removing saw. Those items are deleted
+    // directly (not via ItemActions) — the removing device already sent tombstones
+    // for them, so writing more here would echo the same deletions back.
+    @discardableResult
+    // Returns the ids whose reminders should be cancelled — AFTER the save. Firing
+    // cancellations inline was unsafe: rollback can restore the store, but it
+    // cannot un-cancel a notification, so a failed pass silently disarmed alarms
+    // for to-dos that still exist.
+    static func applyProfileDeletions(_ deletes: [Removal],
+                                      in context: ModelContext) throws -> (deletes: Int, cancel: [UUID]) {
+        guard !deletes.isEmpty else { return (0, []) }
+        let existing = try context.fetch(FetchDescriptor<Profile>())
+        var byID = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        var applied = 0
+        var cancel: [UUID] = []
 
         for removal in deletes {
             guard let local = byID[removal.id] else { continue }
@@ -236,50 +551,63 @@ enum SyncService {
             guard !local.isOwner else { continue }
 
             let id = removal.id
-            let owned = (try? context.fetch(FetchDescriptor<ActionItem>(
-                predicate: #Predicate { $0.profileID == id }))) ?? []
+            let owned = try context.fetch(FetchDescriptor<ActionItem>(
+                predicate: #Predicate { $0.profileID == id }))
             for item in owned {
                 // Per-task last-writer-wins, not a blanket cascade. Removing a
                 // person on another device must not silently destroy a to-do of
-                // theirs that someone edited here more recently. A survivor is
-                // reassigned to the family (nil) so it stays visible and isn't
-                // stranded pointing at a profile that no longer exists.
+                // theirs that someone edited more recently. Because this stage runs
+                // after task changes, `item.updatedAt` already reflects anything
+                // that arrived in this page — no guessing required.
                 if item.updatedAt > removal.deletedAt {
+                    // Survivor: reassign to the family so it stays visible instead
+                    // of pointing at a profile that no longer exists. `touch()` is
+                    // safe here (unlike in stage 1) precisely because no incoming
+                    // DTO is applied after this point.
                     item.profileID = nil
+                    item.touch()
                     continue
                 }
-                ReminderScheduler.shared.cancel(itemID: item.id)
+                cancel.append(item.id)
                 context.delete(item)
             }
             context.delete(local)
             byID[removal.id] = nil
-            appliedDeletes += 1
+            applied += 1
         }
-        return (appliedChanges, appliedDeletes)
+        return (applied, cancel)
     }
 
     // MARK: - apply (pure enough to unit-test without a network)
 
     // Merge server state into the local store using last-writer-wins. Returns how
     // much actually landed (a stale server copy is skipped, not applied).
+    // `needsReminderRefresh` is returned rather than scheduled here: notifications
+    // must not be registered for changes that a later failure rolls back.
     @discardableResult
     static func apply(changes: [TaskDTO],
                       deletes: [Removal],
-                      in context: ModelContext) -> (changes: Int, deletes: Int) {
-        let existing = (try? context.fetch(FetchDescriptor<ActionItem>())) ?? []
+                      in context: ModelContext) throws
+                      -> (changes: Int, deletes: Int,
+                          needsReminderRefresh: [ActionItem], cancel: [UUID]) {
+        // Throwing, like every other fetch in the sync path: reconciling against a
+        // partially-read store silently produces wrong merge decisions.
+        let existing = try context.fetch(FetchDescriptor<ActionItem>())
         var byID = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var appliedChanges = 0, appliedDeletes = 0
+        var needsReminderRefresh: [ActionItem] = []
+        var cancel: [UUID] = []
 
         for dto in changes {
             if let local = byID[dto.id] {
                 guard dto.updatedAt > local.updatedAt else { continue }   // local is newer → keep it
                 dto.apply(to: local)
-                ReminderScheduler.shared.reschedule(for: local)
+                needsReminderRefresh.append(local)
             } else {
                 let item = dto.makeItem()
                 context.insert(item)
                 byID[dto.id] = item
-                ReminderScheduler.shared.reschedule(for: item)
+                needsReminderRefresh.append(item)
             }
             appliedChanges += 1
         }
@@ -293,14 +621,14 @@ enum SyncService {
             // also re-pushes it (its updatedAt is past the watermark), so the edit
             // wins on the server and the other device gets it back.
             guard removal.deletedAt > local.updatedAt else { continue }
-            ReminderScheduler.shared.cancel(itemID: removal.id)
+            cancel.append(removal.id)
             // context.delete directly — NOT ItemActions.delete, which would write a
             // tombstone and echo this deletion back to the server.
             context.delete(local)
             byID[removal.id] = nil
             appliedDeletes += 1
         }
-        return (appliedChanges, appliedDeletes)
+        return (appliedChanges, appliedDeletes, needsReminderRefresh, cancel)
     }
 
     // MARK: - helpers

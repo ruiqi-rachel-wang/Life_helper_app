@@ -1,9 +1,14 @@
 //  SyncFoundationTests.swift
 //
-//  Phase 1 of Part 3 sync: the on-device data foundation + backup. These prove
-//  the primitives are safe BEFORE any server code exists — serialization is
-//  lossless (minus images by design), touch() advances the LWW clock, deletes
-//  leave tombstones, and a backup snapshot restores exactly.
+//  Phase 1 of Part 3 sync: the on-device data foundation. These prove the
+//  primitives are safe BEFORE any server code exists — serialization is lossless
+//  (minus images by design), touch() advances the LWW clock, and deletes leave
+//  tombstones.
+//
+//  The snapshot/restore test that lived here went with TaskBackup (2026-08-13):
+//  once reconciliation became non-destructive, nothing in the app deletes a
+//  user's to-dos on their behalf, so there was no destructive step left for a
+//  local backup to guard.
 //
 
 import Testing
@@ -11,6 +16,11 @@ import Foundation
 import SwiftData
 @testable import Tadah
 
+// @MainActor because TaskDTO's Codable/Equatable conformances are main-actor
+// isolated (it's built from the @Model ActionItem). Calling them from a
+// nonisolated test is a warning today and an ERROR under the Swift 6 language
+// mode — this is the same annotation the other sync test suites already carry.
+@MainActor
 struct SyncFoundationTests {
 
     private func container() throws -> ModelContainer {
@@ -40,6 +50,64 @@ struct SyncFoundationTests {
         item.remindersCustomized = true
         item.source = .scanned
         return item
+    }
+
+    // THE CONTRACT DETAIL/STEP-DETAIL CHANGE DETECTION RESTS ON.
+    //
+    // Those screens snapshot `TaskDTO(item)` when editing opens and stamp
+    // `updatedAt` on the way out ONLY if the value differs. That is what keeps
+    // merely READING a to-do from bumping its timestamp and overwriting a real
+    // edit from another device under last-writer-wins — while still catching an
+    // edit the user never confirmed with "Done".
+    //
+    // So the DTO has to notice every editable field. If one is ever dropped from
+    // TaskDTO, edits to it would silently stop syncing again, and nothing else
+    // would fail. This is that alarm.
+    @Test func taskDTOEqualityNoticesEveryEditableField() {
+        func changed(_ mutate: (ActionItem) -> Void) -> Bool {
+            let item = sampleItem()
+            let before = TaskDTO(item)
+            mutate(item)
+            return TaskDTO(item) != before
+        }
+
+        #expect(changed { $0.title = "Water bill" })
+        #expect(changed { $0.note = "pay by post" })
+        #expect(changed { $0.amount = Decimal(string: "9.99") })
+        #expect(changed { $0.currency = "EUR" })
+        #expect(changed { $0.dueDate = Date(timeIntervalSince1970: 1_900_000_000) })
+        #expect(changed { $0.dueHasTime.toggle() })
+        #expect(changed { $0.category = .medical })
+        #expect(changed { $0.status = .done })
+        #expect(changed { $0.summary = "July bill" })
+        #expect(changed { $0.documentType = "Bank letter" })
+        #expect(changed { $0.sender = "Utility Co" })
+        #expect(changed { $0.siteURL = "https://example.com" })
+        #expect(changed { $0.notes = ["something else"] })
+        #expect(changed { $0.otherIDs = [DocID(label: "Ref", value: "999")] })
+        #expect(changed { $0.reminders = [] })
+        #expect(changed { $0.remindersCustomized.toggle() })
+        #expect(changed { $0.reminderLeadHours = 48 })
+        #expect(changed { $0.profileID = UUID() })
+        // Recurrence is edited in Detail (the "Repeats" row) and its two companion
+        // fields travel with it. Missing from the first version of this test.
+        #expect(changed { $0.recurrence = .weekly })
+        #expect(changed { $0.recurrence = nil })
+        #expect(changed { $0.seriesID = UUID() })
+        #expect(changed { $0.recurrenceAnchorDay = 15 })
+        #expect(changed { $0.senderShort = "UtilCo" })
+
+        // Steps, including the nested detail the Step Detail sheet edits — the
+        // whole reason that sheet reports changes at all.
+        #expect(changed { $0.steps[0].text = "Pay it today" })
+        #expect(changed { $0.steps[0].done.toggle() })
+        #expect(changed { $0.steps[0].detail?.explanation = "call them instead" })
+        #expect(changed { $0.steps[0].detail?.miniChecklist[0].done.toggle() })
+        #expect(changed { $0.steps[0].detail?.miniChecklist.append(SubStep(text: "new")) })
+
+        // And the other half of the contract: an untouched item must compare EQUAL,
+        // or every read would stamp and we'd be back to overwriting live edits.
+        #expect(!changed { _ in })
     }
 
     @Test func taskDTORoundTripsThroughJSON() throws {
@@ -92,29 +160,4 @@ struct SyncFoundationTests {
         #expect(try context.fetch(FetchDescriptor<ActionItem>()).isEmpty)
     }
 
-    @MainActor
-    @Test func snapshotThenRestoreReplacesLocalData() throws {
-        // Source store: one real item + one tombstone.
-        let source = ModelContext(try container())
-        let item = sampleItem(); item.imageData = Data([0xAA]); source.insert(item)
-        source.insert(TaskTombstone(id: UUID()))
-        try source.save()
-
-        let url = try TaskBackup.snapshot(from: source)
-        defer { try? FileManager.default.removeItem(at: url) }
-
-        // Restore into a DIFFERENT store that already holds stale data.
-        let target = ModelContext(try container())
-        target.insert(ActionItem(title: "stale — should be gone", category: .other))
-        try target.save()
-
-        try TaskBackup.restore(from: url, into: target)
-        try target.save()
-
-        let items = try target.fetch(FetchDescriptor<ActionItem>())
-        #expect(items.count == 1)
-        #expect(items.first?.title == "Electric bill")
-        #expect(items.first?.imageData == nil)   // image not carried, not clobbered either
-        #expect(try target.fetch(FetchDescriptor<TaskTombstone>()).count == 1)
-    }
 }
