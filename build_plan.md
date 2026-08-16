@@ -19,6 +19,69 @@
 - The next version's roadmap is now organized as numbered **Parts** in
   `future_features.md`. **Part 1 = metrics tracking backend** (in progress, see below).
 
+**Changed 2026-08-13 (build 4 = accounts + sync + family + Plus; ARCHITECTURE SUMMARY).**
+This doc had drifted badly — it was last accurate on 2026-07-27, before any of the
+Part 3 work existed. The detail lives in `testflight_build4_notes.md` (fifteen
+review passes, authoritative) and `future_features.md` Part 3; what follows is the
+map, so nobody reads this file and thinks Tadah is still a device-only app.
+
+- **Accounts. EMAIL + PASSWORD** (`SignInView`, `AccountStore`, `Sync/AuthService`,
+  `Sync/PasswordCrypto`). Sign in with Apple was removed on 2026-08-15 and its code
+  deleted: Apple auth authenticates the DEVICE'S Apple ID, so a family member on
+  their own iPhone could only ever create their own account, never reach the shared
+  one — which made the whole family feature unbuildable on it.
+  - The **phone** runs PBKDF2-HMAC-SHA256 at 600k iterations and sends only the
+    derived key; the Worker stores `HMAC-SHA256(pepper, salt ‖ derivedKey)`. The
+    stretching is client-side because a free-plan Worker has **10ms of CPU** per
+    request and real PBKDF2 needs hundreds — an attacker still pays the full
+    per-guess cost, so nothing is weakened. The pepper is a Worker secret, not a
+    column, so a stolen `accounts` table can't even be attacked offline.
+  - **Password reset** is a 6-digit emailed code (Resend, `mytadah.com`): 15-min
+    expiry, single use, **5-attempt cap**, only its SHA-256 stored, and every
+    session revoked on success. Request answers identically for unknown addresses.
+  - The session is ONE Codable Keychain record
+    (`SessionStore.Session {token, userID, setupComplete}`), written with a checked,
+    throwing write — three independent keys could tear. **Unchanged by the auth
+    swap**, along with `ReconciliationGate` and all of sync: they only ever cared
+    about a token and a user id, which is why replacing the auth method touched
+    almost nothing.
+- **Backup/sync.** `Sync/SyncService` does one round trip against the Cloudflare
+  Worker's `/sync`: push then pull, last-writer-wins on `updatedAt`, tombstones for
+  deletes. It runs in a **private ModelContext** (main context flushed first) so a
+  rollback can never discard the user's in-flight edits. Pushes **page at 25
+  records** with **composite (timestamp, id) watermarks kept per stream** (tasks and
+  profiles independently — a shared one let a busy stream starve the other
+  forever). Pulls are byte-bounded inside the SQL. The wire **envelope is
+  authoritative** over the stored payload for id + timestamp.
+- **Family profiles.** `Profile` / `ProfileStore` / `FamilySharingView`: one Apple
+  account, several named person-spaces, switched in-app. The owner profile's id is
+  **derived from the Apple user id** (`Profile.ownerID`, a name-based UUID) so every
+  device converges on one owner instead of each pushing its own. Free = 1 profile,
+  Plus = 8 (server-enforced per tier).
+- **The reconciliation gate.** `Sync/ReconciliationGate` is a durable, per-user
+  "this account may not sync yet" marker in UserDefaults, raised BEFORE the session
+  reaches the Keychain and cleared only as the last step of a completed
+  reconciliation. It exists because the session and the account are durable, so
+  anything guarding them must be at least as durable — an in-memory flag died with
+  the process and let one account's data upload into another's.
+- **What sign-in does with existing local data.** Same account → **merges
+  silently**. A *different* account's data → asks, with two **non-destructive**
+  answers: "Move them to this account" or "Not now — sign out". Nothing in the app
+  deletes a user's to-dos on their behalf; the old "start fresh" option was removed
+  by construction (photos are device-only blobs, so no backup could make it safe).
+- **Monetization.** RevenueCat (`PlusStore`, entitlement **`Tadah Pro`**),
+  $6.99/mo · $59.99/yr, `Tadah.storekit` mirrors those for Simulator runs.
+  `PaywallView` resolves the offering itself and shows an on-brand "coming soon"
+  rather than the SDK's raw configuration error; Restore is reachable from every
+  state.
+- **Per-tier limits.** Free 10 scans/day + 20 per 30 days + 20 to-dos; Plus 60/300
+  and 100 (`ScanQuota`, `TaskLimit`, per profile). The Worker's 200/2000 numbers are
+  a **storage safety net, not the commercial limits** — it can't see profile
+  membership.
+- **Photos are NOT backed up** — deliberate (large external blobs; D1 stays cheap),
+  stated plainly in the privacy policy rather than worked around.
+- Deferred engineering debt from these passes is in **`later_ideas.md` §8**.
+
 **Changed 2026-06-23 (Part 1: metrics tracking backend — IN PROGRESS):**
 - **Decision:** KEEP and EXTEND the local `Metrics.swift` (it already logs
   `confirmed`/`completed`) into a backend-uploading tracker — do NOT delete it.
@@ -983,4 +1046,5 @@ Rachel reviewed the 2026-07-19 depth pass for "too much / don't overwhelm the us
 
 ---
 
-*Last updated: 2026-07-27. Update this doc whenever architecture decisions change.*
+*Last updated: 2026-08-13 (build-4 architecture summary added at the top).*
+*Update this doc whenever architecture decisions change.*

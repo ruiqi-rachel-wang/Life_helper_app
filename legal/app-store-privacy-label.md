@@ -2,15 +2,17 @@
 
 > Fill this into **App Store Connect → your app → App Privacy**. These answers
 > match how Tadah works today: document text sent to OpenAI for processing;
-> anonymous, non-identifying first-party usage stats; **an optional Sign in with
-> Apple account that backs up your items to our backend and syncs them between
+> anonymous, non-identifying first-party usage stats; **an optional EMAIL +
+> PASSWORD account that backs up your items to our backend and syncs them between
 > devices**; and **Tadah Plus subscriptions billed by Apple via RevenueCat**.
 > Re-check before each submission.
 >
-> **⚠️ Updated 2026-08-07 for accounts + sync + subscriptions.** The previous
-> version said "no accounts" and declared everything as *not linked to identity*.
-> That is no longer true for signed-in users — see §2.5. Submitting the old label
-> would misdeclare the app.
+> **⚠️ Rewritten 2026-08-15 for email + password.** Sign in with Apple is gone
+> (it authenticated the device's Apple ID, so a family member could never reach a
+> shared account). Earlier revisions of this file argued with themselves — the
+> header described Apple while a later note said it had been removed — so the
+> Apple text is now deleted rather than annotated. §2.5 is the authoritative
+> section.
 
 ## Key nuance (don't get this wrong)
 Apple counts data as **"collected"** if it **leaves the device**, even if you don't
@@ -60,13 +62,20 @@ brokers, no cross-app tracking. The user can turn this off in **Profile → Priv
 ### 2.5 Accounts, sync, and subscriptions — **linked to identity**
 
 Signing in is optional, but when a user DOES sign in, their items are stored on our
-backend under a Tadah-specific Apple user identifier. For those users the data is
-**Linked to You**, and the label must say so. Declare:
+backend under an account identified by their **email address**. For those users the
+data is **Linked to You**, and the label must say so. Declare:
 
+- **Contact Info → Email Address** — Collected · purpose **App Functionality** ·
+  **LINKED to identity** · not used for tracking. (Identifies the account and
+  receives password-reset codes. Stored on our backend, and sent to Resend to
+  deliver those codes.)
 - **Identifiers → User ID** — Collected · purpose **App Functionality** · **LINKED to
-  identity** · not used for tracking. (The Sign in with Apple `sub` — a Tadah-specific
-  identifier. Sent to our backend to store the account's items, and to RevenueCat to
+  identity** · not used for tracking. (Our own account id. Sent to RevenueCat to
   attach the subscription.)
+
+> **Passwords are NOT collected.** The phone derives an unreadable verifier and the
+> raw password never leaves the device, so there is nothing to declare for it under
+> Contact Info or Sensitive Info.
 - **Other User Content** — also declare a **LINKED** instance for signed-in backup:
   the item's title, amount, due date, notes, checklist steps, and any reference numbers
   the user saves are stored on our backend under that User ID. Same for the
@@ -81,10 +90,6 @@ backend under a Tadah-specific Apple user identifier. For those users the data i
 > account). If the form makes that awkward, declare the **linked** version — it is the
 > stronger, safer statement.
 >
-> Name and email from Sign in with Apple are stored **on the device only** and are never
-> sent to our backend, so they are not declared as collected. If that ever changes,
-> declare **Contact Info → Name / Email Address**, linked.
-
 **Family profiles (added 2026-08-08).** Tadah Plus lets a user add profiles for family
 members. Each profile stores **a name they type and a colour** — nothing else, no contact
 details — but that name is **another person's name**, and it is sent to our backend.

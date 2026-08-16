@@ -294,6 +294,50 @@ and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can c
 number, no in-screen scan-count dashboard, no password-change flow beyond what
 Apple/Google sign-in already handles. Add only if a real need shows up post-launch.
 
+### Part 3b — EMAIL + PASSWORD AUTH, replacing Sign in with Apple *(decided 2026-08-15)*
+
+**Why this changes.** Sign in with Apple authenticates the Apple ID *on the
+device*. So on a family member's own iPhone it can only ever mint THEIR account —
+there is no way for them to reach the account holder's. That makes "one account,
+several people, several devices" unbuildable on Apple auth: `Plus = 8 devices`
+only ever meant the account holder's own devices. Email + password is what lets a
+second person sign in to a shared account at all.
+
+**No migration needed.** Accounts have never shipped — build 2 has none — so
+there are no users to move. Clean slate. Removing Apple entirely also keeps
+guideline 4.8 out of scope (it only applies alongside other social logins).
+
+**Worker (all security-sensitive, all new):**
+- `POST /auth/email/register` and `/auth/email/login`. **PBKDF2-HMAC-SHA256**,
+  high iteration count, per-account random salt — that's what WebCrypto offers
+  natively in Workers; Argon2id would need WASM. Constant-time compare. Rate
+  limit both routes hard, per-IP and per-account.
+- `accounts` table: id, email (unique, lower-cased), password_hash, salt,
+  iterations, verified_at, created_at.
+- Email verification + password reset via **Resend** (decided): single-use,
+  expiring, constant-time-compared tokens; secret via `wrangler secret put`.
+  Needs a domain with DNS records — so the domain purchase (§7) is now a
+  dependency, not a nice-to-have.
+- `/account/delete` loses the Apple-revocation step; re-auth becomes the password.
+
+**App:**
+- `SignInView` becomes register / sign-in / forgot-password. `AppleReauthorization`
+  and the applesignin entitlement go.
+- RevenueCat's app user id moves off the Apple `sub` to our own account id.
+- `SessionStore` / `ReconciliationGate` / sync are **unchanged** — they only ever
+  cared about a token and a user id, which is the point of that design.
+
+**Consequences to handle, not discover later:**
+1. **We now store real email addresses.** Apple's private relay often meant we
+   never saw one. The privacy policy and the App Store label (just corrected to
+   match `PrivacyInfo.xcprivacy`) both need another pass — email moves from
+   "transmitted in a token" to "stored on our backend".
+2. **Password reset is load-bearing.** Without it, one forgotten password is an
+   account and every to-do in it, gone. It ships WITH login, not after.
+3. This resets a chunk of Part 3 that was otherwise upload-ready.
+
+---
+
 ## Part 4 — Reminders & personalization
 
 - **Configurable default reminder time** *(Rachel's #2 future ask)* — reminders
