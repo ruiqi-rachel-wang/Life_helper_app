@@ -50,6 +50,15 @@ struct ProfileAvatar: View {
             Circle().stroke(isSelected ? tint : .clear, lineWidth: 2)
                 .padding(-3)
         }
+        // RESERVE THE RING'S SPACE IN LAYOUT.
+        //
+        // `padding(-3)` paints the ring OUTSIDE the frame, so the view drew 3pt it
+        // hadn't asked for. Inside the horizontal ScrollView in the profile
+        // switcher — which clips to its bounds — the top of the ring fell outside
+        // and the selected avatar came out visibly sliced along the divider above
+        // it. Padding back by the same 3pt makes the footprint match what's
+        // actually drawn, so nothing can clip it anywhere it's used.
+        .padding(3)
     }
 }
 

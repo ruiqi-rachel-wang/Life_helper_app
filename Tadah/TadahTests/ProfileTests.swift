@@ -130,6 +130,31 @@ struct ProfileTests {
         #expect(s.activeProfileID == mom.id)
     }
 
+    // A LOCKED FAMILY MUST NOT KEEP FILING TO-DOS UNDER A HIDDEN PERSON.
+    //
+    // `activeID` is a persisted device setting and locking deliberately hides
+    // profiles without deleting anything, so a lapse while viewing Mum left
+    // `activeProfileID` pointing at Mum — with no switcher and no assignee picker
+    // on screen to reveal or change it. Add and Review seed the new item's owner
+    // from this, and TaskLimit counts the free cap against the same bucket, so
+    // every new to-do was silently filed under a profile the user couldn't see.
+    @Test func lockedFamilyFilesNewItemsUnderTheOwner() throws {
+        let ctx = try context()
+        let s = store()
+        let owner = s.ensureOwnerProfile(ctx, name: "Jing")
+        let mom = try s.add(name: "Mom", plus: true, in: ctx)
+        s.setActive(mom.id)
+        #expect(s.activeProfileID == mom.id)
+
+        s.familyUnlocked = false
+        #expect(s.activeProfileID == owner.id)   // not Mom
+        #expect(s.hasFamily == false)            // and nothing on screen says otherwise
+
+        // Nothing was destroyed: resubscribing restores the selection exactly.
+        s.familyUnlocked = true
+        #expect(s.activeProfileID == mom.id)
+    }
+
     @Test func deletingAProfileTakesItsItemsAndFallsBackToOwner() throws {
         let ctx = try context()
         let s = store()
@@ -257,5 +282,46 @@ struct ProfileTests {
         item.profileID = pid
         let next = item.makeNextOccurrence()
         #expect(next?.profileID == pid)
+    }
+
+    // MARK: family locks when Plus ends
+
+    // Family profiles are the thing Plus is sold on, so they have to switch off
+    // when the subscription does — every screen asks `hasFamily`, so the gate
+    // lives there and no screen can be missed.
+    @Test func familyLocksWhenPlusEnds() throws {
+        let ctx = try context()
+        let s = store()
+        s.ensureOwnerProfile(ctx, name: "Me")
+        _ = try s.add(name: "Mom", plus: true, in: ctx)
+        #expect(s.hasFamily)
+
+        s.familyUnlocked = false
+        #expect(!s.hasFamily)          // switcher, assignee row, scope toggle all vanish
+        #expect(s.profiles.count == 2) // …but NOBODY is deleted
+    }
+
+    // THE TRAP THIS AVOIDS. Plus ends while the user is viewing "just mine" as
+    // Mom: the switcher disappears with `hasFamily`, so if the filter kept
+    // applying, their own to-dos would look deleted with no control left to bring
+    // them back. Locked has to mean one plain list of everything.
+    @Test func aLockedFamilyNeverHidesAToDo() throws {
+        let ctx = try context()
+        let s = store()
+        s.ensureOwnerProfile(ctx, name: "Me")
+        let mom = try s.add(name: "Mom", plus: true, in: ctx)
+        s.setActive(mom.id)            // viewing Mom's list…
+        s.scope = .mine                // …filtered to just her
+        let someoneElse = UUID()
+
+        // Unlocked: "just mine" really does filter the other person out.
+        #expect(s.isVisible(profileID: mom.id))
+        #expect(!s.isVisible(profileID: someoneElse))
+
+        // Locked: everything is visible regardless of scope or who's active.
+        s.familyUnlocked = false
+        #expect(s.isVisible(profileID: mom.id))
+        #expect(s.isVisible(profileID: someoneElse))
+        #expect(s.isVisible(profileID: nil))
     }
 }

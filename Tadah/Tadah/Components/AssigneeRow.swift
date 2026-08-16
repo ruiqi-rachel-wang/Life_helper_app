@@ -35,7 +35,11 @@ struct AssigneeRow: View {
                     Image(systemName: "person.crop.circle")
                         .font(.system(size: 15)).foregroundStyle(Color.faded)
                         .frame(width: 22)
-                    Text("For").font(.body14).foregroundStyle(Color.ink)
+                    // "For" alone left the Chinese as a dangling preposition —
+                    // 给 is "to/give", so the row read as the fragment "给 妈妈".
+                    // "Who it's for" / 给谁 is a whole phrase in both, and 给谁
+                    // echoes the picker's own title (这是给谁的？).
+                    Text("Who it's for").font(.body14).foregroundStyle(Color.ink)
                     Spacer()
                     Text(currentName)
                         .font(.body14).foregroundStyle(Color.faded)

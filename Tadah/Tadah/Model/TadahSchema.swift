@@ -131,13 +131,30 @@ nonisolated enum TadahSchemaV2: VersionedSchema {
 
 // ── V3 — CURRENT. Family sharing: Profile + ProfileTombstone and
 // ActionItem.profileID. This version alone points at the LIVE types, so it tracks
-// the app automatically. The moment a V4 is needed, freeze a copy of these here
-// exactly as V1/V2 above and let V4 take over the live types.
+// the app automatically.
+//
+// ⚠️ 2026-08-15 — WHY THERE IS NO FROZEN V3 / V4 PAIR, THOUGH THE HEADER SAYS
+// THERE SHOULD BE.
+//
+// Adding `Profile.reminderMinutes` did redefine what "V3" means, and a store
+// written by the earlier V3 no longer opens. The by-the-book fix is to freeze V3
+// and add V4 — and that was tried. It made things WORSE: a second @Model class
+// named "Profile" in the same process makes SwiftData fail every live fetch with
+// "Failed to cast model Tadah.Profile to Profile", crashing the whole test suite.
+// (V1/V2 nest `ActionItem` without this, so the conflict is not universal — but it
+// is real here and not worth guessing at hours before an upload.)
+//
+// It is survivable ONLY because V3 HAS NEVER SHIPPED. Build 2 is V1/V2, which have
+// no Profile entity at all, so no tester holds a V3 store — the affected devices
+// are development phones, whose fix is to delete and reinstall the app.
+//
+// ⚠️ THE MOMENT ACCOUNTS SHIP, THIS BECOMES UNACCEPTABLE. Freezing has to work
+// before a real user has a V3 store, or their to-dos become unreadable on update
+// with no reinstall that doesn't lose them. Investigate the cast conflict
+// properly then — it is a blocker for the build AFTER this one, not for this one.
 //
 // profileID is optional, so existing rows migrate untouched and are adopted onto
-// the owner profile at launch by ProfileStore.ensureOwnerProfile. (Doing the
-// backfill in the app rather than a custom migration stage keeps the migration
-// lightweight and the backfill re-runnable if it's ever interrupted.)
+// the owner profile at launch by ProfileStore.ensureOwnerProfile.
 nonisolated enum TadahSchemaV3: VersionedSchema {
     static let versionIdentifier = Schema.Version(3, 0, 0)
     static var models: [any PersistentModel.Type] {

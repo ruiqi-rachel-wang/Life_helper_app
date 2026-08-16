@@ -77,6 +77,13 @@ struct SchemaVersioningTests {
         #expect(item.updatedAt.timeIntervalSince1970 > 0)
     }
 
+    // NOTE (2026-08-15): there is deliberately no V3-store migration test here.
+    // Freezing V3 to write one introduced a second @Model class named "Profile",
+    // which makes SwiftData fail every live Profile fetch. See TadahSchema.swift
+    // for the full reasoning and why this is survivable only while V3 is
+    // unshipped. Reinstating a frozen version is a blocker for the build AFTER
+    // accounts ship.
+
     // The store this test writes is the one every tester has. If it can't be
     // opened, TadahApp must NOT delete it — losing everyone's to-dos silently is
     // worse than any error state. This pins that policy.

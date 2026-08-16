@@ -26,8 +26,10 @@ struct FamilySharingView: View {
     @State private var showPaywall = false
     @State private var limitMessage: String?
     @State private var removeFailed = false
+    // Per-person reminder time, edited in the same sheet as the name.
+    @State private var useOwnReminderTime = false
+    @State private var reminderTime = Date.now
 
-    private let columns = [GridItem(.adaptive(minimum: 92), spacing: 18)]
 
     var body: some View {
         NavigationStack {
@@ -90,54 +92,113 @@ struct FamilySharingView: View {
             // saving their own mail under Mom.
             Text("Give each person their own list, so a parent's letters don't mix with yours. Tap someone to switch to them — new to-dos are filed under whoever is selected.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+            // Names the icon that is ACTUALLY on screen. This said "Tap ⋯" while
+            // the button has been an ⓘ since the grid became a list — instructions
+            // pointing at a control that isn't there read as a bug in the app.
+            Text("Tap ⓘ next to a person to edit or remove them.")
+                .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
         }
         .padding(.horizontal, 6)
         .padding(.top, 6)
     }
 
+    // A LIST, not a grid of avatars.
+    //
+    // The grid put identity, count and a ⋯ button into a 92pt tile, so the name
+    // truncated, the count was an afterthought, and "which one am I?" was carried
+    // only by a coloured ring. Rows give each person a full line: a ✓ says who is
+    // active, and an explicit edit button replaces the ⋯ that people had to know
+    // to look for. Modelled on the account switchers this pattern is borrowed
+    // from, where the same three jobs — identify, indicate current, change
+    // settings — are laid out exactly this way.
     private var grid: some View {
-        LazyVGrid(columns: columns, spacing: 18) {
-            ForEach(profiles.profiles) { profile in
-                Button { switchTo(profile) } label: {
-                    VStack(spacing: 8) {
-                        ProfileAvatar(initials: profile.initials,
-                                      colorIndex: profile.colorIndex,
-                                      size: 62,
-                                      isSelected: profile.id == profiles.activeProfileID)
-                        Text(profile.displayName)
-                            .font(.subline).foregroundStyle(Color.ink)
-                            .lineLimit(1)
-                        Text(profile.isOwner ? "You" : "\(count(profile)) to-dos")
-                            .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faded)
+        VStack(spacing: 0) {
+            ForEach(Array(profiles.profiles.enumerated()), id: \.element.id) { index, profile in
+                if index > 0 { divider }
+                HStack(spacing: 14) {
+                    Button { switchTo(profile) } label: {
+                        HStack(spacing: 14) {
+                            ProfileAvatar(initials: profile.initials,
+                                          colorIndex: profile.colorIndex,
+                                          size: 44,
+                                          isSelected: false)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(profile.displayName)
+                                    .font(.body14).foregroundStyle(Color.ink).lineLimit(1)
+                                Text("\(count(profile)) to-dos")
+                                    .font(.subline).foregroundStyle(Color.faded)
+                            }
+                            Spacer(minLength: 8)
+                            // The tick, not a ring: it names the state ("this is
+                            // the one you're using") instead of leaving colour to
+                            // imply it.
+                            if profile.id == profiles.activeProfileID {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(Color.accent)
+                                    .accessibilityLabel("Currently viewing")
+                            }
+                        }
+                        .contentShape(Rectangle())
                     }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                // Rename / remove live here rather than as visible buttons —
-                // the grid stays calm, and both are rare actions.
-                .contextMenu {
-                    Button("Rename") { editing = profile }
-                    if !profile.isOwner {
-                        Button("Remove", role: .destructive) { confirmRemove = profile }
+                    .buttonStyle(.plain)
+                    .contextMenu { editActions(for: profile) }
+
+                    Menu {
+                        editActions(for: profile)
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 19))
+                            .foregroundStyle(Color.faded)
+                            .frame(width: 30, height: 40)
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("Edit \(profile.displayName)")
                 }
+                .padding(.vertical, 10)
             }
 
+            divider
             Button { addTapped() } label: {
-                VStack(spacing: 8) {
-                    AddProfileCircle(size: 62)
-                    Text("Add someone").font(.subline).foregroundStyle(Color.faded)
-                        .lineLimit(1)
-                    Text(plus.isPlus ? " " : "PLUS")
-                        .font(.eyebrow).tracking(0.6).foregroundStyle(Color.accent)
+                HStack(spacing: 14) {
+                    AddProfileCircle(size: 44)
+                    Text("Add someone").font(.body14).foregroundStyle(Color.ink)
+                    Spacer()
+                    if !profiles.familyUnlocked {
+                        Text("PLUS").font(.eyebrow).tracking(0.6).foregroundStyle(Color.accent)
+                    }
                 }
-                .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .padding(.vertical, 10)
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(Color.card)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.hair, lineWidth: 1))
+        .padding(.vertical, 4)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(Color.hair).frame(height: 1)
+    }
+
+    // Shared by the ⓘ menu and the long-press menu, so the two can't drift apart.
+    @ViewBuilder
+    private func editActions(for profile: Profile) -> some View {
+        // Prefill with the CURRENT name. An empty rename field reads as "type a new
+        // name from scratch" and, worse, Save is disabled until you type something —
+        // so tapping Edit to check a spelling left you with a dead sheet.
+        Button("Edit") {
+            newName = profile.name
+            loadReminderState(for: profile)
+            editing = profile
+        }
+        // The owner is the account itself, so there's nothing to remove them FROM.
+        if !profile.isOwner {
+            Button("Remove", role: .destructive) { confirmRemove = profile }
+        }
     }
 
     private var footnote: some View {
@@ -163,12 +224,39 @@ struct FamilySharingView: View {
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hair, lineWidth: 1))
                     Text("Just a name so you can tell the lists apart — it isn't an invitation or a separate login.")
                         .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+
+                    // PER-PERSON REMINDER TIME. Only when editing someone who
+                    // already exists — while adding, there's nothing to attach it
+                    // to yet, and one decision at a time is plenty.
+                    if profile != nil {
+                        Divider().padding(.vertical, 4)
+                        Toggle(isOn: $useOwnReminderTime.animation(.easeInOut(duration: 0.15))) {
+                            Text("Own reminder time").font(.body14).foregroundStyle(Color.ink)
+                        }
+                        .tint(Color.accent)
+                        // The picker is `.compact`, which is a TAPPABLE control
+                        // rather than a label — the default style rendered as text
+                        // that looked like a caption, so it read as unchangeable.
+                        if useOwnReminderTime {
+                            HStack {
+                                Text("Remind at").font(.body14).foregroundStyle(Color.ink)
+                                Spacer()
+                                DatePicker("", selection: $reminderTime,
+                                           displayedComponents: .hourAndMinute)
+                                    .datePickerStyle(.compact)
+                                    .labelsHidden()
+                            }
+                        } else {
+                            Text("Follows your default reminder time.")
+                                .font(.subline).foregroundStyle(Color.faded)
+                        }
+                    }
                     Spacer()
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 16)
             }
-            .navigationTitle(profile == nil ? "Add someone" : "Rename")
+            .navigationTitle(profile == nil ? "Add someone" : "Edit person")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -181,7 +269,8 @@ struct FamilySharingView: View {
                 }
             }
         }
-        .presentationDetents([.height(280)])
+        // Taller when editing: the sheet carries the reminder controls too.
+        .presentationDetents([.height(profile == nil ? 300 : 460)])
     }
 
     // MARK: actions
@@ -196,7 +285,9 @@ struct FamilySharingView: View {
 
     private func addTapped() {
         // Free accounts get the upgrade path, not an error they can't act on.
-        guard plus.isPlus else { showPaywall = true; return }
+        // Same gate the rest of the family UI uses, so an outage can't leave a
+        // subscriber looking at their profiles but unable to add one.
+        guard profiles.familyUnlocked else { showPaywall = true; return }
         if let reason = profiles.blockedReason(plus: true) { limitMessage = reason; return }
         newName = ""
         showAdd = true
@@ -207,12 +298,26 @@ struct FamilySharingView: View {
         guard !name.isEmpty else { return }
         if let profile {
             profiles.rename(profile, to: name, in: context)
+            // `rename` stamps updatedAt; set the time first so one touch covers
+            // both and the pair syncs together rather than as two writes.
+            let minutes = useOwnReminderTime ? Self.minutes(from: reminderTime) : nil
+            if profile.reminderMinutes != minutes {
+                profile.reminderMinutes = minutes
+                profile.touch()
+                // Times feed straight into what's already scheduled.
+                ReminderScheduler.shared.rescheduleAll(
+                    for: (try? context.fetch(FetchDescriptor<ActionItem>())) ?? [])
+            }
         } else {
             do {
-                let created = try profiles.add(name: name, plus: plus.isPlus, in: context)
+                // `familyUnlocked`, matching addTapped. Using isPlus here meant the
+                // Add tile opened (gate says yes) and Save then applied the FREE
+                // one-profile cap (isPlus says no) — so during a RevenueCat outage
+                // a subscriber could type a name and be refused on save.
+                let created = try profiles.add(name: name, plus: profiles.familyUnlocked, in: context)
                 profiles.setActive(created.id)     // jump straight into the new list
             } catch {
-                limitMessage = profiles.blockedReason(plus: plus.isPlus)
+                limitMessage = profiles.blockedReason(plus: profiles.familyUnlocked)
             }
         }
         SyncCoordinator.shared.noteLocalChange()
@@ -236,6 +341,26 @@ struct FamilySharingView: View {
         showAdd = false
         editing = nil
         newName = ""
+        useOwnReminderTime = false
+    }
+
+    // Minutes past midnight ⇄ a Date the picker can show. Only the time of day is
+    // meaningful; the date part is whatever today happens to be.
+    private static func minutes(from date: Date) -> Int {
+        let c = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (c.hour ?? 9) * 60 + (c.minute ?? 0)
+    }
+
+    private static func date(fromMinutes m: Int) -> Date {
+        Calendar.current.date(bySettingHour: m / 60, minute: m % 60, second: 0, of: .now) ?? .now
+    }
+
+    // Load the sheet's per-person state from whoever is being edited.
+    private func loadReminderState(for profile: Profile?) {
+        guard let profile else { useOwnReminderTime = false; return }
+        useOwnReminderTime = profile.reminderMinutes != nil
+        reminderTime = Self.date(fromMinutes: profile.reminderMinutes
+                                 ?? AppSettings.defaultReminderMinutes)
     }
 }
 

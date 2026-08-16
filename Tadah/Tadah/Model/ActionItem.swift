@@ -447,10 +447,15 @@ final class ActionItem {
     // The default reminders (day reminders resolved to 9am; timed reminders at
     // their exact time). Notes are left empty so the scheduler computes a
     // friendly body. Used to seed the editable list.
-    func defaultReminders(now: Date = .now, calendar: Calendar = .current) -> [ReminderItem] {
+    // `defaultMinutes` is passed in rather than read here so the caller can supply
+    // the time belonging to whoever this to-do is FILED UNDER (see
+    // ProfileStore.reminderMinutes(for:)). The device setting stays the default so
+    // model-level callers and tests are unaffected.
+    func defaultReminders(defaultMinutes: Int = AppSettings.defaultReminderMinutes,
+                          now: Date = .now, calendar: Calendar = .current) -> [ReminderItem] {
         Self.defaultReminders(dueDate: dueDate, dueHasTime: dueHasTime,
                               leadHours: reminderLeadHours,
-                              defaultMinutes: AppSettings.defaultReminderMinutes,
+                              defaultMinutes: defaultMinutes,
                               now: now, calendar: calendar)
     }
 
@@ -478,6 +483,13 @@ final class ActionItem {
     // otherwise the smart defaults.
     var effectiveReminders: [ReminderItem] {
         remindersCustomized ? reminders : defaultReminders()
+    }
+
+    // Same thing, but with the reminder time of the PERSON this to-do is filed
+    // under. A customized list is already absolute, so it's returned untouched —
+    // only the smart defaults follow the person.
+    func effectiveReminders(defaultMinutes: Int) -> [ReminderItem] {
+        remindersCustomized ? reminders : defaultReminders(defaultMinutes: defaultMinutes)
     }
 
     // Move a CUSTOMIZED reminder list along with a changed due date: shift every
