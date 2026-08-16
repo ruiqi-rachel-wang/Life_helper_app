@@ -30,6 +30,11 @@ Packages/
 # Secrets — NEVER commit these
 .env
 *.env
+# Wrangler's LOCAL secret file (`wrangler dev` reads it). Deployed secrets live in
+# `wrangler secret put` and never touch the repo, but this one is a real file on
+# disk holding real keys — and `.env` above does not match it.
+.dev.vars
+.dev.vars.*
 secrets.plist
 # (APIKeys.swift no longer holds a secret — it reads OPENAI_API_KEY from the
 #  environment at runtime, so it is committed and a clean checkout compiles.)

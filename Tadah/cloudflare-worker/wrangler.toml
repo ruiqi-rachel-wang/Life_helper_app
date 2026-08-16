@@ -13,24 +13,44 @@ enabled = true
 # Account task sync (Part 3) adds two more:
 #   REVENUECAT_SECRET  — RevenueCat REST *secret* key; the Worker checks Plus tier
 #                        authoritatively (GET /v1/subscribers/<appUserId>).
-#   APPLE_AUDIENCE     — ⚠️ REQUIRED, not optional. The app's bundle id
-#                        (com.ruiqiwang.cuevi). Without it /auth/apple returns 503
-#                        and NOBODY CAN SIGN IN — deliberately, because when the
-#                        check was optional a valid Sign-in-with-Apple token from
-#                        ANY app would have authenticated here.
-#                        wrangler secret put APPLE_AUDIENCE
-# Account DELETION additionally needs Apple token revocation (Apple TN3194) —
-# without all three, /account/delete returns 501 and the app tells the user to
-# contact support rather than pretending the account was deleted:
-#   APPLE_TEAM_ID      — 10-char Team ID from the Apple Developer portal.
-#   APPLE_KEY_ID       — Key ID of a "Sign in with Apple" key.
-#   APPLE_PRIVATE_KEY  — the .p8 file's CONTENTS (paste the whole thing, headers
-#                        included; literal \n sequences are handled).
+#
+# Email + password auth (Part 3b). ⚠️ ALL THREE REQUIRED — each FAILS CLOSED
+# (503 or throw) rather than degrading, because every earlier version of this
+# section had a "sensible fallback" that silently weakened security.
+#   PASSWORD_PEPPER    — ⚠️ REQUIRED. The HMAC key every password verifier and
+#                        reset code is derived through, and the reason a stolen
+#                        `accounts` table can't be attacked offline. NO default:
+#                        without it /auth/email/* returns 503. Generate once with
+#                        `openssl rand -base64 32` and NEVER change it — rotating
+#                        invalidates every stored password at once.
+#                        wrangler secret put PASSWORD_PEPPER
+#   RESEND_KEY         — ⚠️ REQUIRED for password reset. Resend API key. Never
+#                        paste it into a file; one that reaches git or a chat log
+#                        should be revoked and replaced, because it can send mail
+#                        as you and burn your domain's sending reputation.
+#                        wrangler secret put RESEND_KEY
+#   EMAIL_FROM         — ⚠️ REQUIRED, not optional. e.g. noreply@mytadah.com, on a
+#                        domain VERIFIED in Resend. It used to fall back to the
+#                        shared onboarding@resend.dev, which only delivers to the
+#                        Resend account owner — so a real user was told "check
+#                        your inbox" for a code that could never arrive.
+#                        wrangler secret put EMAIL_FROM
+#
+# APPLE_* SECRETS ARE NO LONGER NEEDED. Sign in with Apple was removed on
+# 2026-08-15: the /auth/apple route went then (a route test pins the 404), and the
+# JWKS cache, nonce table, ES256 client-secret minting, base64url/PEM helpers and
+# the grant-revocation step of /account/delete followed on 2026-08-16 — worker.js
+# now contains no Apple code path at all. It authenticated the DEVICE's Apple ID,
+# so a family member could never reach a shared account. Delete the secrets with
+# `wrangler secret delete <NAME>`:
+# APPLE_AUDIENCE, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY.
 # After adding the sync tables run once:
 #   wrangler d1 execute cuevi-metrics --remote --file=schema.sql
-# (Re-run it after pulling the session/nonce changes: `sessions` gains
-#  plus_checked_at and a `used_nonces` table appears. The Worker also creates
-#  these lazily, so the manual run is belt-and-braces.)
+# (Re-run it after pulling the session changes: `sessions` gains plus_checked_at.
+#  The Worker also creates these lazily, so the manual run is belt-and-braces.
+#  An already-deployed database keeps its now-unused `used_nonces` table and its
+#  `account_deletions.apple_revoked` column; nothing reads either, and they can be
+#  dropped by hand whenever convenient.)
 
 # Anonymous tester metrics storage (Part 1). One-time setup:
 #   1) wrangler d1 create cuevi-metrics
@@ -51,8 +71,7 @@ database_id = "5e803b6a-8d38-4388-a4b8-23a0e4fa3122"
 # the noisiest person on it. worker.js skips the check if this binding is missing,
 # so removing it degrades gracefully. `namespace_id` is just a local identifier
 # (any unique int per limiter in this Worker).
-[[unsafe.bindings]]
+[[ratelimits]]
 name = "RATE_LIMITER"
-type = "ratelimit"
 namespace_id = "1001"
 simple = { limit = 60, period = 60 }

@@ -4,7 +4,7 @@
 //   • "/" or /v1/chat/completions  → proxy to OpenAI (keeps the key OFF the phone;
 //     the app sends NO key, this Worker adds the secret OPENAI_API_KEY it holds).
 //   • POST /events                 → store anonymous tester metrics in D1 (Part 1).
-//   • POST /auth/apple             → verify Sign in with Apple, issue a session.
+//   • POST /auth/register|login    → email + password, issue a session.
 //   • POST /auth/logout            → revoke THIS device's session.
 //   • POST /account/delete         → erase the account's server data entirely.
 //   • POST /sync                   → last-writer-wins task/profile sync (Part 3).
@@ -23,7 +23,8 @@
 //     failed open, omitting or rotating the header disabled the cap entirely.
 //   • /events: capped batch size, every stored string clamped, only known event
 //     kinds accepted, INSERT OR IGNORE so re-sends never duplicate.
-//   • /auth: APPLE_AUDIENCE is mandatory, nonces are single-use, sessions expire.
+//   • /auth: passwords are salted+hashed server-side, sessions expire, and both
+//     register and login are rate-limited like every other route.
 //   • The final $ ceiling is the OpenAI spending cap (dashboard) — keep it set.
 
 // gpt-4o stays listed even though the app moved to gpt-5-mini: builds already on
@@ -42,6 +43,15 @@ const MAX_CHAT_BYTES = 128 * 1024;
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 40_000;      // per message
 const ALLOWED_ROLES = new Set(["system", "user", "assistant"]);
+
+// Body ceilings for the NON-chat routes. Every route reads through readJSON(),
+// so nothing is ever buffered unbounded before validation runs.
+//   • /events, /auth/*, /account/* are small fixed-shape payloads.
+//   • /sync legitimately carries a page of records, hence its own larger limit
+//     (MAX_SYNC_BATCH records × MAX_PAYLOAD would be far bigger, but the batch
+//     count check downstream catches the rest).
+const MAX_BODY_BYTES = 64 * 1024;
+const MAX_SYNC_BYTES = 8 * 1024 * 1024;
 
 // Per-install AI-call caps — a COST backstop, not entitlement enforcement.
 // Entitlement is the app's job (ScanQuota.swift + PlusStore); this only bounds a
@@ -66,13 +76,35 @@ const AI_DAY_LIMIT = PLUS_PER_DAY * 3;      // 180
 const AI_MONTH_LIMIT = PLUS_PER_30D * 3;    // 900
 
 // /events guardrails.
-const MAX_BATCH = 500;                               // events accepted per request
+//
+// ⚠️ SIZED FOR D1's PER-INVOCATION QUERY LIMIT, not for what feels generous.
+// D1 Free allows 50 queries per Worker invocation, and statements inside a
+// batch() each count. At 500 this route could never store a full batch — the
+// write failed, the client never advanced its cursor, and the same doomed batch
+// retried forever. 25 leaves headroom for the lazy DDL and any read on the path.
+const MAX_BATCH = 25;                                // events accepted per request
 const VALID_KINDS = new Set(["confirmed", "completed"]);
 const MAX_STR = 64;                                  // clamp every stored string
 
 // /sync + /auth guardrails (Part 3 account task sync).
-const MAX_SYNC_BATCH = 500;     // changes + deletes accepted per push
-const MAX_PULL = 1000;          // rows returned per pull
+//
+// ⚠️ Same D1 constraint as MAX_BATCH above. Every change/delete/profile record in
+// a push becomes one statement in the batch, and /sync also spends queries on
+// session lookup, the profile-cap read, two pulls and the last_seen update. 25
+// records keeps the worst case comfortably under D1 Free's 50-per-invocation
+// ceiling. The CLIENT pages to this size (see SyncService.maxRecordsPerPush), so
+// a device with hundreds of pending edits sends several requests instead of one
+// oversized one that could never succeed.
+const MAX_SYNC_BATCH = 25;      // changes + deletes + profiles accepted per push
+const MAX_PULL = 1000;          // rows returned per pull (see also MAX_PULL_BYTES)
+// ⚠️ ROW COUNT ALONE IS NOT A BOUND. MAX_PULL × MAX_PAYLOAD is 100 MB, and the D1
+// result set, the output arrays and JSON.stringify()'s buffer all share the
+// Worker's 128 MB ceiling — so a large account could OOM the pull instead of
+// syncing. Responses are therefore capped by BYTES as well; whichever limit is
+// reached first ends the page, and `more` brings the client back for the rest.
+const MAX_PULL_BYTES = 4 * 1024 * 1024;
+// Per-row allowance for the id, timestamps and JSON punctuation around a payload.
+const ROW_OVERHEAD_BYTES = 120;
 // Bytes of TaskDTO JSON stored per task (generous; images aren't synced). An
 // oversized payload is REJECTED, never truncated — slicing a JSON string mid-value
 // produces a record the client can't decode, and an undecodable record that the
@@ -89,12 +121,25 @@ const REVOKED_SESSION_TTL_DAYS = 30;
 const USAGE_TTL_DAYS = 60;
 // Plus caps (decided 2026-08-05), enforced here because the client can lie. The
 // two are DECOUPLED — any profile can be open on any device; the account simply
-// can't exceed 8 of either. Free is 1 profile / 1 device (see handleAppleAuth).
+// can't exceed 8 of either. Free is 1 profile / 1 device (see issueSession).
 const MAX_PROFILES = 8;
 const MAX_DEVICES = 8;
 // Free tier: one profile (you), one device. Must match ProfileStore.freeMax.
 const FREE_PROFILES = 1;
-const APPLE_ISS = "https://appleid.apple.com";
+// STORAGE SAFETY CEILINGS — deliberately NOT the commercial limits.
+//
+// Be clear about what this is: the product's paid limits are 20/100 tasks PER
+// PROFILE (TaskLimit.max / .maxPlus) and are enforced in the app. These numbers
+// are per ACCOUNT and much larger; they exist only so a modified client cannot
+// store unbounded rows, which is both a cost problem and exactly the volume
+// needed to push a pull response toward the Worker's memory ceiling.
+//
+// Do not mistake these for tier enforcement, and don't tighten them to 20/100
+// without also making them per-profile — the server can't see profile membership
+// (payloads are opaque to it), so an account-wide 20 would break a legitimate
+// family of four long before anyone hit their own limit.
+const FREE_TASK_STORAGE_CEILING = 200;
+const PLUS_TASK_STORAGE_CEILING = 2000;
 // MUST match PlusStore.entitlementID in the app AND the Entitlement identifier in
 // the RevenueCat dashboard. If these drift, checkPlus() sees every user as free
 // and Plus accounts get the free one-device limit. Override with a
@@ -105,7 +150,6 @@ const PLUS_ENTITLEMENT = "Tadah Pro";
 // migration step. Cheap: runs once per Worker instance, IF NOT EXISTS after.
 let usageTableReady = false;
 let syncTablesReady = false;              // lazy DDL for tasks/sessions (see ensureSyncTables)
-let appleKeys = null, appleKeysAt = 0;    // cached Apple JWKS (per isolate)
 
 export default {
   async fetch(request, env) {
@@ -137,7 +181,10 @@ export default {
     }
 
     if (path === "/events") return handleEvents(request, env);
-    if (path === "/auth/apple") return handleAppleAuth(request, env);
+    if (path === "/auth/email/register") return handleEmailRegister(request, env);
+    if (path === "/auth/email/login") return handleEmailLogin(request, env);
+    if (path === "/auth/email/reset/request") return handleResetRequest(request, env);
+    if (path === "/auth/email/reset/confirm") return handleResetConfirm(request, env);
     if (path === "/auth/logout") return handleLogout(request, env);
     if (path === "/account/delete") return handleAccountDelete(request, env);
     if (path === "/sync") return handleSync(request, env);
@@ -149,18 +196,11 @@ export default {
 // ── AI proxy ────────────────────────────────────────────────────────────────
 async function handleChat(request, env) {
   // Bound the REQUEST before reading it. The token cap only limited what OpenAI
-  // writes back; the input side was unbounded, so a caller could push megabytes of
-  // prompt (which is what actually costs money) through a single allowed call.
-  const declared = Number(request.headers.get("Content-Length") || 0);
-  if (Number.isFinite(declared) && declared > MAX_CHAT_BYTES) {
-    return json({ error: "Request too large" }, 413);
-  }
-  const raw = await request.text();
-  if (raw.length > MAX_CHAT_BYTES) return json({ error: "Request too large" }, 413);
-
-  let body;
-  try { body = JSON.parse(raw); } catch { return json({ error: "Invalid JSON" }, 400); }
-  if (!body || typeof body !== "object") return json({ error: "Invalid JSON" }, 400);
+  // writes back; the input side was unbounded, and prompt tokens are most of the
+  // bill on a document scan.
+  const read = await readJSON(request, MAX_CHAT_BYTES);
+  if (!read.ok) return read.response;
+  const body = read.body;
 
   if (!ALLOWED_MODELS.has(body.model)) return json({ error: "Model not allowed" }, 400);
 
@@ -235,6 +275,66 @@ async function handleChat(request, env) {
   });
 }
 
+// Read and parse a JSON body with a HARD byte ceiling.
+//
+// Every route used to call `request.json()` straight away, which buffers whatever
+// the caller sends before any validation runs — so batch-count checks downstream
+// couldn't prevent a multi-megabyte body from being materialised first. This
+// checks the declared Content-Length AND the bytes actually read (a chunked
+// request can lie, or omit the header entirely).
+//
+// Returns { ok: true, body } or { ok: false, response } ready to return.
+async function readJSON(request, limit = MAX_BODY_BYTES) {
+  const tooLarge = { ok: false, response: json({ error: "Request too large" }, 413) };
+
+  const declared = Number(request.headers.get("Content-Length") || 0);
+  if (Number.isFinite(declared) && declared > limit) return tooLarge;
+  if (!request.body) return { ok: false, response: json({ error: "Invalid JSON" }, 400) };
+
+  // STREAMED, and counted in BYTES.
+  //
+  // Two bugs the earlier version had, both of which let an oversized body through:
+  //   • it awaited request.text() first, so the whole payload was buffered before
+  //     the limit was consulted — the check couldn't prevent the memory cost it
+  //     was there to prevent;
+  //   • it then compared `raw.length`, which is UTF-16 code units, NOT bytes. A
+  //     body of two-byte characters measured at half its real size: 80,008 bytes
+  //     sailed through a 65,536-byte limit as "40,008".
+  // Reading chunk by chunk and cancelling the moment the byte count is exceeded
+  // fixes both.
+  const reader = request.body.getReader();
+  const chunks = [];
+  let received = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > limit) {
+        await reader.cancel();
+        return tooLarge;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { ok: false, response: json({ error: "Invalid body" }, 400) };
+  }
+
+  const buffer = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.byteLength; }
+
+  try {
+    const body = JSON.parse(new TextDecoder().decode(buffer));
+    if (!body || typeof body !== "object") {
+      return { ok: false, response: json({ error: "Invalid JSON" }, 400) };
+    }
+    return { ok: true, body };
+  } catch {
+    return { ok: false, response: json({ error: "Invalid JSON" }, 400) };
+  }
+}
+
 // Validate the chat messages, returning a clean copy or null if unusable.
 //
 // TEXT ONLY, on purpose. Tadah does OCR on the device and sends the recognized
@@ -293,8 +393,9 @@ async function bumpUsage(db, installID) {
 async function handleEvents(request, env) {
   if (!env.DB) return json({ error: "Metrics storage not configured" }, 503);
 
-  let body;
-  try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
+  const body = read.body;
 
   const installID = clamp(body.installID);
   const appVersion = clamp(body.appVersion);
@@ -338,13 +439,13 @@ async function handleEvents(request, env) {
 
 // ── Account task sync (Part 3) ───────────────────────────────────────────────
 // Two routes:
-//   POST /auth/apple  { idToken, deviceId } → verify the Sign-in-with-Apple JWT
-//     (Apple's public keys), check the user's tier via RevenueCat, enforce the
-//     free = 1-device rule, and issue a session token.
+//   POST /auth/register|login  { email, derivedKey, deviceId } → authenticate,
+//     check the user's tier via RevenueCat, enforce the free = 1-device rule, and
+//     issue a session token.
 //   POST /sync        header X-Tadah-Session; { since, changes[], deletes[] } →
 //     last-writer-wins upsert into `tasks`, then return everything changed since
 //     the client's cursor. A revoked session ⇒ 401 (signed out on another device).
-// The user_id is ALWAYS the verified Apple `sub` — never taken from the client.
+// The user_id ALWAYS comes from the resolved session — never taken from the client.
 
 // Create tasks/sessions if a migration hasn't been run (mirrors ai_usage's lazy
 // DDL). Cheap: once per isolate, IF NOT EXISTS after.
@@ -353,94 +454,31 @@ async function ensureSyncTables(db) {
   await db.exec("CREATE TABLE IF NOT EXISTS tasks (user_id TEXT NOT NULL, item_id TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT, PRIMARY KEY (user_id, item_id))");
   await db.exec("CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id TEXT NOT NULL, device_id TEXT NOT NULL, created_at TEXT NOT NULL, last_seen TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0)");
   await db.exec("CREATE TABLE IF NOT EXISTS profiles (user_id TEXT NOT NULL, profile_id TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT, PRIMARY KEY (user_id, profile_id))");
-  // Single-use Sign-in-with-Apple nonces. Without this an intercepted identity
-  // token could be replayed until it expired to mint extra sessions.
-  await db.exec("CREATE TABLE IF NOT EXISTS used_nonces (nonce TEXT PRIMARY KEY, used_at TEXT NOT NULL)");
+  // (The single-use Sign-in-with-Apple nonce table went with the route on
+  // 2026-08-15. It is NOT created here any more — nothing reads or writes a nonce.
+  // An existing deployment keeps its empty `used_nonces` table until it is dropped
+  // by hand; it is unreferenced either way.)
+  // Per-user progress through account deletion. Deletion spans RevenueCat and D1
+  // and cannot be atomic, so the completed step is recorded and a retry resumes
+  // rather than repeating (or falsely reporting) work.
+  // Email accounts + their reset codes. Created lazily like the rest so a Worker
+  // deployed without running schema.sql still works rather than 500-ing on the
+  // first registration.
+  await db.exec("CREATE TABLE IF NOT EXISTS accounts (user_id TEXT PRIMARY KEY, email TEXT NOT NULL, pw_hash TEXT NOT NULL, pw_salt TEXT NOT NULL, pw_iterations INTEGER NOT NULL, pw_version INTEGER NOT NULL DEFAULT 1, verified_at TEXT, created_at TEXT NOT NULL)");
+  await db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)");
+  await db.exec("CREATE TABLE IF NOT EXISTS password_resets (user_id TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)");
+  await db.exec("CREATE TABLE IF NOT EXISTS account_deletions (user_id TEXT PRIMARY KEY, revenuecat_deleted INTEGER NOT NULL DEFAULT 0, started_at TEXT NOT NULL)");
   // Added after the sessions table shipped, so it's an ALTER rather than part of
   // the CREATE above. Harmless duplicate-column error on an already-migrated DB.
   try { await db.exec("ALTER TABLE sessions ADD COLUMN plus_checked_at TEXT"); } catch { /* already there */ }
   syncTablesReady = true;
 }
 
-async function handleAppleAuth(request, env) {
-  if (!env.DB) return json({ error: "Sync not configured" }, 503);
-  // Refuse to run unconfigured. Without APPLE_AUDIENCE any valid Sign-in-with-Apple
-  // token from ANY app would authenticate here, so treating it as optional made
-  // the check decorative. Fail loudly instead of silently accepting everyone.
-  if (!env.APPLE_AUDIENCE) return json({ error: "Auth not configured" }, 503);
-
-  let body;
-  try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
-
-  await ensureSyncTables(env.DB);
-
-  let claims;
-  try { claims = await verifyAppleToken(body && body.idToken, env); }
-  catch { return json({ error: "Invalid Apple token" }, 401); }
-  const userID = claims.sub;
-
-  // Replay protection: the client hashes a random nonce into the authorization
-  // request, so the token carries sha256(rawNonce). We re-derive it from the raw
-  // value the client sends and then BURN it, so the same token can't be presented
-  // twice even inside its validity window.
-  const rawNonce = clamp(body && body.nonce, 128);
-  if (!rawNonce) return json({ error: "Nonce required" }, 401);
-  if (claims.nonce !== (await sha256Hex(rawNonce))) return json({ error: "Nonce mismatch" }, 401);
-  const fresh = await env.DB.prepare(
-    "INSERT INTO used_nonces (nonce, used_at) VALUES (?, ?) ON CONFLICT(nonce) DO NOTHING RETURNING nonce"
-  ).bind(claims.nonce, new Date().toISOString()).first();
-  if (!fresh) return json({ error: "Nonce already used" }, 401);
-
-  const deviceId = clamp(body.deviceId);
-  if (!deviceId) return json({ error: "Device id required" }, 400);
-  const { known, plus } = await checkPlus(userID, env);
-  const now = new Date().toISOString();
-  const token = newToken();
-
-  // Revoke + create in ONE batch (D1 runs a batch as a transaction), so two
-  // simultaneous sign-ins can't interleave and leave a free account with two live
-  // sessions — which was how the one-device rule could be defeated by racing it.
-  const revokeAll = env.DB.prepare(
-    "UPDATE sessions SET revoked = 1 WHERE user_id = ? AND revoked = 0");
-  const revokeDevice = env.DB.prepare(
-    "UPDATE sessions SET revoked = 1 WHERE user_id = ? AND device_id = ? AND revoked = 0");
-  const insert = env.DB.prepare(
-    "INSERT INTO sessions (token, user_id, device_id, created_at, last_seen, revoked, plus_checked_at) VALUES (?, ?, ?, ?, ?, 0, ?)"
-  ).bind(token, userID, deviceId, now, now, known ? now : null);
-
-  // Free (tier KNOWN and not Plus) → revoke the user's other live sessions so only
-  // this device stays signed in. When the tier is UNKNOWN (RevenueCat unreachable)
-  // we deliberately DON'T revoke — never wrongly sign out a possible Plus user;
-  // the worst case is a brief extra device.
-  if (known && !plus) {
-    await env.DB.batch([revokeAll.bind(userID), insert]);
-  } else {
-    // Plus (or unknown tier): several devices are fine, but not unlimited — each
-    // one is sync traffic and another copy of the family's data. Re-signing in on
-    // a device we already know just replaces its session and never counts twice.
-    await env.DB.batch([revokeDevice.bind(userID, deviceId), insert]);
-    // Counted AFTER inserting, then undone if we went over. Checking first and
-    // inserting second is the race that let concurrent sign-ins both pass.
-    const live = await env.DB.prepare(
-      "SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND revoked = 0"
-    ).bind(userID).first();
-    if ((live?.n ?? 0) > MAX_DEVICES) {
-      await env.DB.prepare("UPDATE sessions SET revoked = 1 WHERE token = ?").bind(token).run();
-      return json({ error: "device_limit",
-                    message: `This account is already signed in on ${MAX_DEVICES} devices. Sign out on one of them first.` }, 409);
-    }
-  }
-
-  // Opportunistic retention cleanup — cheap, and keeps tombstones / dead sessions
-  // / usage rows from growing without bound.
-  await sweepRetention(env.DB);
-
-  // Lets the client tell a NEW account (seed from local) from an EXISTING one
-  // (pull + reconcile) — Phase 3.
-  const has = await env.DB.prepare(
-    "SELECT 1 FROM tasks WHERE user_id = ? AND deleted_at IS NULL LIMIT 1").bind(userID).first();
-  return json({ token, userID, plus, hasServerData: !!has }, 200);
-}
+// Sign in with Apple was REMOVED on 2026-08-15 along with its route, token
+// verification, JWKS handling and grant revocation. It authenticates the DEVICE's
+// Apple ID, so a family member on their own iPhone could only ever create their
+// own account — which made a shared family account unbuildable on it. Accounts
+// never shipped under it, so there is nothing to keep a compatibility path for.
 
 // Sign out THIS device: revoke the session server-side so its token stops working
 // immediately. Without this a token stayed valid forever after sign-out, and the
@@ -454,14 +492,16 @@ async function handleLogout(request, env) {
   return json({ ok: true }, 200);
 }
 
-// Delete the ENTIRE account. Apple requires an in-app path that deletes the
-// account and its data — and, for apps using Sign in with Apple, that the token
-// grant is REVOKED too (Apple TN3194). Deleting only our own rows leaves Tadah
-// listed under Settings ▸ Apple ID ▸ Sign in with Apple, which is not deletion.
+// Delete the ENTIRE account. Apple (App Store guideline 5.1.1(v)) requires an
+// in-app path that deletes the account and its data, not just the local copy.
 //
-// Order matters: revoke the third-party state FIRST, while we still have the ids
-// to do it with, and only drop our rows once that has succeeded. Deleting our
-// rows first would leave no way to retry the revocation.
+// The Sign-in-with-Apple grant revocation this handler used to do first is gone
+// with the auth route — every account is an email account, and there is no
+// third-party grant to sever. What remains is RevenueCat, then our own rows.
+//
+// Order still matters: revoke the third-party state FIRST, while we still have
+// the ids to do it with, and only drop our rows once that has succeeded. Deleting
+// our rows first would leave no way to retry.
 //
 // Rows are removed outright rather than tombstoned — there is no other device left
 // to propagate a deletion to once all sessions are revoked, and keeping tombstones
@@ -474,115 +514,135 @@ async function handleAccountDelete(request, env) {
   if (!session) return json({ error: "Session invalid" }, 401);
   const userID = session.user_id;
 
-  let body = {};
-  try { body = await request.json(); } catch { /* body is optional-ish; checked below */ }
-  const authorizationCode = clamp(body && body.authorizationCode, 512);
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
 
-  // 1) Revoke the Sign in with Apple grant.
-  if (!appleRevocationConfigured(env)) {
-    // Refuse rather than half-delete. A 501 tells the app to say "we couldn't
-    // delete your account" instead of falsely confirming — the same rule the
-    // client applies to every other failure here.
-    return json({ error: "not_configured",
-                  message: "Account deletion is temporarily unavailable. Please contact support." }, 501);
+  // ACCOUNTS RE-AUTHENTICATE WITH THEIR PASSWORD.
+  //
+  // Deleting an account is irreversible and takes every to-do with it, so it must
+  // not be possible with a borrowed unlocked phone — hence proving you know the
+  // password. (This used to read an `authorizationCode` from the body for Apple
+  // grant revocation; the field was still being parsed long after the code that
+  // consumed it was deleted, so it went too.)
+  const emailAccount = await env.DB.prepare(
+    "SELECT pw_hash, pw_salt FROM accounts WHERE user_id = ?").bind(userID).first();
+
+  if (emailAccount) {
+    const derived = validDerivedKey(read.body && read.body.derivedKey);
+    const computed = await derivePasswordHash(env, derived || "0".repeat(64),
+                                              emailAccount.pw_salt);
+    if (!derived || !timingSafeEqual(computed, emailAccount.pw_hash)) {
+      return json({ error: "invalid_credentials" }, 401);
+    }
+    if (!env.REVENUECAT_SECRET) {
+      return json({ error: "not_configured",
+                    message: "Account deletion is temporarily unavailable. Please contact support." }, 501);
+    }
+  } else {
+    // No `accounts` row means no account to delete. Every account is an email
+    // account now (Apple auth is gone and never shipped), so this is a session
+    // pointing at nothing rather than a legacy case to support.
+    return json({ error: "invalid_credentials" }, 401);
   }
-  if (!authorizationCode) return json({ error: "authorization_required" }, 400);
+
+  // Deletion spans two systems and CANNOT be atomic — a RevenueCat success
+  // followed by a D1 failure leaves a partially-deleted account no matter how it
+  // is ordered. Rather than pretend otherwise, progress is recorded and the whole
+  // handler is idempotent: a retry resumes at the step that hasn't completed, and
+  // a completed step is skipped. The response reports exactly what is done.
+  const progress = await deletionProgress(env.DB, userID);
+
+  // 1) RevenueCat subscriber, so no purchase history stays keyed to this user id.
+  //    Purchases.logOut() only changes the SDK's local identity — it deletes
+  //    nothing. The RESULT is checked: silently swallowing a failure here meant
+  //    reporting a complete deletion while RevenueCat still held the customer.
+  if (!progress.revenuecat) {
+    const rc = await deleteRevenueCatSubscriber(userID, env);
+    if (!rc.ok) {
+      // Unconfigured is an operator problem, not a transient one — retrying won't
+      // help until the secret is set, so say so differently.
+      if (rc.unconfigured) {
+        return json({ error: "not_configured", completed: progress,
+                      message: "Account deletion can't be completed right now. Please contact support and we'll finish it for you." }, 501);
+      }
+      return json({ error: "revenuecat_failed", completed: progress,
+                    message: "We couldn't finish deleting your subscription record. Nothing else has been removed yet. Please try again." }, 502);
+    }
+    await markDeletionStep(env.DB, userID);
+    progress.revenuecat = true;
+  }
+
+  // 2) Our own rows, last. ONE BATCH, including the progress row — D1 batches are
+  //    transactional and roll back as a unit.
+  //
+  //    Deleting the progress row in a separate statement was a trap: it runs after
+  //    `sessions` is already gone, so if it failed the user could no longer
+  //    authenticate to retry — locked out of finishing their own deletion. In one
+  //    batch, either everything goes or nothing does and the session survives.
   try {
-    await revokeAppleGrant(authorizationCode, env);
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM tasks WHERE user_id = ?").bind(userID),
+      env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userID),
+      env.DB.prepare("DELETE FROM account_deletions WHERE user_id = ?").bind(userID),
+      // Any outstanding reset code goes too. Leaving it behind would let a live
+      // code outlive the account it belonged to — and if the address were later
+      // re-registered, an old row keyed on a recycled user id is a mess nobody
+      // wants to reason about.
+      env.DB.prepare("DELETE FROM password_resets WHERE user_id = ?").bind(userID),
+      env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userID),
+      // The credentials themselves. Leaving this row behind would keep the email
+      // address registered forever — the user's data would be gone but they could
+      // never sign up again with their own address, and we'd still be holding a
+      // password hash for an account we told them we deleted.
+      env.DB.prepare("DELETE FROM accounts WHERE user_id = ?").bind(userID),
+    ]);
   } catch {
-    return json({ error: "revoke_failed",
-                  message: "We couldn't fully disconnect your Apple ID. Nothing was deleted; please try again." }, 502);
+    return json({ error: "store_failed", completed: progress,
+                  message: "Your subscription record is deleted, but we couldn't finish deleting your saved items. Please try again." }, 502);
   }
-
-  // 2) Delete the RevenueCat subscriber, so no purchase history stays keyed to
-  //    this user id. Purchases.logOut() only changes the SDK's local identity —
-  //    it deletes nothing. Best-effort: a subscriber that never existed 404s, and
-  //    that must not block the deletion the user asked for.
-  await deleteRevenueCatSubscriber(userID, env);
-
-  // 3) Now our own rows.
-  await env.DB.batch([
-    env.DB.prepare("DELETE FROM tasks WHERE user_id = ?").bind(userID),
-    env.DB.prepare("DELETE FROM profiles WHERE user_id = ?").bind(userID),
-    env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userID),
-  ]);
   return json({ ok: true }, 200);
 }
 
-// Apple token revocation needs a client secret: an ES256 JWT signed with the
-// private key from the Apple Developer portal. All four must be set:
-//   APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY (the .p8 contents), APPLE_AUDIENCE.
-function appleRevocationConfigured(env) {
-  return !!(env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY && env.APPLE_AUDIENCE);
+// Which deletion steps have already succeeded for this user. Only RevenueCat can
+// half-succeed now; the Apple-grant step went with Sign in with Apple. Older
+// databases still carry an `apple_revoked` column — it is never read or written.
+async function deletionProgress(db, userID) {
+  const row = await db.prepare(
+    "SELECT revenuecat_deleted FROM account_deletions WHERE user_id = ?"
+  ).bind(userID).first();
+  return { revenuecat: !!(row && row.revenuecat_deleted) };
 }
 
-// Exchange the authorization code for a refresh token, then revoke it. Apple
-// wants the token revoked, not just the local session dropped.
-async function revokeAppleGrant(authorizationCode, env) {
-  const secret = await appleClientSecret(env);
-
-  const tokenRes = await fetch("https://appleid.apple.com/auth/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: env.APPLE_AUDIENCE,
-      client_secret: secret,
-      code: authorizationCode,
-      grant_type: "authorization_code",
-    }),
-  });
-  if (!tokenRes.ok) throw new Error("apple token exchange failed");
-  const tokens = await tokenRes.json();
-  // Prefer the refresh token: revoking it invalidates the whole grant.
-  const token = tokens.refresh_token || tokens.access_token;
-  const hint = tokens.refresh_token ? "refresh_token" : "access_token";
-  if (!token) throw new Error("no token to revoke");
-
-  const revokeRes = await fetch("https://appleid.apple.com/auth/revoke", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: env.APPLE_AUDIENCE,
-      client_secret: secret,
-      token,
-      token_type_hint: hint,
-    }),
-  });
-  if (!revokeRes.ok) throw new Error("apple revoke failed");
+async function markDeletionStep(db, userID) {
+  await db.prepare(
+    `INSERT INTO account_deletions (user_id, revenuecat_deleted, started_at) VALUES (?, 1, ?)
+     ON CONFLICT(user_id) DO UPDATE SET revenuecat_deleted = 1`
+  ).bind(userID, new Date().toISOString()).run();
 }
 
-// ES256 JWT signed with the Apple .p8 key — Apple's "client secret".
-async function appleClientSecret(env) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = { alg: "ES256", kid: env.APPLE_KEY_ID, typ: "JWT" };
-  const payload = {
-    iss: env.APPLE_TEAM_ID,
-    iat: now,
-    exp: now + 300,                 // short-lived; minted per request
-    aud: APPLE_ISS,
-    sub: env.APPLE_AUDIENCE,
-  };
-  const signingInput =
-    `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;
-
-  const key = await crypto.subtle.importKey(
-    "pkcs8", pemToBytes(env.APPLE_PRIVATE_KEY),
-    { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign(
-    { name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(signingInput));
-  return `${signingInput}.${b64urlFromBytes(new Uint8Array(sig))}`;
-}
-
-// RevenueCat keeps a subscriber record keyed by the app user id (our Apple sub).
+// RevenueCat keeps a subscriber record keyed by the app user id.
 // Deleting the account must delete that too, or purchase history outlives it.
+//
+// Returns { ok }. The result is CHECKED by the caller — this used to swallow
+// missing configuration, network errors and every HTTP status alike, so a failed
+// deletion still reported complete success to the user.
 async function deleteRevenueCatSubscriber(userID, env) {
-  if (!env.REVENUECAT_SECRET) return;
+  // FAIL CLOSED when unconfigured. It's tempting to treat a missing secret as
+  // "no purchases exist, nothing to delete" — but the APP configures RevenueCat
+  // with its own public key (see TadahApp), so subscriber records are created
+  // regardless of whether this Worker secret is set. A missing/rotated secret
+  // would then leave that data in place while telling the user deletion finished.
+  if (!env.REVENUECAT_SECRET) return { ok: false, unconfigured: true };
   try {
-    await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userID)}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${env.REVENUECAT_SECRET}` },
-    });
-  } catch { /* best-effort; never block the user's deletion on it */ }
+    const res = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(userID)}`,
+      { method: "DELETE", headers: { Authorization: `Bearer ${env.REVENUECAT_SECRET}` } });
+    // 200 = deleted. 404 = no such subscriber, which is the desired end state for
+    // anyone who never purchased. Anything else is a real failure.
+    return { ok: res.status === 200 || res.status === 404 };
+  } catch {
+    return { ok: false };
+  }
 }
 
 // Bounded retention for rows nothing reads anymore. Runs opportunistically off
@@ -597,7 +657,6 @@ async function sweepRetention(db) {
         .bind(cutoff(TOMBSTONE_TTL_DAYS)),
       db.prepare("DELETE FROM sessions WHERE revoked = 1 AND last_seen < ?")
         .bind(cutoff(REVOKED_SESSION_TTL_DAYS)),
-      db.prepare("DELETE FROM used_nonces WHERE used_at < ?").bind(cutoff(1)),
       db.prepare("DELETE FROM ai_usage WHERE period < ?").bind(cutoff(USAGE_TTL_DAYS).slice(0, 10)),
     ]);
   } catch { /* cleanup is best-effort; never fail a sign-in over it */ }
@@ -618,8 +677,10 @@ async function handleSync(request, env) {
   const downgraded = await enforceTierOnSync(env, session, token);
   if (downgraded) return json({ error: "Session invalid" }, 401);
 
-  let body;
-  try { body = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+  // Sync legitimately carries a page of records, so it gets the larger ceiling.
+  const read = await readJSON(request, MAX_SYNC_BYTES);
+  if (!read.ok) return read.response;
+  const body = read.body;
   // Roomy: a composite cursor is ~130 chars ("t:<stamp>~<uuid>|p:<stamp>~<uuid>").
   // Clamping this below the cursor's own length would silently corrupt it and
   // re-send the whole account on every sync.
@@ -635,11 +696,48 @@ async function handleSync(request, env) {
   if (batchSize > MAX_SYNC_BATCH) return json({ error: "Batch too large" }, 413);
 
   const now = new Date().toISOString();
+  // DELETES ARE COLLECTED SEPARATELY AND RUN FIRST.
+  //
+  // D1 executes a batch in order, and every conflict clause below requires a
+  // STRICTLY newer timestamp. So for an id that appears as both a change and a
+  // delete with the SAME stamp, whichever runs first wins — the second no-ops.
+  // With changes first the change won, while the cap preflight had already
+  // counted that id as deleted: a request could pass the check and still leave
+  // the account one row over its ceiling (and the same trick bypassed the
+  // profile cap).
+  //
+  // Running deletions first makes the database agree with the declared policy —
+  // a tie goes to the delete — which is also the conservative direction: a
+  // deletion is never silently undone.
   const stmts = [];
+  const deleteStmts = [];
 
   // Upsert live changes, last-writer-wins on updated_at (a stale change no-ops).
+  // ⚠️ EVERY write below is conditional on the session STILL being live.
+  //
+  // The session was validated at the top of the request, but account deletion can
+  // land in between: it erases every row (sessions included) and returns success,
+  // and then this already-authorized sync recreates the tasks it was holding —
+  // the user's account resurrects itself moments after they deleted it. Making the
+  // liveness check part of the write itself closes that window, because the
+  // deletion's DELETE FROM sessions and these inserts can no longer interleave.
+  const LIVE = "EXISTS (SELECT 1 FROM sessions WHERE token = ? AND revoked = 0)";
+
+  // NOTE ON THE RESIDUAL RACE: the storage-ceiling preflight above is a read
+  // outside the batch, so two syncs for the same account landing together can
+  // each see one free slot and both insert — overshooting the ceiling by the
+  // number of concurrent requests. Folding the count into this INSERT's WHERE was
+  // tried and rejected: SQLite will not accept a subquery over the target table
+  // in an upsert's SELECT, and the attempt broke every sync write.
+  //
+  // Left as-is deliberately. This ceiling is a STORAGE safety net (200/2000 per
+  // account), not a correctness or billing boundary — the commercial limits are
+  // enforced in the app — and overshooting it by a row or two under genuine
+  // concurrency costs nothing. Tightening it properly needs a real transaction
+  // around read-then-write, which D1 does not currently offer outside a batch.
   const upsert = env.DB.prepare(
-    `INSERT INTO tasks (user_id, item_id, payload, updated_at, deleted_at) VALUES (?, ?, ?, ?, NULL)
+    `INSERT INTO tasks (user_id, item_id, payload, updated_at, deleted_at)
+     SELECT ?, ?, ?, ?, NULL WHERE ${LIVE}
      ON CONFLICT(user_id, item_id) DO UPDATE SET
        payload = excluded.payload, updated_at = excluded.updated_at, deleted_at = NULL
      WHERE excluded.updated_at > tasks.updated_at`
@@ -652,13 +750,16 @@ async function handleSync(request, env) {
     // REJECT oversized, never truncate: `payload.slice()` used to cut the JSON
     // mid-value, and the stored record then failed to decode on every device that
     // pulled it — silently losing that task forever.
-    if (payload.length > MAX_PAYLOAD) return json({ error: "Payload too large", itemId }, 413);
-    stmts.push(upsert.bind(userID, itemId, payload, updatedAt));
+    // byteLength, not .length: MAX_PAYLOAD is a byte budget, and String.length
+    // counts UTF-16 units — a payload of non-ASCII text measured up to 4x small.
+    if (byteLength(payload) > MAX_PAYLOAD) return json({ error: "Payload too large", itemId }, 413);
+    stmts.push(upsert.bind(userID, itemId, payload, updatedAt, token));
   }
 
   // Soft-delete (tombstone), also LWW: a delete only wins if newer than the row.
   const tomb = env.DB.prepare(
-    `INSERT INTO tasks (user_id, item_id, payload, updated_at, deleted_at) VALUES (?, ?, '', ?, ?)
+    `INSERT INTO tasks (user_id, item_id, payload, updated_at, deleted_at)
+     SELECT ?, ?, '', ?, ? WHERE ${LIVE}
      ON CONFLICT(user_id, item_id) DO UPDATE SET
        payload = '', updated_at = excluded.updated_at, deleted_at = excluded.deleted_at
      WHERE excluded.updated_at > tasks.updated_at`
@@ -667,7 +768,7 @@ async function handleSync(request, env) {
     const itemId = validID(d && d.id);
     const deletedAt = validStamp(d && d.deletedAt, now);
     if (!itemId || !deletedAt) return json({ error: "Bad delete record" }, 400);
-    stmts.push(tomb.bind(userID, itemId, deletedAt, deletedAt));
+    deleteStmts.push(tomb.bind(userID, itemId, deletedAt, deletedAt, token));
   }
 
   // ── family profiles, same LWW contract as tasks ──────────────────────────
@@ -678,38 +779,159 @@ async function handleSync(request, env) {
   // Only counts NEW ids — edits to existing profiles are always allowed through,
   // so hitting the cap can never freeze someone out of renaming what they have.
   if (profiles.length) {
-    const live = (await env.DB.prepare(
-      "SELECT profile_id FROM profiles WHERE user_id = ? AND deleted_at IS NULL"
+    // Read LIVE *and* TOMBSTONED rows. Reading only live ones made a stale client
+    // update for a profile the server had already deleted look like a brand-new
+    // profile — so a free account whose canonical owner was still in flight got a
+    // permanent 409 and could never pull the tombstone that would have resolved
+    // it. The cap has to be computed on the FINAL state, which means knowing about
+    // the deletions too.
+    const rows = (await env.DB.prepare(
+      "SELECT profile_id, updated_at, deleted_at FROM profiles WHERE user_id = ?"
     ).bind(userID).all()).results || [];
-    const known = new Set(live.map((r) => r.profile_id));
-    // validID (not clamp) so this counts exactly the ids the upsert below will
-    // accept — otherwise a junk id inflates the count and trips the cap error
-    // instead of the clearer "Bad profile record" 400.
-    const incomingNew = profiles
-      .map((p) => validID(p && p.id))
-      .filter((id) => id && !known.has(id));
-    const total = known.size + new Set(incomingNew).size;
+    // Same merge-then-count rule as tasks: resolve every id to its FINAL state
+    // before counting, so an id appearing in both `profiles` and `profileDeletes`
+    // is counted by whichever write actually wins rather than by pass order.
+    const finalProfiles = new Map();   // id → { at, live, fromServer }
+    for (const r of rows) {
+      finalProfiles.set(r.profile_id, { at: r.updated_at, live: !r.deleted_at, fromServer: true });
+    }
+    const considerProfile = (id, at, isLive) => {
+      const seen = finalProfiles.get(id);
+      if (!seen) { finalProfiles.set(id, { at, live: isLive, fromServer: false }); return; }
+      if (seen.fromServer) {
+        if (at > seen.at) finalProfiles.set(id, { at, live: isLive, fromServer: false });
+        return;
+      }
+      if (at > seen.at || (at === seen.at && !isLive)) {
+        finalProfiles.set(id, { at, live: isLive, fromServer: false });
+      }
+    };
+    for (const p of profiles) {
+      const id = validID(p && p.id);
+      const at = validStamp(p && p.updatedAt, now);
+      if (id && at) considerProfile(id, at, true);
+    }
+    for (const d of profileDeletes) {
+      const id = validID(d && d.id);
+      const at = validStamp(d && d.deletedAt, now);
+      if (id && at) considerProfile(id, at, false);
+    }
+    const total = [...finalProfiles.values()].filter((v) => v.live).length;
 
-    // The cap is PER TIER. Every authenticated account could previously create 8
-    // profiles regardless of subscription, so the paid feature wasn't actually
-    // gated anywhere the client couldn't bypass. The tier is re-read here rather
-    // than trusted from the session, and an UNKNOWN tier (RevenueCat unreachable)
-    // gets the Plus cap — never block a possible subscriber over an outage.
-    const { known: tierKnown, plus } = await checkPlus(userID, env);
-    const cap = (tierKnown && !plus) ? FREE_PROFILES : MAX_PROFILES;
-    if (total > cap) {
+    // Which live profiles this request ADDS — ids that are live at the end but
+    // were not already live on the server.
+    //
+    // ⚠️ THE CAP MUST ONLY BLOCK GROWTH, NOT EDITS. Counting the final total
+    // alone locked out anyone already ABOVE the cap, which is exactly what a
+    // lapsed Plus family is: cap drops to 1 while they still have 3 profiles, so
+    // every profile push — including a plain rename — returned 409 and, because
+    // this route rejects the WHOLE request, their tasks stopped syncing too. The
+    // app hides routine sync errors, so it just looked like the app had quietly
+    // stopped saving. Renaming what you already have can never be the thing that
+    // breaks your backup.
+    const wasLiveOnServer = new Set(
+      rows.filter((r) => !r.deleted_at).map((r) => r.profile_id));
+    const added = [...finalProfiles.entries()]
+      .filter(([id, v]) => v.live && !v.fromServer && !wasLiveOnServer.has(id));
+
+    // STORAGE IS NOT THE PAID BOUNDARY — USING PROFILES IS.
+    //
+    // This used to apply the FREE cap (1) to what the database may hold, and that
+    // broke real people two ways. A Plus family that lapsed still had 3 profiles
+    // on disk, and a free account could end up with 2 via the deliberate
+    // fail-open while RevenueCat was unreachable. In both cases every sync then
+    // returned 409 — and because this route rejects the WHOLE request, their
+    // TASKS stopped backing up too, over rows that were merely *stored*.
+    //
+    // The app already gates the feature: `ProfileStore.familyUnlocked` hides the
+    // switcher, the assignee picker and the per-person lists on a free account, so
+    // extra profiles are invisible and unusable there — it simply looks like one
+    // list. Keeping the rows costs nothing and means resubscribing restores the
+    // family instead of asking someone to rebuild it.
+    //
+    // So the server keeps only the ABSOLUTE ceiling (8) — an anti-abuse bound on
+    // storage, not a tier check. No `checkPlus` call either, which also drops an
+    // outbound request from the hot sync path.
+    const cap = MAX_PROFILES;
+    if (total > cap && added.length > 0) {
       return json({
         error: "profile_limit",
         limit: cap,
-        message: cap === FREE_PROFILES
-          ? "Tadah Plus is needed to add family members."
-          : `An account can have at most ${MAX_PROFILES} profiles.`,
+        message: `An account can have at most ${MAX_PROFILES} profiles.`,
       }, 409);
     }
   }
 
+  // Storage ceiling, computed on the FINAL last-writer-wins state — the same
+  // arithmetic the profile cap uses, and for the same reason: counting raw
+  // submissions instead of what will actually win both over-counts (a stale
+  // update to a tombstoned row is not a new task) and under-counts (a winning
+  // delete in this very request frees a slot).
+  if (changes.length) {
+    // Only pushes that carry changes need the tier — resolving it outside this
+    // block made a RevenueCat round trip on every pull-only sync (i.e. most
+    // launch/foreground passes, on every device).
+    const { known: tierKnownForTasks, plus: plusForTasks } = await checkPlus(userID, env);
+    const taskCeiling = (tierKnownForTasks && !plusForTasks)
+      ? FREE_TASK_STORAGE_CEILING : PLUS_TASK_STORAGE_CEILING;
+
+    const rows = (await env.DB.prepare(
+      "SELECT item_id, updated_at, deleted_at FROM tasks WHERE user_id = ?"
+    ).bind(userID).all()).results || [];
+
+    // RESOLVE EACH ID TO ITS FINAL STATE FIRST, then count.
+    //
+    // Walking `deletes` and `changes` as two separate passes was not the same
+    // thing as the final state: an id present in BOTH arrays would be counted by
+    // whichever pass ran last, regardless of which write actually wins. A new id
+    // that is created and then tombstoned (delete newer) ends up NOT live, but the
+    // preflight counted it as live and returned a 409 for a request that would
+    // have stored nothing.
+    //
+    // Merge every stamp per id — server row, incoming change, incoming delete —
+    // and let the newest decide, exactly as the upserts below will.
+    const finalState = new Map();   // id → { at, live, fromServer }
+    for (const r of rows) {
+      finalState.set(r.item_id, { at: r.updated_at, live: !r.deleted_at, fromServer: true });
+    }
+    const consider = (id, at, isLive) => {
+      const seen = finalState.get(id);
+      if (!seen) { finalState.set(id, { at, live: isLive, fromServer: false }); return; }
+      // Against a SERVER row the comparison is strictly newer, exactly matching
+      // the upserts' `WHERE excluded.updated_at > tasks.updated_at` — a tie
+      // changes nothing, so the preflight must not pretend it does.
+      if (seen.fromServer) {
+        if (at > seen.at) finalState.set(id, { at, live: isLive, fromServer: false });
+        return;
+      }
+      // Between two records in the SAME request, a tie goes to the delete: the
+      // conservative reading, and it keeps the count from drifting upward.
+      if (at > seen.at || (at === seen.at && !isLive)) {
+        finalState.set(id, { at, live: isLive, fromServer: false });
+      }
+    };
+    for (const c of changes) {
+      const id = validID(c && c.id);
+      const at = validStamp(c && c.updatedAt, now);
+      if (id && at) consider(id, at, true);
+    }
+    for (const d of deletes) {
+      const id = validID(d && d.id);
+      const at = validStamp(d && d.deletedAt, now);
+      if (id && at) consider(id, at, false);
+    }
+    const live = new Set(
+      [...finalState.entries()].filter(([, v]) => v.live).map(([id]) => id));
+
+    if (live.size > taskCeiling) {
+      return json({ error: "task_limit", limit: taskCeiling,
+                    message: "This account has reached the maximum number of stored to-dos." }, 409);
+    }
+  }
+
   const upsertProfile = env.DB.prepare(
-    `INSERT INTO profiles (user_id, profile_id, payload, updated_at, deleted_at) VALUES (?, ?, ?, ?, NULL)
+    `INSERT INTO profiles (user_id, profile_id, payload, updated_at, deleted_at)
+     SELECT ?, ?, ?, ?, NULL WHERE ${LIVE}
      ON CONFLICT(user_id, profile_id) DO UPDATE SET
        payload = excluded.payload, updated_at = excluded.updated_at, deleted_at = NULL
      WHERE excluded.updated_at > profiles.updated_at`
@@ -719,12 +941,13 @@ async function handleSync(request, env) {
     const updatedAt = validStamp(p && p.updatedAt, now);
     if (!profileId || !updatedAt) return json({ error: "Bad profile record" }, 400);
     const payload = typeof (p && p.payload) === "string" ? p.payload : JSON.stringify((p && p.payload) ?? "");
-    if (payload.length > MAX_PAYLOAD) return json({ error: "Payload too large", profileId }, 413);
-    stmts.push(upsertProfile.bind(userID, profileId, payload, updatedAt));
+    if (byteLength(payload) > MAX_PAYLOAD) return json({ error: "Payload too large", profileId }, 413);
+    stmts.push(upsertProfile.bind(userID, profileId, payload, updatedAt, token));
   }
 
   const tombProfile = env.DB.prepare(
-    `INSERT INTO profiles (user_id, profile_id, payload, updated_at, deleted_at) VALUES (?, ?, '', ?, ?)
+    `INSERT INTO profiles (user_id, profile_id, payload, updated_at, deleted_at)
+     SELECT ?, ?, '', ?, ? WHERE ${LIVE}
      ON CONFLICT(user_id, profile_id) DO UPDATE SET
        payload = '', updated_at = excluded.updated_at, deleted_at = excluded.deleted_at
      WHERE excluded.updated_at > profiles.updated_at`
@@ -733,11 +956,13 @@ async function handleSync(request, env) {
     const profileId = validID(d && d.id);
     const deletedAt = validStamp(d && d.deletedAt, now);
     if (!profileId || !deletedAt) return json({ error: "Bad profile delete record" }, 400);
-    stmts.push(tombProfile.bind(userID, profileId, deletedAt, deletedAt));
+    deleteStmts.push(tombProfile.bind(userID, profileId, deletedAt, deletedAt, token));
   }
 
-  if (stmts.length) {
-    try { await env.DB.batch(stmts); } catch { return json({ error: "Store failed" }, 500); }
+  // Deletions first — see the note where `deleteStmts` is declared.
+  const ordered = [...deleteStmts, ...stmts];
+  if (ordered.length) {
+    try { await env.DB.batch(ordered); } catch { return json({ error: "Store failed" }, 500); }
   }
 
   // Pull everything changed for this user since the client's cursor.
@@ -749,16 +974,77 @@ async function handleSync(request, env) {
   // separate components, packed into one opaque string the client just round-trips.
   const { task: taskMark, profile: profileMark } = parseCursor(since);
 
+  // The byte bound is applied IN SQL, not after the fact.
+  //
+  // Truncating in JavaScript was too late: D1 had already materialised up to
+  // MAX_PULL rows — 1,000 × 100 KB payloads — and that result set shares the
+  // Worker's 128 MB allocation, so the pull could OOM before the loop ever ran.
+  // A running total inside the query means D1 only ever serialises rows that fit.
+  //
+  // LENGTH(CAST(payload AS BLOB)) is BYTES; bare LENGTH() on TEXT counts
+  // characters, which under-measures anything non-ASCII by up to 4x — the same
+  // mistake the request-size check made.
   const page = (table, idCol, mark) => env.DB.prepare(
-    `SELECT ${idCol} AS id, payload, updated_at, deleted_at FROM ${table}
-      WHERE user_id = ? AND (updated_at > ? OR (updated_at = ? AND ${idCol} > ?))
-      ORDER BY updated_at ASC, ${idCol} ASC LIMIT ?`
-  ).bind(userID, mark.at, mark.at, mark.id, MAX_PULL);
+    `SELECT id, payload, updated_at, deleted_at FROM (
+       SELECT ${idCol} AS id, payload, updated_at, deleted_at,
+              SUM(LENGTH(CAST(payload AS BLOB)) + ${ROW_OVERHEAD_BYTES})
+                OVER (ORDER BY updated_at ASC, ${idCol} ASC
+                      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running
+         FROM ${table}
+        WHERE user_id = ? AND (updated_at > ? OR (updated_at = ? AND ${idCol} > ?))
+        ORDER BY updated_at ASC, ${idCol} ASC
+        LIMIT ?
+     )
+     WHERE running <= ?
+     ORDER BY updated_at ASC, id ASC`
+  ).bind(userID, mark.at, mark.at, mark.id, MAX_PULL, MAX_PULL_BYTES);
 
   const rows = (await page("tasks", "item_id", taskMark).all()).results || [];
-  const profileRows = (await page("profiles", "profile_id", profileMark).all()).results || [];
+  // Whatever the tasks page didn't spend is available to profiles.
+  const spent = rows.reduce((n, r) => n + byteLength(r.payload) + ROW_OVERHEAD_BYTES, 0);
+  const profileBudget = Math.max(MAX_PULL_BYTES - spent, ROW_OVERHEAD_BYTES);
+  const profileRows = (await env.DB.prepare(
+    `SELECT id, payload, updated_at, deleted_at FROM (
+       SELECT profile_id AS id, payload, updated_at, deleted_at,
+              SUM(LENGTH(CAST(payload AS BLOB)) + ${ROW_OVERHEAD_BYTES})
+                OVER (ORDER BY updated_at ASC, profile_id ASC
+                      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running
+         FROM profiles
+        WHERE user_id = ? AND (updated_at > ? OR (updated_at = ? AND profile_id > ?))
+        ORDER BY updated_at ASC, profile_id ASC
+        LIMIT ?
+     )
+     WHERE running <= ?
+     ORDER BY updated_at ASC, id ASC`
+  ).bind(userID, profileMark.at, profileMark.at, profileMark.id, MAX_PULL, profileBudget)
+    .all()).results || [];
 
+  // Is there more AFTER what we returned?
+  //
+  // Inferring it from "bytes spent >= budget" was wrong: the SQL stops at the last
+  // row that FITS, so when the next row is too big `spent` sits BELOW the budget
+  // and truncation looked like completion. With 50 × 100 KB rows that reported
+  // more:false after 41 — the remaining 9 then waited for some later lifecycle
+  // sync, so a first sign-in could settle with an incomplete account.
+  //
+  // Ask the database instead: is there a row past the last one we returned?
+  const existsAfter = async (table, idCol, rowsReturned, mark) => {
+    const last = rowsReturned[rowsReturned.length - 1];
+    const at = last ? last.updated_at : mark.at;
+    const id = last ? last.id : mark.id;
+    const row = await env.DB.prepare(
+      `SELECT 1 AS more FROM ${table}
+        WHERE user_id = ? AND (updated_at > ? OR (updated_at = ? AND ${idCol} > ?))
+        LIMIT 1`
+    ).bind(userID, at, at, id).first();
+    return !!row;
+  };
+  const tasksTruncated = await existsAfter("tasks", "item_id", rows, taskMark);
+  const profilesTruncated = await existsAfter("profiles", "profile_id", profileRows, profileMark);
+
+  // SQL already bounded these, so every returned row is taken.
   const outChanges = [], outDeletes = [];
+  const takenTasks = rows.length;
   for (const r of rows) {
     if (r.deleted_at) outDeletes.push({ id: r.id, deletedAt: r.deleted_at });
     else outChanges.push({ id: r.id, payload: r.payload, updatedAt: r.updated_at });
@@ -767,6 +1053,7 @@ async function handleSync(request, env) {
   // Family profiles ride the SAME round trip — a profile and the to-dos inside it
   // should never arrive on a device one without the other.
   const outProfiles = [], outProfileDeletes = [];
+  const takenProfiles = profileRows.length;
   for (const r of profileRows) {
     if (r.deleted_at) outProfileDeletes.push({ id: r.id, deletedAt: r.deleted_at });
     else outProfiles.push({ id: r.id, payload: r.payload, updatedAt: r.updated_at });
@@ -774,11 +1061,12 @@ async function handleSync(request, env) {
 
   // Advance to the LAST row actually returned (rows are ordered), never to the max
   // stamp seen — otherwise the tail of a truncated page is skipped.
-  const advance = (pageRows, mark) => {
-    const last = pageRows[pageRows.length - 1];
+  const advance = (pageRows, taken, mark) => {
+    const last = pageRows[taken - 1];
     return last ? { at: last.updated_at, id: last.id } : mark;
   };
-  const cursor = formatCursor(advance(rows, taskMark), advance(profileRows, profileMark));
+  const cursor = formatCursor(advance(rows, takenTasks, taskMark),
+                              advance(profileRows, takenProfiles, profileMark));
 
   await env.DB.prepare("UPDATE sessions SET last_seen = ? WHERE token = ?").bind(now, token).run();
   return json({
@@ -787,7 +1075,10 @@ async function handleSync(request, env) {
     cursor,
     // True when either stream filled its page, so the client knows to come straight
     // back for the rest instead of waiting for the next lifecycle event.
-    more: rows.length >= MAX_PULL || profileRows.length >= MAX_PULL,
+    // More to come if either stream filled its row budget OR was truncated for
+    // size. Without the byte case, rows dropped for size would never be requested.
+    more: rows.length >= MAX_PULL || profileRows.length >= MAX_PULL
+       || tasksTruncated || profilesTruncated,
   }, 200);
 }
 
@@ -878,52 +1169,19 @@ function validStamp(v, now) {
   if (typeof v !== "string" || v.length === 0 || v.length > 40) return "";
   const t = Date.parse(v);
   if (!Number.isFinite(t)) return "";
-  return t > Date.now() + MAX_SKEW_MS ? now : v;
+  if (t > Date.now() + MAX_SKEW_MS) return now;
+  // NORMALIZE to one canonical form. Rows are compared LEXICALLY (that's what
+  // makes the composite cursor and the last-writer-wins upserts work), but
+  // ISO-8601 has several spellings of the same instant — "+00:00" vs "Z", with or
+  // without milliseconds. Storing them verbatim let an older write sort ABOVE a
+  // newer one purely on formatting, silently inverting the conflict rule.
+  return new Date(t).toISOString();
 }
 
-// Hex SHA-256, for comparing the Sign-in-with-Apple nonce against the token claim.
-async function sha256Hex(s) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-// Verify a Sign-in-with-Apple identity JWT against Apple's public keys and its
-// standard claims. Returns the verified claims (`sub` is the stable user id;
-// `nonce` is checked by the caller against the raw value the client sends).
-// Throws on any failure.
-async function verifyAppleToken(idToken, env) {
-  const parts = String(idToken || "").split(".");
-  if (parts.length !== 3) throw new Error("malformed token");
-  const [h, p, s] = parts;
-  const header = JSON.parse(b64urlToString(h));
-  const payload = JSON.parse(b64urlToString(p));
-
-  const jwk = (await getAppleKeys()).find((k) => k.kid === header.kid);
-  if (!jwk) throw new Error("unknown signing key");
-  const key = await crypto.subtle.importKey(
-    "jwk", { kty: jwk.kty, n: jwk.n, e: jwk.e },
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
-  const ok = await crypto.subtle.verify(
-    "RSASSA-PKCS1-v1_5", key, b64urlToBytes(s), new TextEncoder().encode(`${h}.${p}`));
-  if (!ok) throw new Error("bad signature");
-
-  if (payload.iss !== APPLE_ISS) throw new Error("bad issuer");
-  // Binds the token to THIS app. handleAppleAuth refuses to run without
-  // APPLE_AUDIENCE set, so this is never skipped in production.
-  if (payload.aud !== env.APPLE_AUDIENCE) throw new Error("bad audience");
-  if (!payload.exp || payload.exp * 1000 < Date.now()) throw new Error("expired");
-  if (!payload.sub) throw new Error("no subject");
-  return { sub: String(payload.sub), nonce: payload.nonce ? String(payload.nonce) : "" };
-}
-
-// Apple's rotating public keys, cached ~6h per isolate.
-async function getAppleKeys() {
-  if (appleKeys && Date.now() - appleKeysAt < 6 * 3600 * 1000) return appleKeys;
-  const res = await fetch(`${APPLE_ISS}/auth/keys`);
-  if (!res.ok) throw new Error("jwks fetch failed");
-  appleKeys = (await res.json()).keys || [];
-  appleKeysAt = Date.now();
-  return appleKeys;
+// UTF-8 byte length. `String.length` is UTF-16 code units and under-measures any
+// non-ASCII text — the same trap the request-size check fell into.
+function byteLength(s) {
+  return typeof s === "string" ? new TextEncoder().encode(s).byteLength : 0;
 }
 
 // Authoritative tier check via the RevenueCat REST API (server-side, secret key).
@@ -948,6 +1206,421 @@ async function checkPlus(userID, env) {
   }
 }
 
+// Transactional email via Resend (verification + password reset).
+//
+// Deliberately the REST API and not the `resend` npm SDK: this Worker has no
+// runtime dependencies, and the SDK's whole job here would be one fetch. Same
+// reasoning that kept the Apple client-secret JWT hand-rolled before it was
+// removed: one fetch does not need a dependency.
+//
+// ⚠️ NOTHING ABOUT THE MESSAGE IS LOGGED. `to` is a user's email address and the
+// body can carry a reset link — a log line with either in it turns the
+// observability we enabled into a credential leak and a PII spill. Only the
+// status code is ever surfaced.
+export async function sendEmail(env, { to, subject, html, text }) {
+  if (!env.RESEND_KEY) throw new Error("email_not_configured");
+  // Resend's shared `onboarding@resend.dev` sender only delivers to the ACCOUNT
+  // OWNER's address. Falling back to it meant a real user could be told "check
+  // your inbox" for a reset code that could never arrive — a silent dead end on
+  // the one path back into a locked-out account. Demand a verified sender.
+  if (!env.EMAIL_FROM) throw new Error("email_from_not_configured");
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_KEY}`,
+      "Content-Type": "application/json",
+    },
+    // EMAIL_FROM is config, not code, so moving off Resend's shared testing
+    // sender to noreply@<your domain> is a `wrangler secret put`, not a deploy.
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html, text }),
+  });
+  if (!res.ok) {
+    // Status only — the response can echo the recipient back.
+    throw new Error(`email_send_failed_${res.status}`);
+  }
+  return true;
+}
+
+// Mint a session for an ALREADY-AUTHENTICATED account.
+//
+// Shared by every auth route. The device-limit rules and — more importantly —
+// the race handling around them are subtle enough that a second copy would drift
+// from this one, and the drift would show up as "the one-device rule can be
+// beaten by signing in twice quickly", which is exactly the bug the batch below
+// exists to prevent.
+//
+// Returns { ok: true, token, plus } or { ok: false, response } to send as-is.
+async function issueSession(userID, deviceId, env) {
+  const { known, plus } = await checkPlus(userID, env);
+  const now = new Date().toISOString();
+  const token = newToken();
+
+  // Revoke + create in ONE batch (D1 runs a batch as a transaction), so two
+  // simultaneous sign-ins can't interleave and leave a free account with two live
+  // sessions — which was how the one-device rule could be defeated by racing it.
+  const revokeAll = env.DB.prepare(
+    "UPDATE sessions SET revoked = 1 WHERE user_id = ? AND revoked = 0");
+  const revokeDevice = env.DB.prepare(
+    "UPDATE sessions SET revoked = 1 WHERE user_id = ? AND device_id = ? AND revoked = 0");
+  const insert = env.DB.prepare(
+    "INSERT INTO sessions (token, user_id, device_id, created_at, last_seen, revoked, plus_checked_at) VALUES (?, ?, ?, ?, ?, 0, ?)"
+  ).bind(token, userID, deviceId, now, now, known ? now : null);
+
+  // Free (tier KNOWN and not Plus) → revoke the user's other live sessions so only
+  // this device stays signed in. When the tier is UNKNOWN (RevenueCat unreachable)
+  // we deliberately DON'T revoke — never wrongly sign out a possible Plus user;
+  // the worst case is a brief extra device.
+  if (known && !plus) {
+    await env.DB.batch([revokeAll.bind(userID), insert]);
+  } else {
+    // Plus (or unknown tier): several devices are fine, but not unlimited — each
+    // one is sync traffic and another copy of the family's data. Re-signing in on
+    // a device we already know just replaces its session and never counts twice.
+    await env.DB.batch([revokeDevice.bind(userID, deviceId), insert]);
+    // Counted AFTER inserting, then undone if we went over. Checking first and
+    // inserting second is the race that let concurrent sign-ins both pass.
+    const live = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND revoked = 0"
+    ).bind(userID).first();
+    if ((live?.n ?? 0) > MAX_DEVICES) {
+      await env.DB.prepare("UPDATE sessions SET revoked = 1 WHERE token = ?").bind(token).run();
+      return { ok: false, response: json({
+        error: "device_limit",
+        message: `This account is already signed in on ${MAX_DEVICES} devices. Sign out on one of them first.` }, 409) };
+    }
+  }
+  return { ok: true, token, plus };
+}
+
+// Does this account already hold anything? Lets the client tell a NEW account
+// (seed from local) from an EXISTING one (pull + reconcile).
+//
+// PROFILES COUNT TOO. Checking tasks alone reported "new account" for an account
+// that already had family members but no live to-dos, so the device skipped
+// reconciliation and seeded straight over it.
+async function accountHasData(userID, env) {
+  const hasTasks = await env.DB.prepare(
+    "SELECT 1 FROM tasks WHERE user_id = ? AND deleted_at IS NULL LIMIT 1").bind(userID).first();
+  const hasProfiles = await env.DB.prepare(
+    "SELECT 1 FROM profiles WHERE user_id = ? AND deleted_at IS NULL LIMIT 1").bind(userID).first();
+  return !!(hasTasks || hasProfiles);
+}
+
+// ── email + password ────────────────────────────────────────────────────────
+
+// Normalise an address for storage and lookup. Lower-cased and trimmed so
+// "Rachel@Example.com " and "rachel@example.com" are one account, not two.
+export function normalizeEmail(raw) {
+  return String(raw || "").trim().toLowerCase();
+}
+
+// Deliberately permissive. Email syntax is famously not a regex, and the real
+// proof an address works is that a message to it arrives — so this only rejects
+// what is obviously not an address, and verification does the rest.
+export function validEmail(raw) {
+  const e = normalizeEmail(raw);
+  if (e.length < 3 || e.length > 254) return "";
+  if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(e)) return "";
+  return e;
+}
+
+// The CLIENT sends an already-stretched value, so what arrives must look like the
+// output of PBKDF2 and nothing else: fixed-length hex. This also stops a hostile
+// client shoving a megabyte into the hash function.
+export function validDerivedKey(raw) {
+  const s = String(raw || "");
+  return /^[0-9a-f]{64}$/.test(s) ? s : "";
+}
+
+// The stored verifier: HMAC-SHA256(pepper, salt || clientDerivedKey), base64.
+//
+// One HMAC is microseconds, which is the entire point — see schema.sql. The
+// pepper is a Worker SECRET, not a column, so a database leak on its own doesn't
+// let an attacker test guesses offline at all: they'd need the secret too.
+export async function derivePasswordHash(env, derivedKeyHex, saltB64) {
+  // NO FALLBACK, DELIBERATELY. This used to default to a public constant, so a
+  // deploy that forgot `wrangler secret put PASSWORD_PEPPER` would keep working
+  // while quietly losing the one protection that makes a stolen `accounts` table
+  // useless — and nothing would say so. Failing loudly is the only safe choice
+  // for a secret whose absence is invisible.
+  if (!env.PASSWORD_PEPPER) throw new Error("password_pepper_missing");
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(env.PASSWORD_PEPPER),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`${saltB64}:${derivedKeyHex}`));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+// Constant-time compare. `a === b` on secrets leaks their common prefix through
+// timing, which is enough to reconstruct a verifier one byte at a time.
+export function timingSafeEqual(a, b) {
+  const x = String(a), y = String(b);
+  if (x.length !== y.length) return false;
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return diff === 0;
+}
+
+function randomSaltB64() {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return btoa(String.fromCharCode(...b));
+}
+
+// The floor for client-side stretching. The phone is supposed to run PBKDF2 at
+// PW_ITERATIONS; this rejects a client claiming it did far less, which would make
+// a stolen hash cheap to attack. It can't PROVE the work was done — only the real
+// app is expected here — but it stops an accidental regression shipping silently.
+const MIN_PW_ITERATIONS = 100000;
+
+// ── password reset ──────────────────────────────────────────────────────────
+
+const RESET_TTL_MINUTES = 15;
+const RESET_MAX_ATTEMPTS = 5;
+// Don't let one account be used to flood an inbox.
+const RESET_RESEND_COOLDOWN_SECONDS = 60;
+
+// KEYED with the pepper, not a bare SHA-256.
+//
+// A six-digit code has only a million possibilities, so an unkeyed digest in a
+// leaked `password_resets` table is searched in about a second. Keying it means
+// the table alone is useless without the Worker secret — the same reasoning as
+// the password verifier.
+async function resetCodeHash(env, code) {
+  return derivePasswordHash(env, "0".repeat(64), `reset:${code}`);
+}
+
+// Six digits, uniformly distributed. `crypto.getRandomValues` rather than
+// Math.random, which is not a CSPRNG and would make codes predictable.
+function newResetCode() {
+  const b = new Uint32Array(1);
+  crypto.getRandomValues(b);
+  return String(b[0] % 1000000).padStart(6, "0");
+}
+
+// STEP 1 — ask for a code.
+//
+// ALWAYS answers 200, whether or not the address is registered. Saying "no such
+// account" here would hand over a list of who uses Tadah to anyone willing to
+// type addresses — the same enumeration leak the login route refuses.
+async function handleResetRequest(request, env) {
+  if (!env.DB) return json({ error: "Sync not configured" }, 503);
+  if (!env.PASSWORD_PEPPER) {
+    return json({ error: "not_configured",
+                  message: "Accounts are temporarily unavailable. Please try again later." }, 503);
+  }
+  await ensureSyncTables(env.DB);
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
+  const email = validEmail((read.body || {}).email);
+
+  const ok = json({ ok: true }, 200);
+  if (!email) return ok;
+
+  const account = await env.DB.prepare(
+    "SELECT user_id FROM accounts WHERE email = ?").bind(email).first();
+  if (!account) return ok;                       // silently, on purpose
+
+  // Inbox-flood guard. Still answers 200 so the response stays identical for
+  // registered and unregistered addresses — it just doesn't send again yet.
+  const existing = await env.DB.prepare(
+    "SELECT created_at FROM password_resets WHERE user_id = ?").bind(account.user_id).first();
+  if (existing && Date.now() - new Date(existing.created_at).getTime()
+        < RESET_RESEND_COOLDOWN_SECONDS * 1000) {
+    return ok;
+  }
+
+  const code = newResetCode();
+  const now = new Date();
+  const expires = new Date(now.getTime() + RESET_TTL_MINUTES * 60_000);
+  // ON CONFLICT REPLACE: a new request invalidates the previous code rather than
+  // leaving several live at once.
+  await env.DB.prepare(
+    `INSERT INTO password_resets (user_id, code_hash, expires_at, attempts, created_at)
+     VALUES (?, ?, ?, 0, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       code_hash = excluded.code_hash, expires_at = excluded.expires_at,
+       attempts = 0, created_at = excluded.created_at`
+  ).bind(account.user_id, await resetCodeHash(env, code), expires.toISOString(), now.toISOString()).run();
+
+  try {
+    await sendEmail(env, {
+      to: email,
+      subject: "Your Tadah password reset code",
+      text: `Your Tadah reset code is ${code}. It expires in ${RESET_TTL_MINUTES} minutes.\n\nIf you didn't ask to reset your password, you can ignore this — nothing has changed.`,
+      html: `<p>Your Tadah reset code is:</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It expires in ${RESET_TTL_MINUTES} minutes.</p><p>If you didn't ask to reset your password, you can ignore this — nothing has changed.</p>`,
+    });
+  } catch (e) {
+    // The RESPONSE is unchanged by design — reporting "we couldn't send" would
+    // confirm the address exists. But swallowing it entirely left a broken mail
+    // configuration completely invisible, and the old comment claiming Worker
+    // metrics would surface it was simply wrong: a caught exception is not an
+    // error event. Log the REASON only — never the address or the code.
+    console.error("reset_email_failed", e && e.message ? e.message : "unknown");
+  }
+  return ok;
+}
+
+// STEP 2 — use the code to set a new password.
+async function handleResetConfirm(request, env) {
+  if (!env.DB) return json({ error: "Sync not configured" }, 503);
+  if (!env.PASSWORD_PEPPER) {
+    return json({ error: "not_configured",
+                  message: "Accounts are temporarily unavailable. Please try again later." }, 503);
+  }
+  await ensureSyncTables(env.DB);
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
+  const body = read.body || {};
+
+  const email = validEmail(body.email);
+  const code = String(body.code || "").trim();
+  const derived = validDerivedKey(body.derivedKey);
+  const iterations = Number(body.iterations);
+  if (!email || !/^\d{6}$/.test(code) || !derived) return json({ error: "invalid_code" }, 400);
+  if (!Number.isInteger(iterations) || iterations < MIN_PW_ITERATIONS) {
+    return json({ error: "weak_derivation" }, 400);
+  }
+
+  const row = await env.DB.prepare(
+    `SELECT a.user_id AS user_id, r.code_hash AS code_hash, r.expires_at AS expires_at,
+            r.attempts AS attempts
+     FROM accounts a JOIN password_resets r ON r.user_id = a.user_id
+     WHERE a.email = ?`).bind(email).first();
+  if (!row) return json({ error: "invalid_code" }, 400);
+
+  // Expired or exhausted → burn it. Without the attempt cap, six digits is a
+  // million guesses and a patient script.
+  if (new Date(row.expires_at).getTime() < Date.now() || row.attempts >= RESET_MAX_ATTEMPTS) {
+    await env.DB.prepare("DELETE FROM password_resets WHERE user_id = ?").bind(row.user_id).run();
+    return json({ error: "invalid_code" }, 400);
+  }
+
+  // CLAIM AN ATTEMPT ATOMICALLY, BEFORE COMPARING.
+  //
+  // Reading `attempts`, comparing, then incrementing is three steps that two
+  // concurrent requests interleave freely — a scripted attacker could fire far
+  // more than five guesses through a cap that "passes" for all of them. A
+  // conditional UPDATE ... RETURNING makes the increment itself the check, so
+  // exactly RESET_MAX_ATTEMPTS guesses can ever be claimed.
+  const claimed = await env.DB.prepare(
+    `UPDATE password_resets SET attempts = attempts + 1
+     WHERE user_id = ? AND attempts < ? RETURNING attempts`
+  ).bind(row.user_id, RESET_MAX_ATTEMPTS).first();
+  if (!claimed) {
+    await env.DB.prepare("DELETE FROM password_resets WHERE user_id = ?").bind(row.user_id).run();
+    return json({ error: "invalid_code" }, 400);
+  }
+
+  if (!timingSafeEqual(await resetCodeHash(env, code), row.code_hash)) {
+    return json({ error: "invalid_code" }, 400);
+  }
+
+  const salt = randomSaltB64();
+  const hash = await derivePasswordHash(env, derived, salt);
+  // One batch: set the password, consume the code, and revoke EVERY session.
+  // Revoking matters — a reset is what someone does when they fear the account is
+  // compromised, so leaving other devices signed in would defeat the point.
+  await env.DB.batch([
+    env.DB.prepare(
+      "UPDATE accounts SET pw_hash = ?, pw_salt = ?, pw_iterations = ? WHERE user_id = ?"
+    ).bind(hash, salt, iterations, row.user_id),
+    env.DB.prepare("DELETE FROM password_resets WHERE user_id = ?").bind(row.user_id),
+    env.DB.prepare("UPDATE sessions SET revoked = 1 WHERE user_id = ? AND revoked = 0")
+      .bind(row.user_id),
+  ]);
+  return json({ ok: true }, 200);
+}
+
+// REGISTER. The password never reaches this Worker: the phone sends a PBKDF2
+// output (see schema.sql for why the heavy lifting is client-side).
+async function handleEmailRegister(request, env) {
+  if (!env.DB) return json({ error: "Sync not configured" }, 503);
+  if (!env.PASSWORD_PEPPER) {
+    return json({ error: "not_configured",
+                  message: "Accounts are temporarily unavailable. Please try again later." }, 503);
+  }
+  await ensureSyncTables(env.DB);
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
+  const body = read.body || {};
+
+  const email = validEmail(body.email);
+  if (!email) return json({ error: "invalid_email" }, 400);
+  const derived = validDerivedKey(body.derivedKey);
+  if (!derived) return json({ error: "invalid_credentials" }, 400);
+  const iterations = Number(body.iterations);
+  if (!Number.isInteger(iterations) || iterations < MIN_PW_ITERATIONS) {
+    return json({ error: "weak_derivation" }, 400);
+  }
+  const deviceId = clamp(body.deviceId);
+  if (!deviceId) return json({ error: "Device id required" }, 400);
+
+  const userID = crypto.randomUUID();
+  const salt = randomSaltB64();
+  const hash = await derivePasswordHash(env, derived, salt);
+  const now = new Date().toISOString();
+
+  try {
+    await env.DB.prepare(
+      "INSERT INTO accounts (user_id, email, pw_hash, pw_salt, pw_iterations, pw_version, verified_at, created_at) VALUES (?, ?, ?, ?, ?, 1, NULL, ?)"
+    ).bind(userID, email, hash, salt, iterations, now).run();
+  } catch {
+    // The UNIQUE index is the real guard: checking "does this email exist?" first
+    // and inserting after is not atomic, and two simultaneous registrations would
+    // both pass the check. Let the constraint decide.
+    return json({ error: "email_taken" }, 409);
+  }
+
+  const session = await issueSession(userID, deviceId, env);
+  if (!session.ok) return session.response;
+  // A brand-new account by definition holds nothing.
+  return json({ token: session.token, userID, plus: session.plus, hasServerData: false }, 200);
+}
+
+// LOG IN.
+async function handleEmailLogin(request, env) {
+  if (!env.DB) return json({ error: "Sync not configured" }, 503);
+  if (!env.PASSWORD_PEPPER) {
+    return json({ error: "not_configured",
+                  message: "Accounts are temporarily unavailable. Please try again later." }, 503);
+  }
+  await ensureSyncTables(env.DB);
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
+  const body = read.body || {};
+
+  const email = validEmail(body.email);
+  const derived = validDerivedKey(body.derivedKey);
+  const deviceId = clamp(body.deviceId);
+  if (!deviceId) return json({ error: "Device id required" }, 400);
+
+  const row = email
+    ? await env.DB.prepare(
+        "SELECT user_id, pw_hash, pw_salt FROM accounts WHERE email = ?").bind(email).first()
+    : null;
+
+  // ONE reply for every failure, and the HMAC runs even when there is no such
+  // account. Otherwise "unknown email" would return faster than "wrong password",
+  // and that timing difference alone tells an attacker which addresses are
+  // registered — a list of your users, extractable by anyone.
+  const computed = await derivePasswordHash(env, derived || "0".repeat(64),
+                                            row?.pw_salt || "no-such-account");
+  if (!email || !derived || !row || !timingSafeEqual(computed, row.pw_hash)) {
+    return json({ error: "invalid_credentials" }, 401);
+  }
+
+  const session = await issueSession(row.user_id, deviceId, env);
+  if (!session.ok) return session.response;
+  return json({
+    token: session.token,
+    userID: row.user_id,
+    plus: session.plus,
+    hasServerData: await accountHasData(row.user_id, env),
+  }, 200);
+}
+
 // A fresh opaque session token (256 bits of randomness, hex).
 function newToken() {
   const b = new Uint8Array(32);
@@ -955,39 +1628,9 @@ function newToken() {
   return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-// base64url → bytes / string (for decoding JWT segments).
-function b64urlToBytes(s) {
-  s = String(s).replace(/-/g, "+").replace(/_/g, "/");
-  const pad = s.length % 4;
-  if (pad) s += "=".repeat(4 - pad);
-  const bin = atob(s);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
-}
-function b64urlToString(s) { return new TextDecoder().decode(b64urlToBytes(s)); }
-
-// bytes/string → base64url (for MINTING the Apple client-secret JWT).
-function b64urlFromBytes(bytes) {
-  let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-function b64url(str) { return b64urlFromBytes(new TextEncoder().encode(str)); }
-
-// "-----BEGIN PRIVATE KEY----- …" → the DER bytes WebCrypto wants. Tolerates the
-// literal "\n" sequences you get when a .p8 is pasted into `wrangler secret put`.
-function pemToBytes(pem) {
-  const body = String(pem)
-    .replace(/\\n/g, "\n")
-    .replace(/-----BEGIN [^-]+-----/, "")
-    .replace(/-----END [^-]+-----/, "")
-    .replace(/\s+/g, "");
-  const bin = atob(body);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
-}
+// (The base64url codec and the PEM→DER reader were removed on 2026-08-16. Their
+// only callers were Sign-in-with-Apple JWT decoding and the ES256 client-secret
+// minting, both deleted with the route.)
 
 function onTimeToInt(v) { return v === true ? 1 : v === false ? 0 : null; }
 
@@ -1008,15 +1651,16 @@ function json(obj, status) {
 // named exports exist so the pure logic (cursors, validation, request shaping)
 // can be unit-tested without a network or a D1 binding. See worker.test.js.
 export {
+  readJSON,
   parseCursor,
   formatCursor,
   validID,
   validStamp,
   sanitizeMessages,
   clamp,
-  pemToBytes,
   MAX_MESSAGES,
   MAX_MESSAGE_CHARS,
   MAX_PROFILES,
   FREE_PROFILES,
+  MAX_BODY_BYTES,
 };
