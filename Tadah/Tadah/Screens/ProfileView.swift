@@ -32,6 +32,7 @@ struct ProfileView: View {
     @Environment(AccountStore.self) private var account
     @Environment(PlusStore.self) private var plus
     @Environment(ProfileStore.self) private var profiles
+    @Environment(SyncCoordinator.self) private var sync
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
     @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
@@ -144,6 +145,8 @@ struct ProfileView: View {
                     }
                     .buttonStyle(.plain)
 
+                    backupProblemRow
+
                     // Whose list am I looking at — only worth showing once there's
                     // more than one person on the account.
                     if profiles.hasFamily {
@@ -151,9 +154,18 @@ struct ProfileView: View {
                         profileSwitcherStrip
                     }
 
-                    divider
-
-                    plusUpgradeRow
+                    // ONE way into family management, not two.
+                    //
+                    // When the switcher is on screen it already carries "Manage",
+                    // so the Family row underneath was a second door to the same
+                    // sheet, stacked directly below the first. Show that row only
+                    // when the switcher ISN'T there — i.e. a Plus account with
+                    // nobody added yet, where it's the only way in — and keep it
+                    // for free accounts, where it's the upgrade prompt.
+                    if !profiles.hasFamily {
+                        divider
+                        plusUpgradeRow
+                    }
                 }
             }
         } else {
@@ -245,19 +257,63 @@ struct ProfileView: View {
         .frame(width: 52, height: 52)
     }
 
-    // NO BACKUP UI, deliberately (2026-08-13).
+    // NO BACKUP STATUS LIGHT, deliberately (2026-08-13) — but failure is NOT
+    // silent (2026-08-16).
     //
     // There used to be a "Backup — Backed up 14 seconds ago" row here that also
-    // acted as a manual sync button. It's gone: backing up is supposed to be an
-    // invisible property of having an account, not a chore with a status light.
-    // Nothing about syncing is lost by removing it — `TadahApp` already syncs on
-    // launch and on every foreground/background transition, and a failed attempt
-    // retries on the next one, so the row was reporting on something the user was
-    // never required to manage.
+    // acted as a manual sync button. That's gone, and stays gone: backing up is
+    // an invisible property of having an account, not a chore, and `TadahApp`
+    // already syncs on launch and on every foreground/background transition.
     //
-    // If a "last backed up" indicator is ever wanted again, `SyncCoordinator`
-    // still publishes `isSyncing`, `lastSyncedAt` and `lastError` — only the view
-    // was deleted, not the state behind it.
+    // What the removal took with it, though, was the only place a PERMANENT
+    // failure could ever surface. "It retries on the next foreground" is true of a
+    // dropped connection; it is not true of a rejected request, an encoding
+    // failure, or a response this build can't parse — those fail identically every
+    // time, forever, while the user goes on believing their list is safe.
+    //
+    // So: nothing while sync is merely working or briefly offline, and one honest
+    // row once it has failed three times running (SyncCoordinator.backupIsStuck).
+    @ViewBuilder
+    private var backupProblemRow: some View {
+        if sync.backupIsStuck {
+            VStack(alignment: .leading, spacing: 8) {
+                divider
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 16)).foregroundStyle(Color.warn)
+                        .frame(width: 24)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Backup isn't working").font(.body14.weight(.semibold))
+                            .foregroundStyle(Color.ink)
+                        // Says what is and isn't at risk. Their to-dos are all still
+                        // here — the failure is about the COPY, and saying so stops
+                        // this reading as "your data is gone".
+                        Text("Your to-dos are safe on this phone, but they haven't reached your account. Tap to try again.")
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        // The raw reason, small. Not for the user to act on — it's
+                        // so a bug report can say WHAT failed instead of "sync is
+                        // broken", which is unfixable from the outside.
+                        if let detail = sync.lastError {
+                            Text(detail)
+                                .font(.eyebrow).foregroundStyle(Color.faded)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    if sync.isSyncing { ProgressView().controlSize(.small) }
+                }
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+                .onTapGesture { retryBackup() }
+            }
+        }
+    }
+
+    private func retryBackup() {
+        guard !sync.isSyncing else { return }
+        Task { await sync.syncNow(context: modelContext, account: account) }
+    }
 
     // Names once there are some ("Jing, Mom, Dad"), an invitation before that.
     private var familySubtitle: String {
@@ -271,7 +327,11 @@ struct ProfileView: View {
 
     @ViewBuilder
     private var plusUpgradeRow: some View {
-        if plus.isPlus {
+        // `familyUnlocked`, not `isPlus`. They differ during a RevenueCat outage,
+        // where the gate deliberately fails OPEN — and branching on isPlus there
+        // showed a paying subscriber an "Upgrade" button for something they
+        // already have.
+        if profiles.familyUnlocked {
             // Already Plus: the row becomes the way INTO family management, since
             // that's the thing Plus actually unlocks day to day.
             Button { showFamilySharing = true } label: {
@@ -300,7 +360,11 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Tadah Plus").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
                         // A little more on what Plus unlocks (Rachel's ask).
-                        Text("Add family members, share tasks, and use Tadah on more than one device.")
+                        // NOT "share tasks" — that implies your mum signs in with her
+                        // own Apple ID and you share between accounts, which is a
+                        // different product (later_ideas §6). What Plus actually
+                        // buys is separate lists on ONE account.
+                        Text("Add family members, keep a separate list for each person, and use Tadah on more than one device.")
                             .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -327,11 +391,35 @@ struct ProfileView: View {
                 divider
                 notificationsRow
                 divider
-                // The time a reminder fires when its task has no time of its own
-                // (plain-date tasks + the daily overdue nudge). Timed tasks keep
-                // their own exact time.
-                DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
-                    Text("Default reminder time").font(.body14).foregroundStyle(Color.ink)
+                // ALWAYS SHOWN — including when there is a family.
+                //
+                // It used to be hidden once a family existed, on the theory that
+                // each person sets their own time in Family → ⓘ → Edit. But the
+                // setting never stopped mattering: "Everyone" to-dos always use
+                // it, and any family member who turns OFF "Own reminder time" is
+                // told they now follow it. Hiding the only editor left people
+                // pointed at a default they had no way to change.
+                //
+                // The label says which of the two it is, so it can't be mistaken
+                // for a second, contradicting copy of Mum's per-person time.
+                VStack(alignment: .leading, spacing: 2) {
+                    // The time a reminder fires when its task has no time of its
+                    // own (plain-date tasks + the daily overdue nudge). Timed
+                    // tasks keep their own exact time.
+                    DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
+                        // Explicit LocalizedStringKey: a ternary between two string
+                        // literals types as `String`, which Text renders VERBATIM —
+                        // the row would silently stop translating.
+                        Text(profiles.hasFamily
+                             ? LocalizedStringKey("Default reminder time")
+                             : LocalizedStringKey("Reminder time"))
+                            .font(.body14).foregroundStyle(Color.ink)
+                    }
+                    if profiles.hasFamily {
+                        Text("Used for “Everyone” to-dos and anyone without their own reminder time.")
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .tint(Color.accent)
                 .padding(.vertical, 8)
@@ -483,8 +571,8 @@ struct ProfileView: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Tadah is informational only — not legal, tax, immigration, financial, or medical advice. It uses AI, which can make mistakes; please double-check important details with official sources or a professional.")
-                .font(.subline).foregroundStyle(Color.faint).lineSpacing(2)
-            Text(versionText).font(.eyebrow).tracking(0.6).foregroundStyle(Color.faint)
+                .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+            Text(versionText).font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 8)
@@ -632,7 +720,7 @@ struct ProfileView: View {
     // Kept separate from real settings so it never looks shippable.
     private var debugCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("DEBUG").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faint)
+            Text("DEBUG").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
             metricsPanel
         }
         .padding(.horizontal, 4)

@@ -97,7 +97,25 @@ struct TadahApp: App {
                 .environment(plus)
                 .environment(sync)
                 .environment(profiles)
-                .onAppear { notificationDelegate.attach(router: router) }
+                .onAppear {
+                    notificationDelegate.attach(router: router)
+                    // So a scheduled notification fires at the time set for the
+                    // person the to-do belongs to, not just the device default.
+                    ReminderScheduler.shared.profileReminderMinutes = { [profiles] id in
+                        profiles.reminderMinutes(for: id)
+                    }
+                }
+                // Family profiles are what Plus is sold on, so the feature has to
+                // switch off when the subscription ends — otherwise it's paid once
+                // and kept forever. `ProfileStore` can't see `PlusStore`, so the
+                // two are joined here, in the one place that owns both.
+                //
+                // Only lock once the tier is actually KNOWN: `isPlus` is false
+                // until RevenueCat replies, and locking on that alone would blink
+                // a paying family's profiles away at every launch.
+                .onChange(of: plus.isPlus, initial: true) { _, _ in syncFamilyLock() }
+                .onChange(of: plus.tierKnown) { _, _ in syncFamilyLock() }
+                .onChange(of: account.isSignedIn) { _, _ in syncFamilyLock() }
                 .task {
                     // GATE FIRST. `ensureOwnerProfile` mutates local identity —
                     // it can rename the owner and adopt unassigned items — so it
@@ -153,6 +171,19 @@ struct TadahApp: App {
     // starts its repeating daily nudge. Goes through rescheduleAll so the
     // soonest reminders across ALL items win iOS's 64-pending-request budget.
     @MainActor
+    // Fail OPEN: unlocked unless we positively know the tier is free. A RevenueCat
+    // outage must not take a paying family's profiles away — the same rule the
+    // Worker applies when it can't determine the tier.
+    private func syncFamilyLock() {
+        // Signed out = no family, full stop. Profiles are a property of an ACCOUNT
+        // (they sync with it, they're capped by its tier), so showing a switcher
+        // and per-person lists to someone with no account is offering a feature
+        // that has nothing behind it — and it would leave a departed user's family
+        // on screen for whoever picks the phone up next.
+        guard account.isSignedIn else { profiles.familyUnlocked = false; return }
+        profiles.familyUnlocked = plus.paidFeaturesUnlocked
+    }
+
     private func refreshAllReminders() {
         let context = ModelContext(container)
         guard let items = try? context.fetch(FetchDescriptor<ActionItem>()) else { return }

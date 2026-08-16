@@ -32,6 +32,20 @@ enum ReminderID {
 @MainActor
 final class ReminderScheduler {
     static let shared = ReminderScheduler()
+
+    // Resolves the reminder time (minutes past midnight) for the person a to-do is
+    // filed under. Injected by TadahApp, because the scheduler must not depend on
+    // ProfileStore — and left nil in tests, where the device default applies.
+    //
+    // Without this the per-person time would be purely cosmetic: it would show in
+    // the reminder editor while the notification that ACTUALLY fires still used the
+    // device setting, which is the kind of half-wired feature that looks fine until
+    // someone relies on it.
+    var profileReminderMinutes: ((UUID?) -> Int)?
+
+    private func minutes(for item: ActionItem) -> Int {
+        profileReminderMinutes?(item.profileID) ?? AppSettings.defaultReminderMinutes
+    }
     private let center = UNUserNotificationCenter.current()
 
     // "Hide details in notifications" (My Settings → Privacy): when on, banners
@@ -68,12 +82,20 @@ final class ReminderScheduler {
     // with headroom for snoozes and per-item edits made between launches.
     private static let globalBudget = 56
 
-    private func ids(for itemID: UUID) -> [String] {
+    // `includingSnooze: false` leaves a "Remind me later" request alone.
+    //
+    // A snooze is a one-off the USER asked for, and nothing here can recreate it —
+    // it isn't derived from the item's dates, so once cancelled it's simply gone.
+    // Rescheduling (launch, foreground, and now after every successful sync) was
+    // therefore silently eating snoozes: someone taps "Remind me later", the app
+    // syncs, and the reminder they just asked for never arrives. Deletion and
+    // completion still clear it, because then there IS nothing to remind about.
+    private func ids(for itemID: UUID, includingSnooze: Bool = true) -> [String] {
         var ids = (0..<Self.maxReminders).map { "\(itemID.uuidString)|r\($0)" }
         // Remove requests created by the old 14-one-shot implementation too.
         ids += (0..<Self.legacyOverdueNudges).map { "\(itemID.uuidString)|od\($0)" }
         ids.append("\(itemID.uuidString)|odDaily")   // repeating overdue nudge
-        ids.append("\(itemID.uuidString)|snooze")
+        if includingSnooze { ids.append("\(itemID.uuidString)|snooze") }
         return ids
     }
 
@@ -81,11 +103,16 @@ final class ReminderScheduler {
     // reopen). cancel() is synchronous (removes known ids), so the adds below
     // can't be undone by a late callback.
     func reschedule(for item: ActionItem) {
-        cancel(itemID: item.id)
-        guard wantsReminders(item) else { return }
+        // A done (or example) item keeps NOTHING, snooze included — there is
+        // nothing left to be reminded about, and a stray "Snoozed reminder" for a
+        // finished task is exactly the kind of nag that gets notifications turned
+        // off entirely. Everything else keeps its snooze (see ids(for:)).
+        guard wantsReminders(item) else { cancel(itemID: item.id); return }
+        cancel(itemID: item.id, includingSnooze: false)
 
         let now = Date.now
-        for (index, reminder) in item.effectiveReminders.enumerated() where reminder.date > now {
+        for (index, reminder) in item.effectiveReminders(defaultMinutes: minutes(for: item))
+                .enumerated() where reminder.date > now {
             guard index < Self.maxReminders else { break }
             scheduleOneShot(item, index: index, reminder: reminder)
         }
@@ -95,7 +122,11 @@ final class ReminderScheduler {
     // Cancel + reschedule EVERYTHING (launch / foreground), spending the global
     // budget soonest-first across all items — see the header comment.
     func rescheduleAll(for items: [ActionItem]) {
-        for item in items { cancel(itemID: item.id) }
+        // Same rule per item: keep the snooze only while the item still wants
+        // reminders at all.
+        for item in items {
+            cancel(itemID: item.id, includingSnooze: !wantsReminders(item))
+        }
         let active = items.filter(wantsReminders)
         var budget = Self.globalBudget
 
@@ -110,7 +141,7 @@ final class ReminderScheduler {
         let now = Date.now
         let upcoming = active
             .flatMap { item in
-                item.effectiveReminders.enumerated()
+                item.effectiveReminders(defaultMinutes: minutes(for: item)).enumerated()
                     .filter { $0.element.date > now && $0.offset < Self.maxReminders }
                     .map { (item: item, index: $0.offset, reminder: $0.element) }
             }
@@ -126,8 +157,9 @@ final class ReminderScheduler {
 
     // Remove every pending reminder belonging to this item. Synchronous —
     // removes the item's known identifiers directly (no fetch callback).
-    func cancel(itemID: UUID) {
-        center.removePendingNotificationRequests(withIdentifiers: ids(for: itemID))
+    func cancel(itemID: UUID, includingSnooze: Bool = true) {
+        center.removePendingNotificationRequests(
+            withIdentifiers: ids(for: itemID, includingSnooze: includingSnooze))
     }
 
     // "Remind me later" → fire again in 2 hours.
@@ -175,9 +207,13 @@ final class ReminderScheduler {
         content.sound = .default
         content.categoryIdentifier = ReminderID.category
         content.userInfo = [ReminderID.itemKey: item.id.uuidString]
+        // Follows the OWNING PERSON's reminder time, like every other reminder.
+        // This was hard-coded to the device default, so Mum's dated reminders
+        // arrived at 9am while her overdue nudge came at the owner's 7pm — the
+        // per-person setting looked half-applied because it was.
+        let minutes = self.minutes(for: item)
         let trigger = UNCalendarNotificationTrigger(
-            dateMatching: DateComponents(hour: AppSettings.defaultReminderHour,
-                                         minute: AppSettings.defaultReminderMinute),
+            dateMatching: DateComponents(hour: minutes / 60, minute: minutes % 60),
             repeats: true)
         center.add(UNNotificationRequest(
             identifier: "\(item.id.uuidString)|odDaily", content: content, trigger: trigger))

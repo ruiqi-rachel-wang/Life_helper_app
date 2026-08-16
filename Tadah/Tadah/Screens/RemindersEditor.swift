@@ -67,7 +67,7 @@ struct RemindersEditor: View {
                     HStack(spacing: 10) {
                         Text(shown[i].date.formatted(.dateTime.month(.abbreviated).day()))
                             .font(.eyebrow).tracking(0.4)
-                            .foregroundStyle(isPast ? Color.faint : Color.ink)
+                            .foregroundStyle(isPast ? Color.faded : Color.ink)
                             .frame(width: 60, alignment: .leading)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(shown[i].date.formatted(.dateTime.hour().minute()))

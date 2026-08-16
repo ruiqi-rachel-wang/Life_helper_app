@@ -74,7 +74,11 @@ struct RootTabView: View {
         // answers are both non-destructive: take it with you, or back out and
         // leave the phone untouched. (The old third option deleted everything
         // local; it's gone — see SyncCoordinator.cancelSignIn.)
-        .alert("These to-dos belong to another account",
+        // "Items", not "to-dos": the count behind this is to-dos PLUS family
+        // profiles (see localPersonalDataCount — a person's name left by another
+        // account is personal data too). Someone with 2 profiles and no to-dos was
+        // being told they had "2 to-dos", which is simply untrue.
+        .alert("This device's data belongs to another account",
                isPresented: $sync.isShowingReconciliation,
                presenting: sync.pendingReconciliation) { r in
             Button("Move them to this account") {
@@ -90,10 +94,7 @@ struct RootTabView: View {
                 }
             }
         } message: { r in
-            // Plural handled by the String Catalog (en one/other), not an inline
-            // "s" — languages like 中文 don't pluralize and a mid-sentence %@ can't
-            // be translated cleanly.
-            Text("The \(r.localCount) to-dos on this device were saved under a different account. Nothing has been uploaded. Move them to this account, or sign out and leave them exactly as they are.")
+            Text("The \(r.localCount) items saved on this device belong to a different account. Nothing has been uploaded. Move them to this account, or sign out and leave them exactly as they are.")
         }
         // The reconciliation choice couldn't be carried out. The question is still
         // pending, so dismissing this puts it straight back.

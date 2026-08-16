@@ -319,7 +319,7 @@ struct ReviewView: View {
                                     defaults: ActionItem.defaultReminders(dueDate: draft.dueDate,
                                                                           dueHasTime: draft.dueHasTime,
                                                                           leadHours: leadHours,
-                                                                          defaultMinutes: AppSettings.defaultReminderMinutes),
+                                                                          defaultMinutes: profiles.reminderMinutes(for: assignee)),
                                     dueDate: draft.dueDate,
                                     isEditing: isEditing)
                 }
@@ -613,7 +613,7 @@ struct ReviewView: View {
             // Always-visible AI-accuracy disclaimer (legal/risk control): the result
             // is AI-generated and can be wrong — tell the user to verify.
             Text("AI-generated — double-check important details against the original and the official source.")
-                .font(.subline).foregroundStyle(Color.faint)
+                .font(.subline).foregroundStyle(Color.faded)
                 .multilineTextAlignment(.center).lineSpacing(2)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 2)
@@ -627,7 +627,7 @@ struct ReviewView: View {
     }
 
     private func addToInbox() {
-        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus,
+        if let reason = TaskLimit.blockedReason(context, plus: plus.paidFeaturesUnlocked,
                                                 profileID: assignee) {
             limitMessage = reason; return
         }
@@ -755,9 +755,9 @@ struct ReviewView: View {
 
     private func addSelected() {
         let chosen = items.indices.filter { selected.contains($0) }
-        let room = TaskLimit.remaining(context, plus: plus.isPlus, profileID: assignee)
+        let room = TaskLimit.remaining(context, plus: plus.paidFeaturesUnlocked, profileID: assignee)
         guard room > 0 else {
-            limitMessage = TaskLimit.blockedReason(context, plus: plus.isPlus, profileID: assignee)
+            limitMessage = TaskLimit.blockedReason(context, plus: plus.paidFeaturesUnlocked, profileID: assignee)
             return
         }
         // Add what fits, oldest-selected first; tell the user if some didn't fit.
@@ -772,7 +772,7 @@ struct ReviewView: View {
         }
         SyncCoordinator.shared.noteLocalChange()
         if toAdd.count < chosen.count {
-            limitMessage = String(localized: "Your list is full at \(TaskLimit.cap(plus: plus.isPlus)) items, so only \(toAdd.count) of \(chosen.count) were added. Delete some to add the rest.")
+            limitMessage = String(localized: "Your list is full at \(TaskLimit.cap(plus: plus.paidFeaturesUnlocked)) items, so only \(toAdd.count) of \(chosen.count) were added. Delete some to add the rest.")
             selected = Set(chosen.dropFirst(room))   // leave the ones that didn't fit checked
             return
         }

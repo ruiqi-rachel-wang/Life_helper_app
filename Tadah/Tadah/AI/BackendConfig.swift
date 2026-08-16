@@ -47,11 +47,16 @@ nonisolated enum BackendConfig {
 
     // Account task sync (Part 3). All nil until a Worker is configured, so the
     // app stays fully local (no auth, no sync) in that case.
-    //   /auth/apple     — exchange a Sign-in-with-Apple token for a session.
+    //   /auth/email/*   — register, sign in, and reset a password.
     //   /auth/logout    — revoke this device's session.
     //   /account/delete — erase the account's server data entirely.
     //   /sync           — push local changes + pull the account's.
-    static var authEndpoint: URL? { workerURL?.appendingPathComponent("auth/apple") }
+    // Email + password (Part 3b). The password itself never goes over the wire —
+    // the phone sends a PBKDF2 output, see PasswordCrypto.
+    static var registerEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/register") }
+    static var loginEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/login") }
+    static var resetRequestEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/reset/request") }
+    static var resetConfirmEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/reset/confirm") }
     static var logoutEndpoint: URL? { workerURL?.appendingPathComponent("auth/logout") }
     static var accountDeleteEndpoint: URL? { workerURL?.appendingPathComponent("account/delete") }
     static var syncEndpoint: URL? { workerURL?.appendingPathComponent("sync") }

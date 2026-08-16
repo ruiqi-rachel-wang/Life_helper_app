@@ -16,6 +16,7 @@ import UIKit
 struct DetailView: View {
     @Bindable var item: ActionItem
     @Environment(ProfileStore.self) private var profiles
+    @Environment(PlusStore.self) private var plus
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -24,6 +25,11 @@ struct DetailView: View {
     @State private var didDelete = false
     @State private var detailStep: ChecklistStep?   // tapped step → detail sheet
     @State private var showFullPhoto = false         // tapped photo → full-screen viewer
+    // What the item looked like when edit mode opened, so leaving can tell a real
+    // edit from a look. `TaskDTO` is the item's own value form and is Equatable, so
+    // this compares every synced field without hand-listing them.
+    @State private var editSnapshot: TaskDTO?
+    @State private var moveBlocked = false           // destination list already full
 
     // Which field the keyboard is in. Tapping "Add a step / detail / note" used to
     // append a row whose only visible sign was an empty placeholder — testers read
@@ -67,14 +73,76 @@ struct DetailView: View {
             if let idx = item.steps.firstIndex(where: { $0.id == tapped.id }) {
                 // A plain step (no detail yet) opens straight into edit mode —
                 // there's nothing to read otherwise.
-                StepDetailView(step: $item.steps[idx], startInEditMode: !tapped.hasDetail)
+                StepDetailView(step: $item.steps[idx], startInEditMode: !tapped.hasDetail) {
+                    // The sheet edits item.steps in place; only the item can stamp
+                    // itself, so it does it here.
+                    item.touch()
+                    SyncCoordinator.shared.noteLocalChange()
+                }
             }
+        }
+        // Reusing "List full" — it's the same ceiling the create flow reports.
+        .alert("List full", isPresented: $moveBlocked) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("That person's list is already full. Remove a to-do from it first, then move this one.")
         }
         .onDisappear {
             if !didDelete, item.modelContext != nil {
+                // COMMIT EDITS THAT NEVER GOT A "Done" TAP.
+                //
+                // Every field here binds straight to `$item`, so typing has already
+                // mutated the stored model — but `touch()` only ran on the Done
+                // button. Leaving by the back chevron or a swipe therefore saved the
+                // edit locally while `updatedAt` stayed old, which means the push
+                // filter (`updatedAt > watermark`) skips it and the next pull from
+                // another device overwrites it. The user's edit vanishes with no
+                // error anywhere. Committing on the way out closes that path.
+                if isEditing { commitIfChanged() }
                 ReminderScheduler.shared.reschedule(for: item)
             }
         }
+    }
+
+    // Reassigning the to-do to a different person.
+    //
+    // Goes through a proxy binding rather than `$item.profileID` for two reasons:
+    // it has to REFUSE a move into a list that's already at its cap, and it has to
+    // stamp the change itself.
+    private var assigneeBinding: Binding<UUID?> {
+        Binding(
+            get: { item.profileID },
+            set: { newID in
+                guard newID != item.profileID else { return }
+                // Caps are PER PERSON (TaskLimit counts one bucket), so a move can
+                // push the destination over even though the account total is
+                // unchanged. Without this, moving would be a free way around the
+                // per-profile cap: create in an empty list, then shuffle across.
+                guard TaskLimit.count(context, profileID: newID)
+                        < TaskLimit.cap(plus: plus.paidFeaturesUnlocked) else {
+                    moveBlocked = true
+                    return
+                }
+                item.profileID = newID
+                item.touch()
+                SyncCoordinator.shared.noteLocalChange()
+            })
+    }
+
+    // Stamp `updatedAt` ONLY if something actually changed.
+    //
+    // ⚠️ AN UNCONDITIONAL touch() IS NOT THE SAFE DEFAULT — it's a different data
+    // loss. Under last-writer-wins, stamping on the way out of a screen the user
+    // only LOOKED at makes this stale copy the newest version of the item, so it
+    // overwrites a genuine edit made on another device in the meantime. Opening a
+    // to-do to read it must never beat someone else's real change.
+    private func commitIfChanged() {
+        defer { editSnapshot = nil }
+        // No snapshot means edit mode was never entered through the button — treat
+        // that as "nothing to commit" rather than stamping blind.
+        guard let editSnapshot, TaskDTO(item) != editSnapshot else { return }
+        item.touch()
+        SyncCoordinator.shared.noteLocalChange()
     }
 
     // MARK: nav — back · ACTION · Edit/Done
@@ -91,8 +159,9 @@ struct DetailView: View {
             Spacer()
             Button {
                 if isEditing {                  // leaving edit mode = commit
-                    item.touch()
-                    SyncCoordinator.shared.noteLocalChange()
+                    commitIfChanged()
+                } else {                        // entering = remember the "before"
+                    editSnapshot = TaskDTO(item)
                 }
                 isEditing.toggle()
             } label: {
@@ -109,6 +178,18 @@ struct DetailView: View {
         card {
             VStack(alignment: .leading, spacing: 10) {
                 Text(tagText).font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
+
+                // WHO THIS IS FOR — changeable after the fact.
+                //
+                // Filing something under the wrong person used to be permanent:
+                // the only fix was deleting it and typing it again. The row shows
+                // in read mode too (not just Edit), because moving a letter to Mum
+                // is a quick correction, not an editing session — which is exactly
+                // why the binding stamps immediately rather than waiting for
+                // `commitIfChanged`, since that only runs when leaving edit mode.
+                //
+                // Renders nothing when the account has no family (AssigneeRow).
+                AssigneeRow(profileID: assigneeBinding)
 
                 if isEditing {
                     TextField("Title", text: $item.title, prompt: fieldPrompt("Title"), axis: .vertical)
@@ -375,7 +456,8 @@ struct DetailView: View {
         card {
             RemindersEditor(reminders: $item.reminders,
                             customized: $item.remindersCustomized,
-                            defaults: item.defaultReminders(),
+                            defaults: item.defaultReminders(
+                                defaultMinutes: profiles.reminderMinutes(for: item.profileID)),
                             dueDate: item.dueDate,
                             isEditing: isEditing)
         }
@@ -514,7 +596,7 @@ struct DetailView: View {
                 }
                 .buttonStyle(.plain)
                 Text(explainLanguage == .english ? "Tap to enlarge" : "Tap to enlarge and translate")
-                    .font(.subline).foregroundStyle(Color.faint)
+                    .font(.subline).foregroundStyle(Color.faded)
             }
         }
         .fullScreenCover(isPresented: $showFullPhoto) {
@@ -666,7 +748,11 @@ struct DetailView: View {
 }
 
 #Preview {
+    // Both stores are required by @Environment lookups in this view, and a missing
+    // one traps at runtime — the preview was already short of ProfileStore.
     DetailView(item: ActionItem(title: "Preview item", category: .utility,
                                 dueDate: .now, steps: [ChecklistStep(text: "A step")]))
         .modelContainer(for: ActionItem.self, inMemory: true)
+        .environment(ProfileStore())
+        .environment(PlusStore())
 }

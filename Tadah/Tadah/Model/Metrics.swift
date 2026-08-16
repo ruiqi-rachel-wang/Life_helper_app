@@ -13,6 +13,7 @@
 //
 
 import Foundation
+import CryptoKit
 
 // One logged moment in the confirm → complete loop.
 nonisolated struct MetricEvent: Codable, Equatable {
@@ -98,6 +99,9 @@ nonisolated enum Metrics {
     // sent to the backend. Lets flush() send only what's new.
     private static let syncedKey = "tadah.metrics.syncedCount"
 
+    // Must stay <= the Worker's MAX_BATCH (D1 Free: 50 queries per invocation).
+    static let maxEventsPerUpload = 25
+
     // User consent for uploading anonymous usage stats. Default true (opted in); the
     // Profile "Share anonymous usage data" toggle writes this same key. When off,
     // flush() no-ops — events still log locally, they just never leave the device.
@@ -168,14 +172,20 @@ nonisolated enum Metrics {
             let all = readFile()
             let synced = UserDefaults.standard.integer(forKey: syncedKey)
             guard all.count > synced else { return }               // nothing new
-            let total = all.count
-            let pending = Array(all[synced...])
+            // CHUNKED to the server's per-request limit, which is sized for D1
+            // Free's 50-queries-per-invocation ceiling. Sending every pending
+            // event at once meant a device that had been offline built a batch the
+            // server could never store: it 413'd, the cursor never advanced, and
+            // the same doomed upload retried forever. One chunk per flush; the
+            // next flush (launch/background) takes the following one.
+            let pending = Array(all[synced...].prefix(maxEventsPerUpload))
+            let total = synced + pending.count
 
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601                 // readable occurred_at
             let envelope = UploadEnvelope(installID: Install.id,
                                           appVersion: Install.appVersion,
-                                          events: pending)
+                                          events: pending.map(WireEvent.init))
             guard let body = try? encoder.encode(envelope) else { return }
 
             var req = URLRequest(url: endpoint)
@@ -198,7 +208,67 @@ nonisolated enum Metrics {
     private struct UploadEnvelope: Encodable {
         let installID: String
         let appVersion: String
-        let events: [MetricEvent]
+        let events: [WireEvent]
+    }
+
+    // What actually goes over the wire.
+    //
+    // ⚠️ THE ITEM ID IS PSEUDONYMISED HERE, and it must stay that way. The local
+    // event keeps the real `ActionItem.id` because the funnel needs to match a
+    // confirm to its completion — but uploading that raw UUID made the analytics
+    // re-identifiable: the very same UUID is stored as `tasks.item_id` next to
+    // `tasks.user_id`, IN THE SAME D1 DATABASE. One JOIN turned every "anonymous"
+    // product-interaction row into "this named Apple account did this".
+    //
+    // `funnelID` is HMAC(per-install salt, itemID). It is stable within an install
+    // — so the confirm→complete funnel still works exactly as before — and is
+    // unjoinable with anything else, because the salt never leaves the device.
+    struct WireEvent: Encodable {
+        let id: String
+        let kind: String
+        let date: Date
+        let itemID: String?      // the HMAC, never the task's real UUID
+        let source: String?
+        let onTime: Bool?
+
+        init(_ e: MetricEvent) {
+            id = e.id.uuidString
+            kind = e.kind.rawValue
+            date = e.date
+            itemID = e.itemID.map { Metrics.funnelID(for: $0) }
+            source = e.source
+            onTime = e.onTime
+        }
+    }
+
+    // Per-install pseudonym for an item. HMAC (not a bare hash) because the input
+    // space is guessable: a plain SHA-256 of a UUID could be recomputed by anyone
+    // holding the task ids, which would defeat the whole point.
+    static func funnelID(for itemID: UUID) -> String {
+        let mac = HMAC<SHA256>.authenticationCode(
+            for: Data(itemID.uuidString.utf8),
+            using: SymmetricKey(data: funnelSalt))
+        return mac.prefix(16).map { String(format: "%02x", $0) }.joined()
+    }
+
+    // Random, generated once per install, never uploaded. Losing it (reinstall)
+    // just means the funnel restarts for that install, which is acceptable —
+    // metrics are per-install anyway.
+    private static let saltKey = "tadah.metrics.funnelSalt"
+    private static var funnelSalt: Data {
+        let d = UserDefaults.standard
+        if let existing = d.data(forKey: saltKey) { return existing }
+        var bytes = [UInt8](repeating: 0, count: 32)
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        // An all-zero salt would make the "pseudonym" trivially recomputable by
+        // anyone holding the task ids, which is exactly the linkage this exists to
+        // break. If the system RNG fails, fall back to UUIDs rather than ship a
+        // known-weak key.
+        let fresh: Data = status == errSecSuccess
+            ? Data(bytes)
+            : Data((UUID().uuidString + UUID().uuidString).utf8)
+        d.set(fresh, forKey: saltKey)
+        return fresh
     }
 
     #if DEBUG

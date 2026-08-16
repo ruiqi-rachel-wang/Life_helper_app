@@ -12,8 +12,21 @@ import SwiftUI
 struct StepDetailView: View {
     @Binding var step: ChecklistStep
     var startInEditMode: Bool = false
+    // Called after this sheet has changed the step, so the OWNER can stamp its
+    // own `updatedAt` and nudge a sync.
+    //
+    // The binding writes into `item.steps[i]`, which mutates the stored item —
+    // but nothing here could advance the ITEM's `updatedAt`, so every edit made
+    // in this sheet (step text, the explanation, the mini-checklist ticks) was
+    // saved locally and then skipped by the push filter and overwritten by the
+    // next pull. Review passes a no-op: its draft isn't a stored item yet.
+    var onChange: () -> Void = {}
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
+    // The step as it was when this sheet opened, so closing can tell an edit from
+    // a read. ChecklistStep is Hashable, so this compares the whole step —
+    // text, explanation, mini-checklist, links — without listing fields.
+    @State private var entrySnapshot: ChecklistStep?
 
     // Focus for rows appended by the "Add" buttons — see DetailView.Field.
     private enum Field: Hashable { case subStep(Int), needed(Int) }
@@ -49,6 +62,21 @@ struct StepDetailView: View {
         }
         .onAppear {
             if startInEditMode { isEditing = true }
+            entrySnapshot = step        // capture BEFORE anything can be typed
+        }
+        // Text edits don't pass through rollUp(), and there is no "save" here —
+        // the bindings write as you type. Stamping on the way out is what makes
+        // those edits reach the account.
+        //
+        // ⚠️ ONLY IF THE STEP ACTUALLY CHANGED. Reporting a change after a plain
+        // READ bumped the parent's `updatedAt`, which under last-writer-wins let
+        // this untouched copy overwrite a real edit from another device. Opening a
+        // step to read it must not beat someone else's genuine change.
+        // Only reports what hasn't already been reported (see reportIfChanged).
+        // `entrySnapshot == nil` means onAppear never ran, so there's no baseline
+        // to compare against — say nothing rather than stamp blind.
+        .onDisappear {
+            if entrySnapshot != nil { reportIfChanged() }
         }
         .presentationDragIndicator(.visible)
     }
@@ -171,6 +199,20 @@ struct StepDetailView: View {
     private func rollUp() {
         let subs = step.detail?.miniChecklist ?? []
         if !subs.isEmpty { step.done = subs.allSatisfy(\.done) }
+        reportIfChanged()
+    }
+
+    // Report a change AND re-baseline, so the same edit is never reported twice.
+    //
+    // Ticking a checklist used to stamp here and then AGAIN on dismissal, because
+    // the dismissal comparison still saw the tick as "different from when the sheet
+    // opened". The sync debounce swallowed the duplicate, so it was only waste —
+    // but re-baselining is free and keeps "reported" meaning "since the last time
+    // we said so", which is what makes the dismissal check trustworthy.
+    private func reportIfChanged() {
+        guard entrySnapshot != step else { return }
+        entrySnapshot = step
+        onChange()
     }
 
     private func checkbox(_ done: Bool) -> some View {

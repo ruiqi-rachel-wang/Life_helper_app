@@ -53,10 +53,6 @@ struct InboxView: View {
                             section("Done", b.done, muted: true, done: true)
                         }
 
-                        PrivacyBanner()
-                            .padding(.horizontal, 14)
-                            .padding(.top, 24)
-
                         Spacer(minLength: 40)
                     }
                     .padding(.top, 48)
@@ -469,25 +465,11 @@ private struct InboxRow: View {
     }
 }
 
-// MARK: - Trust banner
-//
-// Was "On-device scanning · No bank login · No autopay". The on-device claim is
-// gone (2026-08-06): we no longer sell local-only storage, since items now back
-// up to the account. The other two are about what Tadah will never DO — touch
-// your bank or charge you — which stays true and is the real reassurance.
-
-private struct PrivacyBanner: View {
-    var body: some View {
-        Text("No bank login · No autopay")
-            .font(.eyebrow).tracking(0.4).foregroundStyle(Color.faded)
-            .padding(.vertical, 14).padding(.horizontal, 18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.bg)
-            .overlay(alignment: .leading) {
-                Rectangle().fill(Color.accent).frame(width: 2)
-            }
-    }
-}
+// The "No bank login · No autopay" trust banner was REMOVED 2026-08-14. It sat at
+// the bottom of every to-do list answering a question nobody had asked by that
+// point — you don't wonder whether a to-do list is about to charge you — so it was
+// permanent furniture earning nothing. What it claimed is still true; it just
+// doesn't need saying on the main screen forever.
 
 #Preview {
     InboxView()

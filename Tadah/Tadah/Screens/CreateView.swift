@@ -38,6 +38,7 @@ struct CreateView: View {
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var scanRoute: ScanRoute?
     @State private var quotaMessage: String?
+    @State private var showPaywall = false
 
     private var cameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
@@ -46,7 +47,9 @@ struct CreateView: View {
     // Gate a scan on the rate limit; shows the limit message and returns false
     // when the user is out of scans for the day/month.
     private func allowScan() -> Bool {
-        if let reason = ScanQuota.blockedReason(plus: plus.isPlus) { quotaMessage = reason; return false }
+        // `paidFeaturesUnlocked`, not `isPlus` — an unknown tier must not spend a
+        // subscriber's scans out of the free pool. See PlusStore.
+        if let reason = ScanQuota.blockedReason(plus: plus.paidFeaturesUnlocked) { quotaMessage = reason; return false }
         return true
     }
 
@@ -170,10 +173,18 @@ struct CreateView: View {
                 photoItems = []
             }
         }
+        // A limit is the one moment Plus is genuinely relevant, so offer the way
+        // out instead of only "OK" — which told someone they were stuck and gave
+        // them nowhere to go. Only for free users: a subscriber who hits the Plus
+        // ceiling can't buy their way past it, so pitching them would be nonsense.
         .alert("Scan limit reached", isPresented: Binding(
             get: { quotaMessage != nil }, set: { if !$0 { quotaMessage = nil } })) {
+            if !plus.paidFeaturesUnlocked {
+                Button("See Tadah Plus") { quotaMessage = nil; showPaywall = true }
+            }
             Button("OK", role: .cancel) {}
         } message: { Text(quotaMessage ?? "") }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
     }
 
     // Big primary action: Scan a document → camera → OCR. With no camera
@@ -307,6 +318,7 @@ private struct CreateForm: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var imageData: Data?
     @State private var limitMessage: String?   // task-list full
+    @State private var showPaywall = false
     // Who the to-do is for. Defaults to whoever is using this phone; the
     // picker only appears once the account has family members.
     @State private var assignee: UUID?
@@ -374,8 +386,12 @@ private struct CreateForm: View {
         }
         .alert("List full", isPresented: Binding(
             get: { limitMessage != nil }, set: { if !$0 { limitMessage = nil } })) {
+            if !plus.paidFeaturesUnlocked {
+                Button("See Tadah Plus") { limitMessage = nil; showPaywall = true }
+            }
             Button("OK", role: .cancel) {}
         } message: { Text(limitMessage ?? "") }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
     }
 
     // MARK: header
@@ -434,7 +450,15 @@ private struct CreateForm: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: category.symbol).font(.system(size: 13)).foregroundStyle(category.tint)
+                    // `fixedSize` + `lineLimit(1)`: without them the HStack
+                    // squeezed the label and "Government" rendered as "Governmer"
+                    // for a beat before settling. `transaction` kills the implicit
+                    // animation SwiftUI runs on a Menu label when its content
+                    // changes — that animation WAS the visible delay.
                     Text(category.displayName).font(.body14).foregroundStyle(Color.ink)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .transaction { $0.animation = nil }
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Color.faint)
                 }
             }
@@ -495,7 +519,7 @@ private struct CreateForm: View {
             HStack {
                 Text("STEPS").font(.eyebrow).tracking(1.0).foregroundStyle(Color.faded)
                 Spacer()
-                Text("OPTIONAL").font(.eyebrow).tracking(0.6).foregroundStyle(Color.faint)
+                Text("OPTIONAL").font(.eyebrow).tracking(0.6).foregroundStyle(Color.faded)
             }
             .padding(.bottom, steps.isEmpty ? 0 : 8)
 
@@ -541,8 +565,9 @@ private struct CreateForm: View {
         RemindersEditor(
             reminders: $reminders,
             customized: $remindersCustomized,
+            // Whoever this to-do is being filed under sets the time of day.
             defaults: ActionItem.defaultReminders(dueDate: dueDate, dueHasTime: false, leadHours: 2,
-                                                  defaultMinutes: AppSettings.defaultReminderMinutes),
+                                                  defaultMinutes: profiles.reminderMinutes(for: assignee)),
             dueDate: dueDate,
             isEditing: true)
         .padding(.horizontal, 18)
@@ -635,7 +660,7 @@ private struct CreateForm: View {
     }
 
     private func save() {
-        if let reason = TaskLimit.blockedReason(context, plus: plus.isPlus,
+        if let reason = TaskLimit.blockedReason(context, plus: plus.paidFeaturesUnlocked,
                                                 profileID: assignee) {
             limitMessage = reason; return
         }
