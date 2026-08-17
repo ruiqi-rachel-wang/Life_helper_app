@@ -178,11 +178,15 @@ export default {
   // Daily retention sweep (cron in wrangler.toml). Separate from `fetch` on
   // purpose: retention that depends on traffic isn't retention.
   async scheduled(event, env, ctx) {
-    if (!env.DB) return;
-    ctx.waitUntil((async () => {
-      await ensureSyncTables(env.DB);
-      await sweepRetention(env.DB);
-    })());
+    if (!env.DB) {
+      console.error("retention sweep skipped: no DB binding");
+      return;
+    }
+    // AWAITED, not waitUntil. This handler has nothing to return early for, and
+    // awaiting is what lets a failure mark the cron run as errored rather than
+    // vanish into a detached promise.
+    await ensureSyncTables(env.DB);
+    await sweepRetention(env.DB);
   },
 
   async fetch(request, env) {
@@ -795,7 +799,23 @@ async function sweepRetention(db) {
         .bind(cutoff(REVOKED_SESSION_TTL_DAYS)),
       db.prepare("DELETE FROM ai_usage WHERE period < ?").bind(cutoff(USAGE_TTL_DAYS).slice(0, 10)),
     ]);
-  } catch { /* cleanup is best-effort; never fail a sign-in over it */ }
+  } catch (err) {
+    // LOUD, AND IT FAILS THE INVOCATION. This swallowed every database error
+    // silently, under a comment about not failing a sign-in that was already
+    // obsolete when the sweep moved to a cron. A production failure would have
+    // breached every retention period the privacy policy promises with nothing
+    // anywhere to show for it — and a retention promise you cannot observe is
+    // not a promise.
+    //
+    // Rethrowing marks the scheduled run as errored, so it shows up in the
+    // Workers dashboard and in observability instead of in nobody's inbox.
+    console.error("sweepRetention failed", {
+      message: err && err.message,
+      // No row contents and no user ids — just enough to say WHICH job broke.
+      at: new Date().toISOString(),
+    });
+    throw err;
+  }
 }
 
 async function handleSync(request, env) {

@@ -23,11 +23,23 @@ CREATE INDEX IF NOT EXISTS idx_events_install ON events(install_id);
 CREATE INDEX IF NOT EXISTS idx_events_kind    ON events(kind);
 CREATE INDEX IF NOT EXISTS idx_events_item    ON events(item_id);
 
--- Per-install AI-call counters (chat proxy quota; see worker.js AI_DAY_LIMIT).
+-- AI-call counters (chat proxy quota; see worker.js AI_DAY_LIMIT).
 -- The worker lazy-creates this table too, so applying this file is optional;
 -- kept here so schema.sql stays the one honest description of the database.
+--
+-- ⚠️ `install_id` IS NO LONGER ALWAYS AN INSTALL ID. Despite the column name it
+-- now holds four kinds of key, and the prefix tells them apart:
+--   <uuid>   the app's per-install UUID (same id metrics use) — the normal case
+--   ip:<hex> a DAILY salted hash of the client IP — the per-network ceiling
+--   ipm:<hex> a MONTHLY salted hash of the client IP — the fallback quota for
+--            older builds that send no install header, which needs a key stable
+--            across the month because it carries a monthly count
+--   *global* the single circuit-breaker row counting every AI call
+-- The hashes are salted with PASSWORD_PEPPER and are NOT reversible; the raw
+-- address is never written. Renaming the column would need a migration on a live
+-- database, so the name stays and this comment carries the truth.
 CREATE TABLE IF NOT EXISTS ai_usage (
-  install_id TEXT NOT NULL,   -- anonymous per-install UUID (same id metrics use)
+  install_id TEXT NOT NULL,   -- install UUID, or ip:/ipm:/*global* quota key (see above)
   period     TEXT NOT NULL,   -- '2026-07-08' (a day) or '2026-07' (a month)
   count      INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (install_id, period)
