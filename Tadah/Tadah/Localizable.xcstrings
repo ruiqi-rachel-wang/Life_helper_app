@@ -16997,23 +16997,6 @@
         }
       }
     },
-    "The new place's ZIP code? (optional — to find your local utility companies)": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿El código postal del nuevo lugar? (opcional: para encontrar las empresas de servicios públicos de tu zona)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新住处的邮政编码？（可选——用于查找你所在地区的公用事业公司）"
-          }
-        }
-      }
-    },
     "The other driver hit me": {
       "extractionState": "stale",
       "localizations": {
@@ -19978,23 +19961,6 @@
         }
       }
     },
-    "Your new home's ZIP code? (optional — to find your local utility companies)": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿El código postal de tu nuevo hogar? (opcional: para encontrar las empresas de servicios públicos de tu zona)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你新家的邮政编码？（可选——用于查找你所在地区的公用事业公司）"
-          }
-        }
-      }
-    },
     "Your own note…": {
       "extractionState": "stale",
       "localizations": {
@@ -20351,23 +20317,6 @@
         }
       }
     },
-    "We don't send your name, email, or account with it.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No enviamos tu nombre, correo ni cuenta junto con él."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我们不会随之发送你的姓名、邮箱或账户。"
-          }
-        }
-      }
-    },
     "Prefer not to? Tap “Not now.” You can still add to-dos yourself, use the guides, and set reminders — and you can change this any time in Profile → Privacy.": {
       "extractionState": "manual",
       "localizations": {
@@ -20449,6 +20398,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "只添加你有权处理其文件的人——你照顾的家人，或你自己的孩子。归在这个人名下的内容可能包含他们的医疗、财务和移民信息。"
+          }
+        }
+      }
+    },
+    "We don't attach your Tadah account — your sign-in email and account aren't sent, so OpenAI can't tell whose document it is.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No adjuntamos tu cuenta de Tadah: no enviamos tu correo de inicio de sesión ni tu cuenta, así que OpenAI no puede saber de quién es el documento."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们不会附带你的 Tadah 账户——不会发送你的登录邮箱和账户，因此 OpenAI 无法知道这份文件是谁的。"
+          }
+        }
+      }
+    },
+    "This same permission covers one more thing: in the moving and renting guides, a ZIP code you type is sent with your answers to name your local utility companies. Every other guide is built on your phone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este mismo permiso cubre una cosa más: en las guías de mudanza y alquiler, el código postal que escribas se envía junto con tus respuestas para nombrar las compañías de servicios de tu zona. Todas las demás guías se crean en tu teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同一项许可还包含一件事：在搬家和租房指南中，你输入的邮编会连同你的回答一起发送，用于列出你所在地区的水电网公司。其他所有指南都在你的手机上生成。"
+          }
+        }
+      }
+    },
+    "Your new home's ZIP code? (optional — sent to AI with your answers to find your local utility companies)": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿El código postal de tu nueva casa? (opcional: se envía a la IA con tus respuestas para encontrar las compañías de servicios de tu zona)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你新家的邮编？（可选——会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
+          }
+        }
+      }
+    },
+    "The new place's ZIP code? (optional — sent to AI with your answers to find your local utility companies)": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿El código postal del nuevo lugar? (opcional: se envía a la IA con tus respuestas para encontrar las compañías de servicios de tu zona)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新住处的邮编？（可选——会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
           }
         }
       }

@@ -142,6 +142,7 @@ nonisolated struct Guide: Identifiable {
     // caller is a SwiftUI callback that already runs there.
     @MainActor
     func usesScanQuota(for answers: [String: String]) -> Bool {
+        guard AIConsent.allowsSendingToAI else { return false }
         guard risk == .general, OpenAIClient.isLookupZip(answers["zip"]) else { return false }
         return build(answers).detailedSteps.contains { $0.detail == Guide.utilitiesDetail }
     }
@@ -499,8 +500,12 @@ extension Guide {
                           kind: .choice(["Yes", "Not yet"])),
             GuideQuestion(id: "car", prompt: "Do you have a car to update?",
                           kind: .choice(["Yes", "No"])),
-            GuideQuestion(id: "zip", prompt: "Your new home's ZIP code? (optional — to find your local utility companies)",
-                          kind: .text("e.g. 78701"), showIf: { $0["knowAddress"] != "Not yet" }),
+            // DISCLOSES THE DESTINATION, and disappears entirely when the user
+            // hasn't agreed to send anything to AI — see AIConsent. Everything
+            // else in this guide is built on the device.
+            GuideQuestion(id: "zip", prompt: "Your new home's ZIP code? (optional — sent to AI with your answers to find your local utility companies)",
+                          kind: .text("e.g. 78701"),
+                          showIf: { $0["knowAddress"] != "Not yet" && AIConsent.allowsSendingToAI }),
             GuideQuestion(id: "moveDate", prompt: "When's your move date? (optional)", kind: .date),
         ],
         build: { a in
@@ -616,8 +621,9 @@ extension Guide {
         questions: [
             GuideQuestion(id: "signed", prompt: "Have you signed the lease yet?",
                           kind: .choice(["Yes", "Not yet"])),
-            GuideQuestion(id: "zip", prompt: "The new place's ZIP code? (optional — to find your local utility companies)",
-                          kind: .text("e.g. 78701")),
+            GuideQuestion(id: "zip", prompt: "The new place's ZIP code? (optional — sent to AI with your answers to find your local utility companies)",
+                          kind: .text("e.g. 78701"),
+                          showIf: { _ in AIConsent.allowsSendingToAI }),
             GuideQuestion(id: "moveDate", prompt: "When's your move-in date? (optional)", kind: .date),
         ],
         build: { a in

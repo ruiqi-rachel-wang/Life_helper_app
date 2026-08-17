@@ -18,6 +18,7 @@ import Testing
 import Foundation
 @testable import Tadah
 
+@MainActor
 struct ConsentDefaultTests {
 
     private func withCleanDefault<T>(_ key: String, _ body: () throws -> T) rethrows -> T {
@@ -33,20 +34,42 @@ struct ConsentDefaultTests {
     @Test func documentsAreNotSentUntilTheUserAgrees() {
         withCleanDefault(AIConsent.key) {
             #expect(AIConsent.state == .notAsked)
-            #expect(AIConsent.allowsSendingDocuments == false)
+            #expect(AIConsent.allowsSendingToAI == false)
 
             AIConsent.record(granted: false)
             #expect(AIConsent.state == .declined)
-            #expect(AIConsent.allowsSendingDocuments == false)
+            #expect(AIConsent.allowsSendingToAI == false)
 
             AIConsent.record(granted: true)
             #expect(AIConsent.state == .granted)
-            #expect(AIConsent.allowsSendingDocuments == true)
+            #expect(AIConsent.allowsSendingToAI == true)
 
             // Withdrawable — the Profile toggle writes the same key, and turning
             // it back off has to actually stop future scans.
             AIConsent.set(false)
-            #expect(AIConsent.allowsSendingDocuments == false)
+            #expect(AIConsent.allowsSendingToAI == false)
+        }
+    }
+
+    // THE SECOND PATH TO OPENAI. The moving/renting utility lookup sent a ZIP and
+    // every answer to that guide's questions with no permission check at all, and
+    // kept doing it while "Send scans to AI" was off — a per-feature flag is
+    // exactly how it got missed. Declining must silence BOTH paths.
+    @Test func decliningAlsoStopsTheGuideUtilityLookup() {
+        withCleanDefault(AIConsent.key) {
+            let answers = ["home": "Renting", "knowAddress": "Yes", "zip": "78701"]
+
+            AIConsent.record(granted: false)
+            // The question isn't even asked…
+            #expect(!Guide.moving.visibleQuestions(answers).contains { $0.id == "zip" })
+            #expect(!Guide.rentingNewPlace.visibleQuestions(answers).contains { $0.id == "zip" })
+            // …and a stale answer carrying a ZIP still can't trigger the call.
+            #expect(Guide.moving.usesScanQuota(for: answers) == false)
+            #expect(Guide.rentingNewPlace.usesScanQuota(for: ["zip": "78701"]) == false)
+
+            AIConsent.record(granted: true)
+            #expect(Guide.moving.visibleQuestions(answers).contains { $0.id == "zip" })
+            #expect(Guide.moving.usesScanQuota(for: answers) == true)
         }
     }
 

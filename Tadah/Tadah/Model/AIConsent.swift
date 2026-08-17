@@ -45,12 +45,21 @@ nonisolated enum AIConsent {
         return stored ? .granted : .declined
     }
 
-    // May a document's recognised text leave the device right now?
+    // May ANYTHING leave the device for OpenAI right now?
     //
-    // The ONLY question the scan path should ask. `.notAsked` is false: silence
-    // is not agreement, and a build that shipped this check inverted would send
-    // documents to OpenAI for every user who had never seen the sheet.
-    static var allowsSendingDocuments: Bool { state == .granted }
+    // Deliberately named for the destination, not for one feature. It began as
+    // `allowsSendingDocuments` and guarded only scanning — which left the moving
+    // and renting guides' local-utility lookup sending a ZIP code and every
+    // answer to that guide's questions to OpenAI with no permission at all, and
+    // still doing it while "Send scans to AI" was switched off.
+    //
+    // Every call site that reaches OpenAI asks THIS. If a third one is ever
+    // added, it asks this too — a per-feature flag is how the second one got
+    // missed.
+    //
+    // `.notAsked` is false: silence is not agreement, and a build that shipped
+    // this inverted would send to OpenAI for everyone who had never seen the sheet.
+    static var allowsSendingToAI: Bool { state == .granted }
 
     static func record(granted: Bool) {
         UserDefaults.standard.set(granted, forKey: key)

@@ -111,8 +111,17 @@ struct GuidesView: View {
                                 // The one thing the catalog can't know: which real companies serve
                                 // this person's ZIP. Only housing guides ask for a ZIP, so every
                                 // other guide is now instant and works offline.
+                                // CONSENT IS THE FIRST CONDITION, not an
+                                // afterthought. This is the app's SECOND path to
+                                // OpenAI, and it used to have no permission check
+                                // at all — it sent the ZIP and every answer to
+                                // this guide's questions even while "Send scans to
+                                // AI" was switched off. Declining now simply skips
+                                // the lookup and keeps the generic utilities
+                                // detail, so the guide still works, offline.
                                 let zip = answers["zip"]?.trimmingCharacters(in: .whitespaces) ?? ""
-                                guard g.risk == .general, let i = utilIdx,
+                                guard AIConsent.allowsSendingToAI,
+                                      g.risk == .general, let i = utilIdx,
                                       OpenAIClient.isLookupZip(zip) else { return [result] }
 
                                 let context = "\(g.title). "

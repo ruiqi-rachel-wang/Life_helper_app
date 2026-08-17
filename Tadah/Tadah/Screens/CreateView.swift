@@ -55,7 +55,7 @@ struct CreateView: View {
     // Returns false and puts the sheet up when we have never asked, or when the
     // user has said no — in both cases nothing is sent and no quota is spent.
     private func allowScan() -> Bool {
-        guard AIConsent.allowsSendingDocuments else { showAIConsent = true; return false }
+        guard AIConsent.allowsSendingToAI else { showAIConsent = true; return false }
         // `paidFeaturesUnlocked`, not `isPlus` — an unknown tier must not spend a
         // subscriber's scans out of the free pool. See PlusStore.
         if let reason = ScanQuota.blockedReason(plus: plus.paidFeaturesUnlocked) { quotaMessage = reason; return false }

@@ -49,8 +49,17 @@ struct AIConsentSheet: View {
                                   "The text is whatever is printed on the page — that can include your name, a medical condition, a case or account number, or money details.")
                             point("clock.arrow.circlepath",
                                   "OpenAI does not use it to train their AI, and may keep it up to about 30 days to check for misuse. We keep no copy on our server.")
+                            // Says ACCOUNT, not "name". The line above has just
+                            // warned that the page's text can contain your name —
+                            // "we don't send your name" flatly contradicted it.
+                            // What we withhold is the Tadah account behind the
+                            // request, not whatever is printed on the paper.
                             point("person.crop.circle.badge.xmark",
-                                  "We don't send your name, email, or account with it.")
+                                  "We don't attach your Tadah account — your sign-in email and account aren't sent, so OpenAI can't tell whose document it is.")
+                            // The app's other AI path, disclosed HERE rather than
+                            // discovered later: one permission covers both.
+                            point("mappin.and.ellipse",
+                                  "This same permission covers one more thing: in the moving and renting guides, a ZIP code you type is sent with your answers to name your local utility companies. Every other guide is built on your phone.")
                         }
 
                         // Says the app still works. Someone who declines should not

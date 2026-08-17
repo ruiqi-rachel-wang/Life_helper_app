@@ -528,6 +528,17 @@ struct GuideTests {
     // question is gone, and the gate now asks the built checklist.
     @MainActor
     @Test func onlyGuidesThatReallyCallTheAISpendAScan() {
+        // This test is about WHICH guides make an AI call, so consent is granted
+        // for its duration — the separate question of whether the user agreed at
+        // all is pinned in ConsentDefaultTests. Restored afterwards so the
+        // opt-out default isn't left flipped for whatever runs next.
+        let saved = UserDefaults.standard.object(forKey: AIConsent.key)
+        defer {
+            saved == nil ? UserDefaults.standard.removeObject(forKey: AIConsent.key)
+                         : UserDefaults.standard.set(saved, forKey: AIConsent.key)
+        }
+        AIConsent.record(granted: true)
+
         // Renting has the utilities step: a real ZIP does spend one.
         #expect(Guide.rentingNewPlace.usesScanQuota(for: ["zip": "78701"]))
         // …and no ZIP means no lookup, so it doesn't.
