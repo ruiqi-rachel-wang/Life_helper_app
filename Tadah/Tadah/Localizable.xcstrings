@@ -168,10 +168,40 @@
     },
     "%lld to-dos": {
       "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld to-do"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld to-dos"
+                }
+              }
+            }
+          }
+        },
         "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld tareas"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld tarea"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld tareas"
+                }
+              }
+            }
           }
         },
         "zh-Hans": {

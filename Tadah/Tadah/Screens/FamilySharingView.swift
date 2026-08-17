@@ -93,7 +93,7 @@ struct FamilySharingView: View {
             // a feature nobody has. Still says what TAPPING does, because that is
             // the part people get wrong: it sets who new to-dos are filed under,
             // not just what you're looking at.
-            Text("Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove.")
+            Text("Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove (you can't remove yourself).")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
         }
         .padding(.horizontal, 6)

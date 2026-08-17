@@ -64,7 +64,7 @@ Signing in is optional. It exists so your items survive signing out, a reinstall
 
 This does **not** apply to **scanning**, where the recognized text is sent to OpenAI as described above, however sensitive the document is. Note that once you add a guide's checklist to your list, that item is backed up to your account like any other item if you are signed in.
 
-### Anonymous usage statistics (sent to a backend we run)
+### Pseudonymous usage statistics (sent to a backend we run)
 To understand whether Tadah actually helps — for example, of the items you add, how many you come back and complete — the app can send a small amount of usage data to a backend we operate (a Cloudflare database). It carries **no name, email, or account**, but it does carry a random identifier that stays the same for this installation — so it is better described as **pseudonymous** than anonymous: we cannot tell who you are from it, but events from one installation can be seen as belonging together. What it contains:
 - **What happened, not what's in it:** that an item was *added* (and whether from a scan, a guide, or manual entry), or *completed* (and whether on time).
 - A random **install identifier** created on your device, plus the app version and the time of the event. This labels an app installation — it is **not** your name, email, account, or Apple ID, and we cannot use it to identify you. It is also **deliberately different** from the device identifier stored with your account session, so even signed in, these statistics cannot be linked back to you.
@@ -105,7 +105,7 @@ We use these providers to deliver Tadah, and we require them by contract to prot
 - **Backed-up items (signed-in accounts)** are kept for as long as your account exists, so we can restore them to you. Deleting an item in the app removes it from your account on the next sync. To delete the whole account and everything in it, use **Profile → your name → Delete account** in the app (see *Your choices and rights*); you can also email us if you'd rather we did it.
 - **Family profiles** are kept for as long as your account exists, or until you remove the person or delete the account.
 - **Session records** are kept while a device is signed in, and for a short period afterwards for security; ended sessions are marked revoked and cleaned up. Sessions also expire on their own, so a device left unused eventually has to sign in again.
-- **Anonymous usage statistics** are stored on our backend (Cloudflare) until we no longer need them for product analysis. They contain no personal identifiers and aren't linked to you. Turning the setting off stops new data from being sent.
+- **Pseudonymous usage statistics** are stored on our backend (Cloudflare). They carry no name, email or account — but they do carry a random identifier that is stable for one installation, so events from one install can be seen as belonging together. Usage counters are deleted after **60 days**; turning the setting off stops new data being sent, and you can ask us to delete what has already been sent.
 
 ---
 

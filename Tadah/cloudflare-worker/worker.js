@@ -75,6 +75,29 @@ const PLUS_PER_30D = 300;   // ScanQuota.perWindowPlus
 const AI_DAY_LIMIT = PLUS_PER_DAY * 3;      // 180
 const AI_MONTH_LIMIT = PLUS_PER_30D * 3;    // 900
 
+// TWO CEILINGS THAT DON'T TRUST THE CALLER'S IDENTITY.
+//
+// The per-install cap above is keyed on X-Cuevi-Install, a header the CLIENT
+// sends — and the proxy token that gates this route ships inside the app, so it
+// must be assumed public. Anyone who pulls both out of the binary can send a
+// fresh install id per request and get a fresh quota every time, forever. The
+// per-install limit is therefore an accounting tool, not a spend cap.
+//
+// So two limits that a caller cannot rotate their way out of:
+//   • IP_DAY_LIMIT — one address, one budget, whatever ids it claims. Set well
+//     above a household or a small office sharing a NAT, since punishing a whole
+//     school for one noisy person is the failure the install id exists to avoid.
+//   • GLOBAL_DAY_LIMIT — the circuit breaker. Total AI calls across everybody in
+//     one UTC day. With ~10 testers this is orders of magnitude above real use,
+//     so tripping it means something is wrong, and the right answer is to stop
+//     spending rather than to keep serving. Raise it deliberately as the user
+//     base grows; it is the last thing between a leaked token and the card.
+//
+// Neither replaces the OpenAI dashboard spending cap, which is the only limit
+// that still applies if this Worker itself is misconfigured.
+const IP_DAY_LIMIT = 300;
+const GLOBAL_DAY_LIMIT = 3000;
+
 // /events guardrails.
 //
 // ⚠️ SIZED FOR D1's PER-INVOCATION QUERY LIMIT, not for what feels generous.
@@ -241,14 +264,30 @@ async function handleChat(request, env) {
   if (!env.DB) {
     return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
   }
-  let usage;
+  let usage, ipUsage, globalUsage;
   try {
-    usage = await bumpUsage(env.DB, quotaKey);
+    // All three counters in ONE batch: they share a transaction, so a request can
+    // never be counted against the device but not the global breaker (which is
+    // how a partially-applied count would let spend drift past the ceiling).
+    const ip = clamp(request.headers.get("CF-Connecting-IP") || "unknown");
+    [usage, ipUsage, globalUsage] = await bumpUsageBatch(env.DB, [quotaKey, `ip:${ip}`, "*global*"]);
   } catch {
     return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
   }
   if (usage.day > AI_DAY_LIMIT || usage.month > AI_MONTH_LIMIT) {
     return json({ error: "quota", message: "AI limit reached for this device" }, 429);
+  }
+  // Keyed on the CONNECTING IP, which the caller cannot set — rotating the
+  // install header no longer buys a fresh budget.
+  if (ipUsage.day > IP_DAY_LIMIT) {
+    return json({ error: "quota", message: "AI limit reached for this network. Please try again tomorrow." }, 429);
+  }
+  // THE CIRCUIT BREAKER. Deliberately the same 429 shape so the app's existing
+  // handling covers it, but this one means "stop spending", not "you personally
+  // did too much" — check the Cloudflare logs and the OpenAI dashboard if it
+  // ever fires.
+  if (globalUsage.day > GLOBAL_DAY_LIMIT) {
+    return json({ error: "quota", message: "AI is temporarily unavailable. Please try again later." }, 429);
   }
 
   // Cap tokens even if the client omitted the field (the previously-broken cap).
@@ -359,6 +398,35 @@ function sanitizeMessages(messages) {
 
 // Count this call against the install's day + month windows and return the new
 // totals. Counts attempts (not successes) — the limits carry 3x headroom for that.
+// Count one AI call against several keys at once, in a single D1 batch so they
+// commit together. Returns per-key { day, month } in the order given.
+async function bumpUsageBatch(db, keys) {
+  await ensureUsageTable(db);
+  const now = new Date().toISOString();
+  const dayKey = now.slice(0, 10);
+  const monthKey = now.slice(0, 7);
+  const bump = db.prepare(
+    `INSERT INTO ai_usage (install_id, period, count) VALUES (?, ?, 1)
+     ON CONFLICT(install_id, period) DO UPDATE SET count = count + 1
+     RETURNING count`
+  );
+  const statements = [];
+  for (const k of keys) statements.push(bump.bind(k, dayKey), bump.bind(k, monthKey));
+  const rows = await db.batch(statements);
+  return keys.map((_, i) => ({
+    day: rows[i * 2]?.results?.[0]?.count ?? 0,
+    month: rows[i * 2 + 1]?.results?.[0]?.count ?? 0,
+  }));
+}
+
+async function ensureUsageTable(db) {
+  if (usageTableReady) return;
+  await db.exec(
+    "CREATE TABLE IF NOT EXISTS ai_usage (install_id TEXT NOT NULL, period TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (install_id, period))"
+  );
+  usageTableReady = true;
+}
+
 async function bumpUsage(db, installID) {
   if (!usageTableReady) {
     await db.exec(

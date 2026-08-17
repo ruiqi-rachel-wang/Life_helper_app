@@ -62,9 +62,11 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Anonymous per-install usage stats (Metrics.swift → cuevi-ai Worker → D1).
-		     Genuinely NOT linked: these carry only a random per-install UUID and
-		     are never joined to an account. -->
+		<!-- Per-install usage stats (Metrics.swift → cuevi-ai Worker → D1).
+		     OPT-IN as of 2026-08-17: nothing is sent unless the user switches on
+		     Profile → Privacy → Share usage data.
+		     NOT linked: never joined to an account. Described as PSEUDONYMOUS, not
+		     anonymous — see the Device ID entry directly below. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
@@ -75,6 +77,29 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<!-- THE INSTALL IDENTIFIER ITSELF. Declared because Apple defines an
+		     installation- or device-level identifier as DEVICE ID, not User ID:
+		     Install.id is a random UUID created on this device that persists for
+		     the life of the installation, and it rides along with every usage
+		     event and (as a separate value) every auth session. Omitting it while
+		     calling the data "anonymous" was the inaccuracy.
+		     NOT linked to identity — the analytics install id is deliberately a
+		     DIFFERENT value from the session device id, so stats cannot be joined
+		     back to an account — and NOT used for tracking: it never leaves our
+		     own backend and is never combined with third-party data. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
 		<!-- The Sign-in-with-Apple user id. LINKED: it IS the account identifier —

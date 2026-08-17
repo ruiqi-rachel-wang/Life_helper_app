@@ -54,8 +54,14 @@ struct AIConsentSheet: View {
                             // "we don't send your name" flatly contradicted it.
                             // What we withhold is the Tadah account behind the
                             // request, not whatever is printed on the paper.
+                            // "OpenAI can't tell whose document it is" was not
+                            // true, and it sat two lines under a warning that the
+                            // page can carry a name and a case number. We withhold
+                            // the ACCOUNT; we cannot withhold what is printed on
+                            // the paper, and claiming otherwise is the kind of
+                            // reassurance that makes the rest untrustworthy.
                             point("person.crop.circle.badge.xmark",
-                                  "We don't attach your Tadah account — your sign-in email and account aren't sent, so OpenAI can't tell whose document it is.")
+                                  "We don't attach your Tadah account or sign-in email. OpenAI still receives any identifying details printed on the document.")
                             // The app's other AI path, disclosed HERE rather than
                             // discovered later: one permission covers both.
                             point("mappin.and.ellipse",

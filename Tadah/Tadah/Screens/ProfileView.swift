@@ -35,7 +35,10 @@ struct ProfileView: View {
     @Environment(SyncCoordinator.self) private var sync
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @AppStorage(Metrics.shareUsageKey) private var shareUsage = false  // usage stats: OPT-IN (see Metrics)
-    @AppStorage(AIConsent.key) private var sendScansToAI = false       // OPT-IN (see AIConsent)
+    // NOT bound straight to a Toggle: switching ON has to show the disclosure
+    // first (see aiConsentRow). Read-only here; writes go through AIConsent.
+    @AppStorage(AIConsent.key) private var sendToAI = false            // OPT-IN (see AIConsent)
+    @State private var showAIConsentFromSettings = false
     @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
     @AppStorage(AppSettings.savePhotoKey) private var savePhoto = true // keep scanned photo on the item
     @AppStorage(AppSettings.defaultReminderMinutesKey) private var reminderMinutes = AppSettings.fallbackReminderMinutes
@@ -104,6 +107,9 @@ struct ProfileView: View {
         .sheet(isPresented: $showLanguageSheet) { languageSheet }
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .sheet(isPresented: $showFamilySharing) { FamilySharingView() }
+        // Same disclosure as the first scan — the sheet is the only thing that
+        // grants the permission, from either entry point.
+        .sheet(isPresented: $showAIConsentFromSettings) { AIConsentSheet { _ in } }
     }
 
     // MARK: header
@@ -494,11 +500,9 @@ struct ProfileView: View {
                         }
                     }
                 divider
-                // "Send scans to AI" sits FIRST in Privacy: it is the setting
-                // with real consequences (a document's text leaving the phone),
-                // and it is the one people come here to find after agreeing at
-                // the first scan. Turning it off stops future scans being sent.
-                toggleRow("Send scans to AI", isOn: $sendScansToAI)
+                // Sits FIRST in Privacy: the setting with real consequences, and
+                // the one people come here to find after the first scan.
+                aiConsentRow
                 divider
                 // No longer called "anonymous": every event carries a persistent
                 // install id, which makes it pseudonymous. Saying otherwise in
@@ -684,6 +688,38 @@ struct ProfileView: View {
     }
 
     // Plain toggle row — settings here are self-explanatory, so no helper text.
+    // TURNING IT ON MUST SHOW THE DISCLOSURE. Bound directly to AIConsent's key,
+    // this switch granted permission with no explanation at all — someone could
+    // enable it here, having never seen the sheet, and start sending documents
+    // (and the guides' ZIP lookup) to OpenAI. Apple requires explicit permission
+    // before personal data reaches a third-party AI, and a bare switch labelled
+    // four words is not that.
+    //
+    // So ON opens the same sheet the first scan shows, and only the sheet writes
+    // the permission. OFF stays immediate: withdrawing consent should never be
+    // harder than giving it.
+    //
+    // Named "content", not "scans": the one permission also covers the moving and
+    // renting guides' ZIP lookup, and a switch that names only one of the two
+    // things it controls is how the second one got missed in the first place.
+    private var aiConsentRow: some View {
+        Toggle(isOn: Binding(
+            get: { sendToAI },
+            set: { wantsOn in
+                if wantsOn { showAIConsentFromSettings = true }   // sheet decides
+                else { AIConsent.set(false) }
+            })) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Send content to AI").font(.body14).foregroundStyle(Color.ink)
+                Text("Scanned documents, and the ZIP you enter in the moving and renting guides.")
+                    .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(Color.accent)
+        .padding(.vertical, 12)
+    }
+
     private func toggleRow(_ title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             Text(title).font(.body14).foregroundStyle(Color.ink)

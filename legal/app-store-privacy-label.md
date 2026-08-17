@@ -44,17 +44,35 @@ identity · NOT used for tracking**:
 > retain it ~30 days), so over-declaring is the safe, accurate choice. A privacy
 > professional can narrow this later if appropriate.
 
-### Also collected — anonymous usage statistics (first-party)
-Tadah sends anonymous, non-identifying usage events to our own backend (a Cloudflare
-database) to measure whether the app helps. Declare:
+### Also collected — pseudonymous usage statistics (first-party, OPT-IN)
+Tadah can send usage events to our own backend (a Cloudflare database) to measure
+whether the app helps. **Opt-in since 2026-08-17** — nothing is sent unless the user
+switches on Profile → Privacy → Share usage data. Declare it anyway: the label
+describes what the app *can* collect, not what a given user has enabled.
+
+Called **pseudonymous**, not anonymous: every event carries a random identifier that is
+stable for one installation, so events from one install can be seen as belonging
+together even though we cannot tell who that is.
 
 - **Usage Data → Product Interaction** — Collected · purpose **Analytics** + App
   Functionality · **NOT linked** to identity · **NOT used for tracking**. (Events like
   "item added" / "item completed," with a source and an on-time flag.)
-- **Identifiers → User ID** — Collected · purpose Analytics + App Functionality · **NOT
-  linked** to identity · **NOT used for tracking**. (A random per-install UUID generated
-  on the device — not your Apple ID, account, or the advertising identifier, and never
-  linked to who you are.)
+- **Identifiers → Device ID** — Collected · purpose Analytics + App Functionality ·
+  **NOT linked** to identity · **NOT used for tracking**.
+
+  ⚠️ **This was previously declared as User ID, which is wrong.** Apple defines an
+  installation- or device-level identifier as **Device ID**; **User ID** means an
+  identifier for the *person* (a screen name, account id, or similar). `Install.id` is a
+  random UUID created on the device and persisted for the life of the installation, so
+  it is a Device ID. Fix this in App Store Connect as well as here.
+
+  It stays **NOT linked**: the analytics install id is deliberately a different value
+  from the device id stored with an auth session, so statistics cannot be joined back to
+  an account. And **NOT tracking**: it never leaves our own backend and is never
+  combined with data from other companies.
+
+- **Identifiers → User ID** — also Collected, but for the ACCOUNT (see the account
+  section): your Tadah user id is a genuine user identifier and it *is* linked to you.
 
 Both are **first-party only**: no third-party analytics SDK, no advertising, no data
 brokers, no cross-app tracking. The user can turn this off in **Profile → Privacy**.
