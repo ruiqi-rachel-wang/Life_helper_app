@@ -9,7 +9,7 @@
 
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT } from "./worker.js";
+import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT, hashedIP, ipDayScope, ipMonthScope } from "./worker.js";
 
 const USER = "apple-sub-test-user";
 const OTHER = "apple-sub-other-user";
@@ -661,6 +661,14 @@ describe("AI spend ceilings", () => {
   const today = () => new Date().toISOString().slice(0, 10);
   const IP = "203.0.113.77";                       // TEST-NET-3, never routable
 
+  // The Worker never stores the address itself, so tests can't seed `ip:<addr>`
+  // — they have to derive the same opaque key the Worker will. Deriving it via
+  // the Worker's OWN helper rather than re-implementing the hash means a change
+  // to the derivation shows up as a failure here instead of silently making
+  // these tests seed rows nothing reads.
+  const ipDayKey = async () => `ip:${await hashedIP(env, IP, ipDayScope())}`;
+  const ipMonthKey = async () => `ipm:${await hashedIP(env, IP, ipMonthScope())}`;
+
   async function seed(key, count) {
     await env.DB.prepare(
       `INSERT INTO ai_usage (install_id, period, count) VALUES (?, ?, ?)
@@ -674,7 +682,7 @@ describe("AI spend ceilings", () => {
   });
 
   it("ROTATING THE INSTALL ID DOES NOT BUY A FRESH BUDGET", async () => {
-    await seed(`ip:${IP}`, IP_DAY_LIMIT);
+    await seed(await ipDayKey(), IP_DAY_LIMIT);
 
     // Three different install ids, none of which has ever been seen before —
     // exactly what an attacker with the shipped token would send.
@@ -686,7 +694,7 @@ describe("AI spend ceilings", () => {
   });
 
   it("lets the same IP through while it is under the ceiling", async () => {
-    await seed(`ip:${IP}`, 0);
+    await seed(await ipDayKey(), 0);
     await seed("*global*", 0);
     const r = await scan("install-under-the-cap");
     // Not 429: it gets past both ceilings. (It fails later at the upstream call,
@@ -695,7 +703,7 @@ describe("AI spend ceilings", () => {
   });
 
   it("trips the global circuit breaker regardless of IP or install", async () => {
-    await seed(`ip:${IP}`, 0);
+    await seed(await ipDayKey(), 0);
     await seed("*global*", GLOBAL_DAY_LIMIT);
 
     const r = await call("/", {
@@ -709,16 +717,100 @@ describe("AI spend ceilings", () => {
   });
 
   it("counts every request against the IP row, whatever install id it claims", async () => {
-    await seed(`ip:${IP}`, IP_DAY_LIMIT);
+    await seed(await ipDayKey(), IP_DAY_LIMIT);
     await scan("rotating-id-a");
     await scan("rotating-id-b");
 
     const row = await env.DB.prepare(
       "SELECT count FROM ai_usage WHERE install_id = ? AND period = ?"
-    ).bind(`ip:${IP}`, today()).first();
+    ).bind(await ipDayKey(), today()).first();
     // Both refused requests still counted — the ceiling can't be worn down by
     // retrying under new identities.
     expect(row.count).toBe(IP_DAY_LIMIT + 2);
+  });
+
+  it("NEVER writes the address itself", async () => {
+    await seed(await ipDayKey(), 0);
+    await scan("some-install-id");
+    // The whole point of hashing: no row anywhere may contain the raw address.
+    const hit = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM ai_usage WHERE install_id LIKE ?").bind(`%${IP}%`).first();
+    expect(hit.n).toBe(0);
+  });
+
+  it("keeps a MONTHLY count for clients that send no install header", async () => {
+    // These clients fall back to an IP-derived quota key. It rotates monthly,
+    // not daily — scoping it to the day reset the monthly cap every 24h, which
+    // quietly removed the monthly limit for exactly the oldest builds.
+    const monthKey = await ipMonthKey();
+    await env.DB.prepare("DELETE FROM ai_usage WHERE install_id = ?").bind(monthKey).run();
+
+    await call("/", {                       // no X-Cuevi-Install at all
+      headers: { "CF-Connecting-IP": IP },
+      body: { model: "gpt-5-mini", messages: [{ role: "user", content: "hi" }] },
+    });
+
+    const month = await env.DB.prepare(
+      "SELECT count FROM ai_usage WHERE install_id = ? AND period = ?"
+    ).bind(monthKey, new Date().toISOString().slice(0, 7)).first();
+    expect(month?.count).toBe(1);
+  });
+
+  it("refuses rather than storing a reversible key when the pepper is missing", async () => {
+    // DB explicitly re-attached: the same route also 503s when DB is missing, so
+    // a spread that dropped the binding would make this pass for the wrong reason.
+    const noPepper = { ...env, DB: env.DB, PASSWORD_PEPPER: undefined };
+    const request = new Request("https://worker.test/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "CF-Connecting-IP": IP },
+      body: JSON.stringify({ model: "gpt-5-mini", messages: [{ role: "user", content: "hi" }] }),
+    });
+    const ctx = createExecutionContext();
+    const response = await worker.fetch(request, noPepper, ctx);
+    await waitOnExecutionContext(ctx);
+    // Fails CLOSED: no pepper means no way to key the quota without keeping the
+    // address, so the request is refused instead.
+    expect(response.status).toBe(503);
+  });
+});
+
+// ── scheduled retention sweep ────────────────────────────────────────────────
+//
+// sweepRetention() sat uncalled for two days because the route it hung off was
+// deleted, so every retention period the privacy policy promises was silently
+// not happening. It runs from a cron now, and this proves the handler is wired
+// to it — the failure mode is "nothing calls it", which no unit test of the
+// function itself would ever catch.
+
+describe("scheduled retention", () => {
+  it("deletes expired rows and keeps fresh ones", async () => {
+    const old = new Date(Date.now() - 400 * 86400_000).toISOString();
+    const fresh = new Date().toISOString();
+
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO tasks (user_id, item_id, payload, updated_at, deleted_at) VALUES (?, ?, '', ?, ?)"
+    ).bind("sweep-user", uuid(901), old, old).run();
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO tasks (user_id, item_id, payload, updated_at, deleted_at) VALUES (?, ?, '', ?, ?)"
+    ).bind("sweep-user", uuid(902), fresh, fresh).run();
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO ai_usage (install_id, period, count) VALUES (?, ?, 1)"
+    ).bind("sweep-install", old.slice(0, 10)).run();
+
+    const ctx = createExecutionContext();
+    await worker.scheduled({ cron: "12 4 * * *" }, env, ctx);
+    await waitOnExecutionContext(ctx);
+
+    const gone = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tasks WHERE user_id = ? AND item_id = ?").bind("sweep-user", uuid(901)).first();
+    const kept = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tasks WHERE user_id = ? AND item_id = ?").bind("sweep-user", uuid(902)).first();
+    const usage = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM ai_usage WHERE install_id = ?").bind("sweep-install").first();
+
+    expect(gone.n).toBe(0);      // 400-day-old tombstone swept
+    expect(kept.n).toBe(1);      // today's is untouched
+    expect(usage.n).toBe(0);     // usage counter past its 60 days
   });
 });
 

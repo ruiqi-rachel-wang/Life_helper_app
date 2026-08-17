@@ -265,14 +265,30 @@ async function handleChat(request, env) {
   // now and it predates the header, so a hard 400 would break scanning for every
   // current tester. The fallback keeps them working while still counting them.
   const installID = clamp(request.headers.get("X-Cuevi-Install") || "");
-  // The IP is HASHED before it is ever written. The counter only needs a stable
-  // opaque key per address per day, and it used to store `ip:203.0.113.7`
-  // verbatim in D1 — which made the privacy policy's "we do not store it in our
-  // database" untrue, and turned a rate-limit table into a log of who was using
-  // the app from where. The digest is salted with the day, so yesterday's rows
-  // can't be matched to today's and an expired row is unlinkable even to us.
-  const ipKey = `ip:${await hashedIP(env, request.headers.get("CF-Connecting-IP") || "unknown")}`;
-  const quotaKey = installID.length >= 8 ? installID : ipKey;
+  // The IP is HASHED before it is ever written. It used to be stored as
+  // `ip:203.0.113.7` verbatim, which made the privacy policy's "we do not store
+  // it in our database" untrue and turned a rate-limit table into a log of who
+  // used the app from where.
+  //
+  // TWO WINDOWS, on purpose:
+  //   • the per-network CEILING rotates daily, so retained rows can't be joined
+  //     across days;
+  //   • the fallback per-device quota (used by older clients that send no
+  //     install header) rotates MONTHLY, because it carries a monthly count.
+  //     Scoping it to the day reset that count every 24h — daily and global
+  //     protection still held, but the monthly cap silently stopped existing.
+  const rawIP = request.headers.get("CF-Connecting-IP") || "unknown";
+  let ipKey, quotaKey;
+  try {
+    ipKey = `ip:${await hashedIP(env, rawIP, ipDayScope())}`;
+    quotaKey = installID.length >= 8
+      ? installID
+      : `ipm:${await hashedIP(env, rawIP, ipMonthScope())}`;
+  } catch {
+    // No pepper → we cannot key the quota without storing the address itself.
+    // Refuse rather than fall back to something reversible.
+    return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
+  }
   // Fail CLOSED, including when D1 isn't bound at all. Skipping the quota because
   // storage is missing means a misconfigured deploy silently has NO spend cap —
   // the one situation where you most want one.
@@ -419,25 +435,30 @@ function sanitizeMessages(messages) {
 
 // Count this call against the install's day + month windows and return the new
 // totals. Counts attempts (not successes) — the limits carry 3x headroom for that.
-// A stable, opaque, DAY-SCOPED digest of an IP address.
+// A stable, opaque digest of an IP address, scoped to a time window.
 //
-// Salted with PASSWORD_PEPPER when it is set. An unsalted digest of an IPv4
-// address is not pseudonymisation at all — the whole space is 2^32, so anyone
-// holding the table could enumerate it in seconds. Including the UTC day means
-// the same address produces a different key tomorrow, so the retained rows can't
-// be joined into a history of one person's usage.
+// `scope` is the window the key rotates on — the UTC day for the per-network
+// ceiling, the month for the fallback per-device quota (which has to accumulate
+// a MONTHLY count, and so cannot rotate daily). Rotating at all means retained
+// rows can't be joined into a long history of one address.
 //
-// Falls back to a fixed salt when no pepper is configured: weaker (an attacker
-// who knows the constant can still enumerate), but the AI proxy has to keep
-// working on a deployment that has no accounts set up, and a hashed key is still
-// strictly better than the address in plain text.
-async function hashedIP(env, ip) {
-  const day = new Date().toISOString().slice(0, 10);
-  const salt = env.PASSWORD_PEPPER || "tadah-ip-quota-v1";
-  const data = new TextEncoder().encode(`${salt}:${day}:${String(ip)}`);
+// ⚠️ THROWS WITHOUT A PEPPER, deliberately. This used to fall back to a fixed
+// public salt, and the comment cheerfully admitted an attacker knowing the
+// constant could enumerate it — while the privacy policy told users the value
+// could not be reversed. An IPv4 address is 32 bits; an unsalted or
+// known-salted digest of it is an index, not pseudonymisation. That is exactly
+// the "sensible fallback that quietly weakens security" this Worker has removed
+// everywhere else, so it fails closed here too: the caller turns it into a 503.
+export async function hashedIP(env, ip, scope) {
+  if (!env.PASSWORD_PEPPER) throw new Error("password_pepper_missing");
+  const data = new TextEncoder().encode(`${env.PASSWORD_PEPPER}:${scope}:${String(ip)}`);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest).slice(0, 16), (b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+// The two windows the IP keys rotate on.
+export function ipDayScope(now = new Date()) { return now.toISOString().slice(0, 10); }
+export function ipMonthScope(now = new Date()) { return now.toISOString().slice(0, 7); }
 
 // Count one AI call against several keys at once, in a single D1 batch so they
 // commit together. Returns per-key { day, month } in the order given.

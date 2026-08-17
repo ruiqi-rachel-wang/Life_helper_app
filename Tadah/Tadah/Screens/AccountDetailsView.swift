@@ -68,7 +68,12 @@ struct AccountDetailsView: View {
             // being charged for an account that no longer exists — and finds out a
             // month later. Apple expects the app to say so and offer the way to
             // cancel, so an active subscriber gets that route first.
-            if plus.isPlus {
+            // WARN UNLESS WE POSITIVELY KNOW THEY'RE FREE. This asked `plus.isPlus`,
+            // which is false while RevenueCat is still loading and false when it's
+            // unreachable — so exactly the subscriber on a flaky connection got no
+            // billing warning and went on paying for a deleted account. Only a
+            // confirmed `.free` earns silence.
+            if showsBillingWarning {
                 Button("Manage subscription first") { MembershipCard.openAppleSubscriptions(openURL) }
             }
             // The password is asked for next — something irreversible needs proof
@@ -76,7 +81,7 @@ struct AccountDetailsView: View {
             Button("Delete account", role: .destructive) { askPassword = true }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(plus.isPlus
+            Text(showsBillingWarning
                  ? String(localized: "This permanently deletes your account and everything backed up to it, on every device. Your saved items stay on this phone. This can't be undone.\n\n⚠️ This does NOT cancel your Tadah Plus subscription — Apple handles billing, so you must cancel it in the App Store or you'll keep being charged.")
                  : String(localized: "This permanently deletes your account and everything backed up to it, on every device. Your saved items stay on this phone. This can't be undone."))
         }
@@ -196,6 +201,13 @@ struct AccountDetailsView: View {
                 }
             }
         }
+    }
+
+    // Silence only on a CONFIRMED free account. `.unknown` (RevenueCat still
+    // loading, or unreachable) warns — an unnecessary warning costs a sentence,
+    // a missing one costs someone real money every month.
+    private var showsBillingWarning: Bool {
+        plus.membershipState != .free
     }
 
     private var deleteCard: some View {

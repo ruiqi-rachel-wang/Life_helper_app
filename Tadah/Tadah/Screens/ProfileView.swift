@@ -198,9 +198,13 @@ struct ProfileView: View {
             // the only route to managing it was Account Details, which is
             // signed-in only, so those buyers had nowhere to see their renewal
             // date, reach Apple's cancel screen, or restore a purchase.
-            if plus.isPlus || plus.membership != nil {
-                MembershipCard()
-            }
+            //
+            // ALWAYS shown to guests, not just when a purchase is already found.
+            // Gating on `plus.isPlus || membership != nil` hid it in the one
+            // situation it exists for: a previous subscriber on a NEW install,
+            // who needs Restore precisely BECAUSE RevenueCat hasn't found their
+            // purchase yet. The card handles the free case on its own.
+            MembershipCard()
         }
     }
 
