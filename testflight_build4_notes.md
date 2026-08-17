@@ -195,11 +195,14 @@ No migration was needed: accounts never shipped, so there were no users to move.
   delete branch, and the comments describing them. `Account.Provider.apple` stays
   — it's a persisted Codable case.
 
-**Rachel still to do:** remove the Sign in with Apple capability in Xcode's
-Signing & Capabilities (left to the UI deliberately — a hand-edited entitlement
-mid-testing invites a signing failure), and the privacy policy + App Store label
-pass, which is now REQUIRED: real email addresses are stored on the backend where
-Apple's private relay previously meant we often never saw one.
+**Done 2026-08-16:** the Sign in with Apple entitlement is gone. `Tadah.entitlements`
+is an empty dict, `project.pbxproj` carries no capability reference, and the
+Release build was checked with `codesign -d --entitlements` — it embeds nothing.
+Nothing left to do in Xcode's Signing & Capabilities.
+
+**Done 2026-08-16:** the privacy policy and App Store label pass. Real email
+addresses are now stored on the backend, where Apple's private relay previously
+meant we often never saw one, so this was REQUIRED rather than polish.
 
 **⚠️ ALSO OPEN — a SwiftData versioning trap.** Adding `Profile.reminderMinutes`
 while `TadahSchemaV3` pointed at the live types made a real V3 store unopenable
@@ -1211,7 +1214,9 @@ still in progress and were deliberately left alone):
   identified at launch, and `logOut()` runs on sign-out/delete.
 - **Worker hardening**: install header required + quota fails closed (the AI cost
   cap was bypassable by omitting a header), `APPLE_AUDIENCE` mandatory, single-use
-  sign-in nonces, session expiry, composite `(updated_at, id)` pull cursor
+  sign-in nonces *(both superseded 2026-08-15/16 — Apple auth is gone; see the
+  checklist for the secrets that actually matter now)*, session expiry, composite
+  `(updated_at, id)` pull cursor
   (the old one silently dropped rows sharing a timestamp), UUID/timestamp
   validation, retention sweeps, and rate-limiting keyed on session/install before IP.
 - Privacy manifest now declares user content, user id, name, email and purchases
@@ -1232,80 +1237,117 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
 
 ## Checklist
 
-1. ☐ **Deploy the Worker** — now REQUIRED for more than the entitlement id:
-   account deletion, logout, the tombstone/cursor fixes and the quota fix all live
-   there. The RevenueCat entitlement id fix (`PLUS_ENTITLEMENT = "Tadah Pro"`,
-   was `plus`) still applies too.
-   `cd Tadah/cloudflare-worker && npx wrangler deploy`
-   *(Node 22 needed: `export PATH="/usr/local/opt/node@22/bin:$PATH"`.)*
-   - ☐ **Set `APPLE_AUDIENCE` first** — `npx wrangler secret put APPLE_AUDIENCE`
-     with the bundle id `com.ruiqiwang.cuevi`. It is no longer optional:
-     without it `/auth/apple` returns 503 and **nobody can sign in**. Deploying
-     without setting it will break sign-in for everyone.
-   - ☐ **Set the three Apple revocation secrets** — account deletion has to revoke
-     the Sign-in-with-Apple grant, and Apple requires that of any app offering
-     account creation. Without them `/account/delete` returns 501 and the app
-     tells people to contact support:
-     `npx wrangler secret put APPLE_TEAM_ID` (10-char Team ID),
-     `npx wrangler secret put APPLE_KEY_ID` (Key ID of a Sign in with Apple key),
-     `npx wrangler secret put APPLE_PRIVATE_KEY` (paste the whole `.p8` contents).
-     Create the key at developer.apple.com → Certificates, Identifiers & Profiles
-     → Keys → **+** → enable "Sign in with Apple". **This is required for App
-     Store review**, not optional polish.
+> ⚠️ **Rewritten 2026-08-16.** The previous version of this checklist told you to
+> configure `APPLE_AUDIENCE` and three Sign-in-with-Apple revocation secrets, said
+> the Apple entitlement was present, and told testers to sign in with Apple. All
+> of that is wrong now — the route is gone, the entitlement is gone, and following
+> those steps would waste an afternoon creating an Apple key nothing reads.
+
+1. ☐ **Decide whether to deploy the Worker with this build.** You do **not** have
+   to. The app behaves identically against the currently-deployed Worker, because
+   the pending Worker changes are dead-code removal (Apple JWKS, nonces, ES256
+   client-secret minting) plus the deletion-flow tidy — nothing the app depends on.
+   - The 51 route tests **cannot run on this Mac** (Node 20.6.0; vitest needs
+     ≥22.12, and it dies on `styleText` not exported from `node:util`). Deploying
+     untested code that owns account deletion is the one avoidable risk here.
+   - **Recommended:** ship build 4 against the current Worker, then install
+     Node 22, run `npm test` in `Tadah/cloudflare-worker`, and deploy separately.
+   - If you do deploy: `cd Tadah/cloudflare-worker && npx wrangler deploy`
+     *(Node 22 needed: `export PATH="/usr/local/opt/node@22/bin:$PATH"`.)*
+   - ☐ Secrets that must exist — **these three, not the Apple ones**. Each fails
+     CLOSED, so a missing one breaks accounts loudly rather than quietly:
+     `npx wrangler secret put PASSWORD_PEPPER` (generate once with
+     `openssl rand -base64 32` and **never rotate it** — rotating invalidates
+     every stored password at once),
+     `npx wrangler secret put RESEND_KEY` (password-reset email),
+     `npx wrangler secret put EMAIL_FROM` (e.g. `noreply@mytadah.com`, on a domain
+     **verified in Resend** — the shared `onboarding@resend.dev` sender only
+     delivers to the Resend account owner, so a real user would be told to check
+     an inbox for a code that could never arrive).
+   - ☐ `APPLE_AUDIENCE`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` are
+     **no longer read by anything**. Delete them:
+     `npx wrangler secret delete <NAME>`.
    - ☐ Re-run `npx wrangler d1 execute cuevi-metrics --remote --file=schema.sql`
-     (adds `used_nonces`, `account_deletions` and `sessions.plus_checked_at`; the
-     Worker also creates them lazily).
+     (adds `sessions.plus_checked_at` and the accounts/reset tables; the Worker
+     also creates them lazily). It no longer creates `used_nonces`. An existing
+     database keeps its unused `used_nonces` table and
+     `account_deletions.apple_revoked` column — nothing reads either, and they can
+     be dropped by hand whenever convenient.
    - ☐ **Purge the historical analytics item ids.** Rows already in `events`
-     contain RAW task UUIDs, which are joinable against `tasks.item_id` →
-     `tasks.user_id`. New uploads send a salted HMAC instead, but the old rows are
-     still re-identifiable and should not be kept:
+     contain RAW task UUIDs, joinable against `tasks.item_id` → `tasks.user_id`.
+     New uploads send a salted HMAC, but the old rows stay re-identifiable:
      `npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE events SET item_id = NULL;"`
-     This blanks the funnel for pre-build-4 events (the counts survive; only the
-     per-item matching is lost). Do it before the privacy label goes in.
-   - ☐ **Also clear legacy session device ids.** Before the split, `Install.id` was
-     sent BOTH as the metrics `install_id` and as the auth `deviceId`, so any
-     session row created by a pre-fix build can still be joined to `events`:
+     This blanks the funnel for pre-build-4 events (counts survive; only per-item
+     matching is lost). Do it before the privacy label goes in.
+   - ☐ **Also clear legacy session device ids.** Before the split, `Install.id`
+     was sent BOTH as the metrics `install_id` and the auth `deviceId`, so any
+     session row from a pre-fix build can still be joined to `events`:
      `npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE sessions SET device_id = '';"`
-     Harmless — `device_id` is only used to recognise a returning device, and the
-     worst case is one extra sign-in. Until this is run, "analytics cannot be
-     linked to an account" is only true for NEW data. (Accounts have never shipped
-     to testers, so in practice this should only affect your own test sign-ins —
-     but run it rather than assume.)
-   - ☐ Old app builds (build 2/3) will fail sign-in against the new Worker
-     because they don't send a nonce. That's intended — build 2 has no accounts
-     at all, so no shipped build is affected.
-2. ☐ **Publish the updated legal pages** — privacy policy + terms were rewritten
-   for accounts/sync (Last updated **August 7, 2026**). `docs/privacy.html` and
-   `docs/terms.html` are regenerated and must go live BEFORE submission:
+     Harmless — worst case is one extra sign-in.
+
+2. ☐ **Publish the updated legal pages — REQUIRED, and currently out of date.**
+   The live page is still the **August 7** version and still describes Sign in
+   with Apple. `docs/privacy.html` and `docs/terms.html` were regenerated on
+   **August 16** from `LegalContent.swift` (the single source — edit that, then
+   run `python3 legal/make_legal_pages.py`, never edit the HTML by hand):
    `npx wrangler pages deploy docs --project-name cuevi-legal`
-   Then confirm https://cuevi-legal.pages.dev/privacy shows the new date.
-3. ☐ **Update the App Privacy label** (App Store Connect → App Privacy) using the
-   revised `legal/app-store-privacy-label.md`. **This changed materially:** with
-   accounts, data is now **Linked to You** (User ID, user content, Purchases).
-   The old "nothing is linked to identity" answers are no longer accurate.
-4. ☐ **Decide #1 and #2 above**, then archive and upload:
-   Xcode → Product ▸ Archive → Organizer → Distribute App ▸ App Store Connect.
-   Wait for processing, add build 4 to the tester group, paste the notes below.
-5. ☐ **Confirm the OpenAI spending cap** is still set (platform.openai.com →
-   Settings → Limits) — the model moved to `gpt-5-mini` and `MAX_TOKENS` is now
-   4000, so cost per scan changed.
-6. ☐ **Sanity-test sync on two real devices** before shipping: sign in on the
-   phone, add a task, background the app; sign in on a second device / simulator
-   and confirm it appears. Then sign in on a *third* to confirm the free
-   one-device rule signs the first one out.
+   Then confirm https://cuevi-legal.pages.dev/privacy shows **August 16, 2026**,
+   says email + password, and no longer mentions Sign in with Apple.
 
-## Verified from the repo (2026-08-07)
+3. ☐ **Update the App Privacy label** (App Store Connect → App Privacy) from
+   `legal/app-store-privacy-label.md`. **Changed materially:** with accounts, data
+   is **Linked to You** (User ID, user content, Purchases), and we now collect an
+   **email address**. The old "nothing is linked to identity" answers are wrong.
 
-- App builds clean; sync unit tests pass (LWW both directions, delete
-  propagation, photo preserved, per-user cursors).
-- Worker `/auth/apple` + `/sync` deployed and probed live: bad Apple token → 401,
-  no session → 401, missing proxy token → 401, unknown route → 404.
-- Sync protocol verified end-to-end against the live Worker with simulated
-  clients: push→pull across devices, stale write rejected, newer write wins,
-  delete propagates, revoked session → 401 while the other device stays 200.
-  (Test rows were deleted; D1 left clean.)
-- "Sign in with Apple" capability **is** present in `Tadah.entitlements`.
-- No `sk-` key material in the app; secrets live in the Worker.
+4. ☐ **Archive and upload.** Xcode → Product ▸ Archive → Organizer → Distribute
+   App ▸ App Store Connect. Wait for processing, add build 4 to the tester group,
+   paste the notes below.
+
+5. ☐ **Confirm the OpenAI spending cap** (platform.openai.com → Settings →
+   Limits). The model is `gpt-5-mini` and `MAX_TOKENS` is 4000, so cost per scan
+   has changed since you last looked.
+
+6. ☐ **Confirm the paywall renders in all three languages.** A package that
+   exists only in `zh_Hans` breaks the en/es paywalls, which would block every
+   purchase on a build whose headline feature is Plus. Check the RevenueCat
+   dashboard before upload, or decide build 4 says "Plus is coming soon".
+
+## Smoke test on a real device — nothing below is proven by the test suite
+
+Every one of these crosses a boundary the unit tests stub out (Keychain, live
+Resend/DNS, two devices, StoreKit). 273/273 passing says nothing about them.
+
+- ☐ **Register → log out → log back in.** Confirm your to-dos are still there.
+- ☐ **Password reset end to end**, through live Resend and real DNS: request a
+  code, receive the email, set a new password, sign in with it. Confirm the old
+  password no longer works and other devices were signed out.
+- ☐ **Sync between two devices**: add an item on one, confirm it appears on the
+  other; change a reminder time and confirm the *notification* moves, not just
+  the displayed time.
+- ☐ **Family profiles**: add, rename, reassign a to-do, and remove a profile.
+  Confirm removing takes that person's to-dos with them.
+- ☐ **Free one-device rule**: sign in on a third device and confirm the first is
+  signed out with a clear message.
+- ☐ **Plus, only if it should be purchasable in build 4**: sandbox purchase and
+  restore. If build 4 says "Plus is coming soon", this is not a blocker.
+
+## Verified from the repo (2026-08-16)
+
+- Release build succeeds as **1.0 (4)**, no warnings in app code, no concurrency
+  warnings.
+- **273/273 unit tests** across 23 suites.
+- **31/31 Worker helper tests**, `node --check` clean, `npm audit --omit=dev`
+  reports 0 vulnerabilities. Route tests **not run here** — see checklist item 1.
+- The Release app embeds **no Sign in with Apple entitlement** (`codesign -d
+  --entitlements` returns an empty dict) and no Apple sign-in symbols.
+- No `sk-`/AWS/private-key material in the app; secrets live in the Worker.
+- All 96 official URLs in the guides fetched; five were dead and replaced.
+- Guide translations complete in Spanish and Simplified Chinese, with regression
+  tests covering notes and the reworded branches.
+- Working tree clean, `git diff --check` clean.
+
+**⚠️ Not verified, and not verifiable by automation:** everything in the smoke
+test above.
 
 ---
 
@@ -1316,10 +1358,14 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
 Big update — thank you for testing! Two brand-new things: **accounts** and
 **backup/sync**.
 
-- **Sign in (new).** Profile → Create a free account → Sign in with Apple. Your
-  to-dos are now backed up to your account automatically, so they survive a
-  reinstall or a new phone — there's nothing to press. Did signing in feel
-  clear and quick?
+- **Sign in (new).** Profile → Create a free account, using your **email address
+  and a password**. (Sign in with Apple is gone — it signed you in as the Apple ID
+  on *this phone*, which made a shared family account impossible.) Your to-dos are
+  backed up automatically, so they survive a reinstall or a new phone — there's
+  nothing to press. Did signing in feel clear and quick?
+- **Forgot your password?** Please try it even if you haven't forgotten it: tap
+  **Forgot password?**, and we'll email you a six-digit code. Did the email
+  arrive, and how long did it take?
 - **Two devices (new).** If you have an iPad or a second iPhone, sign in there
   too. A **free account works on one device at a time** — signing in on the
   second should sign the first out with a message. Did that work clearly?
@@ -1329,14 +1375,21 @@ Big update — thank you for testing! Two brand-new things: **accounts** and
   "Not now" just signs you back out and leaves your to-dos exactly as they are.)
   If the to-dos already belong to the account you're signing into, there's no
   question at all — they just reconnect.
+- **Family lists (Tadah Plus).** Add someone like a parent so their letters stay
+  in their own list: Profile → Family. You can give each person their own
+  reminder time. The name is just a label — it isn't an invitation, and they
+  don't get a login.
 - **Please note the free limits:** 10 scans/guides a day, 20 per 30 days, and 20
   to-dos at a time. Tell us if you hit them while testing and they got in the way.
 - Scan a real bill or letter (Add → Scan). Are the amount, date, and steps right?
   Tap Edit on the review screen — do your edits stick and sync?
 - Life guides: Moving or Renting asks your ZIP and names local utility companies.
-  Right companies for your area?
-- Reminders: set **My Settings → Default reminder time** and check reminders
-  arrive then (they used to always be 9am).
+  Right companies for your area? Every other guide now works with no internet at
+  all — try one in airplane mode.
+- Reminders: set **My Settings → Reminder time** and check reminders arrive then
+  (they used to always be 9am).
+- **Is anything hard to read?** We darkened the lighter grey text this round —
+  small print, disclaimers, and the text inside greyed-out buttons especially.
 - 中文/Español: set your language in My Settings and scan — is the explanation
   clear? Please flag any English text that should have been translated.
 
@@ -1344,8 +1397,11 @@ Big update — thank you for testing! Two brand-new things: **accounts** and
 
 重大更新——感谢测试！两个全新功能：**账户** 和 **备份/同步**。
 
-- **登录（新）**：我的 → 创建免费账户 → 通过 Apple 登录。你的待办事项会自动备份到账户，
-  重装或换新手机都不会丢——无需任何手动操作。登录过程清楚、顺畅吗？
+- **登录（新）**：我的 → 创建免费账户，使用你的**电子邮箱和密码**。
+  （"通过 Apple 登录"已移除——它登录的是*这台手机*上的 Apple ID，导致无法共享家庭账户。）
+  你的待办事项会自动备份，重装或换新手机都不会丢——无需任何手动操作。登录过程清楚、顺畅吗？
+- **忘记密码？** 即使你没忘也请试一次：点击**忘记密码？**，我们会发送六位验证码到你的邮箱。
+  邮件收到了吗？大约多久到达？
 - **两台设备（新）**：如果你有 iPad 或第二台 iPhone，也在那里登录试试。
   **免费账户一次只能在一台设备上使用**——在第二台登录后，第一台应会退出登录并给出提示。
   这个提示清楚吗？
@@ -1353,10 +1409,16 @@ Big update — thank you for testing! Two brand-new things: **accounts** and
   **"移到这个账户"** 还是 **"暂不——退出登录"**。这个问题清楚吗？
   （绝不会删除任何内容——选"暂不"只是退出登录，你的待办事项原样保留。）
   如果这些待办事项本来就属于你正在登录的账户，则不会有任何询问，会直接重新连接。
+- **家庭列表（Tadah Plus）**：可以添加家人（比如父母），让他们的信件单独成一个列表：
+  我的 → 家庭。每个人可以设置各自的提醒时间。名字只是一个标签——不是邀请，
+  对方不会获得登录账号。
 - **请注意免费额度**：每天 10 次扫描/指南，每 30 天 20 次，最多 20 条待办事项。
   如果测试时遇到额度不够、影响使用，请告诉我们。
 - 扫描一张真实的账单或信件（添加 → 扫描）。金额、日期、步骤对吗？在确认页点"编辑"
   改一改——保存后有没有生效并同步？
 - 生活指南："搬家"或"租房"会问邮编并列出你所在地区的水电网公司。公司对吗？
-- 提醒：在 我的设置 → 默认提醒时间 设置一个时间，看提醒是否按时到达（以前固定早上 9 点）。
+  其他所有指南现在完全离线可用——可以开飞行模式试试。
+- 提醒：在 我的设置 → 提醒时间 设置一个时间，看提醒是否按时到达（以前固定早上 9 点）。
+- **有没有看不清的地方？** 这一版我们加深了浅灰色文字——尤其是小字、免责声明，
+  以及灰色按钮上的文字。
 - 请把任何"本该翻译成中文却显示英文"的地方告诉我们。

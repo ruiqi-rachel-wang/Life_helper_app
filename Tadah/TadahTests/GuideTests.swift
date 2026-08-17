@@ -239,9 +239,18 @@ struct GuideTests {
         // now "Unpaid" — a rename that would otherwise fail silently, since the
         // build closure compares against a string literal.
         let intern = Guide.newJob.build(["type": "Unpaid", "employer": "Acme"])
-        #expect(intern.notes.contains { $0.lowercased().contains("no tax forms") })
+        let notes = intern.notes.joined(separator: "\n")
+        #expect(notes.contains("no W-2 or 1099 to expect"))
         // Security note appears for any employee-type role.
         #expect(intern.notes.contains { $0.contains("official HR portal") })
+
+        // MUST NOT claim there is categorically no tax form. The steps tell this
+        // same user that a stipend can be taxable income, and a flat "unpaid roles
+        // have no tax forms" contradicted that on the same screen — which is how a
+        // 1099-NEC arrives in February for something they were told to expect
+        // nothing for. The no-form claim is scoped to genuinely unpaid work.
+        #expect(!notes.lowercased().contains("unpaid roles have no tax forms"))
+        #expect(notes.lowercased().contains("stipend"))
     }
 
     // AN UNPAID ROLE MUST NOT GET THE PAID-EMPLOYEE CHECKLIST.

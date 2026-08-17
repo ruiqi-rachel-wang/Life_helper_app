@@ -20239,6 +20239,40 @@
           }
         }
       }
+    },
+    "With no pay at all there's no W-2 or 1099 to expect. A stipend is different — that can still come with a tax form, so ask which one before you assume nothing is coming.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin ningún pago no hay que esperar un W-2 ni un 1099. Un estipendio es distinto: puede venir con un formulario de impuestos, así que pregunta cuál antes de dar por hecho que no llegará nada."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完全没有报酬就不会有 W-2 或 1099。津贴则不同——它仍可能附带税表，所以在认定不会收到任何表格之前，先问清楚是哪一种。"
+          }
+        }
+      }
+    },
+    "Depending on your state and your policy, uninsured-motorist (UM) coverage may apply when the other driver is never identified — ask your insurer whether yours does, and what it needs from you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Según tu estado y tu póliza, la cobertura de conductor sin seguro (UM) puede aplicar cuando nunca se identifica al otro conductor: pregunta a tu aseguradora si la tuya aplica y qué necesita de ti."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "视你所在的州和保单而定，当对方司机始终无法确认时，“无保险驾驶人”(UM) 承保可能适用——请询问你的保险公司是否适用，以及需要你提供什么。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

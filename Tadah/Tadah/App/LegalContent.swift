@@ -11,11 +11,11 @@ enum LegalContent {
     static let privacyPolicy = #"""
 # Privacy Policy for Tadah
 
-**Effective date:** June 18, 2026 **Last updated:** August 15, 2026
+**Effective date:** June 18, 2026 **Last updated:** August 16, 2026
 
 Tadah ("Tadah", "we", "us") is an iOS app that helps you understand letters, bills, and official documents and turn them into reminders and checklists. This policy explains what data the app handles and what happens to it.
 
-The short version: you can use Tadah **without an account**, and then your items stay on your device. Three things leave your phone: (1) the *text* of a document you scan is sent for AI processing; (2) **if you sign in**, your saved items are backed up to your account on our backend so they survive a new phone and appear on your other devices — **your scanned photos are not uploaded**; and (3) **anonymous, non-identifying usage statistics** — which features you use, never your content — are sent to a backend we run. You can turn off (3) anytime, and you can use the app signed out to avoid (2).
+The short version: you can use Tadah **without an account**, and then your items stay on your device. Four things leave your phone: (1) the *text* of a document you scan is sent for AI processing; (1a) in the **moving and renting guides only**, a ZIP code you type — with your answers to that guide's questions — is sent to look up local utility companies, and skipping the ZIP skips the lookup; (2) **if you sign in**, your saved items are backed up to your account on our backend so they survive a new phone and appear on your other devices — **your scanned photos are not uploaded**; and (3) **anonymous, non-identifying usage statistics** — which features you use, never your content — are sent to a backend we run. You can turn off (3) anytime, and you can use the app signed out to avoid (2).
 
 ---
 
@@ -53,12 +53,16 @@ Signing in is optional. It exists so your items survive signing out, a reinstall
 ### What is sent to OpenAI when you scan
 - When you **scan or upload a document**, the app recognizes its text on-device and then sends that **full recognized text to OpenAI** to generate the summary and steps. **This text can include sensitive personal information** — whatever appears on the document, such as health, financial, tax, or immigration details, your name, and account, policy, or case numbers. If you'd rather not send a document's text, use **manual entry** instead of scanning.
 - **OpenAI does not receive your account.** We don't attach your name, email, or Tadah user identifier to the request — but the document's text is sent as-is, so any personal details printed on it are included. (Our own Worker does see a random **install identifier**, used only to enforce the per-device scan limit.)
-- For **non-sensitive guides**, the built checklist is sent to OpenAI to reword and translate it. **Sensitive guides** (below) are never sent.
+- **Guide checklists are not sent to OpenAI.** Every guide is built and translated on your device (see below). The one thing a guide can send is a **ZIP code for the local-utility lookup**, described in the next section.
 - The request goes through a **Cloudflare Worker** we run, so our OpenAI key isn't in the app. Cloudflare may briefly process your device's IP address; we don't store it.
 - OpenAI processes the text and returns the result; Tadah keeps no server-side copy. Per OpenAI's API policy, API data is **not used to train their models**, but OpenAI may **retain it for up to ~30 days** for abuse monitoring.
 
-### Sensitive GUIDES are generated on your device
-The built-in **guides** we classify as sensitive — money/banking, taxes, immigration (USCIS), medical, and similar — are generated **entirely on your device** and are **never sent to OpenAI**. This applies to those guides only; it does **not** apply to **scanning**, where the recognized text is sent to OpenAI as described above, however sensitive the document is. Note that once you add a guide's checklist to your list, that item is backed up to your account like any other item if you are signed in.
+### GUIDES are generated on your device
+**Every** built-in guide — including the sensitive ones (money/banking, taxes, immigration (USCIS), medical, and similar) — has its checklist, its wording and its translation built **entirely on your device**, from text shipped inside the app. No guide's content is sent to OpenAI, and guides work with no network at all.
+
+**The one exception: looking up your local utility companies.** In the **moving** and **renting** guides you can type the ZIP code of your new home. If you do, that **ZIP code and your answers to that guide's questions** are sent so we can name the electricity, gas, water and internet providers that serve the area. Leave the ZIP blank and nothing is sent — the guide still works. Sensitive guides never do this lookup, and no other guide asks for a ZIP.
+
+This does **not** apply to **scanning**, where the recognized text is sent to OpenAI as described above, however sensitive the document is. Note that once you add a guide's checklist to your list, that item is backed up to your account like any other item if you are signed in.
 
 ### Anonymous usage statistics (sent to a backend we run)
 To understand whether Tadah actually helps — for example, of the items you add, how many you come back and complete — the app sends a small amount of **anonymous, non-identifying** usage data to a backend we operate (a Cloudflare database):
@@ -107,7 +111,7 @@ We are not responsible for these providers' own practices; please review their p
 - **Delete anytime** — delete an item to remove it from this device and, on the next sync, from your account. Uninstalling removes the local copy.
 - **Delete your account and everything in it, from inside the app** — **Profile → your name → Delete account**. You'll be asked to confirm with your password, and then we: erase your saved items, your family profiles, your email address, your stored password verifier and your session records from our backend on every device; and delete your subscription record from RevenueCat. It does **not** delete the copy saved on your phone — the app says so before you confirm, and you can delete those items yourself, or uninstall, whenever you want. Deletion touches two systems (our backend and our payments provider), so it happens in steps. If a step fails, the app tells you rather than pretending it worked, and tapping Delete account again is safe — retrying picks up the unfinished work and repeating a step that already succeeded does no harm. Until every step has completed, your account is not fully deleted; if you can't get it to finish, email us and we'll complete it for you.
 - **Remove one family member** — Profile → Family → long-press a person → Remove. Their to-dos are deleted from the account too.
-- **Sign out on this device** — Profile → Log out. This ends the session on our side straight away, rather than leaving it valid until it expires.
+- **Sign out on this device** — Profile → Log out. You are signed out on the device immediately, and we ask our backend to end that session at the same time, which is what normally happens. If your device happens to be offline right then, that request can't reach us and the session instead lapses by itself when it expires.
 - **Don't want text sent to OpenAI?** Use the manual-entry option instead of scanning, or use the sensitive guides, which are generated on your device.
 - **Don't want photos kept?** Switch off **Profile → Privacy → Save uploaded photos**. (Photos are never uploaded to your account either way.)
 - **Turn off usage statistics** — go to **Profile → Privacy** and switch off *Share anonymous usage data*; the app stops sending new usage events.
@@ -147,7 +151,7 @@ We may update this policy as the app evolves (for example, if we add accounts, s
     static let terms = #"""
 # Terms of Service & Disclaimers for Tadah
 
-**Effective date:** June 18, 2026 **Last updated:** August 15, 2026
+**Effective date:** June 18, 2026 **Last updated:** August 16, 2026
 
 By downloading or using **Tadah** ("the app"), you agree to these Terms. If you do not agree, do not use the app.
 

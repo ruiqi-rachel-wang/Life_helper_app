@@ -841,7 +841,7 @@ extension Guide {
                 // arrangement, and the answer turns on the whole picture. Point at
                 // the real source and say what's at stake instead of paraphrasing
                 // a seven-factor test into one clause.
-                notes.insert("Unpaid roles have no tax forms — there's no W-2 or 1099 to expect.", at: 0)
+                notes.insert("With no pay at all there's no W-2 or 1099 to expect. A stipend is different — that can still come with a tax form, so ask which one before you assume nothing is coming.", at: 0)
                 notes.insert("Whether an unpaid internship is legal depends on the specific arrangement, not one rule of thumb. If it looks like a paid job with the pay removed, check the Department of Labor's guidance or ask them.", at: 1)
             }
             if isContractor { notes.append("Contractors usually don't get employee benefits (health, paid leave).") }
@@ -1243,7 +1243,7 @@ extension Guide {
                 // was missing from the one branch where UM matters most: most
                 // states treat an unidentified driver as uninsured for exactly
                 // this purpose.
-                notes.append("Most states let uninsured-motorist (UM) coverage apply when the other driver is never identified — ask your insurer whether yours does, and what it needs from you.")
+                notes.append("Depending on your state and your policy, uninsured-motorist (UM) coverage may apply when the other driver is never identified — ask your insurer whether yours does, and what it needs from you.")
             }
             notes.append("Ask your insurer how your medical costs are handled — it depends on your state and your policy.")
             notes.append("If pain shows up hours or days later, see a doctor and save the records.")
