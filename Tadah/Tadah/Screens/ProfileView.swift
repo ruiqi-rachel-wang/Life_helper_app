@@ -34,7 +34,8 @@ struct ProfileView: View {
     @Environment(ProfileStore.self) private var profiles
     @Environment(SyncCoordinator.self) private var sync
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
-    @AppStorage(Metrics.shareUsageKey) private var shareUsage = true   // anonymous usage stats opt-out
+    @AppStorage(Metrics.shareUsageKey) private var shareUsage = false  // usage stats: OPT-IN (see Metrics)
+    @AppStorage(AIConsent.key) private var sendScansToAI = false       // OPT-IN (see AIConsent)
     @AppStorage(ReminderScheduler.discreetKey) private var discreetNotifications = false
     @AppStorage(AppSettings.savePhotoKey) private var savePhoto = true // keep scanned photo on the item
     @AppStorage(AppSettings.defaultReminderMinutesKey) private var reminderMinutes = AppSettings.fallbackReminderMinutes
@@ -493,7 +494,16 @@ struct ProfileView: View {
                         }
                     }
                 divider
-                toggleRow("Share anonymous app data", isOn: $shareUsage)
+                // "Send scans to AI" sits FIRST in Privacy: it is the setting
+                // with real consequences (a document's text leaving the phone),
+                // and it is the one people come here to find after agreeing at
+                // the first scan. Turning it off stops future scans being sent.
+                toggleRow("Send scans to AI", isOn: $sendScansToAI)
+                divider
+                // No longer called "anonymous": every event carries a persistent
+                // install id, which makes it pseudonymous. Saying otherwise in
+                // the one place the user decides would be the deception.
+                toggleRow("Share usage data", isOn: $shareUsage)
                 divider
                 navRow("Privacy Policy", value: nil) { legalDoc = .privacy }
                 divider

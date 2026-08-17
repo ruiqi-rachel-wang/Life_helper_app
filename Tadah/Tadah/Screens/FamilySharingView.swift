@@ -196,6 +196,21 @@ struct FamilySharingView: View {
                     Text("Just a name so you can tell the lists apart — it isn't an invitation or a separate login.")
                         .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
 
+                    // ADDING SOMEONE MEANS HOLDING THEIR DOCUMENTS. A profile is
+                    // where a parent's medical letters, a partner's immigration
+                    // notices and a child's school forms end up — real information
+                    // about a real person who never agreed to anything and cannot
+                    // see or delete it themselves.
+                    //
+                    // Shown only when ADDING. On a rename it would be a nag about
+                    // a decision already made.
+                    if profile == nil {
+                        Text("Only add someone whose paperwork you're allowed to handle — a family member you help, or your own child. What you file under them can include medical, money, and immigration details about that person.")
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 2)
+                    }
+
                     // PER-PERSON REMINDER TIME. Only when editing someone who
                     // already exists — while adding, there's nothing to attach it
                     // to yet, and one decision at a time is plenty.

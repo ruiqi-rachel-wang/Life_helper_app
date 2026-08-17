@@ -39,14 +39,23 @@ struct CreateView: View {
     @State private var scanRoute: ScanRoute?
     @State private var quotaMessage: String?
     @State private var showPaywall = false
+    @State private var showAIConsent = false
 
     private var cameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
     }
 
-    // Gate a scan on the rate limit; shows the limit message and returns false
-    // when the user is out of scans for the day/month.
+    // Gate a scan on CONSENT first, then the rate limit.
+    //
+    // Consent comes first because it is the one that must never be bypassed: this
+    // function is the single choke point every scan path funnels through (the
+    // hero tile, the camera result, and the photo picker all call it), which is
+    // why the check lives here rather than only at the button.
+    //
+    // Returns false and puts the sheet up when we have never asked, or when the
+    // user has said no — in both cases nothing is sent and no quota is spent.
     private func allowScan() -> Bool {
+        guard AIConsent.allowsSendingDocuments else { showAIConsent = true; return false }
         // `paidFeaturesUnlocked`, not `isPlus` — an unknown tier must not spend a
         // subscriber's scans out of the free pool. See PlusStore.
         if let reason = ScanQuota.blockedReason(plus: plus.paidFeaturesUnlocked) { quotaMessage = reason; return false }
@@ -185,6 +194,15 @@ struct CreateView: View {
             Button("OK", role: .cancel) {}
         } message: { Text(quotaMessage ?? "") }
         .sheet(isPresented: $showPaywall) { PaywallView() }
+        // Asked once, at the first scan. Agreeing continues straight into the
+        // camera so the tap isn't wasted; declining returns to the Add screen
+        // with everything else still working.
+        .sheet(isPresented: $showAIConsent) {
+            AIConsentSheet { granted in
+                guard granted else { return }
+                if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+            }
+        }
     }
 
     // Big primary action: Scan a document → camera → OCR. With no camera

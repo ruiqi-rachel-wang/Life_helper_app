@@ -1,7 +1,7 @@
 # Privacy Policy for Tadah
 
 **Effective date:** June 18, 2026
-**Last updated:** August 16, 2026
+**Last updated:** August 17, 2026
 
 > ⚠️ **Template — not legal advice.** This draft reflects how Tadah actually
 > handles data today, but you should have a lawyer review it before a paid or
@@ -11,7 +11,7 @@
 
 Tadah ("Tadah", "we", "us") is an iOS app that helps you understand letters, bills, and official documents and turn them into reminders and checklists. This policy explains what data the app handles and what happens to it.
 
-The short version: you can use Tadah **without an account**, and then your items stay on your device. Four things leave your phone: (1) the *text* of a document you scan is sent for AI processing; (1a) in the **moving and renting guides only**, a ZIP code you type — with your answers to that guide's questions — is sent to look up local utility companies, and skipping the ZIP skips the lookup; (2) **if you sign in**, your saved items are backed up to your account on our backend so they survive a new phone and appear on your other devices — **your scanned photos are not uploaded**; and (3) **anonymous, non-identifying usage statistics** — which features you use, never your content — are sent to a backend we run. You can turn off (3) anytime, and you can use the app signed out to avoid (2).
+The short version: you can use Tadah **without an account**, and then your items stay on your device. **Scanning asks your permission before it sends anything, and usage statistics are off until you switch them on.** Four things can leave your phone: (1) *only if you agree* at the first scan, the *text* of a document you scan is sent for AI processing; (1a) in the **moving and renting guides only**, a ZIP code you type — with your answers to that guide's questions — is sent to look up local utility companies, and skipping the ZIP skips the lookup; (2) **if you sign in**, your saved items are backed up to your account on our backend so they survive a new phone and appear on your other devices — **your scanned photos are not uploaded**; and (3) *only if you switch them on*, **pseudonymous usage statistics** — which features you use, never your content — are sent to a backend we run. You can turn (1) and (3) off anytime in **Profile → Privacy**, and you can use the app signed out to avoid (2).
 
 ---
 
@@ -50,7 +50,7 @@ Signing in is optional. It exists so your items survive signing out, a reinstall
 - When you **scan or upload a document**, the app recognizes its text on-device and then sends that **full recognized text to OpenAI** to generate the summary and steps. **This text can include sensitive personal information** — whatever appears on the document, such as health, financial, tax, or immigration details, your name, and account, policy, or case numbers. If you'd rather not send a document's text, use **manual entry** instead of scanning.
 - **OpenAI does not receive your account.** We don't attach your name, email, or Tadah user identifier to the request — but the document's text is sent as-is, so any personal details printed on it are included. (Our own Worker does see a random **install identifier**, used only to enforce the per-device scan limit.)
 - **Guide checklists are not sent to OpenAI.** Every guide is built and translated on your device (see below). The one thing a guide can send is a **ZIP code for the local-utility lookup**, described in the next section.
-- The request goes through a **Cloudflare Worker** we run, so our OpenAI key isn't in the app. Cloudflare may briefly process your device's IP address; we don't store it.
+- The request goes through a **Cloudflare Worker** we run, so our OpenAI key isn't in the app. Your device's IP address is processed to deliver the request. **We do not store it in our database.** Cloudflare does record it in their own request logs, as any host does, under their retention and their privacy policy — so "we don't keep it" is true of us and not of the internet.
 - OpenAI processes the text and returns the result; Tadah keeps no server-side copy. Per OpenAI's API policy, API data is **not used to train their models**, but OpenAI may **retain it for up to ~30 days** for abuse monitoring.
 
 ### GUIDES are generated on your device
@@ -61,18 +61,22 @@ Signing in is optional. It exists so your items survive signing out, a reinstall
 This does **not** apply to **scanning**, where the recognized text is sent to OpenAI as described above, however sensitive the document is. Note that once you add a guide's checklist to your list, that item is backed up to your account like any other item if you are signed in.
 
 ### Anonymous usage statistics (sent to a backend we run)
-To understand whether Tadah actually helps — for example, of the items you add, how many you come back and complete — the app sends a small amount of **anonymous, non-identifying** usage data to a backend we operate (a Cloudflare database):
+To understand whether Tadah actually helps — for example, of the items you add, how many you come back and complete — the app can send a small amount of usage data to a backend we operate (a Cloudflare database). It carries **no name, email, or account**, but it does carry a random identifier that stays the same for this installation — so it is better described as **pseudonymous** than anonymous: we cannot tell who you are from it, but events from one installation can be seen as belonging together. What it contains:
 - **What happened, not what's in it:** that an item was *added* (and whether from a scan, a guide, or manual entry), or *completed* (and whether on time).
 - A random **install identifier** created on your device, plus the app version and the time of the event. This labels an app installation — it is **not** your name, email, account, or Apple ID, and we cannot use it to identify you. It is also **deliberately different** from the device identifier stored with your account session, so even signed in, these statistics cannot be linked back to you.
 - It **never** includes your documents, photos, titles, amounts, due dates, notes, or any text from your items.
 
-This is **first-party** data, used only to improve Tadah. It is **not** advertising, is **not** sold or shared, and is **not** used to track you across other apps or websites. You can turn it off anytime under **Profile → Privacy → Share anonymous usage data**.
+This is **first-party** data, used only to improve Tadah. It is **not** advertising, is **not** sold or shared, and is **not** used to track you across other apps or websites.
+
+**This is off until you turn it on.** Nothing is sent unless you switch on *Share usage data* under **Profile → Privacy**, and switching it back off stops new events immediately.
+
+**How long we keep it.** AI usage counters are deleted after **60 days**. Deletion records for synced items are removed after **180 days**, and revoked sign-in sessions after **30 days**; a session that simply goes unused expires after **90 days**. Ask us and we will delete your usage events sooner.
 
 ### We do NOT
 - We do **not** sell or rent your data.
 - We do **not** use your data for advertising.
 - We do **not** link your bank account, pay your bills for you, or set up autopay. (Tadah Plus subscriptions are billed by **Apple** through the App Store — we never see your card details.)
-- We do **not** use third-party analytics SDKs, advertising, or cross-app tracking. *(We do collect our own anonymous, non-identifying usage statistics, described above; you can turn them off in Profile.)*
+- We do **not** use third-party analytics SDKs, advertising, or cross-app tracking. *(If you switch them on, we collect our own pseudonymous usage statistics, described above.)*
 
 ---
 
@@ -80,13 +84,13 @@ This is **first-party** data, used only to improve Tadah. It is **not** advertis
 
 | Provider | What they process | Why |
 |---|---|---|
-| **OpenAI** | The full recognized text of any document you scan/upload (may include sensitive personal info), plus non-sensitive guide checklists. May be retained ~30 days for abuse monitoring; not used for training. | To generate the summary, steps, and translations |
-| **Cloudflare** | Your IP address (transiently, when proxying the AI request); the anonymous usage statistics we store; and — **if you sign in** — your backed-up items, your family profiles, and your session records | To proxy the AI request without shipping the OpenAI key, to store anonymous usage stats, and to host your account backup |
+| **OpenAI** | Only if you turn on *Send scans to AI*: the full recognized text of any document you scan/upload (may include sensitive personal info). Separately, in the moving and renting guides, a ZIP code you type plus your answers to that guide's questions. **Guide checklists themselves are not sent** — they are built and translated on your device. May be retained ~30 days for abuse monitoring; not used for training. | To generate the summary and steps, and to look up local utility companies |
+| **Cloudflare** | Your IP address (when proxying the AI request — see the note below on their request logs); the usage statistics we store, if you have turned them on; and — **if you sign in** — your backed-up items, your family profiles, and your session records | To proxy the AI request without shipping the OpenAI key, to store usage statistics, and to host your account backup |
 | **Apple** | Device storage, on-device OCR, local notifications; App Store purchases | Standard iOS functionality and subscription billing |
 | **Resend** | Sends account emails (password-reset codes) — receives your email address | Delivering the code that lets you back into your account |
 | **RevenueCat** | Your Tadah user identifier and your subscription status | To manage Tadah Plus subscriptions and tell the app (and our backend) whether your account is Plus |
 
-We are not responsible for these providers' own practices; please review their privacy policies (OpenAI, Cloudflare, Apple).
+We use these providers to deliver Tadah, and we require them by contract to protect your information to a standard equivalent to this policy, to use it only to provide their service to us, and not to use it for their own purposes. We choose them, and we remain accountable to you for the data we send them. You can also review their own privacy policies (OpenAI, Cloudflare, Apple, RevenueCat).
 
 ---
 
@@ -110,9 +114,10 @@ We are not responsible for these providers' own practices; please review their p
 - **Sign out on this device** — Profile → Log out. You are signed out on the device immediately, and we ask our backend to end that session at the same time, which is what normally happens. If your device happens to be offline right then, that request can't reach us and the session instead lapses by itself when it expires.
 - **Don't want text sent to OpenAI?** Use the manual-entry option instead of scanning, or use the sensitive guides, which are generated on your device.
 - **Don't want photos kept?** Switch off **Profile → Privacy → Save uploaded photos**. (Photos are never uploaded to your account either way.)
-- **Turn off usage statistics** — go to **Profile → Privacy** and switch off *Share anonymous usage data*; the app stops sending new usage events.
+- **Turn off usage statistics** — go to **Profile → Privacy** and switch off *Share usage data*; the app stops sending new usage events. (They are off unless you turned them on.)
+- **Stop sending scans to AI** — go to **Profile → Privacy** and switch off *Send scans to AI*. Scanning then stops working, and manual entry, guides and reminders carry on as normal.
 
-**California (CCPA) and EU/UK (GDPR):** if you are signed in, we hold your Tadah user identifier, the items you have saved, and any family-profile names you have entered, and you have the right to access, correct, port, or delete them — email us at the address above and we will action it. We do **not** sell or share personal information, and we do not use it for advertising or cross-context behavioural profiling. If you never sign in, we hold no personal data about you at all.
+**California (CCPA) and EU/UK (GDPR):** if you are signed in, we hold your Tadah user identifier, the items you have saved, and any family-profile names you have entered, and you have the right to access, correct, port, or delete them — email us at the address above and we will action it. We do **not** sell or share personal information, and we do not use it for advertising or cross-context behavioural profiling. If you never sign in, we hold no **account** — no email address, no saved items, no family profiles. That is not the same as holding nothing: if you turn on *Send scans to AI*, the text of a scanned document is processed as described above; our provider processes your IP address to deliver the request; and if you turn on usage statistics, those carry a random install identifier. Those paths are all optional and all switchable off in **Profile → Privacy**.
 
 ---
 

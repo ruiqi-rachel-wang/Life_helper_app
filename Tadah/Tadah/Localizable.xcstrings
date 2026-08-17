@@ -15432,22 +15432,6 @@
         }
       }
     },
-    "Share anonymous app data": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compartir datos anónimos de la app"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "分享匿名应用数据"
-          }
-        }
-      }
-    },
     "Share anonymous usage data": {
       "extractionState": "manual",
       "localizations": {
@@ -20261,6 +20245,210 @@
           "stringUnit": {
             "state": "translated",
             "value": "每个人都有自己的列表。点按名字即可切换——新的待办事项会归到当前选中的人名下。向左滑动可编辑，向右滑动可移除。"
+          }
+        }
+      }
+    },
+    "BEFORE YOUR FIRST SCAN": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ANTES DE TU PRIMER ESCANEO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一次扫描之前"
+          }
+        }
+      }
+    },
+    "Scanning sends the words to AI": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al escanear, el texto se envía a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扫描会把文字发送给 AI"
+          }
+        }
+      }
+    },
+    "To explain a document and turn it into steps, Tadah sends the words it reads to OpenAI, an AI company we use. We need your OK first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para explicar un documento y convertirlo en pasos, Tadah envía el texto que lee a OpenAI, una empresa de IA que utilizamos. Primero necesitamos tu permiso."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "为了解释文件并把它变成待办步骤，Tadah 会把读取到的文字发送给我们使用的 AI 公司 OpenAI。这需要你先同意。"
+          }
+        }
+      }
+    },
+    "Your phone reads the document, then sends that text — not the photo. Your photos never leave your phone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu teléfono lee el documento y luego envía ese texto, no la foto. Tus fotos nunca salen de tu teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的手机会读取文件，然后发送文字——不是照片。你的照片永远不会离开手机。"
+          }
+        }
+      }
+    },
+    "The text is whatever is printed on the page — that can include your name, a medical condition, a case or account number, or money details.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El texto es lo que esté impreso en la página: puede incluir tu nombre, una condición médica, un número de caso o de cuenta, o datos de dinero."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字就是页面上印的内容——可能包含你的姓名、健康状况、案件或账户号码，或者金额信息。"
+          }
+        }
+      }
+    },
+    "OpenAI does not use it to train their AI, and may keep it up to about 30 days to check for misuse. We keep no copy on our server.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI no lo usa para entrenar su IA, y puede conservarlo hasta unos 30 días para detectar usos indebidos. Nosotros no guardamos ninguna copia en nuestro servidor."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI 不会用它训练 AI，可能会保留最多约 30 天以排查滥用。我们的服务器不保留任何副本。"
+          }
+        }
+      }
+    },
+    "We don't send your name, email, or account with it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No enviamos tu nombre, correo ni cuenta junto con él."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们不会随之发送你的姓名、邮箱或账户。"
+          }
+        }
+      }
+    },
+    "Prefer not to? Tap “Not now.” You can still add to-dos yourself, use the guides, and set reminders — and you can change this any time in Profile → Privacy.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Prefieres que no? Toca «Ahora no». Aún puedes crear tareas tú mismo, usar las guías y poner recordatorios, y puedes cambiar esto cuando quieras en Perfil → Privacidad."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不想这样？点按“暂不”。你仍然可以自己添加待办、使用指南和设置提醒——随时可以在 我的 → 隐私 中更改。"
+          }
+        }
+      }
+    },
+    "OK, send scans to AI": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De acuerdo, enviar escaneos a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好，把扫描发送给 AI"
+          }
+        }
+      }
+    },
+    "Send scans to AI": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar escaneos a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把扫描发送给 AI"
+          }
+        }
+      }
+    },
+    "Share usage data": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartir datos de uso"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享使用数据"
+          }
+        }
+      }
+    },
+    "Only add someone whose paperwork you're allowed to handle — a family member you help, or your own child. What you file under them can include medical, money, and immigration details about that person.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade solo a alguien cuyos documentos tengas permiso para gestionar: un familiar al que ayudas, o tu propio hijo. Lo que guardes bajo esa persona puede incluir datos médicos, económicos y de inmigración suyos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只添加你有权处理其文件的人——你照顾的家人，或你自己的孩子。归在这个人名下的内容可能包含他们的医疗、财务和移民信息。"
           }
         }
       }

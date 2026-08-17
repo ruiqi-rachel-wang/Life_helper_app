@@ -102,12 +102,24 @@ nonisolated enum Metrics {
     // Must stay <= the Worker's MAX_BATCH (D1 Free: 50 queries per invocation).
     static let maxEventsPerUpload = 25
 
-    // User consent for uploading anonymous usage stats. Default true (opted in); the
-    // Profile "Share anonymous usage data" toggle writes this same key. When off,
-    // flush() no-ops — events still log locally, they just never leave the device.
+    // User consent for uploading usage stats. OPT-IN as of 2026-08-17: unset means
+    // OFF, and nothing leaves the device until the user turns it on in
+    // Profile → Privacy. When off, flush() no-ops — events still log locally so
+    // the in-app counters work, they just never leave the phone.
+    //
+    // This used to default to ON. "Anonymous" was doing a lot of work in that
+    // decision, and it doesn't hold up: every event carries a PERSISTENT install
+    // UUID, which makes the data pseudonymous, not anonymous — one identifier
+    // linking a lifetime of one person's events. Apple expects consent for
+    // analytics regardless of how we label it, and a user who never opened
+    // Settings had never agreed to anything.
+    //
+    // Testers who explicitly turned it ON keep that choice: an explicit `true`
+    // survives, only the UNSET default flips. Testers who simply never touched
+    // it are now opted out, which is the correct direction to be wrong in.
     static let shareUsageKey = "tadah.metrics.shareUsage"
     static var uploadsEnabled: Bool {
-        UserDefaults.standard.object(forKey: shareUsageKey) as? Bool ?? true   // unset → opted in
+        UserDefaults.standard.object(forKey: shareUsageKey) as? Bool ?? false   // unset → opted OUT
     }
 
     /// Migrate every persisted key from the app's former name ("cuevi.*") to
