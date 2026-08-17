@@ -175,6 +175,16 @@ let usageTableReady = false;
 let syncTablesReady = false;              // lazy DDL for tasks/sessions (see ensureSyncTables)
 
 export default {
+  // Daily retention sweep (cron in wrangler.toml). Separate from `fetch` on
+  // purpose: retention that depends on traffic isn't retention.
+  async scheduled(event, env, ctx) {
+    if (!env.DB) return;
+    ctx.waitUntil((async () => {
+      await ensureSyncTables(env.DB);
+      await sweepRetention(env.DB);
+    })());
+  },
+
   async fetch(request, env) {
     if (request.method !== "POST") return json({ error: "POST only" }, 405);
 
@@ -255,9 +265,14 @@ async function handleChat(request, env) {
   // now and it predates the header, so a hard 400 would break scanning for every
   // current tester. The fallback keeps them working while still counting them.
   const installID = clamp(request.headers.get("X-Cuevi-Install") || "");
-  const quotaKey = installID.length >= 8
-    ? installID
-    : `ip:${clamp(request.headers.get("CF-Connecting-IP") || "unknown")}`;
+  // The IP is HASHED before it is ever written. The counter only needs a stable
+  // opaque key per address per day, and it used to store `ip:203.0.113.7`
+  // verbatim in D1 — which made the privacy policy's "we do not store it in our
+  // database" untrue, and turned a rate-limit table into a log of who was using
+  // the app from where. The digest is salted with the day, so yesterday's rows
+  // can't be matched to today's and an expired row is unlinkable even to us.
+  const ipKey = `ip:${await hashedIP(env, request.headers.get("CF-Connecting-IP") || "unknown")}`;
+  const quotaKey = installID.length >= 8 ? installID : ipKey;
   // Fail CLOSED, including when D1 isn't bound at all. Skipping the quota because
   // storage is missing means a misconfigured deploy silently has NO spend cap —
   // the one situation where you most want one.
@@ -269,8 +284,14 @@ async function handleChat(request, env) {
     // All three counters in ONE batch: they share a transaction, so a request can
     // never be counted against the device but not the global breaker (which is
     // how a partially-applied count would let spend drift past the ceiling).
-    const ip = clamp(request.headers.get("CF-Connecting-IP") || "unknown");
-    [usage, ipUsage, globalUsage] = await bumpUsageBatch(env.DB, [quotaKey, `ip:${ip}`, "*global*"]);
+    // DEDUPED. A client with no install header falls back to the IP key, so the
+    // same row was bumped twice for one request — that caller burned their
+    // network's daily budget at double speed. Counting distinct keys fixes it
+    // without changing what any of them mean.
+    const keys = [...new Set([quotaKey, ipKey, "*global*"])];
+    const counts = await bumpUsageBatch(env.DB, keys);
+    const at = (k) => counts[keys.indexOf(k)];
+    [usage, ipUsage, globalUsage] = [at(quotaKey), at(ipKey), at("*global*")];
   } catch {
     return json({ error: "quota", message: "AI service is briefly unavailable. Please try again." }, 503);
   }
@@ -398,6 +419,26 @@ function sanitizeMessages(messages) {
 
 // Count this call against the install's day + month windows and return the new
 // totals. Counts attempts (not successes) — the limits carry 3x headroom for that.
+// A stable, opaque, DAY-SCOPED digest of an IP address.
+//
+// Salted with PASSWORD_PEPPER when it is set. An unsalted digest of an IPv4
+// address is not pseudonymisation at all — the whole space is 2^32, so anyone
+// holding the table could enumerate it in seconds. Including the UTC day means
+// the same address produces a different key tomorrow, so the retained rows can't
+// be joined into a history of one person's usage.
+//
+// Falls back to a fixed salt when no pepper is configured: weaker (an attacker
+// who knows the constant can still enumerate), but the AI proxy has to keep
+// working on a deployment that has no accounts set up, and a hashed key is still
+// strictly better than the address in plain text.
+async function hashedIP(env, ip) {
+  const day = new Date().toISOString().slice(0, 10);
+  const salt = env.PASSWORD_PEPPER || "tadah-ip-quota-v1";
+  const data = new TextEncoder().encode(`${salt}:${day}:${String(ip)}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest).slice(0, 16), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 // Count one AI call against several keys at once, in a single D1 batch so they
 // commit together. Returns per-key { day, month } in the order given.
 async function bumpUsageBatch(db, keys) {
@@ -713,8 +754,14 @@ async function deleteRevenueCatSubscriber(userID, env) {
   }
 }
 
-// Bounded retention for rows nothing reads anymore. Runs opportunistically off
-// sign-in (a low-frequency route), so it never adds latency to /sync.
+// Bounded retention for rows nothing reads anymore.
+//
+// ⚠️ CALLED FROM THE `scheduled` HANDLER, not from a request. It used to run
+// "opportunistically off sign-in" — and then the sign-in route it hung off was
+// deleted with Sign in with Apple, so from 2026-08-15 until this was noticed
+// NOTHING called it. Every retention period the privacy policy promises (30-day
+// revoked sessions, 60-day usage counters, 180-day tombstones) was silently not
+// happening. A cron trigger can't be orphaned by deleting a route.
 async function sweepRetention(db) {
   const cutoff = (days) => new Date(Date.now() - days * 86400_000).toISOString();
   try {

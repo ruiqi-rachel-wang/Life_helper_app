@@ -67,8 +67,25 @@ final class PlusStore {
         var isYearly: Bool { productIdentifier.contains("yearly") || productIdentifier.contains("annual") }
     }
 
-    // nil = not subscribed, or RevenueCat hasn't answered yet.
+    // nil means NOT SUBSCRIBED — but only once `tierKnown` is true. Before that
+    // it means "we haven't heard yet", and the two must not be shown the same
+    // way: a subscriber opening this screen during a slow launch was briefly
+    // labelled "Free plan", which is the app telling a paying customer they
+    // aren't one. Views should ask `membershipState`, not this.
     private(set) var membership: Membership?
+
+    // What the account page should actually render.
+    enum MembershipState: Equatable {
+        case unknown                  // RevenueCat hasn't answered — say nothing yet
+        case free                     // answered, and there is no subscription
+        case subscribed(Membership)   // answered, and here are the details
+    }
+
+    var membershipState: MembershipState {
+        guard tierKnown else { return .unknown }
+        guard let membership else { return .free }
+        return .subscribed(membership)
+    }
 
     init() {
         Task {
@@ -90,6 +107,7 @@ final class PlusStore {
     // anything.
     enum RestoreResult: Equatable {
         case restored          // entitlement is active again
+        case expired           // the purchase EXISTS but has lapsed — renew, don't re-buy
         case nothingToRestore  // reached the store; this Apple ID has no purchase
         case failed            // couldn't reach the store — retryable
     }
@@ -99,7 +117,14 @@ final class PlusStore {
     func restore() async -> RestoreResult {
         do {
             apply(try await Purchases.shared.restorePurchases())
-            return isPlus ? .restored : .nothingToRestore
+            if isPlus { return .restored }
+            // AN EXPIRED PURCHASE IS NOT "no purchase". Someone whose card failed
+            // last month, tapping Restore to fix it, was told this Apple ID had
+            // never bought anything — which reads as "we lost your money" and is
+            // the single worst thing to say to a lapsed paying customer. The
+            // entitlement is still there, just inactive, so say what's true.
+            if membership != nil { return .expired }
+            return .nothingToRestore
         } catch {
             return .failed
         }

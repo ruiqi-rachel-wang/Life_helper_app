@@ -194,6 +194,13 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
             }
+            // PLUS DOES NOT REQUIRE AN ACCOUNT — you can buy it signed out. But
+            // the only route to managing it was Account Details, which is
+            // signed-in only, so those buyers had nowhere to see their renewal
+            // date, reach Apple's cancel screen, or restore a purchase.
+            if plus.isPlus || plus.membership != nil {
+                MembershipCard()
+            }
         }
     }
 

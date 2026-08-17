@@ -190,6 +190,8 @@ struct PaywallView: View {
         switch await plus.restore() {
         case .restored:
             dismiss()                       // entitlement is back; nothing more to say
+        case .expired:
+            restoreMessage = String(localized: "Your previous Tadah Plus subscription has expired. Choose a plan above to start again.")
         case .nothingToRestore:
             restoreMessage = String(localized: "We couldn't find a subscription to restore on this Apple ID.")
         case .failed:

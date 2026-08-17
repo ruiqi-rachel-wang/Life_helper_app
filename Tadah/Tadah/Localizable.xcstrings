@@ -20754,6 +20754,108 @@
           }
         }
       }
+    },
+    "Checking your membership…": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobando tu membresía…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在查询你的会员状态…"
+          }
+        }
+      }
+    },
+    "One moment while we check with the App Store.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un momento mientras lo comprobamos con la App Store."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在向 App Store 查询，请稍候。"
+          }
+        }
+      }
+    },
+    "Manage subscription first": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestionar la suscripción primero"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先管理订阅"
+          }
+        }
+      }
+    },
+    "This permanently deletes your account and everything backed up to it, on every device. Your saved items stay on this phone. This can't be undone.\n\n⚠️ This does NOT cancel your Tadah Plus subscription — Apple handles billing, so you must cancel it in the App Store or you'll keep being charged.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esto elimina permanentemente tu cuenta y todo lo respaldado en ella, en todos los dispositivos. Tus elementos guardados permanecen en este teléfono. No se puede deshacer.\n\n⚠️ Esto NO cancela tu suscripción a Tadah Plus: Apple gestiona los cobros, así que debes cancelarla en la App Store o te seguirán cobrando."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这将永久删除你的账户以及备份在其中的所有内容（所有设备）。此手机上已保存的事项会保留。此操作无法撤销。\n\n⚠️ 这不会取消你的 Tadah Plus 订阅——订阅由 Apple 计费，你必须在 App Store 中取消，否则将继续扣费。"
+          }
+        }
+      }
+    },
+    "Your previous Tadah Plus subscription has expired. You can start it again from the Tadah Plus screen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu suscripción anterior a Tadah Plus ha caducado. Puedes volver a activarla desde la pantalla de Tadah Plus."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你之前的 Tadah Plus 订阅已过期。可以在 Tadah Plus 页面重新开通。"
+          }
+        }
+      }
+    },
+    "Your previous Tadah Plus subscription has expired. Choose a plan above to start again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu suscripción anterior a Tadah Plus ha caducado. Elige un plan arriba para empezar de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你之前的 Tadah Plus 订阅已过期。请在上方选择方案重新开通。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

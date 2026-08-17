@@ -7,6 +7,15 @@ compatibility_date = "2026-08-01"
 [observability]
 enabled = true
 
+# DAILY RETENTION SWEEP. Drives the `scheduled` handler in worker.js, which
+# deletes expired tombstones, revoked sessions and usage counters. Without this
+# trigger nothing calls sweepRetention() and the retention periods promised in
+# the privacy policy are not enforced — which is exactly what happened between
+# 2026-08-15 (when the sign-in route it used to hang off was deleted) and
+# 2026-08-17. 04:12 UTC is deliberately off the hour, where cron contention is.
+[triggers]
+crons = ["12 4 * * *"]
+
 # Secrets are NOT here — set each with `wrangler secret put <NAME>` (never in git):
 #   OPENAI_API_KEY     — the OpenAI key the AI proxy adds server-side.
 #   PROXY_TOKEN        — shared app↔Worker token (X-Cuevi-Token), gates every route.
