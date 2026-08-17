@@ -20228,23 +20228,6 @@
         }
       }
     },
-    "Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cada persona tiene su propia lista. Toca un nombre para cambiar a esa persona: las tareas nuevas se guardan en la que esté seleccionada. Desliza un nombre a la izquierda para editar, o a la derecha para quitarlo."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每个人都有自己的列表。点按名字即可切换——新的待办事项会归到当前选中的人名下。向左滑动可编辑，向右滑动可移除。"
-          }
-        }
-      }
-    },
     "BEFORE YOUR FIRST SCAN": {
       "extractionState": "manual",
       "localizations": {
@@ -20364,40 +20347,6 @@
         }
       }
     },
-    "OK, send scans to AI": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "De acuerdo, enviar escaneos a la IA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "好，把扫描发送给 AI"
-          }
-        }
-      }
-    },
-    "Send scans to AI": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enviar escaneos a la IA"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "把扫描发送给 AI"
-          }
-        }
-      }
-    },
     "Share usage data": {
       "extractionState": "manual",
       "localizations": {
@@ -20428,23 +20377,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "只添加你有权处理其文件的人——你照顾的家人，或你自己的孩子。归在这个人名下的内容可能包含他们的医疗、财务和移民信息。"
-          }
-        }
-      }
-    },
-    "We don't attach your Tadah account — your sign-in email and account aren't sent, so OpenAI can't tell whose document it is.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No adjuntamos tu cuenta de Tadah: no enviamos tu correo de inicio de sesión ni tu cuenta, así que OpenAI no puede saber de quién es el documento."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我们不会附带你的 Tadah 账户——不会发送你的登录邮箱和账户，因此 OpenAI 无法知道这份文件是谁的。"
           }
         }
       }
@@ -20496,6 +20428,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "新住处的邮编？（可选——会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
+          }
+        }
+      }
+    },
+    "Send content to AI": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar contenido a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把内容发送给 AI"
+          }
+        }
+      }
+    },
+    "Scanned documents, and the ZIP you enter in the moving and renting guides.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Documentos escaneados y el código postal que introduzcas en las guías de mudanza y alquiler."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扫描的文件，以及你在搬家和租房指南中输入的邮编。"
+          }
+        }
+      }
+    },
+    "We don't attach your Tadah account or sign-in email. OpenAI still receives any identifying details printed on the document.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No adjuntamos tu cuenta de Tadah ni tu correo de inicio de sesión. Aun así, OpenAI recibe cualquier dato identificativo impreso en el documento."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们不会附带你的 Tadah 账户或登录邮箱。但文件上印有的任何可识别身份的信息，OpenAI 仍会收到。"
+          }
+        }
+      }
+    },
+    "Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove (you can't remove yourself).": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada persona tiene su propia lista. Toca un nombre para cambiar a esa persona: las tareas nuevas se guardan en la que esté seleccionada. Desliza un nombre a la izquierda para editar, o a la derecha para quitarlo (no puedes quitarte a ti mismo)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个人都有自己的列表。点按名字即可切换——新的待办事项会归到当前选中的人名下。向左滑动可编辑，向右滑动可移除（不能移除你自己）。"
+          }
+        }
+      }
+    },
+    "OK, send content to AI": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De acuerdo, enviar contenido a la IA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好，把内容发送给 AI"
           }
         }
       }

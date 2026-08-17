@@ -76,7 +76,10 @@ struct AIConsentSheet: View {
 
                         VStack(spacing: 10) {
                             Button { decide(true) } label: {
-                                Text("OK, send scans to AI")
+                                // "content", not "scans": this one tap also grants
+                                // the guides' ZIP lookup, and the button a user
+                                // presses should name everything it agrees to.
+                                Text("OK, send content to AI")
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundStyle(Color.paper)
                                     .frame(maxWidth: .infinity).padding(.vertical, 15)

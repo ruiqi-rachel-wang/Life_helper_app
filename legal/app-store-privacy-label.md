@@ -58,17 +58,26 @@ together even though we cannot tell who that is.
   Functionality · **NOT linked** to identity · **NOT used for tracking**. (Events like
   "item added" / "item completed," with a source and an on-time flag.)
 - **Identifiers → Device ID** — Collected · purpose Analytics + App Functionality ·
-  **NOT linked** to identity · **NOT used for tracking**.
+  **LINKED** to identity · **NOT used for tracking**.
 
-  ⚠️ **This was previously declared as User ID, which is wrong.** Apple defines an
-  installation- or device-level identifier as **Device ID**; **User ID** means an
-  identifier for the *person* (a screen name, account id, or similar). `Install.id` is a
-  random UUID created on the device and persisted for the life of the installation, so
-  it is a Device ID. Fix this in App Store Connect as well as here.
+  ⚠️ **This was previously declared as User ID, and then as an unlinked Device ID.
+  Both were wrong.** Apple defines an installation- or device-level identifier as
+  **Device ID**; **User ID** means an identifier for the *person*.
 
-  It stays **NOT linked**: the analytics install id is deliberately a different value
-  from the device id stored with an auth session, so statistics cannot be joined back to
-  an account. And **NOT tracking**: it never leaves our own backend and is never
+  There are **two** device identifiers, and they differ on exactly this question:
+
+  | | What it is | Linked? |
+  |---|---|---|
+  | `Install.id` | Rides with usage events | **No** — never joined to an account, and deliberately a different random value from the one below so that it can't be |
+  | `Device.id` | Sent at sign-in, stored in the session row beside the account id (the free "one device at a time" rule has to count devices) | **Yes, by design** |
+
+  Answer **linked** in App Store Connect. It is the conservative merge: Apple treats
+  data associated through an account as linked, the form takes one answer per data type,
+  and answering "not linked" because the analytics id qualifies would under-declare the
+  session id. Under-declaring is what gets an app rejected; over-declaring costs only a
+  less flattering label.
+
+  **NOT tracking** either way — neither id leaves our own backend and neither is ever
   combined with data from other companies.
 
 - **Identifiers → User ID** — also Collected, but for the ACCOUNT (see the account

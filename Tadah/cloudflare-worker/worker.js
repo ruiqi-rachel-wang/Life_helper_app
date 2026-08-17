@@ -1731,4 +1731,8 @@ export {
   MAX_PROFILES,
   FREE_PROFILES,
   MAX_BODY_BYTES,
+  // Exported so the route tests assert against the REAL ceilings rather than
+  // copies that quietly drift when someone tunes the limits.
+  IP_DAY_LIMIT,
+  GLOBAL_DAY_LIMIT,
 };

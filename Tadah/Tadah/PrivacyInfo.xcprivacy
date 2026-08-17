@@ -79,21 +79,36 @@
 				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
-		<!-- THE INSTALL IDENTIFIER ITSELF. Declared because Apple defines an
-		     installation- or device-level identifier as DEVICE ID, not User ID:
-		     Install.id is a random UUID created on this device that persists for
-		     the life of the installation, and it rides along with every usage
-		     event and (as a separate value) every auth session. Omitting it while
-		     calling the data "anonymous" was the inaccuracy.
-		     NOT linked to identity — the analytics install id is deliberately a
-		     DIFFERENT value from the session device id, so stats cannot be joined
-		     back to an account — and NOT used for tracking: it never leaves our
-		     own backend and is never combined with third-party data. -->
+		<!-- DEVICE IDENTIFIERS. Apple defines an installation- or device-level
+		     identifier as DEVICE ID (User ID means an identifier for the PERSON),
+		     so declaring these as User ID was wrong.
+
+		     THERE ARE TWO OF THEM, and they differ in exactly the way this key is
+		     asking about:
+		       • Install.id  — rides with usage events. Genuinely NOT linked: it is
+		         never joined to an account, and it is deliberately a DIFFERENT
+		         random value from the one below precisely so it can't be.
+		       • Device.id   — sent at sign-in and stored in the session row beside
+		         the account id, because the free "one device at a time" rule has
+		         to count devices. That one is ACCOUNT-LINKED BY DESIGN.
+
+		     Declared LINKED, which is the conservative merge of the two. Apple
+		     treats data associated through an account as linked, and App Store
+		     Connect takes one answer per data type — so answering "not linked"
+		     because the analytics id qualifies would under-declare the session id,
+		     and under-declaring is the direction that gets an app rejected.
+		     Over-declaring costs us only a less flattering label.
+
+		     If App Store Connect ever allows splitting a data type by purpose, the
+		     honest split is: Analytics → not linked, App Functionality → linked.
+
+		     NOT tracking either way: neither id leaves our own backend, and neither
+		     is ever combined with data from other companies. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeDeviceID</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<false/>
+			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypePurposes</key>

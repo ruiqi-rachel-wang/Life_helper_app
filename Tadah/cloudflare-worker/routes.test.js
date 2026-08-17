@@ -9,7 +9,7 @@
 
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import worker from "./worker.js";
+import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT } from "./worker.js";
 
 const USER = "apple-sub-test-user";
 const OTHER = "apple-sub-other-user";
@@ -641,6 +641,84 @@ describe("AI proxy", () => {
       },
     });
     expect(r.status).toBe(400);
+  });
+});
+
+// ── AI spend ceilings ────────────────────────────────────────────────────────
+//
+// The per-install quota is keyed on X-Cuevi-Install, a header the CLIENT sends,
+// and the proxy token that gates this route ships inside the app — so it must be
+// assumed public. Anyone holding both can send a fresh install id per request and
+// get a fresh budget every time. These two ceilings are the ones a caller cannot
+// rotate their way out of, and they are the last thing between a leaked token and
+// a real credit card, so they get tests that actually push them over.
+//
+// Both are driven by seeding `ai_usage` directly: the quota check runs BEFORE the
+// upstream OpenAI call, so a request that trips a ceiling returns 429 without any
+// network access.
+
+describe("AI spend ceilings", () => {
+  const today = () => new Date().toISOString().slice(0, 10);
+  const IP = "203.0.113.77";                       // TEST-NET-3, never routable
+
+  async function seed(key, count) {
+    await env.DB.prepare(
+      `INSERT INTO ai_usage (install_id, period, count) VALUES (?, ?, ?)
+       ON CONFLICT(install_id, period) DO UPDATE SET count = excluded.count`
+    ).bind(key, today(), count).run();
+  }
+
+  const scan = (install) => call("/", {
+    headers: { "X-Cuevi-Install": install, "CF-Connecting-IP": IP },
+    body: { model: "gpt-5-mini", messages: [{ role: "user", content: "hi" }] },
+  });
+
+  it("ROTATING THE INSTALL ID DOES NOT BUY A FRESH BUDGET", async () => {
+    await seed(`ip:${IP}`, IP_DAY_LIMIT);
+
+    // Three different install ids, none of which has ever been seen before —
+    // exactly what an attacker with the shipped token would send.
+    for (const id of ["brand-new-install-1", "brand-new-install-2", "totally-different-3"]) {
+      const r = await scan(id);
+      expect(r.status).toBe(429);
+      expect(r.body.message).toMatch(/network/i);
+    }
+  });
+
+  it("lets the same IP through while it is under the ceiling", async () => {
+    await seed(`ip:${IP}`, 0);
+    await seed("*global*", 0);
+    const r = await scan("install-under-the-cap");
+    // Not 429: it gets past both ceilings. (It fails later at the upstream call,
+    // which has no key in tests — the point is which gate it reached.)
+    expect(r.status).not.toBe(429);
+  });
+
+  it("trips the global circuit breaker regardless of IP or install", async () => {
+    await seed(`ip:${IP}`, 0);
+    await seed("*global*", GLOBAL_DAY_LIMIT);
+
+    const r = await call("/", {
+      headers: { "X-Cuevi-Install": "someone-else-entirely", "CF-Connecting-IP": "198.51.100.9" },
+      body: { model: "gpt-5-mini", messages: [{ role: "user", content: "hi" }] },
+    });
+    expect(r.status).toBe(429);
+    // Distinguishable from the per-network message: this one means "stop
+    // spending", not "you personally did too much".
+    expect(r.body.message).toMatch(/temporarily unavailable/i);
+  });
+
+  it("counts every request against the IP row, whatever install id it claims", async () => {
+    await seed(`ip:${IP}`, IP_DAY_LIMIT);
+    await scan("rotating-id-a");
+    await scan("rotating-id-b");
+
+    const row = await env.DB.prepare(
+      "SELECT count FROM ai_usage WHERE install_id = ? AND period = ?"
+    ).bind(`ip:${IP}`, today()).first();
+    // Both refused requests still counted — the ceiling can't be worn down by
+    // retrying under new identities.
+    expect(row.count).toBe(IP_DAY_LIMIT + 2);
   });
 });
 
