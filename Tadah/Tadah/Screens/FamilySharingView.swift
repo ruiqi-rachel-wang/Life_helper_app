@@ -85,17 +85,15 @@ struct FamilySharingView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Everyone on this account")
                 .font(.cardTitle).foregroundStyle(Color.ink)
-            // Says what tapping ACTUALLY does. The old copy ("Tap someone to see
-            // their to-dos") described a filter, but tapping sets who is using the
-            // phone — which also becomes the default person new to-dos are filed
-            // under. Someone following that sentence would have quietly started
-            // saving their own mail under Mom.
-            Text("Give each person their own list, so a parent's letters don't mix with yours. Tap someone to switch to them — new to-dos are filed under whoever is selected.")
-                .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
-            // Names the icon that is ACTUALLY on screen. This said "Tap ⋯" while
-            // the button has been an ⓘ since the grid became a list — instructions
-            // pointing at a control that isn't there read as a bug in the app.
-            Text("Tap ⓘ next to a person to edit or remove them.")
+            // ONE line, and it has to teach the swipe.
+            //
+            // Two paragraphs used to sit here; the second pointed at an ⓘ button
+            // that no longer exists. Swipe is now the only way in, so the sentence
+            // that replaces them has to say so — a gesture nobody is told about is
+            // a feature nobody has. Still says what TAPPING does, because that is
+            // the part people get wrong: it sets who new to-dos are filed under,
+            // not just what you're looking at.
+            Text("Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
         }
         .padding(.horizontal, 6)
@@ -107,55 +105,32 @@ struct FamilySharingView: View {
     // The grid put identity, count and a ⋯ button into a 92pt tile, so the name
     // truncated, the count was an afterthought, and "which one am I?" was carried
     // only by a coloured ring. Rows give each person a full line: a ✓ says who is
-    // active, and an explicit edit button replaces the ⋯ that people had to know
-    // to look for. Modelled on the account switchers this pattern is borrowed
-    // from, where the same three jobs — identify, indicate current, change
-    // settings — are laid out exactly this way.
+    // active. Modelled on the account switchers this pattern is borrowed from.
+    //
+    // EDIT AND REMOVE ARE SWIPES, matching the Inbox exactly (2026-08-17): swipe
+    // RIGHT to reveal Remove and tap it, swipe LEFT to edit. The ⓘ menu that used
+    // to sit on the right is gone — the same two actions reached two ways, one of
+    // which contradicted the Inbox, and its 30pt tap target crowded the row. The
+    // long-press menu stays as the non-gesture path, and VoiceOver gets both
+    // actions explicitly.
     private var grid: some View {
         VStack(spacing: 0) {
             ForEach(Array(profiles.profiles.enumerated()), id: \.element.id) { index, profile in
                 if index > 0 { divider }
-                HStack(spacing: 14) {
-                    Button { switchTo(profile) } label: {
-                        HStack(spacing: 14) {
-                            ProfileAvatar(initials: profile.initials,
-                                          colorIndex: profile.colorIndex,
-                                          size: 44,
-                                          isSelected: false)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(profile.displayName)
-                                    .font(.body14).foregroundStyle(Color.ink).lineLimit(1)
-                                Text("\(count(profile)) to-dos")
-                                    .font(.subline).foregroundStyle(Color.faded)
-                            }
-                            Spacer(minLength: 8)
-                            // The tick, not a ring: it names the state ("this is
-                            // the one you're using") instead of leaving colour to
-                            // imply it.
-                            if profile.id == profiles.activeProfileID {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Color.accent)
-                                    .accessibilityLabel("Currently viewing")
-                            }
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu { editActions(for: profile) }
-
-                    Menu {
-                        editActions(for: profile)
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 19))
-                            .foregroundStyle(Color.faded)
-                            .frame(width: 30, height: 40)
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Edit \(profile.displayName)")
-                }
-                .padding(.vertical, 10)
+                ProfileSwipeRow(
+                    name: profile.displayName,
+                    initials: profile.initials,
+                    colorIndex: profile.colorIndex,
+                    todoCount: count(profile),
+                    isActive: profile.id == profiles.activeProfileID,
+                    // The owner is the account itself, so there is nothing to
+                    // remove them FROM — their row has no Remove tray at all
+                    // rather than one that opens and then refuses.
+                    canRemove: !profile.isOwner,
+                    onTap: { switchTo(profile) },
+                    onEdit: { startEditing(profile) },
+                    onRemove: { confirmRemove = profile })
+                .contextMenu { editActions(for: profile) }
             }
 
             divider
@@ -190,11 +165,7 @@ struct FamilySharingView: View {
         // Prefill with the CURRENT name. An empty rename field reads as "type a new
         // name from scratch" and, worse, Save is disabled until you type something —
         // so tapping Edit to check a spelling left you with a dead sheet.
-        Button("Edit") {
-            newName = profile.name
-            loadReminderState(for: profile)
-            editing = profile
-        }
+        Button("Edit") { startEditing(profile) }
         // The owner is the account itself, so there's nothing to remove them FROM.
         if !profile.isOwner {
             Button("Remove", role: .destructive) { confirmRemove = profile }
@@ -277,6 +248,12 @@ struct FamilySharingView: View {
 
     private func count(_ profile: Profile) -> Int {
         TaskLimit.count(context, profileID: profile.id)
+    }
+
+    private func startEditing(_ profile: Profile) {
+        newName = profile.name
+        loadReminderState(for: profile)
+        editing = profile
     }
 
     private func switchTo(_ profile: Profile) {
@@ -369,4 +346,137 @@ struct FamilySharingView: View {
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(ProfileStore())
         .environment(PlusStore())
+}
+
+// One family member's row. The gesture contract is INboxView.SwipeRow's, on
+// purpose: swipe RIGHT to open a Remove tray you then tap, swipe LEFT to edit.
+//
+// Why a hand-rolled drag rather than `.swipeActions`: that modifier only works
+// inside a `List`, and this screen is a card-shaped `VStack`. The Inbox solved
+// the same problem the same way, so copying its mechanics — 84pt tray, identical
+// spring, identical dominance guard — is what makes the two feel like one app.
+//
+// The DESTRUCTIVE direction settles open and waits for a tap; the harmless one
+// fires on release. That asymmetry is the Inbox's too, and it's the reason a
+// stray swipe can't delete a person.
+private struct ProfileSwipeRow: View {
+    let name: String
+    let initials: String
+    let colorIndex: Int
+    let todoCount: Int
+    let isActive: Bool
+    let canRemove: Bool
+    let onTap: () -> Void
+    let onEdit: () -> Void
+    let onRemove: () -> Void
+
+    @State private var offset: CGFloat = 0    // live x-offset
+    @State private var rest: CGFloat = 0      // committed resting offset (0, or +btnW)
+    private let btnW: CGFloat = 84
+    private let spring = Animation.spring(response: 0.28, dampingFraction: 0.85)
+
+    var body: some View {
+        ZStack {
+            HStack(spacing: 0) {
+                removeButton
+                Spacer()
+                editHint
+            }
+            rowContent
+                .background(Color.card)   // opaque, so the trays stay hidden until revealed
+                .contentShape(Rectangle())
+                .offset(x: offset)
+                // A tap, never a Button: a Button under `.simultaneousGesture`
+                // fires a phantom tap when a swipe ends, which would switch
+                // profiles every time you tried to edit one.
+                .onTapGesture { rest != 0 ? close() : onTap() }
+                .simultaneousGesture(dragGesture)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityActions {
+                    Button("Edit") { onEdit() }
+                    if canRemove { Button("Remove") { onRemove() } }
+                }
+        }
+        .clipped()
+    }
+
+    private var rowContent: some View {
+        HStack(spacing: 14) {
+            ProfileAvatar(initials: initials, colorIndex: colorIndex, size: 44, isSelected: false)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(.body14).foregroundStyle(Color.ink).lineLimit(1)
+                Text("\(todoCount) to-dos").font(.subline).foregroundStyle(Color.faded)
+            }
+            Spacer(minLength: 8)
+            // The tick, not a ring: it NAMES the state instead of leaving colour
+            // to imply it.
+            if isActive {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.accent)
+                    .accessibilityLabel("Currently viewing")
+            }
+        }
+        .padding(.vertical, 10)
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onChanged { value in
+                // Horizontal dominance, or the card stops scrolling vertically.
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                let raw = rest + value.translation.width
+                // Don't let the Remove tray peek open on a row that has none.
+                offset = min(canRemove ? btnW : 0, max(-btnW, raw))
+            }
+            .onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else {
+                    withAnimation(spring) { offset = rest }; return
+                }
+                let dx = value.translation.width
+                let t = btnW * 0.5
+                if dx <= -t && rest == 0 {
+                    onEdit()                                              // LEFT → edit
+                    withAnimation(spring) { offset = 0 }
+                } else if dx >= t && canRemove {
+                    rest = btnW; withAnimation(spring) { offset = btnW }   // RIGHT → reveal Remove
+                } else {
+                    rest = 0; withAnimation(spring) { offset = 0 }
+                }
+            }
+    }
+
+    // Revealed by a right swipe, then TAPPED — the "one more click" before a
+    // person and their to-dos go. It still routes through the existing
+    // confirmation alert, so removing stays two deliberate acts.
+    private var removeButton: some View {
+        Button { onRemove() } label: {
+            VStack(spacing: 3) {
+                Image(systemName: "trash").font(.system(size: 17, weight: .semibold))
+                Text("Remove").font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .frame(width: btnW).frame(maxHeight: .infinity)
+            .background(Color.bad)
+        }
+        .buttonStyle(.plain)
+        .opacity(offset > 1 ? 1 : 0)
+    }
+
+    // Feedback while swiping left; the edit sheet itself opens on release.
+    private var editHint: some View {
+        VStack(spacing: 3) {
+            Image(systemName: "pencil").font(.system(size: 17, weight: .semibold))
+            Text("Edit").font(.system(size: 11, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .frame(width: btnW).frame(maxHeight: .infinity)
+        .background(Color.accent)
+        .opacity(offset < -1 ? 1 : 0)
+    }
+
+    private func close() {
+        rest = 0
+        withAnimation(spring) { offset = 0 }
+    }
 }
