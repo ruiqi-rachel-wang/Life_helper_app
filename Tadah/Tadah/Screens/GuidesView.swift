@@ -389,7 +389,7 @@ struct GuideQuestionsView: View {
                             get: { GuideDate.decode(answers[q.id]) ?? .now },
                             set: { answers[q.id] = GuideDate.encode($0) }),
                             displayedComponents: [.date])
-                            .labelsHidden().datePickerStyle(.compact)
+                            .labelsHidden().datePickerStyle(.compact).tint(Color.ink)
                     }
                 }
             }

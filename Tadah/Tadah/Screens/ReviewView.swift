@@ -396,7 +396,7 @@ struct ReviewView: View {
                     if includeDue {
                         DatePicker("", selection: dueDateBinding,
                                    displayedComponents: draft.dueHasTime ? [.date, .hourAndMinute] : [.date])
-                            .labelsHidden().datePickerStyle(.compact)
+                            .labelsHidden().datePickerStyle(.compact).tint(Color.ink)
                         Toggle("Specific time", isOn: bindBool(\.dueHasTime)).font(.subline).tint(Color.ink)
                             // A plain date carries midnight; turning "time" on would make a
                             // 12:00 AM event that's instantly overdue. Start at 9am instead.

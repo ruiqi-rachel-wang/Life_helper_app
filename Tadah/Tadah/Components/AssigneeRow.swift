@@ -27,7 +27,7 @@ struct AssigneeRow: View {
                         Text(profile.displayName).tag(Optional(profile.id))
                     }
                     // Last, and separated: it's the "no one person" case.
-                    Divider()
+                    Divider().overlay(Color.hair)
                     Text("Everyone").tag(UUID?.none)
                 }
             } label: {

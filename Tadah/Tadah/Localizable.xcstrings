@@ -18358,23 +18358,6 @@
         }
       }
     },
-    "Used for “Everyone” to-dos and anyone without their own reminder time.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Se usa para las tareas de “Todos” y para quien no tenga su propia hora de recordatorio."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用于“全家”的待办事项，以及未设置自己提醒时间的成员。"
-          }
-        }
-      }
-    },
     "USPS forwarding only moves your mail — update your bank, DMV, and employer separately.": {
       "extractionState": "stale",
       "localizations": {
@@ -20513,6 +20496,261 @@
           "stringUnit": {
             "state": "translated",
             "value": "好，把内容发送给 AI"
+          }
+        }
+      }
+    },
+    "MEMBERSHIP": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MEMBRESÍA"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会员"
+          }
+        }
+      }
+    },
+    "Tadah Plus · Yearly": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah Plus · Anual"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah Plus · 年付"
+          }
+        }
+      }
+    },
+    "Tadah Plus · Monthly": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah Plus · Mensual"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah Plus · 月付"
+          }
+        }
+      }
+    },
+    "You're on the free plan. Tadah Plus adds family lists, more scans, and more devices.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estás en el plan gratuito. Tadah Plus añade listas familiares, más escaneos y más dispositivos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你正在使用免费方案。Tadah Plus 可增加家庭列表、更多扫描次数和更多设备。"
+          }
+        }
+      }
+    },
+    "There's a problem with your payment. Update your payment method in the App Store to keep Tadah Plus.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hay un problema con tu pago. Actualiza tu método de pago en la App Store para conservar Tadah Plus."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的付款出现问题。请在 App Store 更新付款方式以继续使用 Tadah Plus。"
+          }
+        }
+      }
+    },
+    "Your Plus membership ended on %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu membresía Plus finalizó el %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 Plus 会员已于 %@ 结束。"
+          }
+        }
+      }
+    },
+    "Your Plus membership has ended.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu membresía Plus ha finalizado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 Plus 会员已结束。"
+          }
+        }
+      }
+    },
+    "Renews automatically on %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se renueva automáticamente el %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将于 %@ 自动续订。"
+          }
+        }
+      }
+    },
+    "Renews automatically.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se renueva automáticamente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将自动续订。"
+          }
+        }
+      }
+    },
+    "Cancelled — you keep Tadah Plus until %@, then it won't renew.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelada: conservas Tadah Plus hasta el %@ y después no se renovará."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已取消——你可继续使用 Tadah Plus 至 %@，之后将不再续订。"
+          }
+        }
+      }
+    },
+    "Cancelled — it won't renew.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelada: no se renovará."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已取消——将不再续订。"
+          }
+        }
+      }
+    },
+    "Manage in the App Store": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestionar en la App Store"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 App Store 中管理"
+          }
+        }
+      }
+    },
+    "Cancel, switch between monthly and yearly, or update your payment method. Apple handles subscriptions, so this opens their settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancela, cambia entre mensual y anual, o actualiza tu método de pago. Apple gestiona las suscripciones, así que esto abre sus ajustes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消订阅、在月付与年付之间切换，或更新付款方式。订阅由 Apple 管理，因此这会打开 Apple 的设置。"
+          }
+        }
+      }
+    },
+    "Your Tadah Plus membership is back on this phone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu membresía Tadah Plus ha vuelto a este teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 Tadah Plus 会员已恢复到这台手机。"
+          }
+        }
+      }
+    },
+    "This Apple ID has no Tadah Plus purchase to restore.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este Apple ID no tiene ninguna compra de Tadah Plus que restaurar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此 Apple ID 没有可恢复的 Tadah Plus 购买记录。"
           }
         }
       }

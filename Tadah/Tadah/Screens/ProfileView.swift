@@ -422,13 +422,13 @@ struct ProfileView: View {
                              : LocalizedStringKey("Reminder time"))
                             .font(.body14).foregroundStyle(Color.ink)
                     }
-                    if profiles.hasFamily {
-                        Text("Used for “Everyone” to-dos and anyone without their own reminder time.")
-                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
                 }
-                .tint(Color.accent)
+                // INK, not accent. `tint` colours the compact picker's value text,
+                // and burnt sienna on iOS's near-white picker fill measures about
+                // 4.5:1 — right on the AA floor and reported as hard to read.
+                // Ink is ~12.5:1 on the same fill, and matches the Toggles that
+                // already use .tint(Color.ink) elsewhere.
+                .tint(Color.ink)
                 .padding(.vertical, 8)
                 .onChange(of: reminderMinutes) { _, _ in rescheduleAllItems() }
             }

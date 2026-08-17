@@ -172,6 +172,7 @@ final class ProfileStore {
                 existing.touch()
             }
             adoptPreProfileItemsOnce(context, into: existing)
+            resolveDuplicateColors(context)
             return existing
         }
         let created = Profile(name: name, colorIndex: 0, isOwner: true)
@@ -403,11 +404,53 @@ final class ProfileStore {
         reload(context)
         let limit = Self.cap(plus: plus)
         guard profiles.count < limit else { throw ProfileError.capReached(limit) }
-        let created = Profile(name: name,
-                              colorIndex: profiles.count % Profile.paletteCount)
+        let created = Profile(name: name, colorIndex: freeColorIndex())
         context.insert(created)
         reload(context)
         return created
+    }
+
+    // The lowest palette slot nobody is using.
+    //
+    // This was `profiles.count % paletteCount`, which collides as soon as the
+    // count stops matching the slots in use: owner(0) + A(1) + B(2), remove A,
+    // add C — count is 2, so C is handed slot 2, the colour B already has. Two
+    // family members then look identical in the switcher, which is the one job
+    // the colour has. Past six profiles (the cap is eight) reuse is unavoidable,
+    // so fall back to the least-used slot rather than always the same one.
+    private func freeColorIndex() -> Int {
+        var used: [Int: Int] = [:]
+        for p in profiles {
+            let slot = ((p.colorIndex % Profile.paletteCount) + Profile.paletteCount) % Profile.paletteCount
+            used[slot, default: 0] += 1
+        }
+        if let free = (0..<Profile.paletteCount).first(where: { used[$0] == nil }) { return free }
+        return (0..<Profile.paletteCount).min { (used[$0] ?? 0) < (used[$1] ?? 0) } ?? 0
+    }
+
+    // Repair profiles that ALREADY share a colour, from the buggy assignment
+    // above or from a sync that landed two people on one slot. The owner keeps
+    // slot 0 (it's the app's accent); everyone else moves to a free slot in
+    // creation order. Stamped so the change reaches the family's other devices.
+    private func resolveDuplicateColors(_ context: ModelContext) {
+        var seen = Set<Int>()
+        var changed = false
+        for profile in profiles {
+            let slot = ((profile.colorIndex % Profile.paletteCount) + Profile.paletteCount) % Profile.paletteCount
+            if profile.isOwner { seen.insert(slot); continue }
+            if seen.contains(slot) {
+                let free = (0..<Profile.paletteCount).first { !seen.contains($0) }
+                if let free, free != slot {
+                    profile.colorIndex = free
+                    profile.touch()
+                    changed = true
+                    seen.insert(free)
+                    continue
+                }
+            }
+            seen.insert(slot)
+        }
+        if changed { reload(context) }
     }
 
     // STAMPS ONLY ON A REAL CHANGE.

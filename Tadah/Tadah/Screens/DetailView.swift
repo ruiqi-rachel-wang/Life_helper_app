@@ -285,7 +285,7 @@ struct DetailView: View {
                     HStack(spacing: 6) {
                         DatePicker("", selection: dueBinding,
                                    displayedComponents: item.dueHasTime ? [.date, .hourAndMinute] : [.date])
-                            .labelsHidden().datePickerStyle(.compact)
+                            .labelsHidden().datePickerStyle(.compact).tint(Color.ink)
                         Button {
                             // Clear the due date AND its (now-orphaned) reminders,
                             // so we don't schedule reminders for an item with no date.

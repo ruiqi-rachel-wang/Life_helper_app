@@ -47,7 +47,7 @@ struct RemindersEditor: View {
                     VStack(spacing: 6) {
                         HStack(spacing: 8) {
                             DatePicker("", selection: dateBinding(i), displayedComponents: [.date, .hourAndMinute])
-                                .labelsHidden().datePickerStyle(.compact)
+                                .labelsHidden().datePickerStyle(.compact).tint(Color.ink)
                             Spacer()
                             Button { delete(i) } label: {
                                 Image(systemName: "minus.circle.fill").font(.system(size: 18)).foregroundStyle(Color.faint)

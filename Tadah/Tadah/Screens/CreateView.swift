@@ -40,6 +40,12 @@ struct CreateView: View {
     @State private var quotaMessage: String?
     @State private var showPaywall = false
     @State private var showAIConsent = false
+    // WHICH way in the user actually tapped, so agreeing to the consent sheet
+    // resumes THAT one. Without it the resume always preferred the camera, so
+    // "Upload from Photos" → agree → the camera opened.
+    @State private var pendingEntry: ScanEntry?
+
+    private enum ScanEntry { case camera, photos }
 
     private var cameraAvailable: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
@@ -194,13 +200,18 @@ struct CreateView: View {
             Button("OK", role: .cancel) {}
         } message: { Text(quotaMessage ?? "") }
         .sheet(isPresented: $showPaywall) { PaywallView() }
-        // Asked once, at the first scan. Agreeing continues straight into the
-        // camera so the tap isn't wasted; declining returns to the Add screen
-        // with everything else still working.
+        // Asked once, at the first scan or upload. Agreeing resumes the way in
+        // the user actually chose, so the tap isn't wasted; declining returns to
+        // the Add screen with everything else still working.
         .sheet(isPresented: $showAIConsent) {
             AIConsentSheet { granted in
+                let entry = pendingEntry
+                pendingEntry = nil
                 guard granted else { return }
-                if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+                switch entry {
+                case .photos:          showPhotoPicker = true
+                case .camera, .none:   if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+                }
             }
         }
     }
@@ -212,8 +223,25 @@ struct CreateView: View {
     // The hero tile's action, also fired by the tour card's Next: camera on a
     // real device, photo picker on the Simulator (no camera there).
     private func startScan() {
+        // Recorded BEFORE the gate, because allowScan() is what puts the consent
+        // sheet up and the sheet needs to know where to come back to.
+        pendingEntry = cameraAvailable ? .camera : .photos
         guard allowScan() else { return }
         if cameraAvailable { showCamera = true } else { showPhotoPicker = true }
+    }
+
+    // "Upload from Photos" — the same gate as the camera.
+    //
+    // This tile used to BE a PhotosPicker, so it opened the system picker
+    // immediately and the consent check only happened in the onChange after the
+    // user had already chosen their photos. Two things wrong with that: the
+    // question arrived after the work, and agreeing then resumed into the camera
+    // instead of the pictures they'd just picked. Asking first is both more
+    // honest and less annoying.
+    private func startUpload() {
+        pendingEntry = .photos
+        guard allowScan() else { return }
+        showPhotoPicker = true
     }
 
     private var heroTile: some View {
@@ -251,8 +279,7 @@ struct CreateView: View {
     // Top-aligned: the captions wrap differently, so the cards differ in height.
     private var secondaryRow: some View {
         HStack(alignment: .top, spacing: 8) {
-            PhotosPicker(selection: $photoItems, maxSelectionCount: Self.maxPages,
-                         selectionBehavior: .ordered, matching: .images) {
+            Button { startUpload() } label: {
                 SecondaryTile(symbol: "photo.on.rectangle.angled",
                               color: .sourceScanned,
                               title: "Upload from Photos",
@@ -520,7 +547,7 @@ private struct CreateForm: View {
                     Text("Date").font(.subline).foregroundStyle(Color.faded)
                     Spacer()
                     DatePicker("", selection: $dueDate, displayedComponents: .date)
-                        .labelsHidden().datePickerStyle(.compact)
+                        .labelsHidden().datePickerStyle(.compact).tint(Color.ink)
                 }
             }
         }

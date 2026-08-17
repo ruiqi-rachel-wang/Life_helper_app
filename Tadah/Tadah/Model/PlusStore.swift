@@ -48,6 +48,28 @@ final class PlusStore {
     // badge in Profile, and what a restore actually restored.
     var paidFeaturesUnlocked: Bool { !tierKnown || isPlus }
 
+    // WHAT THE ACCOUNT PAGE NEEDS TO SHOW ABOUT A SUBSCRIPTION.
+    //
+    // Everything here comes from RevenueCat's EntitlementInfo. Deliberately a
+    // plain snapshot rather than the SDK type, so the view never has to know the
+    // SDK and this can be built in a preview or a test.
+    //
+    // ⚠️ THERE IS NO "PAUSE". Apple's App Store has no subscription-pause feature
+    // (that's Google Play), so offering one would be a button that cannot work.
+    // Cancelling also cannot happen in-app — Apple owns that screen, and the only
+    // correct thing we can do is send people to it.
+    struct Membership: Equatable {
+        var isActive: Bool
+        var willRenew: Bool
+        var expirationDate: Date?
+        var productIdentifier: String
+        var hasBillingProblem: Bool
+        var isYearly: Bool { productIdentifier.contains("yearly") || productIdentifier.contains("annual") }
+    }
+
+    // nil = not subscribed, or RevenueCat hasn't answered yet.
+    private(set) var membership: Membership?
+
     init() {
         Task {
             await refresh()
@@ -92,7 +114,18 @@ final class PlusStore {
     }
 
     private func apply(_ info: CustomerInfo) {
-        isPlus = info.entitlements[Self.entitlementID]?.isActive == true
+        let entitlement = info.entitlements[Self.entitlementID]
+        isPlus = entitlement?.isActive == true
+        // Kept even once it has EXPIRED, so the account page can say "ended on
+        // the 4th" instead of silently going blank — someone whose card failed
+        // needs to see what happened, not an empty space where their plan was.
+        membership = entitlement.map {
+            Membership(isActive: $0.isActive,
+                       willRenew: $0.willRenew,
+                       expirationDate: $0.expirationDate,
+                       productIdentifier: $0.productIdentifier,
+                       hasBillingProblem: $0.billingIssueDetectedAt != nil)
+        }
         tierKnown = true
     }
 }

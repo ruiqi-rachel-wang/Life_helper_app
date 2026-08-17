@@ -215,7 +215,7 @@ struct FamilySharingView: View {
                     // already exists — while adding, there's nothing to attach it
                     // to yet, and one decision at a time is plenty.
                     if profile != nil {
-                        Divider().padding(.vertical, 4)
+                        Divider().overlay(Color.hair).padding(.vertical, 4)
                         Toggle(isOn: $useOwnReminderTime.animation(.easeInOut(duration: 0.15))) {
                             Text("Own reminder time").font(.body14).foregroundStyle(Color.ink)
                         }
@@ -231,6 +231,7 @@ struct FamilySharingView: View {
                                            displayedComponents: .hourAndMinute)
                                     .datePickerStyle(.compact)
                                     .labelsHidden()
+                                    .tint(Color.ink)
                             }
                         } else {
                             Text("Follows your default reminder time.")
