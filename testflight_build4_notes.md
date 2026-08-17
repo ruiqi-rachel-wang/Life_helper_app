@@ -1289,10 +1289,22 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
    The live page is still the **August 7** version and still describes Sign in
    with Apple. `docs/privacy.html` and `docs/terms.html` were regenerated on
    **August 16** from `LegalContent.swift` (the single source — edit that, then
-   run `python3 legal/make_legal_pages.py`, never edit the HTML by hand):
-   `npx wrangler pages deploy docs --project-name cuevi-legal`
-   Then confirm https://cuevi-legal.pages.dev/privacy shows **August 16, 2026**,
-   says email + password, and no longer mentions Sign in with Apple.
+   run `python3 legal/make_legal_pages.py`, never edit the HTML by hand).
+   **Run from the REPO ROOT** — `docs/` lives there, not in `cloudflare-worker/`,
+   and running it from the Worker directory fails with `ENOENT ... scandir
+   .../cloudflare-worker/docs` plus a red-herring warning about the Worker's
+   `wrangler.toml` missing `pages_build_output_dir`:
+   ```
+   cd "/Users/rachelwang/Project!/notie_life_helper_app"
+   npx wrangler pages deploy docs --project-name cuevi-legal
+   ```
+   Then confirm it actually replaced the live copy:
+   ```
+   curl -s https://cuevi-legal.pages.dev/privacy | grep -o 'Last updated:</strong> [A-Za-z0-9, ]*'
+   curl -s https://cuevi-legal.pages.dev/privacy | grep -ci 'sign in with apple'
+   ```
+   Expect **August 16, 2026** and **0**. If the date is still August 7, the deploy
+   did not land.
 
 3. ☐ **Update the App Privacy label** (App Store Connect → App Privacy) from
    `legal/app-store-privacy-label.md`. **Changed materially:** with accounts, data
