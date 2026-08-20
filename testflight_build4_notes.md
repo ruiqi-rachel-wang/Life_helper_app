@@ -1243,49 +1243,46 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
 > of that is wrong now — the route is gone, the entitlement is gone, and following
 > those steps would waste an afternoon creating an Apple key nothing reads.
 
-1. ☐ **Decide whether to deploy the Worker with this build.** You do **not** have
-   to. The app behaves identically against the currently-deployed Worker, because
-   the pending Worker changes are dead-code removal (Apple JWKS, nonces, ES256
-   client-secret minting) plus the deletion-flow tidy — nothing the app depends on.
-   - The 51 route tests **cannot run on this Mac** (Node 20.6.0; vitest needs
-     ≥22.12, and it dies on `styleText` not exported from `node:util`). Deploying
-     untested code that owns account deletion is the one avoidable risk here.
-   - **Recommended:** ship build 4 against the current Worker, then install
-     Node 22, run `npm test` in `Tadah/cloudflare-worker`, and deploy separately.
-   - If you do deploy: `cd Tadah/cloudflare-worker && npx wrangler deploy`
-     *(Node 22 needed: `export PATH="/usr/local/opt/node@22/bin:$PATH"`.)*
-   - ☐ Secrets that must exist — **these three, not the Apple ones**. Each fails
-     CLOSED, so a missing one breaks accounts loudly rather than quietly:
-     `npx wrangler secret put PASSWORD_PEPPER` (generate once with
-     `openssl rand -base64 32` and **never rotate it** — rotating invalidates
-     every stored password at once),
-     `npx wrangler secret put RESEND_KEY` (password-reset email),
-     `npx wrangler secret put EMAIL_FROM` (e.g. `noreply@mytadah.com`, on a domain
-     **verified in Resend** — the shared `onboarding@resend.dev` sender only
-     delivers to the Resend account owner, so a real user would be told to check
-     an inbox for a code that could never arrive).
-   - ☐ `APPLE_AUDIENCE`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` are
-     **no longer read by anything**. Delete them:
-     `npx wrangler secret delete <NAME>`.
+1. ☑ **Worker deploy — DONE and verified 2026-08-20.** `wrangler deployments
+   list` shows the newest deployment at **2026-08-17 16:53**, after the final
+   Worker commit (`2ea218c`), and nothing app-side has touched the Worker since.
+   - **Node 22 is now installed** (`/usr/local/opt/node@22`), so the route tests
+     run on this Mac at last: **31/31 helper + 59/59 route pass (2026-08-20)**.
+     For any future wrangler/vitest use:
+     `export PATH="/usr/local/opt/node@22/bin:$PATH"`.
+   - ☑ Secrets verified present 2026-08-20 via `wrangler secret list`:
+     `PASSWORD_PEPPER`, `RESEND_KEY`, `EMAIL_FROM` all exist (each fails CLOSED
+     if missing). Never rotate `PASSWORD_PEPPER` — rotating invalidates every
+     stored password at once.
+   - ☐ `APPLE_AUDIENCE`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`
+     still exist and are **no longer read by anything** (a route test pins the
+     404). Delete them — *this needs to run by hand; the assistant's permission
+     layer blocks prod secret deletion:*
+     `cd Tadah/cloudflare-worker && for s in APPLE_AUDIENCE APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY; do npx wrangler secret delete "$s"; done`
    - ☐ Re-run `npx wrangler d1 execute cuevi-metrics --remote --file=schema.sql`
      (adds `sessions.plus_checked_at` and the accounts/reset tables; the Worker
      also creates them lazily). It no longer creates `used_nonces`. An existing
      database keeps its unused `used_nonces` table and
      `account_deletions.apple_revoked` column — nothing reads either, and they can
      be dropped by hand whenever convenient.
-   - ☐ **Purge the historical analytics item ids.** Rows already in `events`
-     contain RAW task UUIDs, joinable against `tasks.item_id` → `tasks.user_id`.
-     New uploads send a salted HMAC, but the old rows stay re-identifiable:
+   - ☐ **Purge the historical analytics item ids — still pending.** Verified
+     2026-08-20: **39 rows** in `events` still carry RAW task UUIDs, joinable
+     against `tasks.item_id` → `tasks.user_id`. New uploads send a salted HMAC,
+     but the old rows stay re-identifiable:
      `npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE events SET item_id = NULL;"`
      This blanks the funnel for pre-build-4 events (counts survive; only per-item
-     matching is lost). Do it before the privacy label goes in.
-   - ☐ **Also clear legacy session device ids.** Before the split, `Install.id`
-     was sent BOTH as the metrics `install_id` and the auth `deviceId`, so any
-     session row from a pre-fix build can still be joined to `events`:
+     matching is lost). Do it before the privacy label goes in. *(Run by hand —
+     the assistant's permission layer blocks remote D1 writes.)*
+   - ☐ **Also clear legacy session device ids — still pending.** Verified
+     2026-08-20: **11 session rows** still carry a joinable `device_id`. Before
+     the split, `Install.id` was sent BOTH as the metrics `install_id` and the
+     auth `deviceId`:
      `npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE sessions SET device_id = '';"`
      Harmless — worst case is one extra sign-in.
 
-2. ☐ **Publish the updated legal pages — REQUIRED, and currently out of date.**
+2. ☑ **Legal pages — DONE, verified live 2026-08-20.** The live page shows
+   **August 16, 2026** and zero mentions of Sign in with Apple (both curl checks
+   below pass). Kept for reference:
    The live page is still the **August 7** version and still describes Sign in
    with Apple. `docs/privacy.html` and `docs/terms.html` were regenerated on
    **August 16** from `LegalContent.swift` (the single source — edit that, then
@@ -1319,10 +1316,10 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
    Limits). The model is `gpt-5-mini` and `MAX_TOKENS` is 4000, so cost per scan
    has changed since you last looked.
 
-6. ☐ **Confirm the paywall renders in all three languages.** A package that
-   exists only in `zh_Hans` breaks the en/es paywalls, which would block every
-   purchase on a build whose headline feature is Plus. Check the RevenueCat
-   dashboard before upload, or decide build 4 says "Plus is coming soon".
+6. ☑ **Paywall locales — verified 2026-08-20** against the RevenueCat API:
+   offering `default` is Current with `$rc_monthly` + `$rc_annual` present
+   identically in en, es, and zh_Hans (same healthy state as the 2026-08-16
+   dashboard check). Nothing to do unless the dashboard changes before upload.
 
 ## Smoke test on a real device — nothing below is proven by the test suite
 
@@ -1342,6 +1339,21 @@ Resend/DNS, two devices, StoreKit). 273/273 passing says nothing about them.
   signed out with a clear message.
 - ☐ **Plus, only if it should be purchasable in build 4**: sandbox purchase and
   restore. If build 4 says "Plus is coming soon", this is not a blocker.
+
+## Verified 2026-08-20 (after the guide/copy round + review fixes, `3c90683`)
+
+- **281/281 unit tests across 24 suites** on the committed tree.
+- **31/31 Worker helper + 59/59 route tests** — the route suite's first-ever
+  run on this Mac, on the newly installed Node 22.
+- Live legal pages current (August 16, zero Apple mentions), Worker deployed
+  2026-08-17 (after the last Worker commit), all three fail-closed secrets
+  present, RevenueCat offering healthy in en/es/zh.
+- Catalog **1276 keys**, es/zh-Hans complete; +4/−8 in the review round, every
+  new key verified byte-for-byte against its Swift literal.
+- Working tree clean.
+- Still pending from the checklist: Apple secret deletion, the two D1 privacy
+  purges (39 + 11 rows), the App Privacy label, the OpenAI cap check, the
+  archive/upload itself, and the on-device smoke test.
 
 ## Verified from the repo (2026-08-16)
 
