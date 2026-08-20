@@ -454,6 +454,31 @@ extension Guide {
 
     private static func licenseDetail(_ text: String, _ state: String) -> StepDetail? {
         if text.contains("Gather proof") { return licenseDocsDetail }
+        if text.hasPrefix("Study your state's driver handbook") {
+            return StepDetail(
+                explanation: "The written test comes straight out of your state's driver handbook, which is free on the DMV site. Passing it plus a vision check gets you a learner's permit — the thing that lets you practice legally.",
+                miniChecklist: ["Download your state's driver handbook — free, and the test is written from it.",
+                                "Take the free online practice tests until you pass them comfortably.",
+                                "Check whether your state lets you take the written test online or only in person.",
+                                "Bring your documents and the fee — the permit is usually issued the same day."],
+                links: [StepLink(label: "Open your state's DMV", url: dmvURL(state))])
+        }
+        if text.hasPrefix("Book the road test") {
+            return StepDetail(
+                explanation: "Road-test slots book out weeks ahead in most places, so the date you can book is often what decides when you get your license — not when you're ready. Check the earliest date you're eligible and book it then.",
+                miniChecklist: ["Book online as soon as you're eligible; cancellations open earlier slots, so check back.",
+                                "Log your supervised hours as you go if your state requires a signed log.",
+                                "Note the reschedule rules — a missed test can cost the fee or push you weeks back."],
+                links: [StepLink(label: "Open your state's DMV", url: dmvURL(state))])
+        }
+        if text.hasPrefix("For the road test") {
+            return StepDetail(
+                explanation: "Tests get canceled on the spot for the car, not the driving — a broken brake light or expired registration ends the appointment before you pull away.",
+                miniChecklist: ["Check every light, the horn, the wipers, the mirrors, and the tires the day before.",
+                                "Bring the car's current registration and proof of insurance.",
+                                "Bring your learner's permit and your appointment confirmation.",
+                                "Bring a licensed adult to ride along — most states require one to accompany you."])
+        }
         if text.contains("DMV requirements") || text.contains("renew online")
             || text.contains("Report your new address") || text.contains("Exchange your out-of-state") {
             return StepDetail(
@@ -657,13 +682,13 @@ extension Guide {
                 confidence: 1)
         })
 
-    // MARK: Buying a home (pre-offer only — inspection through closing is its
-    // own follow-up guide, started fresh once an offer is actually accepted;
-    // see the last note below).
+    // MARK: Buying a home (credit check through closing — the post-offer
+    // stretch runs on the contract clock, so it lives here as steps, not as a
+    // follow-up guide or a note).
     static let buyingHome = Guide(
         id: "buying",
         title: "Buying a home",
-        subtitle: "Credit, pre-approval, agent, offer",
+        subtitle: "Credit, pre-approval, offer, closing",
         category: .housing,
         // The ONLY guide that had no questions, while its first screen promised
         // "a few quick questions so Tadah can tailor the checklist" — so it asked
@@ -673,16 +698,21 @@ extension Guide {
         // people don't know exists).
         //
         // NO ZIP. It used to ask for one "for local first-time buyer programs" and
-        // then never read it — this guide is pre-offer, so it has no utilities step
-        // for the ZIP lookup to fill in, and the first-buyer step is already the
-        // right, state-level advice without one. Worse than useless: the free-quota
+        // then never read it — there's no utilities step for the ZIP lookup to
+        // fill in, and the first-buyer step is already the right, state-level
+        // advice without one. Worse than useless: the free-quota
         // gate saw a valid ZIP and could turn someone away for an AI call that was
         // never going to happen.
         questions: [
             GuideQuestion(id: "stage", prompt: "Where are you up to?",
-                          kind: .choice(["Just starting", "Have pre-approval", "Working with an agent"])),
+                          kind: .choice(["Just starting", "Have pre-approval", "Working with an agent",
+                                         "Offer accepted"])),
             GuideQuestion(id: "firstTime", prompt: "Is this your first home?",
-                          kind: .choice(["Yes", "No"])),
+                          // Once the offer is accepted, the programs step is
+                          // dropped either way — the answer would change
+                          // nothing, so the question isn't asked.
+                          kind: .choice(["Yes", "No"]),
+                          showIf: { $0["stage"] != "Offer accepted" }),
         ],
         build: { a in
             let stage = a["stage"] ?? ""
@@ -694,28 +724,44 @@ extension Guide {
             if stage == "Just starting" || stage.isEmpty {
                 steps.append("Check your credit and set a budget, including the down payment and the monthly cost (loan, taxes, insurance).")
             }
-            // Only "Have pre-approval" drops this step. Working with an agent does
-            // NOT imply you're pre-approved — plenty of people tour with an agent
-            // first — and dropping the single highest-leverage financing step on
-            // that assumption left them without it entirely.
-            if stage != "Have pre-approval" {
+            // Working with an agent does NOT drop this step: it doesn't imply
+            // you're pre-approved — plenty of people tour with an agent first —
+            // and dropping the single highest-leverage financing step on that
+            // assumption left them without it entirely. An accepted offer DOES:
+            // financing is necessarily in motion by then, and the "send your
+            // lender everything" step below is the one that still applies.
+            if stage != "Have pre-approval" && stage != "Offer accepted" {
                 steps.append("Get pre-approved for a mortgage — compare rates and fees from a few lenders.")
             }
-            if stage != "Working with an agent" {
+            if stage != "Working with an agent" && stage != "Offer accepted" {
                 steps.append("Find a real estate agent and start touring homes in your price range.")
             }
-            if firstTime {
+            if firstTime && stage != "Offer accepted" {
                 // The highest-value thing a first-time buyer doesn't know to ask.
                 // "You apply before making an offer" was stated as the rule; the
                 // timing actually varies by program, and some run through the
                 // lender as part of the loan rather than as a separate application.
                 steps.append("Check first-time buyer programs in your state — many offer down-payment help or a lower rate. Ask early how each one works and when to apply, since some need to be lined up before you make an offer.")
             }
-            steps.append("Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.")
+            if stage != "Offer accepted" {
+                steps.append("Make an offer; once it's accepted, sign the purchase agreement and pay the earnest-money deposit.")
+            } else {
+                // The tail of the offer step happens AFTER acceptance, on a
+                // deadline — dropping the step can't drop these two actions.
+                steps.append("Sign the purchase agreement and pay the earnest-money deposit — it's usually due within a few days of acceptance.")
+            }
+
+            // Everything below happens on a contract clock. These used to be one
+            // sentence in the notes.
+            steps.append("Book the home inspection right away — your contract gives you a short window to inspect and to raise repairs or walk away.")
+            steps.append("Send your lender everything it asks for and don't open new credit or change jobs — the loan is re-checked before closing.")
+            steps.append("Your lender orders the appraisal. If it comes in under the price, you renegotiate, pay the difference, or use your appraisal contingency.")
+            steps.append("Buy homeowners insurance and give the policy to your lender — the loan can't close without it.")
+            steps.append("Read the Closing Disclosure the moment it arrives — you get it at least 3 business days before closing, and it's your last chance to question the numbers.")
+            steps.append("Do the final walkthrough, then close: bring photo ID and your funds by wire or cashier's check, sign, and get the keys.")
 
             var notes = [
                 "Closing costs are usually about 2–5% of the price, on top of your down payment — budget for that too.",
-                "After your offer is accepted, your next steps are the inspection, mortgage approval, appraisal, homeowners insurance, and closing.",
             ]
             notes.append(referenceNote)
             return ExtractionResult(
@@ -723,12 +769,16 @@ extension Guide {
                 documentType: "Home-buying guide",
                 otherIDs: [DocID(label: "Lender / loan #", value: "")],
                 category: .housing,
-                summary: "A step-by-step checklist to get from credit check to an accepted offer.",
+                summary: "A step-by-step checklist to get from credit check to the keys.",
                 steps: steps,
                 detailedSteps: detailed(steps, state: "", buyingDetail),
                 notes: notes,
                 confidence: 1)
         })
+
+    // One wording, one catalog key — this is the highest-fraud-risk advice in
+    // the guide, and two phrasings drift apart under edits and translation.
+    private static let wireFraudWarning = "Confirm wire instructions by calling a number you looked up yourself — never one from an email."
 
     private static func buyingDetail(_ text: String, _ s: String) -> StepDetail? {
         if text.hasPrefix("Get pre-approved") {
@@ -756,11 +806,36 @@ extension Guide {
                                 "Ask what their fee is and who pays it — get it in writing.",
                                 "Check their license on your state's real-estate board site."])
         }
+        if text.hasPrefix("Book the home inspection") {
+            return StepDetail(
+                explanation: "The inspection is for you, not the lender. It's the window where you can still ask for repairs, ask for a price cut, or walk away and keep your deposit — miss the deadline in your contract and those options close.",
+                miniChecklist: ["Book it within a few days — the window in your contract is usually short.",
+                                "Go along and follow the inspector around; the walkthrough teaches you more than the report.",
+                                "Ask for separate specialists if anything looks off — roof, sewer line, foundation, pests.",
+                                "Put any repair request or price change in writing before your deadline."])
+        }
+        if text.hasPrefix("Read the Closing Disclosure") {
+            return StepDetail(
+                explanation: "By law you get the Closing Disclosure at least 3 business days before closing so you can check it. Compare it line by line against the Loan Estimate you were given — ask about anything that moved.",
+                miniChecklist: ["Check the loan amount, interest rate, and monthly payment match what you agreed.",
+                                "Compare every fee against your Loan Estimate and ask about anything that grew.",
+                                "Check the exact cash to bring to closing.",
+                                wireFraudWarning],
+                links: [StepLink(label: "CFPB — closing disclosure explainer", url: "https://www.consumerfinance.gov/owning-a-home/closing-disclosure/")])
+        }
+        if text.hasPrefix("Do the final walkthrough") {
+            return StepDetail(
+                explanation: "The walkthrough is usually the day before or the morning of closing. You're checking that agreed repairs were done and that nothing broke or disappeared since the inspection.",
+                miniChecklist: ["Test the heat, air conditioning, taps, and appliances that stay with the house.",
+                                "Check the agreed repairs were actually done, and ask for the receipts.",
+                                "After signing, save the deed, the closing documents, and your insurance policy."])
+        }
         if text.hasPrefix("Make an offer") {
             return StepDetail(
                 explanation: "Your agent drafts the offer using recent sales of similar homes. The earnest-money deposit (often 1–3%) shows you're serious and counts toward your purchase at closing.",
                 miniChecklist: ["Keep the inspection, financing, and appraisal contingencies — they let you back out safely if something goes wrong.",
-                                "Earnest money goes to an escrow or title company — never wire money based on emailed instructions without calling to verify; wire fraud is common in home sales.",
+                                "Earnest money goes to an escrow or title company — wire fraud is common in home sales.",
+                                wireFraudWarning,
                                 "If the offer is accepted, save the signed purchase agreement."])
         }
         return nil
@@ -918,8 +993,11 @@ extension Guide {
                 steps = [
                     StepFormat.packed("Check %@ DMV requirements and book an appointment online.", state),
                     "Gather proof of identity, lawful presence, residency, and your SSN (or your state's accepted alternative).",
-                    "Study for and pass the written knowledge test.",
-                    "Pass the road test, then pay the license fee.",
+                    "Study your state's driver handbook, then pass the written knowledge test and the vision test to get your learner's permit.",
+                    "Practice with a licensed adult — most states set a minimum time holding the permit, a number of supervised driving hours, or a driver's-ed course before you can take the road test.",
+                    "Book the road test as soon as you're eligible — appointment slots are often weeks out.",
+                    "For the road test, bring a car that passes the safety check with its registration and insurance, your permit, and a licensed adult to ride along.",
+                    "Pass the road test and pay the license fee — most states hand you a temporary paper license and mail the card.",
                 ]
                 if hasCar { steps.append(StepFormat.packed("Register your car and get plates with the %@ DMV.", state)) }
             }
@@ -1784,12 +1862,10 @@ extension Guide {
                           kind: .choice(["Just me (sole proprietor)", "LLC", "Not sure yet"])),
             GuideQuestion(id: "employees", prompt: "Will you hire employees?",
                           kind: .choice(["No", "Yes", "Not yet"])),
-            GuideQuestion(id: "state", prompt: "Which state will the business be in?", kind: .state),
         ],
         build: { a in
             let kind = val(a, "kind", default: "Other / not sure")
             let structure = val(a, "structure", default: "Not sure yet")
-            let state = val(a, "state", default: "your state")
             let isLLC = structure == "LLC"
             let isSoleProp = structure == "Just me (sole proprietor)"
             let sellsGoods = kind == "Online store (e-commerce)" || kind == "Physical shop or restaurant"
@@ -1849,14 +1925,14 @@ extension Guide {
             return ExtractionResult(
                 title: "Start a business",
                 documentType: "Business guide",
-                otherIDs: [(a["state"]?.isEmpty == false) ? DocID(label: "Business state", value: a["state"]!) : nil,
+                otherIDs: [DocID(label: "Business state", value: ""),
                            DocID(label: "Business name", value: ""),
                            DocID(label: "EIN", value: ""),
-                           DocID(label: "State registration #", value: "")].compactMap { $0 },
+                           DocID(label: "State registration #", value: "")],
                 category: .work,
                 summary: "A step-by-step checklist to start a business — structure, EIN, licenses, and taxes.",
                 steps: steps,
-                detailedSteps: detailed(steps, state: state, startBusinessDetail),
+                detailedSteps: detailed(steps, state: "", startBusinessDetail),
                 notes: notes,
                 confidence: 1)
         })

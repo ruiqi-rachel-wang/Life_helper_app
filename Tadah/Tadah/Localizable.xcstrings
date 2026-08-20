@@ -2,6 +2,74 @@
   "sourceLanguage": "en",
   "strings": {
     "": {},
+    "Credit, pre-approval, offer, closing": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédito, preaprobación, oferta, cierre"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "信用、预批准、报价、过户"
+          }
+        }
+      }
+    },
+    "Sign the purchase agreement and pay the earnest-money deposit — it's usually due within a few days of acceptance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Firma el contrato de compraventa y paga el depósito de garantía (earnest money); suele vencer a los pocos días de la aceptación."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "签署购房合同并支付诚意金（earnest money），通常在报价被接受后几天内就要付。"
+          }
+        }
+      }
+    },
+    "Earnest money goes to an escrow or title company — wire fraud is common in home sales.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El depósito de buena fe va a una compañía de custodia (escrow) o de títulos; el fraude de transferencias es común en la compra de casas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诚意金要交给托管（escrow）或产权公司，房产交易中的电汇诈骗很常见。"
+          }
+        }
+      }
+    },
+    "Tap a name to switch; new to-dos are filed under them. Swipe left to edit, right to remove — anyone but yourself.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca un nombre para cambiar; las nuevas tareas se guardan bajo esa persona. Desliza a la izquierda para editar y a la derecha para quitar (a todos menos a ti)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按名字即可切换，新的待办事项会归到 TA 名下。向左滑动可编辑，向右滑动可移除（自己除外）。"
+          }
+        }
+      }
+    },
     "… PLUS List C (work): Social Security card or birth certificate.": {
       "extractionState": "stale",
       "localizations": {
@@ -65,7 +133,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld 项待办"
+            "value": "%lld 项待办事项"
           }
         }
       }
@@ -207,7 +275,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld 项待办"
+            "value": "%lld 项待办事项"
           }
         }
       }
@@ -406,7 +474,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "2 年期绿卡属于「有条件居留」——你需要解除条件，而不是续期。请勿为此提交 I-90 表。"
+            "value": "2 年期绿卡属于「有条件居留」，你需要解除条件，而不是续期。请勿为此提交 I-90 表。"
           }
         }
       }
@@ -423,7 +491,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "买方经纪人代表你，而不是卖家。你可能被要求签买方协议——签字前读清楚服务内容和费用条款。"
+            "value": "买方经纪人代表你，而不是卖家。你可能被要求签买方协议，签字前读清楚服务内容和费用条款。"
           }
         }
       }
@@ -456,7 +524,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "第一版计划一页纸就行——以后可以再完善。"
+            "value": "第一版计划一页纸就行，以后可以再完善。"
           }
         }
       }
@@ -609,7 +677,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "最近有变化吗——失去保险、搬家、结婚、生孩子或换工作？"
+            "value": "最近有变化吗：失去保险、搬家、结婚、生孩子或换工作？"
           }
         }
       }
@@ -626,7 +694,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近期的人生变化可能开启“特殊参保期”——你现在就能参保，无需等公开参保期。"
+            "value": "近期的人生变化可能开启“特殊参保期”。你现在就能参保，无需等公开参保期。"
           }
         }
       }
@@ -643,7 +711,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "近期的生活变化可能触发“特别投保期”，让你在开放投保期之外投保——请确认你的情况是否符合条件，因为并非所有搬家或换工作都算。"
+            "value": "近期的生活变化可能触发“特别投保期”，让你在开放投保期之外投保。请确认你的情况是否符合条件，因为并非所有搬家或换工作都算。"
           }
         }
       }
@@ -677,7 +745,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "退税意味着拿回钱；欠税意味着要补缴——无论哪种，按时报税都能避免罚款。"
+            "value": "退税意味着拿回钱；欠税意味着要补缴，无论哪种，按时报税都能避免罚款。"
           }
         }
       }
@@ -745,7 +813,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "个体经营最简单，但不能将你的个人资产分开。成立 LLC 需缴纳州费用，如维护得当，有助于将个人与企业的责任分开——但它并不能保证防范一切。"
+            "value": "个体经营最简单，但不能将你的个人资产分开。成立 LLC 需缴纳州费用，如维护得当，有助于将个人与企业的责任分开，但它并不能保证防范一切。"
           }
         }
       }
@@ -779,7 +847,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "个体经营的设立手续最少——但开始前请先确认你的行业和所在地需要哪些执照、许可和登记。日后业务扩大可再成立 LLC。"
+            "value": "个体经营的设立手续最少，但开始前请先确认你的行业和所在地需要哪些执照、许可和登记。日后业务扩大可再成立 LLC。"
           }
         }
       }
@@ -796,7 +864,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "特殊参保期通常给你从事件发生起 60 天来参保——过了这段时间一般就要等公开参保期，所以尽快开始。"
+            "value": "特殊参保期通常给你从事件发生起 60 天来参保。过了这段时间一般就要等公开参保期，所以尽快开始。"
           }
         }
       }
@@ -869,23 +937,6 @@
         }
       }
     },
-    "A step-by-step checklist to get from credit check to an accepted offer.": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una lista paso a paso desde revisar tu crédito hasta que acepten tu oferta."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一份从信用检查到报价被接受的分步清单。"
-          }
-        }
-      }
-    },
     "A step-by-step checklist to start a business — structure, EIN, licenses, and taxes.": {
       "extractionState": "stale",
       "localizations": {
@@ -898,7 +949,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "创业的分步清单——架构、EIN、执照和税务。"
+            "value": "创业的分步清单：架构、EIN、执照和税务。"
           }
         }
       }
@@ -914,7 +965,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "有事项需要处理——打开 Tadah 查看。"
+            "value": "有事项需要处理，打开 Tadah 查看。"
           }
         }
       }
@@ -1096,7 +1147,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加 %lld 项到待办"
+            "value": "添加 %lld 项到待办事项"
           }
         }
       }
@@ -1228,7 +1279,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加一个小待办"
+            "value": "添加一个小的待办事项"
           }
         }
       }
@@ -1276,7 +1327,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加到提醒待办"
+            "value": "添加待办事项和提醒"
           }
         }
       }
@@ -1475,7 +1526,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "添加到待办"
+            "value": "添加到待办事项"
           }
         }
       }
@@ -1560,7 +1611,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "肾上腺素可能让伤痛几小时甚至几天后才显现——尽早检查也能把治疗与这次事故关联起来，保险理赔时会问到。"
+            "value": "肾上腺素可能让伤痛几小时甚至几天后才显现。尽早检查也能把治疗与这次事故关联起来，保险理赔时会问到。"
           }
         }
       }
@@ -1633,23 +1684,6 @@
         }
       }
     },
-    "After your offer is accepted, your next steps are the inspection, mortgage approval, appraisal, homeowners insurance, and closing.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una vez aceptada tu oferta, los siguientes pasos son la inspección, la aprobación de la hipoteca, la tasación, el seguro de vivienda y el cierre."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "报价被接受后，接下来的步骤是验房、贷款审批、估价、房屋保险和过户结算。"
-          }
-        }
-      }
-    },
     "AI-generated — double-check important details against the original and the official source.": {
       "localizations": {
         "es": {
@@ -1661,7 +1695,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "由 AI 生成——请对照原件和官方网站核对重要信息。"
+            "value": "由 AI 生成。请对照原件和官方网站核对重要信息。"
           }
         }
       }
@@ -1814,7 +1848,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "EIN 是你企业的免费联邦税务识别号。直接在 IRS.gov 上申请——第三方网站会对 IRS 免费提供的东西收费。"
+            "value": "EIN 是你企业的免费联邦税务识别号。直接在 IRS.gov 上申请。第三方网站会对 IRS 免费提供的东西收费。"
           }
         }
       }
@@ -1831,7 +1865,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "EIN 在 IRS.gov 上免费申请——绝不要通过第三方网站付费办理。"
+            "value": "EIN 在 IRS.gov 上免费申请，绝不要通过第三方网站付费办理。"
           }
         }
       }
@@ -1865,7 +1899,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "银行接受的一种身份识别号码——SSN、ITIN、护照号码、外国人证件号码，或其他政府签发的证件号码。"
+            "value": "银行接受的一种身份识别号码：SSN、ITIN、护照号码、外国人证件号码，或其他政府签发的证件号码。"
           }
         }
       }
@@ -1899,7 +1933,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "ITIN 是给无法获得 SSN 的人使用的联邦税务识别号。它用于税务——不是通用的带照片身份证件，各银行是否接受不一。只有在需要时才用 IRS W-7 表申请。"
+            "value": "ITIN 是给无法获得 SSN 的人使用的联邦税务识别号。它用于税务，不是通用的带照片身份证件，各银行是否接受不一。只有在需要时才用 IRS W-7 表申请。"
           }
         }
       }
@@ -1933,7 +1967,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "ITIN 只是税务号——不是工作许可，也不是带照片的身份证件。"
+            "value": "ITIN 只是税务号，不是工作许可，也不是带照片的身份证件。"
           }
         }
       }
@@ -2119,7 +2153,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 HealthCare.gov 申请——如果你所在州有自己的市场，它会把你转过去。公开参保期通常为 11 月 1 日至次年 1 月 15 日。"
+            "value": "在 HealthCare.gov 申请。如果你所在州有自己的市场，它会把你转过去。公开参保期通常为 11 月 1 日至次年 1 月 15 日。"
           }
         }
       }
@@ -2170,7 +2204,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "先在线申请 SSN，再把证件带到社会安全局办公室——免费。"
+            "value": "先在线申请 SSN，再把证件带到社会安全局办公室，免费。"
           }
         }
       }
@@ -2204,7 +2238,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "申请是免费的——绝不要为号码本身付费。"
+            "value": "申请是免费的，绝不要为号码本身付费。"
           }
         }
       }
@@ -2238,7 +2272,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "安排搬家方式——租货车、租集装箱或请搬家公司——并准备好纸箱。"
+            "value": "安排搬家方式：租货车、租集装箱或请搬家公司，并准备好纸箱。"
           }
         }
       }
@@ -2306,7 +2340,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "作为 1099 合同工，你的报酬不会预扣任何税——要自己处理。每笔收入大约留出 25–30%，并预计每年要向 IRS 缴税四次。"
+            "value": "作为 1099 合同工，你的报酬不会预扣任何税，要自己处理。每笔收入大约留出 25–30%，并预计每年要向 IRS 缴税四次。"
           }
         }
       }
@@ -2323,7 +2357,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "作为 1099 承包人，收入不预扣税款——需自行处理。请从每笔款项中留出税金，并确认年内是否需要预缴税款。"
+            "value": "作为 1099 承包人，收入不预扣税款，需自行处理。请从每笔款项中留出税金，并确认年内是否需要预缴税款。"
           }
         }
       }
@@ -2340,7 +2374,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "作为个体经营者，通常无需向州注册成立公司——但如果你所在的州或地方政府要求使用商号，则需申报 DBA（\"doing business as\"，即以某商号经营）。"
+            "value": "作为个体经营者，通常无需向州注册成立公司，但如果你所在的州或地方政府要求使用商号，则需申报 DBA（\"doing business as\"，即以某商号经营）。"
           }
         }
       }
@@ -2357,7 +2391,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "作为个体经营者，通常无需向州提交成立文件——但如果使用公司名经营，要登记 DBA（“以…名义经营”）。"
+            "value": "作为个体经营者，通常无需向州提交成立文件，但如果使用公司名经营，要登记 DBA（“以…名义经营”）。"
           }
         }
       }
@@ -2510,7 +2544,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向 HR 确认你是 W-2 雇员还是 1099 承包人——这会影响你报哪些税表。"
+            "value": "向 HR 确认你是 W-2 雇员还是 1099 承包人，这会影响你报哪些税表。"
           }
         }
       }
@@ -2578,7 +2612,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "问清佣金多少、由谁支付——并落实到书面。"
+            "value": "问清佣金多少、由谁支付，并落实到书面。"
           }
         }
       }
@@ -2612,7 +2646,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "询问是否可以远程（视频）就诊——可能更快。"
+            "value": "询问是否可以远程（视频）就诊，可能更快。"
           }
         }
       }
@@ -2663,7 +2697,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "询问保险公司你的医疗费用如何处理——这取决于你所在的州和保单内容。"
+            "value": "询问保险公司你的医疗费用如何处理，这取决于你所在的州和保单内容。"
           }
         }
       }
@@ -2882,7 +2916,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "银行必须核实你的身份——请携带原件。"
+            "value": "银行必须核实你的身份，请携带原件。"
           }
         }
       }
@@ -2950,7 +2984,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "福利参保通常在入职后约 30 天截止——加个提醒。"
+            "value": "福利参保通常在入职后约 30 天截止，加个提醒。"
           }
         }
       }
@@ -2983,7 +3017,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "账单、信件/邮件、通知、表格——Tadah 告诉你要做什么"
+            "value": "账单、信件/邮件、通知、表格：Tadah 告诉你要做什么"
           }
         }
       }
@@ -3032,7 +3066,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "月底或夏季要早预订——很容易订满。"
+            "value": "月底或夏季要早预订，很容易订满。"
           }
         }
       }
@@ -3066,7 +3100,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "准备好你的信息预约会更快——并询问最早的空号。"
+            "value": "准备好你的信息预约会更快，并询问最早的空号。"
           }
         }
       }
@@ -3134,7 +3168,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "携带原件——大多数证件不能用复印件。"
+            "value": "携带原件，大多数证件不能用复印件。"
           }
         }
       }
@@ -3337,7 +3371,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "打电话或用患者门户预约——新患者的号可能要等几周。"
+            "value": "打电话或用患者门户预约，新患者的号可能要等几周。"
           }
         }
       }
@@ -3371,7 +3405,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "立即报警并备案——肇事逃逸理赔需要它。记下报告编号。"
+            "value": "立即报警并备案，肇事逃逸理赔需要它。记下报告编号。"
           }
         }
       }
@@ -3388,7 +3422,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如有人受伤、损失严重或你所在州要求时，请报警——记下报告编号。"
+            "value": "如有人受伤、损失严重或你所在州要求时，请报警，记下报告编号。"
           }
         }
       }
@@ -3422,7 +3456,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可以的话在拖车前先打给保险公司——很多保单包含拖车服务，拖到认可的修理厂能避免意外收费。别让车停在存放场；存放费每天都在累加。"
+            "value": "可以的话在拖车前先打给保险公司。很多保单包含拖车服务，拖到认可的修理厂能避免意外收费。别让车停在存放场；存放费每天都在累加。"
           }
         }
       }
@@ -3538,7 +3572,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "CDC——入学疫苗"
+            "value": "CDC：入学疫苗"
           }
         }
       }
@@ -3555,7 +3589,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "CFPB——如何选择银行账户"
+            "value": "CFPB：如何选择银行账户"
           }
         }
       }
@@ -3572,7 +3606,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "CFPB——《成交披露》说明"
+            "value": "CFPB：《成交披露》说明"
           }
         }
       }
@@ -3606,7 +3640,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "CFPB——房贷过户诈骗"
+            "value": "CFPB：房贷过户诈骗"
           }
         }
       }
@@ -3623,7 +3657,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "CFPB——购房与拥有住房"
+            "value": "CFPB：购房与拥有住房"
           }
         }
       }
@@ -3657,7 +3691,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "会更改整个应用——所有页面，以及 Tadah 为你的扫描和指南所写的说明。"
+            "value": "会更改整个应用。所有页面，以及 Tadah 为你的扫描和指南所写的说明。"
           }
         }
       }
@@ -3708,7 +3742,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "查询你所在州的首次购房项目——很多提供首付补助或更低利率，且需在出价前申请。"
+            "value": "查询你所在州的首次购房项目。很多提供首付补助或更低利率，且需在出价前申请。"
           }
         }
       }
@@ -3725,7 +3759,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "了解你所在州面向首次购房者的项目——很多提供首付补助或更低利率。尽早询问每个项目的运作方式和申请时机，因为有些需要在你出价之前就安排妥当。"
+            "value": "了解你所在州面向首次购房者的项目，很多提供首付补助或更低利率。尽早询问每个项目的运作方式和申请时机，因为有些需要在你出价之前就安排妥当。"
           }
         }
       }
@@ -3827,7 +3861,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "查看 USCIS 官方 N-400 资格页面——许多人在成为永久居民 5 年后申请（部分基于婚姻的情况为 3 年），但也有例外。"
+            "value": "查看 USCIS 官方 N-400 资格页面。许多人在成为永久居民 5 年后申请（部分基于婚姻的情况为 3 年），但也有例外。"
           }
         }
       }
@@ -3844,7 +3878,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "提交前请查看 USCIS 官方表格页面——费用和寄送地址会变动。"
+            "value": "提交前请查看 USCIS 官方表格页面，费用和寄送地址会变动。"
           }
         }
       }
@@ -3860,7 +3894,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "检查步骤和截止日期，然后点**添加到待办**保存。"
+            "value": "检查步骤和截止日期，然后点按**添加到待办事项**保存。"
           }
         }
       }
@@ -3945,7 +3979,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "确认你是否还需要报州税——如果你搬过家或在其他州工作过，两个州都要查。"
+            "value": "确认你是否还需要报州税。如果你搬过家或在其他州工作过，两个州都要查。"
           }
         }
       }
@@ -3962,7 +3996,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "确认你是否需要按季度预缴税款（联邦，以及征收所得税的州）——通常在预计欠税 1,000 美元以上时需要。"
+            "value": "确认你是否需要按季度预缴税款（联邦，以及征收所得税的州）。通常在预计欠税 1,000 美元以上时需要。"
           }
         }
       }
@@ -3979,7 +4013,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "确认你所在的州是否对你销售的商品征税——多数州会征税，适用时需先申请销售税许可证再向顾客收取。少数几个州没有一般销售税。"
+            "value": "确认你所在的州是否对你销售的商品征税。多数州会征税，适用时需先申请销售税许可证再向顾客收取。少数几个州没有一般销售税。"
           }
         }
       }
@@ -3996,7 +4030,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "查清你需要哪些执照和许可证——联邦、州以及市/县级。"
+            "value": "查清你需要哪些执照和许可证：联邦、州以及市/县级。"
           }
         }
       }
@@ -4047,7 +4081,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "查看你的 EAD 类别（你的通知或旧卡上的 (c)(#) 代码）——它决定申请方式、费用、费用豁免以及任何自动延期规则。"
+            "value": "查看你的 EAD 类别（你的通知或旧卡上的 (c)(#) 代码）。它决定申请方式、费用、费用豁免以及任何自动延期规则。"
           }
         }
       }
@@ -4064,7 +4098,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "核对你的第一笔工资——薪资标准、税款和直接存款。"
+            "value": "核对你的第一笔工资：薪资标准、税款和直接存款。"
           }
         }
       }
@@ -4130,7 +4164,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择修理厂——通常你可以自己选。"
+            "value": "选择修理厂，通常你可以自己选。"
           }
         }
       }
@@ -4147,7 +4181,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择你的组织形式——个体经营者（最简单）或 LLC（如维护得当，有助于将个人与企业的责任分开）——然后据此进行登记。"
+            "value": "选择你的组织形式：个体经营者（最简单）或 LLC（如维护得当，有助于将个人与企业的责任分开），然后据此进行登记。"
           }
         }
       }
@@ -4164,7 +4198,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择你的架构——个体经营（最简单）或 LLC（隔离个人资产）——然后据此注册。"
+            "value": "选择你的架构：个体经营（最简单）或 LLC（隔离个人资产），然后据此注册。"
           }
         }
       }
@@ -4231,7 +4265,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "交割费用通常是房价的2%-5%，且在首付之外——也要把它算进预算。"
+            "value": "交割费用通常是房价的2%-5%，且在首付之外，也要把它算进预算。"
           }
         }
       }
@@ -4333,7 +4367,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "社区健康中心按收入浮动收费——没有保险也能就诊。"
+            "value": "社区健康中心按收入浮动收费，没有保险也能就诊。"
           }
         }
       }
@@ -4350,7 +4384,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "社区健康中心根据收入和家庭人数提供滑动收费折扣——没有保险也能就诊。"
+            "value": "社区健康中心根据收入和家庭人数提供滑动收费折扣，没有保险也能就诊。"
           }
         }
       }
@@ -4384,7 +4418,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "比较各银行／信用社的费用、最低余额和 ATM——寻找无月费、无透支的账户。"
+            "value": "比较各银行／信用社的费用、最低余额和 ATM：寻找无月费、无透支的账户。"
           }
         }
       }
@@ -4452,7 +4486,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "比较所提供的计划——保费、自付额，以及你的医生是否在网络内。"
+            "value": "比较所提供的计划：保费、自付额，以及你的医生是否在网络内。"
           }
         }
       }
@@ -4723,7 +4757,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "挂号自付或共同保险——每次看病或买药时你要承担的部分。"
+            "value": "挂号自付或共同保险，每次看病或买药时你要承担的部分。"
           }
         }
       }
@@ -4924,7 +4958,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "仅涵盖常见的 USCIS 申请——并不涵盖每一种签证类型或情况。"
+            "value": "仅涵盖常见的 USCIS 申请，并不涵盖每一种签证类型或情况。"
           }
         }
       }
@@ -4941,7 +4975,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "适用于 50 个州和华盛顿特区。在美国海外领地，注册和执照由不同机构办理——请咨询你所在领地的工商主管部门。"
+            "value": "适用于 50 个州和华盛顿特区。在美国海外领地，注册和执照由不同机构办理，请咨询你所在领地的工商主管部门。"
           }
         }
       }
@@ -4958,7 +4992,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "适用于 50 个州和华盛顿特区。在波多黎各、美属维尔京群岛、关岛、北马里亚纳群岛或美属萨摩亚，请咨询当地的车辆管理机构——规则和表格并不相同。"
+            "value": "适用于 50 个州和华盛顿特区。在波多黎各、美属维尔京群岛、关岛、北马里亚纳群岛或美属萨摩亚，请咨询当地的车辆管理机构，规则和表格并不相同。"
           }
         }
       }
@@ -4991,7 +5025,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "创建免费账户，让你的事项永不丢失——退出登录后依然保留，日后换新手机也能带走。一切仍然只属于你。"
+            "value": "创建免费账户，让你的事项永不丢失。退出登录后依然保留，日后换新手机也能带走。一切仍然只属于你。"
           }
         }
       }
@@ -5008,7 +5042,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "创建免费账户，你的事项就不会丢失——它们会备份到你的账户，换新手机也能带走。"
+            "value": "创建免费账户，你的事项就不会丢失。它们会备份到你的账户，换新手机也能带走。"
           }
         }
       }
@@ -5059,7 +5093,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自己创建"
+            "value": "输入待办事项"
           }
         }
       }
@@ -5094,23 +5128,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "创建或登录你的免费 USCIS 在线账户。"
-          }
-        }
-      }
-    },
-    "Credit, pre-approval, agent, offer": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Crédito, preaprobación, agente, oferta"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "信用、预批准、经纪人、报价"
           }
         }
       }
@@ -5227,7 +5244,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自付额（deductible）——在计划开始付款之前你自己要先付的部分。"
+            "value": "自付额（deductible）：在计划开始付款之前你自己要先付的部分。"
           }
         }
       }
@@ -5373,7 +5390,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "视你所在的州和保单而定，当对方司机始终无法确认时，“无保险驾驶人”(UM) 承保可能适用——请询问你的保险公司是否适用，以及需要你提供什么。"
+            "value": "视你所在的州和保单而定，当对方司机始终无法确认时，“无保险驾驶人”(UM) 承保可能适用。请询问你的保险公司是否适用，以及需要你提供什么。"
           }
         }
       }
@@ -5406,7 +5423,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "直接存款会把工资直接打入你的银行账户。你需要银行路由号和账号——两者都在支票上或你的银行App里。仔细核对；填错一个数字可能会延误你的第一笔工资。"
+            "value": "直接存款会把工资直接打入你的银行账户。你需要银行路由号和账号。两者都在支票上或你的银行App里。仔细核对；填错一个数字可能会延误你的第一笔工资。"
           }
         }
       }
@@ -5423,7 +5440,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "申请前对任何错误提出异议——错误可能让你拿不到更好的利率。"
+            "value": "申请前对任何错误提出异议，错误可能让你拿不到更好的利率。"
           }
         }
       }
@@ -5440,7 +5457,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "DMV 期限因州而异——请查询你所在州的 DMV，驾照与车辆登记的期限可能不同。"
+            "value": "DMV 期限因州而异。请查询你所在州的 DMV，驾照与车辆登记的期限可能不同。"
           }
         }
       }
@@ -5457,7 +5474,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "车管所（DMV）的期限各州不同——新居民通常须在约 30 天内转换驾照／车辆登记。"
+            "value": "车管所（DMV）的期限各州不同。新居民通常须在约 30 天内转换驾照／车辆登记。"
           }
         }
       }
@@ -5677,7 +5694,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不要在现场争论谁的责任——收集事实，交给警方和保险公司判定。"
+            "value": "不要在现场争论谁的责任。收集事实，交给警方和保险公司判定。"
           }
         }
       }
@@ -5727,7 +5744,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在你的贷款审核期间，不要新开信用卡或换工作——这可能拖延甚至使贷款泡汤。"
+            "value": "在你的贷款审核期间，不要新开信用卡或换工作，这可能拖延甚至使贷款泡汤。"
           }
         }
       }
@@ -6041,24 +6058,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "更早——我已离开"
-          }
-        }
-      }
-    },
-    "Earnest money goes to an escrow or title company — never wire money based on emailed instructions without calling to verify; wire fraud is common in home sales.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El depósito de buena fe va a una compañía de custodia (escrow) o de títulos. Nunca transfieras dinero solo por instrucciones de un correo sin llamar para verificar; el fraude de transferencias es común en la compra de casas."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "诚意金要交给托管（escrow）或产权公司——绝不要只凭电子邮件里的指示就转账，务必先打电话核实；房产交易中的电汇诈骗很常见。"
+            "value": "更早：我已离开"
           }
         }
       }
@@ -6159,7 +6159,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "电力——联系本地电力公司开通服务。"
+            "value": "电力，联系本地电力公司开通服务。"
           }
         }
       }
@@ -6457,7 +6457,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "将外州驾照换成%@驾照——期限请查询你所在州的 DMV，驾照与车辆登记的期限可能不同。"
+            "value": "将外州驾照换成%@驾照。期限请查询你所在州的 DMV，驾照与车辆登记的期限可能不同。"
           }
         }
       }
@@ -6474,7 +6474,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "把外州驾照换成 %@ 的驾照——通常要在成为本州居民后约 30 天内办理。"
+            "value": "把外州驾照换成 %@ 的驾照。通常要在成为本州居民后约 30 天内办理。"
           }
         }
       }
@@ -6658,7 +6658,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "尽快报警备案——肇事逃逸理赔必须有它。"
+            "value": "尽快报警备案，肇事逃逸理赔必须有它。"
           }
         }
       }
@@ -6675,7 +6675,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果还没报警，请补上——尤其是有人受伤或损失严重时。"
+            "value": "如果还没报警，请补上，尤其是有人受伤或损失严重时。"
           }
         }
       }
@@ -6692,7 +6692,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在截止日期前报税——通常是 4 月 15 日。来不及？可申请延期，但应缴税款仍需在该日前缴清。"
+            "value": "在截止日期前报税，通常是 4 月 15 日。来不及？可申请延期，但应缴税款仍需在该日前缴清。"
           }
         }
       }
@@ -6709,7 +6709,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在联邦截止日期前报税——通常在 4 月 15 日前后，但确切日期可能因周末、节假日或灾害而调整。赶不上？可以申请延期，但欠缴的税款仍需在原截止日期前缴清。"
+            "value": "在联邦截止日期前报税。通常在 4 月 15 日前后，但确切日期可能因周末、节假日或灾害而调整。赶不上？可以申请延期，但欠缴的税款仍需在原截止日期前缴清。"
           }
         }
       }
@@ -6794,7 +6794,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "须在卡片到期前 90 天内提交——这个时间窗很关键，逾期可能危及你的身份。"
+            "value": "须在卡片到期前 90 天内提交。这个时间窗很关键，逾期可能危及你的身份。"
           }
         }
       }
@@ -6811,7 +6811,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "与配偶联合申请？请在卡片到期前 90 天内提交——这个时间窗口很重要，逾期提交可能危及你的身份。"
+            "value": "与配偶联合申请？请在卡片到期前 90 天内提交。这个时间窗口很重要，逾期提交可能危及你的身份。"
           }
         }
       }
@@ -6997,7 +6997,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "根据家庭住址找到你被分配的公立学校——由你居住地决定。"
+            "value": "根据家庭住址找到你被分配的公立学校，由你居住地决定。"
           }
         }
       }
@@ -7014,7 +7014,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "根据住址查找所属学区，再确认孩子可以入读哪些公立学校——部分学区提供择校、magnet 或特许学校选项。"
+            "value": "根据住址查找所属学区，再确认孩子可以入读哪些公立学校。部分学区提供择校、magnet 或特许学校选项。"
           }
         }
       }
@@ -7251,7 +7251,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "可获得免费帮助——Marketplace 导航员和持照代理可免费当面或电话协助你比较方案。"
+            "value": "可获得免费帮助。Marketplace 导航员和持照代理可免费当面或电话协助你比较方案。"
           }
         }
       }
@@ -7334,7 +7334,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "燃气——如果你家使用燃气供暖、做饭或供应热水，请开通天然气服务。"
+            "value": "燃气：如果你家使用燃气供暖、做饭或供应热水，请开通天然气服务。"
           }
         }
       }
@@ -7368,7 +7368,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "尽量收集所有信息——之后很难再取得。"
+            "value": "尽量收集所有信息，之后很难再取得。"
           }
         }
       }
@@ -7470,7 +7470,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "准备好证件：政府签发的带照片身份证件和地址证明——如果你已经有 ITIN，也一并带上。"
+            "value": "准备好证件：政府签发的带照片身份证件和地址证明。如果你已经有 ITIN，也一并带上。"
           }
         }
       }
@@ -7572,7 +7572,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "通用指南——请查看官方网站，并可编辑任意步骤。"
+            "value": "通用指南：请查看官方网站，并可编辑任意步骤。"
           }
         }
       }
@@ -7606,7 +7606,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向 IRS 免费申请 EIN——雇人或开公司银行账户时需要（多数 LLC 都会办）。个体经营者可用 SSN，但用 EIN 能保护隐私。"
+            "value": "向 IRS 免费申请 EIN。雇人或开公司银行账户时需要（多数 LLC 都会办）。个体经营者可用 SSN，但用 EIN 能保护隐私。"
           }
         }
       }
@@ -7623,7 +7623,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向 IRS 免费申请 EIN——雇人时需要，许多企业银行账户也要求提供（多数 LLC 都会申请）。个体经营者视银行规定或可使用 SSN，但 EIN 能让你的 SSN 不出现在表格上。"
+            "value": "向 IRS 免费申请 EIN。雇人时需要，许多企业银行账户也要求提供（多数 LLC 都会申请）。个体经营者视银行规定或可使用 SSN，但 EIN 能让你的 SSN 不出现在表格上。"
           }
         }
       }
@@ -7640,7 +7640,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "取得维修估价——保险公司可能会查验车辆。"
+            "value": "取得维修估价，保险公司可能会查验车辆。"
           }
         }
       }
@@ -7742,7 +7742,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "购买商业保险（常见的是一般责任险）——尤其是当你有客户、经营场所或员工时。"
+            "value": "购买商业保险（常见的是一般责任险），尤其是当你有客户、经营场所或员工时。"
           }
         }
       }
@@ -7776,7 +7776,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "以书面形式确认这份工作的性质——无薪实习、志愿服务还是正式雇员——以及是否有津贴、报销或学分。"
+            "value": "以书面形式确认这份工作的性质：无薪实习、志愿服务还是正式雇员，以及是否有津贴、报销或学分。"
           }
         }
       }
@@ -7793,7 +7793,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "为你的经营地点办理本地许可——营业执照、分区许可，若供应食品还需卫生许可。"
+            "value": "为你的经营地点办理本地许可：营业执照、分区许可，若供应食品还需卫生许可。"
           }
         }
       }
@@ -7810,7 +7810,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "即使看起来轻微也要就医——有些伤会过后才显现。"
+            "value": "即使看起来轻微也要就医，有些伤会过后才显现。"
           }
         }
       }
@@ -7861,7 +7861,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "购买租客保险——很多租约都要求，而且并不贵。"
+            "value": "购买租客保险，很多租约都要求，而且并不贵。"
           }
         }
       }
@@ -7912,7 +7912,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 AnnualCreditReport.com 免费获取你的信用报告——这是联邦授权的官方网站。"
+            "value": "在 AnnualCreditReport.com 免费获取你的信用报告，这是联邦授权的官方网站。"
           }
         }
       }
@@ -7946,7 +7946,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "书面通知房东（查看租约——通常需提前 30–60 天）。"
+            "value": "书面通知房东（查看租约，通常需提前 30–60 天）。"
           }
         }
       }
@@ -8046,7 +8046,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "税前工资（gross）是扣款之前的金额；到手工资（net）是扣款之后的金额。仔细核对你的第一张工资条——发薪错误越早发现越容易更正。"
+            "value": "税前工资（gross）是扣款之前的金额；到手工资（net）是扣款之后的金额。仔细核对你的第一张工资条，发薪错误越早发现越容易更正。"
           }
         }
       }
@@ -8112,7 +8112,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "有待审的 USCIS 案件，或负有地址变更申报义务？请另行、尽快向 USCIS 更新地址——USPS 转寄不会同步给 USCIS，且 USCIS 信件不会被转寄。"
+            "value": "有待审的 USCIS 案件，或负有地址变更申报义务？请另行、尽快向 USCIS 更新地址。USPS 转寄不会同步给 USCIS，且 USCIS 信件不会被转寄。"
           }
         }
       }
@@ -8180,7 +8180,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "准备好你的家庭人数和收入——这决定你的选择和可获得的补贴。"
+            "value": "准备好你的家庭人数和收入，这决定你的选择和可获得的补贴。"
           }
         }
       }
@@ -8197,7 +8197,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "准备好家庭人数和收入——这是主要因素。Medicaid 的资格还取决于你所在的州，以及年龄、怀孕、残疾和移民身份等情况。"
+            "value": "准备好家庭人数和收入，这是主要因素。Medicaid 的资格还取决于你所在的州，以及年龄、怀孕、残疾和移民身份等情况。"
           }
         }
       }
@@ -8282,7 +8282,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "HealthCare.gov——申请前的准备"
+            "value": "HealthCare.gov，申请前的准备"
           }
         }
       }
@@ -8299,7 +8299,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "HealthCare.gov——如何找医生"
+            "value": "HealthCare.gov，如何找医生"
           }
         }
       }
@@ -8333,7 +8333,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "HealthCare.gov——Medicaid 与 CHIP"
+            "value": "HealthCare.gov，Medicaid 与 CHIP"
           }
         }
       }
@@ -8367,7 +8367,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "HealthCare.gov 是官方市场——避免仿冒网站。部分州有自己的市场；若如此，它会把你转过去。"
+            "value": "HealthCare.gov 是官方市场，避免仿冒网站。部分州有自己的市场；若如此，它会把你转过去。"
           }
         }
       }
@@ -8569,7 +8569,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "家庭人数和每个人的收入——工资单或去年的报税表。"
+            "value": "家庭人数和每个人的收入，工资单或去年的报税表。"
           }
         }
       }
@@ -8603,7 +8603,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "家庭人数和收入是主要因素。Medicaid 资格还取决于你所在的州，以及年龄、怀孕、残疾和移民身份等情况。许多具有合法身份的移民可获得 Marketplace 保险——资格取决于你的具体身份且近期有所变动，请在 HealthCare.gov 查看最新名单。"
+            "value": "家庭人数和收入是主要因素。Medicaid 资格还取决于你所在的州，以及年龄、怀孕、残疾和移民身份等情况。许多具有合法身份的移民可获得 Marketplace 保险。资格取决于你的具体身份且近期有所变动，请在 HealthCare.gov 查看最新名单。"
           }
         }
       }
@@ -8687,7 +8687,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如何为孩子办理美国公立学校入学——所需证件、居住证明和语言帮助。"
+            "value": "如何为孩子办理美国公立学校入学：所需证件、居住证明和语言帮助。"
           }
         }
       }
@@ -8721,7 +8721,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如何获得医疗保障——通过工作、保险市场（Marketplace）或 Medicaid。"
+            "value": "如何获得医疗保障：通过工作、保险市场（Marketplace）或 Medicaid。"
           }
         }
       }
@@ -8738,7 +8738,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如何准备报美国税——所需材料、免费报税方式和截止日期。"
+            "value": "如何准备报美国税：所需材料、免费报税方式和截止日期。"
           }
         }
       }
@@ -8755,7 +8755,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如何在美国开设银行账户——包括没有 SSN 的情况。"
+            "value": "如何在美国开设银行账户：包括没有 SSN 的情况。"
           }
         }
       }
@@ -8772,7 +8772,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "HRSA——查找健康中心"
+            "value": "HRSA：查找健康中心"
           }
         }
       }
@@ -8857,7 +8857,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "身份／合法居留：护照、绿卡、EAD 或 I-94——按你车管所的清单。"
+            "value": "身份／合法居留：护照、绿卡、EAD 或 I-94，按你车管所的清单。"
           }
         }
       }
@@ -8942,7 +8942,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果车无法驾驶，安排拖车——并保存拖车公司、地点和收据。"
+            "value": "如果车无法驾驶，安排拖车，并保存拖车公司、地点和收据。"
           }
         }
       }
@@ -9044,7 +9044,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果收到 RFE、NOID 或法院通知，请联系正规的法律帮助——不要依赖社交媒体。"
+            "value": "如果收到 RFE、NOID 或法院通知，请联系正规的法律帮助，不要依赖社交媒体。"
           }
         }
       }
@@ -9061,7 +9061,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果需要翻译，预约时就提出——大多数诊所免费提供。"
+            "value": "如果需要翻译，预约时就提出，大多数诊所免费提供。"
           }
         }
       }
@@ -9078,7 +9078,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果你选了市场计划，要缴第一期保费——不缴费保障不会开始。"
+            "value": "如果你选了市场计划，要缴第一期保费，不缴费保障不会开始。"
           }
         }
       }
@@ -9112,7 +9112,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果有津贴，问清楚将如何申报——即使职位被称为“无薪”，津贴也可能属于应税收入。"
+            "value": "如果有津贴，问清楚将如何申报，即使职位被称为“无薪”，津贴也可能属于应税收入。"
           }
         }
       }
@@ -9146,7 +9146,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "移民证件号码——绿卡、工作许可 (EAD) 或 I-94——适用于任何非美国公民的申请人。"
+            "value": "移民证件号码：绿卡、工作许可 (EAD) 或 I-94，适用于任何非美国公民的申请人。"
           }
         }
       }
@@ -9163,7 +9163,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "申请人的移民证件号码——绿卡、工作许可（EAD）或 I-94。"
+            "value": "申请人的移民证件号码：绿卡、工作许可（EAD）或 I-94。"
           }
         }
       }
@@ -9197,7 +9197,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "移民规则很复杂——任何不清楚的地方，请寻求正规法律帮助（司法部认可的机构或获认证的代表）。"
+            "value": "移民规则很复杂。任何不清楚的地方，请寻求正规法律帮助（司法部认可的机构或获认证的代表）。"
           }
         }
       }
@@ -9345,7 +9345,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "待办"
+            "value": "待办事项"
           }
         }
       }
@@ -9413,7 +9413,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "网络 / WiFi——比较各供应商的速度和每月总费用，然后预约安装（通常需要1-2周）。"
+            "value": "网络 / WiFi：比较各供应商的速度和每月总费用，然后预约安装（通常需要1-2周）。"
           }
         }
       }
@@ -9498,7 +9498,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "IRS——申请 EIN（免费）"
+            "value": "IRS：申请 EIN（免费）"
           }
         }
       }
@@ -9515,7 +9515,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "IRS——免费协助（VITA）"
+            "value": "IRS：免费协助（VITA）"
           }
         }
       }
@@ -9532,7 +9532,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "IRS——免费的现场报税帮助（VITA）"
+            "value": "IRS：免费的现场报税帮助（VITA）"
           }
         }
       }
@@ -9549,7 +9549,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "IRS——ITIN／W-7 表"
+            "value": "IRS：ITIN／W-7 表"
           }
         }
       }
@@ -9566,7 +9566,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "IRS——自雇人士税务中心"
+            "value": "IRS：自雇人士税务中心"
           }
         }
       }
@@ -9583,7 +9583,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "IRS——Where's My Refund?（查询退税）"
+            "value": "IRS：Where's My Refund?（查询退税）"
           }
         }
       }
@@ -9753,7 +9753,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "公司提供的保险通常有一个很短的参保窗口——从入职日起大约 30 天。错过就可能要等公司每年一次的公开参保期。"
+            "value": "公司提供的保险通常有一个很短的参保窗口，从入职日起大约 30 天。错过就可能要等公司每年一次的公开参保期。"
           }
         }
       }
@@ -9770,23 +9770,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "职场医保的登记窗口通常很短。入职后请立即向 HR 确认截止日期——错过可能要等公司年度开放登记。"
-          }
-        }
-      }
-    },
-    "Just a name so you can tell the lists apart — it isn't an invitation or a separate login.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo un nombre para distinguir las listas: no es una invitación ni un inicio de sesión aparte."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只是一个便于区分清单的名称——这不是邀请，也不是另一个登录账号。"
+            "value": "职场医保的登记窗口通常很短。入职后请立即向 HR 确认截止日期，错过可能要等公司年度开放登记。"
           }
         }
       }
@@ -9853,7 +9837,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保留每张账单、病历和收据——理赔可以报销这些费用。"
+            "value": "保留每张账单、病历和收据：理赔可以报销这些费用。"
           }
         }
       }
@@ -9887,7 +9871,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保留验房、贷款和估价这几项附加条件（contingencies）——出问题时它们让你安全退出。"
+            "value": "保留验房、贷款和估价这几项附加条件（contingencies），出问题时它们让你安全退出。"
           }
         }
       }
@@ -9921,7 +9905,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保留租约、押金收据和入住照片——日后可用来证明房屋状况。押金规定各州不同。"
+            "value": "保留租约、押金收据和入住照片：日后可用来证明房屋状况。押金规定各州不同。"
           }
         }
       }
@@ -9938,7 +9922,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "把你的保险计划名称、会员ID和会员服务电话放在手边——它们都在你的保险卡上，每次看病和去药房都会用到。"
+            "value": "把你的保险计划名称、会员ID和会员服务电话放在手边。它们都在你的保险卡上，每次看病和去药房都会用到。"
           }
         }
       }
@@ -10038,7 +10022,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "贷款机构根据你的信用和债务收入比来定利率——尽早查信用报告，留出时间纠正错误。"
+            "value": "贷款机构根据你的信用和债务收入比来定利率。尽早查信用报告，留出时间纠正错误。"
           }
         }
       }
@@ -10054,7 +10038,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "快速看一遍怎么用——添加你的第一个待办，看看 Tadah 怎么帮你不错过任何事。"
+            "value": "快速看一遍怎么用。添加你的第一个待办事项，看看 Tadah 怎么帮你不错过任何事。"
           }
         }
       }
@@ -10136,7 +10120,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "解除免费版的扫描和待办额度限制。"
+            "value": "解除免费版的扫描和待办事项额度限制。"
           }
         }
       }
@@ -10338,7 +10322,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "低收入？可全年随时申请 Medicaid 或 CHIP——若获批，保障何时开始取决于你所在州。"
+            "value": "低收入？可全年随时申请 Medicaid 或 CHIP。若获批，保障何时开始取决于你所在州。"
           }
         }
       }
@@ -10355,7 +10339,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "机器翻译——重要内容请与原件核对。"
+            "value": "机器翻译，重要内容请与原件核对。"
           }
         }
       }
@@ -10405,7 +10389,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "许多银行接受 ITIN 或外国护照代替 SSN——请提前致电确认。"
+            "value": "许多银行接受 ITIN 或外国护照代替 SSN，请提前致电确认。"
           }
         }
       }
@@ -10555,7 +10539,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "MedlinePlus——充分利用你的就诊"
+            "value": "MedlinePlus：充分利用你的就诊"
           }
         }
       }
@@ -10740,7 +10724,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "多数州允许在对方司机始终无法确认时适用“无保险驾驶人”(UM) 承保——请询问你的保险公司是否适用，以及需要你提供什么。"
+            "value": "多数州允许在对方司机始终无法确认时适用“无保险驾驶人”(UM) 承保。请询问你的保险公司是否适用，以及需要你提供什么。"
           }
         }
       }
@@ -11194,7 +11178,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "刚到美国？询问英语（EL）支持——学校必须提供。"
+            "value": "刚到美国？询问英语（EL）支持，学校必须提供。"
           }
         }
       }
@@ -11261,7 +11245,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有——我需要 ITIN"
+            "value": "没有：我需要 ITIN"
           }
         }
       }
@@ -11278,7 +11262,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有——我会使用 ITIN"
+            "value": "没有：我会使用 ITIN"
           }
         }
       }
@@ -11295,7 +11279,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不能——需要拖车"
+            "value": "不能：需要拖车"
           }
         }
       }
@@ -11312,7 +11296,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不是——转学"
+            "value": "不是：转学"
           }
         }
       }
@@ -11461,7 +11445,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有 SSN 或 ITIN？用 IRS W-7 表申请 ITIN——可以同时提交报税表。"
+            "value": "没有 SSN 或 ITIN？用 IRS W-7 表申请 ITIN，可以同时提交报税表。"
           }
         }
       }
@@ -11478,7 +11462,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有 SSN？先打电话问几家银行接受什么——ITIN、外国护照或领事身份证。只有在确实需要时才申请 ITIN。"
+            "value": "没有 SSN？先打电话问几家银行接受什么：ITIN、外国护照或领事身份证。只有在确实需要时才申请 ITIN。"
           }
         }
       }
@@ -11495,7 +11479,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有 SSN？在许多银行和信用社开户并不需要它。先致电几家询问可接受的证件——ITIN、外国护照或领事身份证。只有确实需要报税时才申请 ITIN。"
+            "value": "没有 SSN？在许多银行和信用社开户并不需要它。先致电几家询问可接受的证件：ITIN、外国护照或领事身份证。只有确实需要报税时才申请 ITIN。"
           }
         }
       }
@@ -11512,7 +11496,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有美国信用记录？房东可能要求更高的押金、担保人（co-signer）或预付几个月房租——问清楚他们可以接受哪些替代证明（工资单、银行证明信或工作录用信）。"
+            "value": "没有美国信用记录？房东可能要求更高的押金、担保人（co-signer）或预付几个月房租。问清楚他们可以接受哪些替代证明（工资单、银行证明信或工作录用信）。"
           }
         }
       }
@@ -11529,7 +11513,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有美国信用记录？询问对方还接受哪些证明——工资单、银行证明、录用信或担保人。"
+            "value": "没有美国信用记录？询问对方还接受哪些证明：工资单、银行证明、录用信或担保人。"
           }
         }
       }
@@ -11562,7 +11546,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "暂不——退出登录"
+            "value": "暂不：退出登录"
           }
         }
       }
@@ -11613,7 +11597,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不确定？查看以前的税表或社会安全卡，或者咨询社会安全局——而且开户本身可能根本不需要 SSN。"
+            "value": "不确定？查看以前的税表或社会安全卡，或者咨询社会安全局，而且开户本身可能根本不需要 SSN。"
           }
         }
       }
@@ -11630,7 +11614,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不确定？查看以前的报税表或致电 IRS——你可能并不需要 SSN。"
+            "value": "不确定？查看以前的报税表或致电 IRS，你可能并不需要 SSN。"
           }
         }
       }
@@ -11747,7 +11731,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "记下你复诊的原因——新症状或加重、续药，或查看检查结果。"
+            "value": "记下你复诊的原因：新症状或加重、续药，或查看检查结果。"
           }
         }
       }
@@ -11779,7 +11763,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "没有任何内容被删除——你的待办事项仍保存在这台手机上，只是当前版本的 Tadah 无法读取它们。你现在添加的内容将不会被保留。请更新到最新版本；如果问题持续出现，请联系客服。"
+            "value": "没有任何内容被删除。你的待办事项仍保存在这台手机上，只是当前版本的 Tadah 无法读取它们。你现在添加的内容将不会被保留。请更新到最新版本；如果问题持续出现，请联系客服。"
           }
         }
       }
@@ -11795,7 +11779,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这里还没有内容——两种开始方式"
+            "value": "这里还没有内容：两种开始方式"
           }
         }
       }
@@ -11827,7 +11811,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无需操作——这只是供你参考。"
+            "value": "无需操作，这只是供你参考。"
           }
         }
       }
@@ -11959,7 +11943,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已关闭——点按以开启提醒。"
+            "value": "已关闭，点按以开启提醒。"
           }
         }
       }
@@ -12126,7 +12110,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一旦你的报价被接受，请回到「指南」开始一个新的清单——验房、评估、保险和交割都在此之后进行。"
+            "value": "一旦你的报价被接受，请回到「指南」开始一个新的清单：验房、评估、保险和交割都在此之后进行。"
           }
         }
       }
@@ -12343,7 +12327,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "原件——大多数证件不能用复印件"
+            "value": "原件：大多数证件不能用复印件"
           }
         }
       }
@@ -12444,7 +12428,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自付上限——一年内你为承保的网络内医疗服务最多需要支付的金额；达到上限后，这些费用由保险计划支付 100%。"
+            "value": "自付上限：一年内你为承保的网络内医疗服务最多需要支付的金额；达到上限后，这些费用由保险计划支付 100%。"
           }
         }
       }
@@ -12461,7 +12445,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自付上限——你一年最多要付的金额；达到后计划支付 100%。"
+            "value": "自付上限：你一年最多要付的金额；达到后计划支付 100%。"
           }
         }
       }
@@ -12584,23 +12568,6 @@
         }
       }
     },
-    "Pass the road test, then pay the license fee.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aprueba el examen de manejo y luego paga la tarifa de la licencia."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "通过路考，然后缴纳驾照费用。"
-          }
-        }
-      }
-    },
     "Password": {
       "extractionState": "manual",
       "localizations": {
@@ -12698,7 +12665,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用可追溯的方式付款——支票或银行转账，别用没有收据的现金——并拿到写明日期的收据。这是你日后要回押金时的凭证。"
+            "value": "用可追溯的方式付款。支票或银行转账，别用没有收据的现金，并拿到写明日期的收据。这是你日后要回押金时的凭证。"
           }
         }
       }
@@ -12867,7 +12834,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "入住当天拍下已有的损坏并邮件发给房东留档——这是你日后不被追责的证据。"
+            "value": "入住当天拍下已有的损坏并邮件发给房东留档，这是你日后不被追责的证据。"
           }
         }
       }
@@ -12901,7 +12868,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "入住当天拍照记录房屋状况——退租时这能保护你的押金。"
+            "value": "入住当天拍照记录房屋状况，退租时这能保护你的押金。"
           }
         }
       }
@@ -12935,7 +12902,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "拍下任何原有损坏的照片，才能拿回全额押金——房东不能就本来就存在的问题向你收费。在拿到钥匙那天、搬入任何东西之前就拍好。"
+            "value": "拍下任何原有损坏的照片，才能拿回全额押金。房东不能就本来就存在的问题向你收费。在拿到钥匙那天、搬入任何东西之前就拍好。"
           }
         }
       }
@@ -13053,7 +13020,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "打算以后招人？在第一位员工入职前，你需要办理工资税登记、确认工伤保险要求、搭建工资发放流程并填写 I-9 表——现在了解即可，暂时不必去做。"
+            "value": "打算以后招人？在第一位员工入职前，你需要办理工资税登记、确认工伤保险要求、搭建工资发放流程并填写 I-9 表，现在了解即可，暂时不必去做。"
           }
         }
       }
@@ -13070,7 +13037,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "计划按金属等级分类——铜、银、金、铂。铜的月保费最低，但就医时自己付得更多；金和铂每月更贵，但看病时更便宜。如果你的收入符合条件，选银级计划可解锁额外的费用分摊补贴。"
+            "value": "计划按金属等级分类：铜、银、金、铂。铜的月保费最低，但就医时自己付得更多；金和铂每月更贵，但看病时更便宜。如果你的收入符合条件，选银级计划可解锁额外的费用分摊补贴。"
           }
         }
       }
@@ -13156,7 +13123,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "预批能向卖家表明你是认真的，并确定你真正的预算。在同一小段时间内比较几家贷款机构——这样比价几乎不影响你的信用分。"
+            "value": "预批能向卖家表明你是认真的，并确定你真正的预算。在同一小段时间内比较几家贷款机构，这样比价几乎不影响你的信用分。"
           }
         }
       }
@@ -13173,7 +13140,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保费——每月都要付的钱，即使没看病。"
+            "value": "保费，每月都要付的钱，即使没看病。"
           }
         }
       }
@@ -13492,7 +13459,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "通读整份报告——屋顶、地基、管道、电气、暖通空调。"
+            "value": "通读整份报告：屋顶、地基、管道、电气、暖通空调。"
           }
         }
       }
@@ -13627,7 +13594,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在%@为外州车辆办理登记——期限请查询你所在州的 DMV——并更新车险。"
+            "value": "在%@为外州车辆办理登记。期限请查询你所在州的 DMV，并更新车险。"
           }
         }
       }
@@ -13777,7 +13744,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "提醒是 Tadah 帮你掌握截止日期的方式——请在“设置”中打开，以充分使用本应用。"
+            "value": "提醒是 Tadah 帮你掌握截止日期的方式。请在“设置”中打开，以充分使用本应用。"
           }
         }
       }
@@ -13793,7 +13760,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "提醒是 Tadah 帮你不错过截止日期的方式——开启后才能充分发挥应用的作用。"
+            "value": "提醒是 Tadah 帮你不错过截止日期的方式，开启后才能充分发挥应用的作用。"
           }
         }
       }
@@ -13810,7 +13777,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "锁屏提醒将只显示 \"Tadah\"，不显示事项名称——以防标题涉及隐私（例如医疗或移民信件）。"
+            "value": "锁屏提醒将只显示 \"Tadah\"，不显示事项名称，以防标题涉及隐私（例如医疗或移民信件）。"
           }
         }
       }
@@ -14010,7 +13977,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "租客保险保障你的个人财物（失窃、火灾、水损）以及你的责任险——通常每月 10–20 美元。房东的保险并不保你的东西。"
+            "value": "租客保险保障你的个人财物（失窃、火灾、水损）以及你的责任险，通常每月 10–20 美元。房东的保险并不保你的东西。"
           }
         }
       }
@@ -14128,7 +14095,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "补办遗失、被盗或损坏的卡使用 I-90 表，2 年期的有条件卡也是如此。但如果该卡距到期不足 90 天，你还需要同时办理解除条件（I-751 或 I-829）——请查看 I-751 页面。"
+            "value": "补办遗失、被盗或损坏的卡使用 I-90 表，2 年期的有条件卡也是如此。但如果该卡距到期不足 90 天，你还需要同时办理解除条件（I-751 或 I-829），请查看 I-751 页面。"
           }
         }
       }
@@ -14145,7 +14112,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "肇事逃逸请尽快报警并保存报案编号——保险公司或所在州可能会要求提供。"
+            "value": "肇事逃逸请尽快报警并保存报案编号，保险公司或所在州可能会要求提供。"
           }
         }
       }
@@ -14162,7 +14129,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向你的保险公司报案——责任险负责对方，碰撞险负责你自己的车。"
+            "value": "向你的保险公司报案。责任险负责对方，碰撞险负责你自己的车。"
           }
         }
       }
@@ -14179,7 +14146,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向你自己的保险公司报案，并询问适用哪一项承保范围——对方司机身份不明并不妨碍你索赔。"
+            "value": "向你自己的保险公司报案，并询问适用哪一项承保范围，对方司机身份不明并不妨碍你索赔。"
           }
         }
       }
@@ -14230,7 +14197,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向%@的 DMV 申报新地址——期限请以该州规定为准，各州不同。"
+            "value": "向%@的 DMV 申报新地址，期限请以该州规定为准，各州不同。"
           }
         }
       }
@@ -14247,7 +14214,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向 %@ 车管局（DMV）申报新地址——许多州要求在约 10 天内办理。"
+            "value": "向 %@ 车管局（DMV）申报新地址，许多州要求在约 10 天内办理。"
           }
         }
       }
@@ -14281,7 +14248,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果你申请的是豁免联合申请的要求？90 天的时限适用方式不同——请查看 I-751 页面，了解你的情况该何时提交。"
+            "value": "如果你申请的是豁免联合申请的要求？90 天的时限适用方式不同。请查看 I-751 页面，了解你的情况该何时提交。"
           }
         }
       }
@@ -14298,7 +14265,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "各州要求不同——出发前请查看你所在 DMV 的确切受理文件清单。DMV 可能要求居住证明、身份证明、社会安全号或身份文件，以及改名文件。请携带原件，而非复印件。"
+            "value": "各州要求不同。出发前请查看你所在 DMV 的确切受理文件清单。DMV 可能要求居住证明、身份证明、社会安全号或身份文件，以及改名文件。请携带原件，而非复印件。"
           }
         }
       }
@@ -14315,7 +14282,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "要求各州不同——查看你车管所确切的可接受证件清单。携带原件，而非复印件。一般需证明身份／合法居留、你的 SSN（或替代证明），以及两份居住证明。"
+            "value": "要求各州不同。查看你车管所确切的可接受证件清单。携带原件，而非复印件。一般需证明身份／合法居留、你的 SSN（或替代证明），以及两份居住证明。"
           }
         }
       }
@@ -14414,7 +14381,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "查看各医疗计划——保费、自付额，以及你的医生是否在网络内。"
+            "value": "查看各医疗计划：保费、自付额，以及你的医生是否在网络内。"
           }
         }
       }
@@ -14582,7 +14549,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存到待办"
+            "value": "保存到待办事项"
           }
         }
       }
@@ -14666,7 +14633,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果情况紧急就说明——他们可能会更早安排。"
+            "value": "如果情况紧急就说明，他们可能会更早安排。"
           }
         }
       }
@@ -14683,7 +14650,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SBA——申请执照与许可"
+            "value": "SBA：申请执照与许可"
           }
         }
       }
@@ -14700,7 +14667,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SBA——选择企业架构"
+            "value": "SBA：选择企业架构"
           }
         }
       }
@@ -14717,7 +14684,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SBA——选择你的公司名"
+            "value": "SBA：选择你的公司名"
           }
         }
       }
@@ -14734,7 +14701,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SBA——招聘与管理员工"
+            "value": "SBA：招聘与管理员工"
           }
         }
       }
@@ -14751,7 +14718,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SBA——开设公司银行账户"
+            "value": "SBA：开设公司银行账户"
           }
         }
       }
@@ -14768,7 +14735,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SBA——撰写你的商业计划"
+            "value": "SBA：撰写你的商业计划"
           }
         }
       }
@@ -14816,7 +14783,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "扫描纸质文件、上传照片，或自己输入——都会变成带提醒的待办。"
+            "value": "扫描纸质文件、上传照片，或自己输入，都会变成带提醒的待办事项。"
           }
         }
       }
@@ -14933,7 +14900,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "学校接受多种地址证明——租约、水电账单或宣誓书。"
+            "value": "学校接受多种地址证明：租约、水电账单或宣誓书。"
           }
         }
       }
@@ -15102,7 +15069,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自雇？申报你的 1099 收入和业务支出——你可能需要按季度预缴税款。"
+            "value": "自雇？申报你的 1099 收入和业务支出，你可能需要按季度预缴税款。"
           }
         }
       }
@@ -15136,7 +15103,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如对方要求，向%@提交 W-9 表——该表用于证明你的姓名和税号，不含银行信息。付款信息请另行提供。"
+            "value": "如对方要求，向%@提交 W-9 表。该表用于证明你的姓名和税号，不含银行信息。付款信息请另行提供。"
           }
         }
       }
@@ -15204,7 +15171,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "发送匿名、无法识别身份的统计信息，说明你使用了哪些功能——例如你添加和完成的事项——以帮助我们改进 Tadah。绝不包含你的文件、照片或事项中的任何文字。可随时关闭。"
+            "value": "发送匿名、无法识别身份的统计信息，说明你使用了哪些功能：例如你添加和完成的事项，以帮助我们改进 Tadah。绝不包含你的文件、照片或事项中的任何文字。可随时关闭。"
           }
         }
       }
@@ -15237,7 +15204,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "预留缴税的钱——承包人通常按季度缴税。"
+            "value": "预留缴税的钱，承包人通常按季度缴税。"
           }
         }
       }
@@ -15305,7 +15272,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置自动扣款或使用租户门户，这样就绝不会逾期——租金逾期会产生费用，还可能影响你下次租房需要的推荐。保留每笔付款的凭证。"
+            "value": "设置自动扣款或使用租户门户，这样就绝不会逾期。租金逾期会产生费用，还可能影响你下次租房需要的推荐。保留每笔付款的凭证。"
           }
         }
       }
@@ -15322,7 +15289,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "从第一天起做好记账——用表格或记账软件记录收入和支出。"
+            "value": "从第一天起做好记账，用表格或记账软件记录收入和支出。"
           }
         }
       }
@@ -15390,7 +15357,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置网上银行、直接存款和提醒；申请借记卡——除非你了解相关费用，否则不要开通透支服务。"
+            "value": "设置网上银行、直接存款和提醒；申请借记卡：除非你了解相关费用，否则不要开通透支服务。"
           }
         }
       }
@@ -15424,7 +15391,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置你的 401(k) 缴款——至少要够拿到雇主的匹配。"
+            "value": "设置你的 401(k) 缴款，至少要够拿到雇主的匹配。"
           }
         }
       }
@@ -15889,7 +15856,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果这份工作是为了课程学分，请在开始前办好学分手续——学校通常需要签署自己的表格。"
+            "value": "如果这份工作是为了课程学分，请在开始前办好学分手续，学校通常需要签署自己的表格。"
           }
         }
       }
@@ -15922,7 +15889,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SSA——所需证件"
+            "value": "SSA：所需证件"
           }
         }
       }
@@ -15939,7 +15906,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "SSA——社会安全号与卡"
+            "value": "SSA：社会安全号与卡"
           }
         }
       }
@@ -16007,7 +15974,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "有 SSN 的话提供证明（社保卡、W-2 或工资单）——或你车管所认可的替代证明。"
+            "value": "有 SSN 的话提供证明（社保卡、W-2 或工资单），或你车管所认可的替代证明。"
           }
         }
       }
@@ -16159,7 +16126,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "先在线开始申请 SSN——社会保障局会告知你是否需要携带证件到办事处办理。申请免费。"
+            "value": "先在线开始申请 SSN。社会保障局会告知你是否需要携带证件到办事处办理。申请免费。"
           }
         }
       }
@@ -16243,7 +16210,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "各州的规定、费用和执照要求各不相同——请向你所在州的州务卿核实具体情况。"
+            "value": "各州的规定、费用和执照要求各不相同：请向你所在州的州务卿核实具体情况。"
           }
         }
       }
@@ -16347,23 +16314,6 @@
         }
       }
     },
-    "Study for and pass the written knowledge test.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estudia y aprueba el examen teórico escrito."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备考并通过笔试（交规知识考试）。"
-          }
-        }
-      }
-    },
     "Sub-step": {
       "extractionState": "stale",
       "localizations": {
@@ -16410,7 +16360,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "只通过官方 HR 门户提交你的 SSN、银行和身份信息——绝不要用电邮或短信。"
+            "value": "只通过官方 HR 门户提交你的 SSN、银行和身份信息，绝不要用电邮或短信。"
           }
         }
       }
@@ -16443,7 +16393,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tadah 仅供参考——不构成法律、税务、移民、金融或医疗建议。它使用 AI，可能会出错；请向官方来源或专业人士核对重要信息。"
+            "value": "Tadah 仅供参考：不构成法律、税务、移民、金融或医疗建议。它使用 AI，可能会出错；请向官方来源或专业人士核对重要信息。"
           }
         }
       }
@@ -16475,7 +16425,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tadah Plus 覆盖此账户下的所有成员——无需为每人额外付费。"
+            "value": "Tadah Plus 覆盖此账户下的所有成员，无需为每人额外付费。"
           }
         }
       }
@@ -16540,7 +16490,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tadah 会在账单、预约或表格到期前提醒你。请打开通知，这些提醒才能及时送达——否则 Tadah 无法及时提醒你。"
+            "value": "Tadah 会在账单、预约或表格到期前提醒你。请打开通知，这些提醒才能及时送达，否则 Tadah 无法及时提醒你。"
           }
         }
       }
@@ -16590,7 +16540,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "点下方的**添加**——新的待办都从这里开始。"
+            "value": "点下方的**添加**，新的待办事项都从这里开始。"
           }
         }
       }
@@ -16622,7 +16572,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "点下方的＋，选择扫描——Tadah 帮你看懂并生成步骤。"
+            "value": "点下方的＋，选择扫描，Tadah 帮你看懂并生成步骤。"
           }
         }
       }
@@ -16720,7 +16670,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "税表、薪资、福利——W-2 或 1099"
+            "value": "税表、薪资、福利：W-2 或 1099"
           }
         }
       }
@@ -16754,7 +16704,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "预扣的税款——联邦税、州税、社会安全税（Social Security）和医疗保险税（Medicare）。"
+            "value": "预扣的税款：联邦税、州税、社会安全税（Social Security）和医疗保险税（Medicare）。"
           }
         }
       }
@@ -16920,7 +16870,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "AI 服务繁忙或本设备已达使用上限——请稍后再试。"
+            "value": "AI 服务繁忙或本设备已达使用上限，请稍后再试。"
           }
         }
       }
@@ -16937,7 +16887,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "押金金额——以及要拿回押金你到底得做些什么。"
+            "value": "押金金额，以及要拿回押金你到底得做些什么。"
           }
         }
       }
@@ -16954,7 +16904,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这第一笔付款由保险公司直接向你收取——不是 HealthCare.gov——所以要留意第一张账单（邮寄、电子邮件或他们的网站），并在到期日前付清，否则你的保险生效日期就不作数了。"
+            "value": "这第一笔付款由保险公司直接向你收取，不是 HealthCare.gov，所以要留意第一张账单（邮寄、电子邮件或他们的网站），并在到期日前付清，否则你的保险生效日期就不作数了。"
           }
         }
       }
@@ -16971,7 +16921,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "保险公司通常会先查勘损失——理赔员上门或让你上传照片——然后才批准维修。"
+            "value": "保险公司通常会先查勘损失。理赔员上门或让你上传照片，然后才批准维修。"
           }
         }
       }
@@ -16988,7 +16938,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "租约是有约束力的合同——一旦签字，条款就生效。签字前逐条阅读，任何不清楚的地方都要问。没有写进租约的承诺，都不算数。"
+            "value": "租约是有约束力的合同，一旦签字，条款就生效。签字前逐条阅读，任何不清楚的地方都要问。没有写进租约的承诺，都不算数。"
           }
         }
       }
@@ -17005,7 +16955,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "租约具有法律约束力——签字后即以条款为准。逐条阅读，签前问清疑问，并将重要承诺写入书面。"
+            "value": "租约具有法律约束力，签字后即以条款为准。逐条阅读，签前问清疑问，并将重要承诺写入书面。"
           }
         }
       }
@@ -17073,7 +17023,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "扫描的照片会保存在事项里，方便你随时查看原件——照片只保存在你的手机上。关闭后，新的扫描将不再保存照片。"
+            "value": "扫描的照片会保存在事项里，方便你随时查看原件，照片只保存在你的手机上。关闭后，新的扫描将不再保存照片。"
           }
         }
       }
@@ -17325,7 +17275,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这是重复任务——删除后以后的也不再出现。"
+            "value": "这是重复任务，删除后以后的也不再出现。"
           }
         }
       }
@@ -17391,7 +17341,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "待办"
+            "value": "待办事项"
           }
         }
       }
@@ -17407,7 +17357,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "待办"
+            "value": "待办事项"
           }
         }
       }
@@ -17423,7 +17373,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "提醒待办事项"
+            "value": "待办事项与提醒"
           }
         }
       }
@@ -17473,7 +17423,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "签约前先看房并通读租约——留意租金、租期、押金、各项水电费由谁承担，以及宠物费和提前退租的费用。"
+            "value": "签约前先看房并通读租约：留意租金、租期、押金、各项水电费由谁承担，以及宠物费和提前退租的费用。"
           }
         }
       }
@@ -17490,7 +17440,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "拖到修理厂或你家——不要拖到存放场。"
+            "value": "拖到修理厂或你家，不要拖到存放场。"
           }
         }
       }
@@ -17541,7 +17491,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "记录你的收入和业务支出——支出能降低你要缴的税。"
+            "value": "记录你的收入和业务支出，支出能降低你要缴的税。"
           }
         }
       }
@@ -17660,7 +17610,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "垃圾与回收——由市政收运或私人承运商负责，具体取决于所在地区。"
+            "value": "垃圾与回收：由市政收运或私人承运商负责，具体取决于所在地区。"
           }
         }
       }
@@ -17676,7 +17626,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "试试**扫描文件**——Tadah 帮你读懂并生成步骤。也可以上传已有的照片，或自己输入。"
+            "value": "试试**扫描文件**，Tadah 帮你读懂并生成步骤。也可以上传已有的照片，或自己输入。"
           }
         }
       }
@@ -17777,7 +17727,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自己动手输入一个待办"
+            "value": "自己动手输入一个待办事项"
           }
         }
       }
@@ -17811,7 +17761,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "美国教育部——英语学习者家庭工具包"
+            "value": "美国教育部：英语学习者家庭工具包"
           }
         }
       }
@@ -17828,7 +17778,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "了解你的税务——经营收入要纳税，自雇业主通常按季度预缴税款。"
+            "value": "了解你的税务。经营收入要纳税，自雇业主通常按季度预缴税款。"
           }
         }
       }
@@ -17912,7 +17862,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无薪职位没有税表——不会有 W-2 或 1099。"
+            "value": "无薪职位没有税表，不会有 W-2 或 1099。"
           }
         }
       }
@@ -17929,7 +17879,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无薪岗位没有税务表格——不会有 W-2 或 1099。无薪实习另有特定法律规定：若你与带薪员工做同样的工作，应询问薪酬。"
+            "value": "无薪岗位没有税务表格，不会有 W-2 或 1099。无薪实习另有特定法律规定：若你与带薪员工做同样的工作，应询问薪酬。"
           }
         }
       }
@@ -18065,7 +18015,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "到 DMV 更新驾照/身份证件上的地址——各州期限不同。"
+            "value": "到 DMV 更新驾照/身份证件上的地址，各州期限不同。"
           }
         }
       }
@@ -18082,7 +18032,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "到车管所（DMV）更新你驾照／身份证上的地址——许多州要求在约 10–30 天内办理。"
+            "value": "到车管所（DMV）更新你驾照／身份证上的地址。许多州要求在约 10–30 天内办理。"
           }
         }
       }
@@ -18133,7 +18083,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在%@更新你的驾照/身份证件——各州期限不同，且车辆登记的期限可能不一样，搬家后请尽快查询 DMV。"
+            "value": "在%@更新你的驾照/身份证件。各州期限不同，且车辆登记的期限可能不一样，搬家后请尽快查询 DMV。"
           }
         }
       }
@@ -18150,7 +18100,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 %@ 更新驾照/身份证件（通常需在 10–30 天内办理——请查询车管局规定）。"
+            "value": "在 %@ 更新驾照/身份证件（通常需在 10–30 天内办理，请查询车管局规定）。"
           }
         }
       }
@@ -18200,7 +18150,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USCIS——查询案件状态"
+            "value": "USCIS：查询案件状态"
           }
         }
       }
@@ -18217,7 +18167,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USCIS——在线提交"
+            "value": "USCIS：在线提交"
           }
         }
       }
@@ -18234,7 +18184,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USCIS——I-90 表（更新／补办绿卡）"
+            "value": "USCIS：I-90 表（更新／补办绿卡）"
           }
         }
       }
@@ -18251,7 +18201,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USCIS——I-765 表（工作许可）"
+            "value": "USCIS：I-765 表（工作许可）"
           }
         }
       }
@@ -18268,7 +18218,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USCIS——N-400 表（入籍）"
+            "value": "USCIS：N-400 表（入籍）"
           }
         }
       }
@@ -18285,7 +18235,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USCIS 可能会在 I-90 收据通知上延长你的绿卡有效期——请查看 I-90 页面。"
+            "value": "USCIS 可能会在 I-90 收据通知上延长你的绿卡有效期，请查看 I-90 页面。"
           }
         }
       }
@@ -18353,7 +18303,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "使用你所在州的官方车管所网站——不要用收费的仿冒站点。"
+            "value": "使用你所在州的官方车管所网站，不要用收费的仿冒站点。"
           }
         }
       }
@@ -18370,7 +18320,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "USPS 转寄只转移你的邮件——请另行更新你的银行、车管所（DMV）和雇主信息。"
+            "value": "USPS 转寄只转移你的邮件。请另行更新你的银行、车管所（DMV）和雇主信息。"
           }
         }
       }
@@ -18504,7 +18454,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "自来水与排污——向市政或本地自来水公司申请开通。"
+            "value": "自来水与排污，向市政或本地自来水公司申请开通。"
           }
         }
       }
@@ -18689,7 +18639,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "我们正在做最后的完善。你现在使用的一切仍然免费——请稍后再来看看。"
+            "value": "我们正在做最后的完善。你现在使用的一切仍然免费，请稍后再来看看。"
           }
         }
       }
@@ -18888,7 +18838,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "需要携带什么——无论有没有 SSN"
+            "value": "需要携带什么：无论有没有 SSN"
           }
         }
       }
@@ -18938,7 +18888,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "开始一份新工作时要办理什么——文件、薪资和福利。"
+            "value": "开始一份新工作时要办理什么：文件、薪资和福利。"
           }
         }
       }
@@ -19264,23 +19214,6 @@
         }
       }
     },
-    "Which state will the business be in?": {
-      "extractionState": "stale",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "¿En qué estado estará el negocio?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "公司将设在哪个州？"
-          }
-        }
-      }
-    },
     "Which utilities you pay vs. the landlord, plus rules on pets and early-termination fees.": {
       "extractionState": "manual",
       "localizations": {
@@ -19310,7 +19243,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你打算在哪个邮政编码区购房？（可选——用于查找当地首次购房项目）"
+            "value": "你打算在哪个邮政编码区购房？（可选，用于查找当地首次购房项目）"
           }
         }
       }
@@ -19393,7 +19326,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "过户时电汇诈骗很常见——骗子会发邮件给你假的汇款指示。务必通过你自己查到的电话致电产权／托管公司核实汇款信息，绝不要用邮件里的号码。"
+            "value": "过户时电汇诈骗很常见，骗子会发邮件给你假的汇款指示。务必通过你自己查到的电话致电产权／托管公司核实汇款信息，绝不要用邮件里的号码。"
           }
         }
       }
@@ -19410,7 +19343,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完全没有报酬就不会有 W-2 或 1099。津贴则不同——它仍可能附带税表，所以在认定不会收到任何表格之前，先问清楚是哪一种。"
+            "value": "完全没有报酬就不会有 W-2 或 1099。津贴则不同，它仍可能附带税表，所以在认定不会收到任何表格之前，先问清楚是哪一种。"
           }
         }
       }
@@ -19494,7 +19427,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "写下你的商业点子、目标客户，以及你将如何赚钱——一页纸的计划就足以起步。"
+            "value": "写下你的商业点子、目标客户，以及你将如何赚钱，一页纸的计划就足以起步。"
           }
         }
       }
@@ -19544,7 +19477,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "是——初到美国"
+            "value": "是：初到美国"
           }
         }
       }
@@ -19612,7 +19545,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你可以现在重试，也可以稍后再试——无论哪种方式都不会丢失任何内容。"
+            "value": "你可以现在重试，也可以稍后再试，无论哪种方式都不会丢失任何内容。"
           }
         }
       }
@@ -19629,7 +19562,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你可能需要提供证明——失去保险的信函、结婚证或出生证明，或租约。"
+            "value": "你可能需要提供证明：失去保险的信函、结婚证或出生证明，或租约。"
           }
         }
       }
@@ -19645,7 +19578,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你在另一台设备上登录了。免费账户一次只能在一台设备上使用——升级 Tadah Plus 可同时使用多台设备。你的待办事项仍保存在此设备上。"
+            "value": "你在另一台设备上登录了。免费账户一次只能在一台设备上使用。升级 Tadah Plus 可同时使用多台设备。你的待办事项仍保存在此设备上。"
           }
         }
       }
@@ -19847,7 +19780,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "入职时雇主会给出福利登记截止日期，时间可能很短。第一周就确认——错过可能要等下一个登记期。"
+            "value": "入职时雇主会给出福利登记截止日期，时间可能很短。第一周就确认，错过可能要等下一个登记期。"
           }
         }
       }
@@ -19881,7 +19814,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "家庭人数和收入决定一切——你是否符合 Medicaid 资格，以及你能获得多少市场补贴。有合法身份的移民可以使用市场并且通常符合补贴资格；无证成年人一般不行，但部分州无论身份都为儿童和孕期提供保障。"
+            "value": "家庭人数和收入决定一切：你是否符合 Medicaid 资格，以及你能获得多少市场补贴。有合法身份的移民可以使用市场并且通常符合补贴资格；无证成年人一般不行，但部分州无论身份都为儿童和孕期提供保障。"
           }
         }
       }
@@ -19914,7 +19847,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的事项已保存——重新登录即可恢复。"
+            "value": "你的事项已保存，重新登录即可恢复。"
           }
         }
       }
@@ -19931,7 +19864,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的事项会保留在这台设备上——重新登录后即可恢复。"
+            "value": "你的事项会保留在这台设备上，重新登录后即可恢复。"
           }
         }
       }
@@ -20054,7 +19987,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的保单号——或责任方司机的保险公司和保单号。"
+            "value": "你的保单号，或责任方司机的保险公司和保单号。"
           }
         }
       }
@@ -20071,7 +20004,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的收据编号（3 个字母后跟数字，例如 IOE…）在你的 I-797 收据通知上——把它存在“详情”里方便查找。"
+            "value": "你的收据编号（3 个字母后跟数字，例如 IOE…）在你的 I-797 收据通知上，把它存在“详情”里方便查找。"
           }
         }
       }
@@ -20189,7 +20122,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的待办都在这里"
+            "value": "你的待办事项都在这里"
           }
         }
       }
@@ -20257,7 +20190,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "为了解释文件并把它变成待办步骤，Tadah 会把读取到的文字发送给我们使用的 AI 公司 OpenAI。这需要你先同意。"
+            "value": "为了解释文件并把它变成待办事项步骤，Tadah 会把读取到的文字发送给我们使用的 AI 公司 OpenAI。这需要你先同意。"
           }
         }
       }
@@ -20274,7 +20207,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你的手机会读取文件，然后发送文字——不是照片。你的照片永远不会离开手机。"
+            "value": "你的手机会读取文件，然后发送文字，不是照片。你的照片永远不会离开手机。"
           }
         }
       }
@@ -20291,7 +20224,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "文字就是页面上印的内容——可能包含你的姓名、健康状况、案件或账户号码，或者金额信息。"
+            "value": "文字就是页面上印的内容，可能包含你的姓名、健康状况、案件或账户号码，或者金额信息。"
           }
         }
       }
@@ -20325,7 +20258,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "不想这样？点按“暂不”。你仍然可以自己添加待办、使用指南和设置提醒——随时可以在 我的 → 隐私 中更改。"
+            "value": "不想这样？点按“暂不”。你仍然可以自己添加待办事项、使用指南和设置提醒，随时可以在 我的 → 隐私 中更改。"
           }
         }
       }
@@ -20359,7 +20292,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "只添加你有权处理其文件的人——你照顾的家人，或你自己的孩子。归在这个人名下的内容可能包含他们的医疗、财务和移民信息。"
+            "value": "只添加你有权处理其文件的人，你照顾的家人，或你自己的孩子。归在这个人名下的内容可能包含他们的医疗、财务和移民信息。"
           }
         }
       }
@@ -20393,7 +20326,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你新家的邮编？（可选——会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
+            "value": "你新家的邮编？（可选：会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
           }
         }
       }
@@ -20410,7 +20343,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "新住处的邮编？（可选——会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
+            "value": "新住处的邮编？（可选：会连同你的回答发送给 AI，用于查找你所在地区的水电网公司）"
           }
         }
       }
@@ -20462,23 +20395,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "我们不会附带你的 Tadah 账户或登录邮箱。但文件上印有的任何可识别身份的信息，OpenAI 仍会收到。"
-          }
-        }
-      }
-    },
-    "Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove (you can't remove yourself).": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cada persona tiene su propia lista. Toca un nombre para cambiar a esa persona: las tareas nuevas se guardan en la que esté seleccionada. Desliza un nombre a la izquierda para editar, o a la derecha para quitarlo (no puedes quitarte a ti mismo)."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每个人都有自己的列表。点按名字即可切换——新的待办事项会归到当前选中的人名下。向左滑动可编辑，向右滑动可移除（不能移除你自己）。"
           }
         }
       }
@@ -20665,7 +20581,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已取消——你可继续使用 Tadah Plus 至 %@，之后将不再续订。"
+            "value": "已取消。你可继续使用 Tadah Plus 至 %@，之后将不再续订。"
           }
         }
       }
@@ -20682,7 +20598,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已取消——将不再续订。"
+            "value": "已取消，将不再续订。"
           }
         }
       }
@@ -20818,7 +20734,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "这将永久删除你的账户以及备份在其中的所有内容（所有设备）。此手机上已保存的事项会保留。此操作无法撤销。\n\n⚠️ 这不会取消你的 Tadah Plus 订阅——订阅由 Apple 计费，你必须在 App Store 中取消，否则将继续扣费。"
+            "value": "这将永久删除你的账户以及备份在其中的所有内容（所有设备）。此手机上已保存的事项会保留。此操作无法撤销。\n\n⚠️ 这不会取消你的 Tadah Plus 订阅。订阅由 Apple 计费，你必须在 App Store 中取消，否则将继续扣费。"
           }
         }
       }
@@ -20853,6 +20769,720 @@
           "stringUnit": {
             "state": "translated",
             "value": "你之前的 Tadah Plus 订阅已过期。请在上方选择方案重新开通。"
+          }
+        }
+      }
+    },
+    "A step-by-step checklist to get from credit check to the keys.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una lista paso a paso para ir de la revisión de crédito hasta las llaves."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从查信用记录到拿到钥匙的分步清单。"
+          }
+        }
+      }
+    },
+    "After signing, save the deed, the closing documents, and your insurance policy.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Después de firmar, guarda la escritura, los documentos del cierre y tu póliza de seguro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "签完字，把房产证、过户文件和保单都保存好。"
+          }
+        }
+      }
+    },
+    "Ask for separate specialists if anything looks off — roof, sewer line, foundation, pests.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pide especialistas aparte si algo se ve mal: techo, drenaje, cimientos, plagas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "哪里看着不对劲就单独请专项师傅来查：屋顶、下水管道、地基、白蚁虫害。"
+          }
+        }
+      }
+    },
+    "Book it within a few days — the window in your contract is usually short.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agéndala en pocos días: el plazo de tu contrato suele ser corto."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "几天之内就要约好，合同给的时间通常很短。"
+          }
+        }
+      }
+    },
+    "Book the home inspection right away — your contract gives you a short window to inspect and to raise repairs or walk away.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agenda la inspección de la casa de inmediato: tu contrato te da un plazo corto para inspeccionar y para pedir reparaciones o retirarte."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立刻预约验房。合同给你的验房时间很短，在这段时间内你才能提出维修要求或者退出交易。"
+          }
+        }
+      }
+    },
+    "Buy homeowners insurance and give the policy to your lender — the loan can't close without it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contrata el seguro de vivienda y entrega la póliza a tu prestamista: sin ella el préstamo no puede cerrarse."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "购买房屋保险并把保单交给贷款机构。没有保单就无法完成过户。"
+          }
+        }
+      }
+    },
+    "By law you get the Closing Disclosure at least 3 business days before closing so you can check it. Compare it line by line against the Loan Estimate you were given — ask about anything that moved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por ley recibes el Closing Disclosure al menos 3 días hábiles antes del cierre para que puedas revisarlo. Compáralo línea por línea con el Loan Estimate que te dieron y pregunta por cualquier cifra que haya cambiado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "法律规定过户结算说明书要在过户前至少 3 个工作日交到你手上，就是给你核对用的。把它和之前拿到的贷款报价单（Loan Estimate）逐行对照，有变动的地方都要问清楚。"
+          }
+        }
+      }
+    },
+    "CFPB — closing disclosure explainer": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB: explicación del Closing Disclosure"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CFPB：过户结算说明书详解"
+          }
+        }
+      }
+    },
+    "Check the agreed repairs were actually done, and ask for the receipts.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprueba que las reparaciones acordadas realmente se hicieron y pide los recibos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认说好的维修确实做了，并且要来发票或收据。"
+          }
+        }
+      }
+    },
+    "Check the exact cash to bring to closing.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirma la cantidad exacta de dinero que debes llevar al cierre."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认过户当天到底要带多少钱。"
+          }
+        }
+      }
+    },
+    "Check the loan amount, interest rate, and monthly payment match what you agreed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifica que el monto del préstamo, la tasa de interés y el pago mensual coincidan con lo acordado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "核对贷款金额、利率和月供，看看是不是当初谈好的。"
+          }
+        }
+      }
+    },
+    "Compare every fee against your Loan Estimate and ask about anything that grew.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compara cada cargo con tu Loan Estimate y pregunta por todo lo que haya subido."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每一项费用都和贷款报价单对一遍，涨了的就要问。"
+          }
+        }
+      }
+    },
+    "Confirm wire instructions by calling a number you looked up yourself — never one from an email.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirma las instrucciones de transferencia llamando a un número que hayas buscado tú, nunca a uno que venga en un correo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电汇账号一定要打电话确认，电话号码要自己查，不要用邮件里给的号码。"
+          }
+        }
+      }
+    },
+    "Do the final walkthrough, then close: bring photo ID and your funds by wire or cashier's check, sign, and get the keys.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz el recorrido final y luego cierra: lleva identificación con foto y tus fondos por transferencia o cheque de caja, firma y recibe las llaves."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "做最后一次看房验收，然后办理过户：带上带照片的身份证件，用电汇或本票准备好房款，签字，拿钥匙。"
+          }
+        }
+      }
+    },
+    "Go along and follow the inspector around; the walkthrough teaches you more than the report.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acompaña al inspector durante todo el recorrido; ver la casa con él enseña más que el informe."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全程跟着验房师走一遍。现场看到的东西比报告上写的更有用。"
+          }
+        }
+      }
+    },
+    "Put any repair request or price change in writing before your deadline.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presenta por escrito cualquier solicitud de reparación o cambio de precio antes de tu fecha límite."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "维修要求或者调价要求都要在期限前用书面形式提出。"
+          }
+        }
+      }
+    },
+    "Read the Closing Disclosure the moment it arrives — you get it at least 3 business days before closing, and it's your last chance to question the numbers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lee el Closing Disclosure en cuanto llegue: lo recibes al menos 3 días hábiles antes del cierre y es tu última oportunidad para cuestionar las cifras."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "过户结算说明书（Closing Disclosure）一到就要读。它会在过户前至少 3 个工作日送到，这是你对各项数字提出疑问的最后机会。"
+          }
+        }
+      }
+    },
+    "Send your lender everything it asks for and don't open new credit or change jobs — the loan is re-checked before closing.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envía a tu prestamista todo lo que te pida y no abras créditos nuevos ni cambies de trabajo: el préstamo se vuelve a revisar antes del cierre."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "贷款机构要什么材料就尽快给，同时不要办新的信用卡或贷款，也不要换工作。过户前贷款会再审一次。"
+          }
+        }
+      }
+    },
+    "Test the heat, air conditioning, taps, and appliances that stay with the house.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prueba la calefacción, el aire acondicionado, las llaves de agua y los electrodomésticos que se quedan con la casa."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "试一下暖气、空调、水龙头，以及随房子一起留下的电器。"
+          }
+        }
+      }
+    },
+    "The inspection is for you, not the lender. It's the window where you can still ask for repairs, ask for a price cut, or walk away and keep your deposit — miss the deadline in your contract and those options close.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La inspección es para ti, no para el prestamista. Es la ventana en la que todavía puedes pedir reparaciones, pedir una rebaja o retirarte conservando tu depósito; si se te pasa la fecha del contrato, esas opciones se cierran."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验房是为你自己做的，不是为贷款机构。在这段时间内你还可以要求维修、要求降价，或者退出交易并拿回定金。一旦超过合同里的期限，这些选择就都没有了。"
+          }
+        }
+      }
+    },
+    "The walkthrough is usually the day before or the morning of closing. You're checking that agreed repairs were done and that nothing broke or disappeared since the inspection.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El recorrido final suele ser el día antes o la mañana del cierre. Estás comprobando que se hicieron las reparaciones acordadas y que nada se rompió ni desapareció desde la inspección."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最后一次验收一般在过户前一天或者当天早上。你要确认说好的维修都做了，而且验房之后没有东西坏掉或者被搬走。"
+          }
+        }
+      }
+    },
+    "This isn't an invitation or a separate login.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esto no es una invitación ni una cuenta aparte."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这不是邀请，也不是另一个登录账号。"
+          }
+        }
+      }
+    },
+    "Your lender orders the appraisal. If it comes in under the price, you renegotiate, pay the difference, or use your appraisal contingency.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu prestamista ordena el avalúo. Si resulta menor que el precio, renegocias, pagas la diferencia o usas tu contingencia de avalúo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "贷款机构会安排估价。如果估价低于成交价，你可以重新谈价、自己补差价，或者依据估价条款退出。"
+          }
+        }
+      }
+    },
+    "Study your state's driver handbook, then pass the written knowledge test and the vision test to get your learner's permit.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estudia el manual del conductor de tu estado y luego aprueba el examen escrito y el de la vista para obtener tu permiso de aprendizaje."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先看你所在州的驾驶手册，然后通过笔试和视力测试，拿到实习驾照（learner's permit）。"
+          }
+        }
+      }
+    },
+    "Practice with a licensed adult — most states set a minimum time holding the permit, a number of supervised driving hours, or a driver's-ed course before you can take the road test.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practica con un adulto con licencia: la mayoría de los estados exigen un tiempo mínimo con el permiso, cierta cantidad de horas de práctica supervisada o un curso de manejo antes de que puedas presentar el examen de manejo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找一位有正式驾照的成年人陪你练车。大多数州要求实习驾照持有满一定时间、累计一定的陪同练车时数，或者上完驾校课程，才可以参加路考。"
+          }
+        }
+      }
+    },
+    "Book the road test as soon as you're eligible — appointment slots are often weeks out.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agenda el examen de manejo en cuanto seas elegible: las citas suelen tardar semanas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一满足条件就去约路考，可预约的日期往往排到几周之后。"
+          }
+        }
+      }
+    },
+    "For the road test, bring a car that passes the safety check with its registration and insurance, your permit, and a licensed adult to ride along.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para el examen de manejo lleva un auto que pase la revisión de seguridad con su registro y su seguro, tu permiso y un adulto con licencia que te acompañe."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "路考当天要开一辆能通过车辆安全检查的车，带上行驶证和保险证明、你的实习驾照，还要有一位有正式驾照的成年人陪同。"
+          }
+        }
+      }
+    },
+    "Pass the road test and pay the license fee — most states hand you a temporary paper license and mail the card.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aprueba el examen de manejo y paga la tarifa de la licencia: en la mayoría de los estados te dan una licencia provisional en papel y te envían la tarjeta por correo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过路考并缴纳驾照费用。多数州会先给你一张临时的纸质驾照，正式卡片之后邮寄给你。"
+          }
+        }
+      }
+    },
+    "The written test comes straight out of your state's driver handbook, which is free on the DMV site. Passing it plus a vision check gets you a learner's permit — the thing that lets you practice legally.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El examen escrito sale directamente del manual del conductor de tu estado, que es gratis en el sitio del DMV. Aprobarlo junto con la prueba de la vista te da el permiso de aprendizaje, que es lo que te deja practicar legalmente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "笔试题目就是从你所在州的驾驶手册里出的，手册在车管局网站上免费下载。笔试加视力测试通过后就能拿到实习驾照，有了它才可以合法上路练车。"
+          }
+        }
+      }
+    },
+    "Download your state's driver handbook — free, and the test is written from it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descarga el manual del conductor de tu estado: es gratis y el examen se basa en él."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载你所在州的驾驶手册，免费的，考题就是照着它出的。"
+          }
+        }
+      }
+    },
+    "Take the free online practice tests until you pass them comfortably.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz los exámenes de práctica gratuitos en línea hasta que los apruebes con holgura."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网上有免费的模拟题，一直做到轻松及格为止。"
+          }
+        }
+      }
+    },
+    "Check whether your state lets you take the written test online or only in person.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Averigua si tu estado permite hacer el examen escrito en línea o solo en persona."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查一下你所在州的笔试能不能在网上考，还是只能到现场考。"
+          }
+        }
+      }
+    },
+    "Bring your documents and the fee — the permit is usually issued the same day.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lleva tus documentos y el pago: el permiso suele emitirse el mismo día."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带齐材料和费用，实习驾照一般当天就能拿到。"
+          }
+        }
+      }
+    },
+    "Road-test slots book out weeks ahead in most places, so the date you can book is often what decides when you get your license — not when you're ready. Check the earliest date you're eligible and book it then.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En la mayoría de los lugares las citas para el examen de manejo se llenan con semanas de anticipación, así que la fecha que consigas suele decidir cuándo obtienes tu licencia, no cuándo estás listo. Averigua la fecha más temprana en la que eres elegible y agenda entonces."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大多数地方的路考名额要提前好几周才约得到，所以决定你什么时候拿到驾照的往往不是你练得怎么样，而是能约到哪一天。先算清楚你最早哪天符合报考条件，到那天就去约。"
+          }
+        }
+      }
+    },
+    "Book online as soon as you're eligible; cancellations open earlier slots, so check back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agenda en línea en cuanto seas elegible; las cancelaciones liberan citas más tempranas, así que vuelve a revisar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一符合条件就上网预约。别人取消时会空出更早的名额，所以要多回来刷一刷。"
+          }
+        }
+      }
+    },
+    "Log your supervised hours as you go if your state requires a signed log.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anota tus horas supervisadas sobre la marcha si tu estado exige una bitácora firmada."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果你所在州要求提交签字的练车记录，就练一次记一次。"
+          }
+        }
+      }
+    },
+    "Note the reschedule rules — a missed test can cost the fee or push you weeks back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fíjate en las reglas para cambiar la cita: faltar al examen puede costarte la tarifa o retrasarte semanas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看清楚改期的规定。缺考可能会白交一次费用，也可能要再等好几周。"
+          }
+        }
+      }
+    },
+    "Tests get canceled on the spot for the car, not the driving — a broken brake light or expired registration ends the appointment before you pull away.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los exámenes se cancelan en el acto por culpa del auto, no de cómo manejas: una luz de freno fundida o un registro vencido termina la cita antes de que arranques."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "路考被当场取消，多半是车的问题，不是开得不好。刹车灯坏了或者行驶证过期，车还没开动考试就结束了。"
+          }
+        }
+      }
+    },
+    "Check every light, the horn, the wipers, the mirrors, and the tires the day before.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa todas las luces, el claxon, los limpiaparabrisas, los espejos y las llantas el día anterior."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前一天把所有车灯、喇叭、雨刮、后视镜和轮胎都检查一遍。"
+          }
+        }
+      }
+    },
+    "Bring the car's current registration and proof of insurance.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lleva el registro vigente del auto y el comprobante del seguro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带上车辆当前有效的行驶证和保险证明。"
+          }
+        }
+      }
+    },
+    "Bring your learner's permit and your appointment confirmation.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lleva tu permiso de aprendizaje y la confirmación de tu cita."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带上你的实习驾照和预约确认信息。"
+          }
+        }
+      }
+    },
+    "Bring a licensed adult to ride along — most states require one to accompany you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lleva a un adulto con licencia que te acompañe: la mayoría de los estados lo exigen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "带一位有正式驾照的成年人陪同，大多数州都要求有人陪考。"
           }
         }
       }

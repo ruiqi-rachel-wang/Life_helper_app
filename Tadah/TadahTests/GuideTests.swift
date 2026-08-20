@@ -67,18 +67,66 @@ struct GuideTests {
         #expect(r.detailedSteps.contains { $0.detail != nil })   // utility step has detail
     }
 
-    @Test func buyingCoversOnlyPreApprovalThroughOffer() {
-        // The guide is a single path now — no stage question — and stops at an
-        // accepted offer; inspection/closing is a separate follow-up guide the
-        // user starts once they actually have an offer.
+    @Test func buyingRunsFromCreditCheckThroughClosing() {
+        // The guide used to STOP at an accepted offer and push the rest into a
+        // note, which left out the one stretch that has hard deadlines and money
+        // moving. It now runs to the keys.
         let buying = Guide.buyingHome.build([:])
         let s = buying.steps.joined(separator: "\n").lowercased()
         #expect(s.contains("pre-approved"))
         #expect(s.contains("make an offer"))
-        #expect(!s.contains("inspection"))
-        #expect(!s.contains("closing disclosure"))
-        // Must NOT tell the user to open a Closing guide that doesn't exist yet.
-        #expect(buying.notes.contains { $0.lowercased().contains("after your offer is accepted") })
+        #expect(s.contains("inspection"))
+        #expect(s.contains("appraisal"))
+        #expect(s.contains("homeowners insurance"))
+        #expect(s.contains("closing disclosure"))
+        #expect(s.contains("final walkthrough"))
+        // The post-offer stretch is steps now, so it must not ALSO sit in a note.
+        #expect(!buying.notes.contains { $0.lowercased().contains("after your offer is accepted") })
+    }
+
+    @Test func buyingOfferAcceptedSkipsStraightToTheClosingWork() {
+        // Someone who already has an accepted offer should not open the checklist
+        // on "find an agent" — finished work at the top reads as generic.
+        let steps = Guide.buyingHome.build(["stage": "Offer accepted", "firstTime": "Yes"]).steps
+        let s = steps.joined(separator: "\n").lowercased()
+        #expect(!s.contains("pre-approved"))                // financing is already in motion
+        #expect(!s.contains("find a real estate agent"))
+        #expect(!s.contains("make an offer"))
+        #expect(!s.contains("first-time buyer programs"))   // too late to apply
+        // The property, not a hand-picked list: the checklist must OPEN on the
+        // post-acceptance work. This is what catches the next stage that gets
+        // added with one guard forgotten.
+        #expect(steps.first?.hasPrefix("Sign the purchase agreement") == true)
+        // Dropping the offer step must not drop its tail — the purchase
+        // agreement and the earnest money come due right after acceptance.
+        #expect(s.contains("earnest-money"))
+        #expect(s.contains("inspection"))
+        #expect(s.contains("closing disclosure"))
+    }
+
+    @Test func buyingFirstTimeQuestionDisappearsOnceOfferAccepted() {
+        // With an accepted offer the programs step is dropped for Yes and No
+        // alike, so asking would violate the every-question-changes-the-steps
+        // rule (see startBusinessAsksNothingThatDoesNotChangeTheChecklist).
+        let firstTime = Guide.buyingHome.questions.first { $0.id == "firstTime" }
+        #expect(firstTime?.showIf?(["stage": "Offer accepted"]) == false)
+        #expect(firstTime?.showIf?(["stage": "Just starting"]) == true)
+    }
+
+    @Test func buyingClosingStepsCarryTheirDetailSheets() {
+        // hasPrefix matchers detach silently when step copy is reworded (it
+        // happened to "Apply for an SSN online" once) — pin every pairing.
+        let r = Guide.buyingHome.build([:])
+        let withDetail = r.detailedSteps.filter { $0.hasDetail }.map(\.text)
+        #expect(withDetail.contains { $0.hasPrefix("Book the home inspection") })
+        #expect(withDetail.contains { $0.hasPrefix("Read the Closing Disclosure") })
+        #expect(withDetail.contains { $0.hasPrefix("Do the final walkthrough") })
+        // The Closing Disclosure sheet is the one whose silent loss costs real
+        // money: it carries the wire-fraud warning and the CFPB explainer.
+        let item = ActionItem(from: r)
+        let disclosure = item.steps.first { $0.text.hasPrefix("Read the Closing Disclosure") }
+        #expect(disclosure?.detail?.miniChecklist.contains { $0.text.contains("wire instructions") } == true)
+        #expect(disclosure?.detail?.links.contains { $0.url.contains("consumerfinance.gov") } == true)
     }
 
     // MARK: New job — W-2 vs contractor branch
@@ -121,6 +169,36 @@ struct GuideTests {
         #expect(first.contains("road test"))
         #expect(renew.lowercased().contains("renew"))
         #expect(first != renew)
+    }
+
+    @Test func licenseFirstTimeCoversPermitBookingAndWhatToBring() {
+        // It used to jump from the written test straight to "pass the road test",
+        // so the parts people actually get stuck on — the permit, the practice
+        // requirement, booking a slot weeks out, and what the car needs on the
+        // day — were missing entirely.
+        let r = Guide.driversLicense.build(["task": "First-time", "state": "Texas"])
+        let s = r.steps.joined(separator: "\n").lowercased()
+        #expect(s.contains("learner's permit"))
+        #expect(s.contains("supervised driving hours"))
+        #expect(s.contains("book the road test"))
+        #expect(s.contains("registration and insurance"))
+        // The handbook, booking, and turning up prepared each need their own
+        // detail sheet (pinned so a copy edit can't silently detach a matcher).
+        let withDetail = r.detailedSteps.filter { $0.hasDetail }.map(\.text)
+        #expect(withDetail.contains { $0.hasPrefix("Study your state's driver handbook") })
+        #expect(withDetail.contains { $0.hasPrefix("Book the road test") })
+        #expect(withDetail.contains { $0.hasPrefix("For the road test") })
+    }
+
+    @Test func startBusinessAsksNothingThatDoesNotChangeTheChecklist() {
+        // Every question has to earn its place by changing the steps. The state
+        // question didn't — no step or detail ever read it — so it's gone, and
+        // the state is a field you fill in instead.
+        let ids = Guide.startBusiness.questions.map(\.id)
+        #expect(!ids.contains("state"))
+        let a = Guide.startBusiness.build(["kind": "Freelance / solo service",
+                                           "structure": "LLC", "employees": "No"])
+        #expect(a.otherIDs.contains { $0.label == "Business state" })
     }
 
     @Test func emptyAnswersFallBackToDefaults() {

@@ -85,15 +85,13 @@ struct FamilySharingView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Everyone on this account")
                 .font(.cardTitle).foregroundStyle(Color.ink)
-            // ONE line, and it has to teach the swipe.
-            //
-            // Two paragraphs used to sit here; the second pointed at an ⓘ button
-            // that no longer exists. Swipe is now the only way in, so the sentence
-            // that replaces them has to say so — a gesture nobody is told about is
-            // a feature nobody has. Still says what TAPPING does, because that is
-            // the part people get wrong: it sets who new to-dos are filed under,
-            // not just what you're looking at.
-            Text("Each person gets their own list. Tap a name to switch to them — new to-dos are filed under whoever's selected. Swipe a name left to edit, or right to remove (you can't remove yourself).")
+            // ONE short line. It still has to teach the swipe (the only way in)
+            // and what TAPPING does — tapping sets who new to-dos are filed under,
+            // not just what you're looking at. The "anyone but yourself" tail
+            // stays: the owner's own row silently ignores the right swipe, and
+            // without those three words the promised gesture reads as broken on
+            // the one row every account has.
+            Text("Tap a name to switch; new to-dos are filed under them. Swipe left to edit, right to remove — anyone but yourself.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
         }
         .padding(.horizontal, 6)
@@ -193,18 +191,19 @@ struct FamilySharingView: View {
                         .background(Color.card)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hair, lineWidth: 1))
-                    Text("Just a name so you can tell the lists apart — it isn't an invitation or a separate login.")
-                        .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
-
+                    // BOTH lines are for ADDING only. On a rename the sheet is one
+                    // labelled field and a toggle — a sentence explaining what a
+                    // name is was noise, and the paperwork warning would be a nag
+                    // about a decision already made.
+                    //
                     // ADDING SOMEONE MEANS HOLDING THEIR DOCUMENTS. A profile is
                     // where a parent's medical letters, a partner's immigration
                     // notices and a child's school forms end up — real information
                     // about a real person who never agreed to anything and cannot
                     // see or delete it themselves.
-                    //
-                    // Shown only when ADDING. On a rename it would be a nag about
-                    // a decision already made.
                     if profile == nil {
+                        Text("This isn't an invitation or a separate login.")
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                         Text("Only add someone whose paperwork you're allowed to handle — a family member you help, or your own child. What you file under them can include medical, money, and immigration details about that person.")
                             .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
