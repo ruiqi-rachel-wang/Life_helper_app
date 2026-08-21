@@ -3,7 +3,7 @@
 //  Drives the first-run tour shown directly on the real screens (Inbox intro →
 //  Add tab → the Add page's three ways in → Review's "Add to inbox" → the new
 //  Inbox row) instead of a separate walkthrough screen. Evernote-style coach
-//  marks since 2026-07-13 (Rachel's screenshot) — see future_features.md for
+//  marks since 2026-07-13 (Rachel's screenshot) — see notes/future_features.md for
 //  the iteration history. Persisted "seen" state stays the existing
 //  `didShowWelcomeTour` AppStorage key (RootTabView flips it once `step`
 //  returns to nil).

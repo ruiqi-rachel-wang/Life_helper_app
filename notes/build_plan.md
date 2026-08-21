@@ -105,7 +105,7 @@ map, so nobody reads this file and thinks Tadah is still a device-only app.
   before/at submit: **re-host the public policy page**
   `cuevi-legal.pages.dev/privacy.html` (App Store privacy URL) to match — unverified from
   here, a hosted resource outside this repo.
-- **How Rachel reads the data:** `notie_life_helper_app/how_to_view_tester_data.md`.
+- **How Rachel reads the data:** `notie_life_helper_app/notes/how_to_view_tester_data.md`.
 
 **Changed 2026-06-21 (external-review blocker fixes):**
 - **Security:** the OpenAI key is no longer compiled into the app — `APIKeys` reads

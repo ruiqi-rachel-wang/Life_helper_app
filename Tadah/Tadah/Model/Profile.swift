@@ -9,7 +9,7 @@
 //  there's no invite flow, no per-profile auth, and no cross-account permissions.
 //  A profile is a label on data, not a security boundary — everyone signed into the
 //  account can see every profile. That's the tradeoff of the shared-account model
-//  (decided 2026-08-07); per-member logins are in later_ideas.md.
+//  (decided 2026-08-07); per-member logins are in notes/later_ideas.md.
 //
 //  Caps (decided 2026-08-05): Free = 1 profile, Tadah Plus = 8. Profiles and
 //  devices are counted independently — any profile can be open on any device.
