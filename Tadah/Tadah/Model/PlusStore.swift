@@ -113,8 +113,29 @@ final class PlusStore {
     }
 
     // Restore a previous purchase (e.g. new device / reinstall).
+    //
+    // WHAT RESTORE ACTUALLY USES — and it is NOT the Tadah account, nor Sign in
+    // with Apple (which this app no longer has). A subscription is bought from
+    // the App Store, so it belongs to the Apple ID in Settings → Media &
+    // Purchases, and `restorePurchases` re-reads THAT receipt. It works signed
+    // out, on a fresh install, with no Tadah account in existence.
+    //
+    // The Tadah account is the SECOND route, and it needs no button at all:
+    // sign-in calls `Purchases.logIn(userID)`, so the entitlement follows the
+    // account onto a new phone by itself (TadahApp does the same on every
+    // launch). Restore is for the case where there is no account to sign in to.
+    //
+    // `accountUserID` — pass the signed-in user's id when there is one. Those
+    // logIn calls are `try?`: offline they silently don't happen, and this device
+    // is then still on an ANONYMOUS RevenueCat id. Restoring into that id
+    // attaches the receipt to a throwaway user, and the Worker — which asks
+    // RevenueCat about our account id when it checks the tier — keeps handing a
+    // paying user free-tier limits. So re-identify first, then restore.
     @discardableResult
-    func restore() async -> RestoreResult {
+    func restore(as accountUserID: String? = nil) async -> RestoreResult {
+        if let accountUserID, Purchases.shared.appUserID != accountUserID {
+            _ = try? await Purchases.shared.logIn(accountUserID)
+        }
         do {
             apply(try await Purchases.shared.restorePurchases())
             if isPlus { return .restored }

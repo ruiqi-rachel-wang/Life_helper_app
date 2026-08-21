@@ -23,9 +23,6 @@ struct AccountDetailsView: View {
     @Environment(PlusStore.self) private var plus
     @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
-    @State private var isRestoring = false
-    @State private var restoreMessage: String?
-
     @State private var name = ""
     @State private var email = ""
     @State private var confirmDelete = false

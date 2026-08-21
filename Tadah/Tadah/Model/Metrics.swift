@@ -103,9 +103,16 @@ nonisolated enum Metrics {
     static let maxEventsPerUpload = 25
 
     // User consent for uploading usage stats. OPT-IN as of 2026-08-17: unset means
-    // OFF, and nothing leaves the device until the user turns it on in
-    // Profile → Privacy. When off, flush() no-ops — events still log locally so
-    // the in-app counters work, they just never leave the phone.
+    // OFF, and nothing leaves the device until the user says yes. When off,
+    // flush() no-ops — events still log locally so the in-app counters work, they
+    // just never leave the phone.
+    //
+    // ASKED, NOT BURIED (2026-08-20). Opt-in doesn't have to mean opt-in by
+    // accident: leaving the only "yes" inside Profile → Privacy meant almost
+    // nobody would ever find it, so the app now ASKS once on first launch
+    // (FirstRunPrompts) and the toggle stays there for changing the answer
+    // later. That's the shape consent is supposed to take — a clear question
+    // with a real "no", not a pre-ticked box and not silence.
     //
     // This used to default to ON. "Anonymous" was doing a lot of work in that
     // decision, and it doesn't hold up: every event carries a PERSISTENT install
@@ -118,9 +125,32 @@ nonisolated enum Metrics {
     // survives, only the UNSET default flips. Testers who simply never touched
     // it are now opted out, which is the correct direction to be wrong in.
     static let shareUsageKey = "tadah.metrics.shareUsage"
-    static var uploadsEnabled: Bool {
-        UserDefaults.standard.object(forKey: shareUsageKey) as? Bool ?? false   // unset → opted OUT
+
+    // Three answers, not two — the same shape as AIConsent, and for the same
+    // reason. A Bool cannot tell "never asked" from "asked and said no", and the
+    // difference is the whole point: the first-launch sheet must appear exactly
+    // once, while never showing up again for someone who already declined.
+    //
+    // Opting out through Profile → Privacy writes `false` to this same key, so a
+    // withdrawal counts as an answer and isn't re-asked at the next launch.
+    enum UsageConsent: Equatable {
+        case notAsked
+        case granted
+        case declined
     }
+
+    static var usageConsent: UsageConsent {
+        guard let stored = UserDefaults.standard.object(forKey: shareUsageKey) as? Bool else { return .notAsked }
+        return stored ? .granted : .declined
+    }
+
+    // The answer to the first-launch sheet. Named `record` to match AIConsent —
+    // both write an explicit choice, and neither has a pre-ticked state.
+    static func recordUsageConsent(_ granted: Bool) {
+        UserDefaults.standard.set(granted, forKey: shareUsageKey)
+    }
+
+    static var uploadsEnabled: Bool { usageConsent == .granted }   // unset → opted OUT
 
     /// Migrate every persisted key from the app's former name ("cuevi.*") to
     /// the current one ("tadah.*") so testers who upgrade across the Cuevi→Tadah

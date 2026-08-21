@@ -18459,23 +18459,6 @@
         }
       }
     },
-    "We couldn't find a subscription to restore on this Apple ID.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No encontramos ninguna suscripción para restaurar en este ID de Apple."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在此 Apple ID 上未找到可恢复的订阅。"
-          }
-        }
-      }
-    },
     "We couldn't finish setting up your account on this phone. Please try again.": {
       "extractionState": "manual",
       "localizations": {
@@ -20654,23 +20637,6 @@
         }
       }
     },
-    "This Apple ID has no Tadah Plus purchase to restore.": {
-      "extractionState": "manual",
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Este Apple ID no tiene ninguna compra de Tadah Plus que restaurar."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此 Apple ID 没有可恢复的 Tadah Plus 购买记录。"
-          }
-        }
-      }
-    },
     "Checking your membership…": {
       "extractionState": "manual",
       "localizations": {
@@ -21483,6 +21449,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "带一位有正式驾照的成年人陪同，大多数州都要求有人陪考。"
+          }
+        }
+      }
+    },
+    "Brings back a subscription bought with the Apple ID signed in to this phone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recupera una suscripción comprada con el Apple ID que tiene la sesión iniciada en este teléfono."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复用此手机登录的 Apple ID 购买的订阅。"
+          }
+        }
+      }
+    },
+    "We couldn't find a Tadah Plus purchase on your account, or on the Apple ID signed in to this phone. If you bought it with a different Apple ID, switch to that one in Settings and try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No encontramos ninguna compra de Tadah Plus en tu cuenta ni en el Apple ID que tiene la sesión iniciada en este teléfono. Si la compraste con otro Apple ID, cambia a ese en Ajustes e inténtalo de nuevo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们在你的账户和此手机登录的 Apple ID 中都没有找到 Tadah Plus 的购买记录。如果你是用另一个 Apple ID 购买的，请在“设置”中切换到该 Apple ID 后重试。"
+          }
+        }
+      }
+    },
+    "We couldn't find a purchase on the Apple ID signed in to this phone. If you bought Tadah Plus while signed in to a Tadah account, sign in to that account instead — your membership comes back with it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No encontramos ninguna compra en el Apple ID que tiene la sesión iniciada en este teléfono. Si compraste Tadah Plus con la sesión iniciada en una cuenta de Tadah, inicia sesión en esa cuenta: tu suscripción volverá contigo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我们在此手机登录的 Apple ID 中没有找到购买记录。如果你是在登录 Tadah 账户后购买的 Tadah Plus，请改为登录该账户——你的会员资格会随之恢复。"
+          }
+        }
+      }
+    },
+    "Help improve Tadah?": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Ayudar a mejorar Tadah?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帮助改进 Tadah？"
+          }
+        }
+      }
+    },
+    "Tadah can send a little usage data — which features you use, and whether the to-dos you add get done. Never your documents, your to-dos, your name, or your email.\n\nIt's tied to a random ID for this install, not to you. Everything works the same if you say no, and you can change your mind anytime in Profile → Privacy.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah puede enviar algunos datos de uso: qué funciones usas y si las tareas que añades se completan. Nunca tus documentos, tus tareas, tu nombre ni tu correo.\n\nSe asocian a un identificador aleatorio de esta instalación, no a ti. Todo funciona igual si dices que no, y puedes cambiar de opinión cuando quieras en Perfil → Privacidad."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tadah 可以发送少量使用数据：你使用了哪些功能，以及你添加的待办事项是否完成。绝不会发送你的文件、待办事项、姓名或邮箱。\n\n这些数据关联的是本次安装的随机标识，而不是你本人。即使拒绝，所有功能也完全照常，你随时可以在 我的 → 隐私 中更改。"
+          }
+        }
+      }
+    },
+    "No thanks": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No, gracias"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不用了"
           }
         }
       }

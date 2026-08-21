@@ -42,6 +42,9 @@ import RevenueCatUI
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PlusStore.self) private var plus
+    // Only so Restore can re-identify this device to RevenueCat first, and so
+    // "nothing found" can say the right thing to a guest vs. a signed-in user.
+    @Environment(AccountStore.self) private var account
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
 
     private enum Phase: Equatable {
@@ -187,13 +190,21 @@ struct PaywallView: View {
     private func restore() async {
         isRestoring = true
         defer { isRestoring = false }
-        switch await plus.restore() {
+        switch await plus.restore(as: account.account?.userID) {
         case .restored:
             dismiss()                       // entitlement is back; nothing more to say
         case .expired:
             restoreMessage = String(localized: "Your previous Tadah Plus subscription has expired. Choose a plan above to start again.")
         case .nothingToRestore:
-            restoreMessage = String(localized: "We couldn't find a subscription to restore on this Apple ID.")
+            // TWO DIFFERENT DEAD ENDS, and the old single line answered neither.
+            // Restore reads the receipt of the Apple ID in Settings → Media &
+            // Purchases — nothing to do with a Tadah account. So a guest who
+            // bought Plus while signed in needs to be told to sign in (the
+            // entitlement follows the account on its own), and a signed-in user
+            // needs to be told to check WHICH Apple ID this phone is on.
+            restoreMessage = account.isSignedIn
+                ? String(localized: "We couldn't find a Tadah Plus purchase on your account, or on the Apple ID signed in to this phone. If you bought it with a different Apple ID, switch to that one in Settings and try again.")
+                : String(localized: "We couldn't find a purchase on the Apple ID signed in to this phone. If you bought Tadah Plus while signed in to a Tadah account, sign in to that account instead — your membership comes back with it.")
         case .failed:
             // Distinct from "nothing found" — this one is worth trying again.
             restoreMessage = String(localized: "We couldn't reach the App Store. Please check your connection and try again.")

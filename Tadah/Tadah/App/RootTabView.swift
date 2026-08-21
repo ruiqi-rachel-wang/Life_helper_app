@@ -31,7 +31,10 @@ struct RootTabView: View {
     // Whether the first-run tour has been seen (the empty Inbox can call
     // tourGuide.start() directly to replay it via "Show me how Tadah works").
     @AppStorage("didShowWelcomeTour") private var didShowWelcomeTour = false
-    @State private var showNotificationPrimer = false
+    // The one-time questions this launch still needs to ask (notifications, usage
+    // statistics), played as pages in ONE sheet — see FirstRunPrompts.
+    @State private var firstRunSteps: [FirstRunPrompts.Step] = []
+    @State private var showFirstRunPrompts = false
     @State private var showStoreFailure = false
     // The in-app language. Drives the whole UI, not just the AI's prose — see
     // AppLanguage. Watched here (the root) so a change re-renders every screen.
@@ -67,8 +70,14 @@ struct RootTabView: View {
         } message: {
             Text("Nothing has been deleted — your to-dos are still saved on this phone, but this version of Tadah can't read them. Anything you add right now will not be kept. Please update to the latest version, and contact support if this keeps happening.")
         }
-        .sheet(isPresented: $showNotificationPrimer) {
-            NotificationPrimerView { didAskNotifications = true; showNotificationPrimer = false }
+        .sheet(isPresented: $showFirstRunPrompts) {
+            FirstRunPrompts(steps: firstRunSteps) {
+                // Both prompts write their own answer (iOS owns the notification
+                // one, Metrics stores the usage one); this flag only records that
+                // we got as far as ASKING, so a decline isn't asked again.
+                didAskNotifications = true
+                showFirstRunPrompts = false
+            }
         }
         // Signing in on a device that holds ANOTHER account's data. The only two
         // answers are both non-destructive: take it with you, or back out and
@@ -115,14 +124,14 @@ struct RootTabView: View {
             guard !ProcessInfo.processInfo.arguments.contains("-uitest") else { return }
             // Ahead of the tour/primer: this one matters more than onboarding.
             if storeLoadFailed { showStoreFailure = true; return }
-            // One thing at a time: the notification primer (a modal sheet) first;
+            // One thing at a time: the first-run questions (a modal sheet) first;
             // the tour's first hint starts right away only when no sheet is coming,
             // otherwise when the sheet is dismissed (onChange below).
-            await maybeShowNotificationPrimer()
-            if !showNotificationPrimer, !didShowWelcomeTour { tourGuide.start() }
+            await prepareFirstRunPrompts()
+            if !showFirstRunPrompts, !didShowWelcomeTour { tourGuide.start() }
         }
-        // Primer dismissed on first launch → now start the tour.
-        .onChange(of: showNotificationPrimer) { was, isNow in
+        // Prompts finished on first launch → now start the tour.
+        .onChange(of: showFirstRunPrompts) { was, isNow in
             if was, !isNow, !didShowWelcomeTour { tourGuide.start() }
         }
         // Reaching the Add tab lands the tour on the Add page's card — whether
@@ -149,16 +158,36 @@ struct RootTabView: View {
         .onChange(of: explainLanguageRaw) { _, _ in AppLanguage.applyStoredPreference() }
     }
 
-    // First launch: explain why reminders matter, THEN ask — after the walkthrough,
-    // and only while iOS hasn't been asked yet.
-    private func maybeShowNotificationPrimer() async {
-        guard !didAskNotifications else { return }
-        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-        if status == .notDetermined {
-            showNotificationPrimer = true
-        } else {
-            didAskNotifications = true   // already decided in a past install/session
+    // WHICH one-time questions this launch still owes the user. Each is included
+    // only if it has never been answered, so this is empty on every launch after
+    // the first and the sheet never appears.
+    //
+    // Order is deliberate: reminders first (it explains what the app is FOR, and
+    // iOS only lets you ask once), usage statistics second (a smaller ask, and
+    // the one people are most likely to skim).
+    private func prepareFirstRunPrompts() async {
+        var steps: [FirstRunPrompts.Step] = []
+
+        // Explain why reminders matter, THEN ask — a bare system prompt with no
+        // context gets dismissed.
+        if !didAskNotifications {
+            let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+            if status == .notDetermined {
+                steps.append(.notifications)
+            } else {
+                didAskNotifications = true   // already decided in a past install/session
+            }
         }
+
+        // Usage statistics are opt-in, and an opt-in nobody is ever shown is just
+        // a switch in a drawer. Asked ONCE: `.declined` counts as answered, so
+        // saying no (here or later in Profile → Privacy) is never re-litigated.
+        if Metrics.usageConsent == .notAsked {
+            steps.append(.usageData)
+        }
+
+        firstRunSteps = steps
+        showFirstRunPrompts = !steps.isEmpty
     }
 }
 

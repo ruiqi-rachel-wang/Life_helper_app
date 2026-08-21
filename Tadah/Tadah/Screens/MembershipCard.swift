@@ -22,6 +22,9 @@ import UIKit
 
 struct MembershipCard: View {
     @Environment(PlusStore.self) private var plus
+    // Restore re-identifies this device to RevenueCat before asking the App
+    // Store, and "nothing found" says something different to a guest.
+    @Environment(AccountStore.self) private var account
     @Environment(\.openURL) private var openURL
     @State private var isRestoring = false
     @State private var restoreMessage: String?
@@ -85,12 +88,22 @@ struct MembershipCard: View {
                 }
 
                 divider
+                // SAYS WHERE IT LOOKS. Plus is bought from the App Store, so a
+                // restore reads the receipt of the Apple ID this phone is signed
+                // in to — the Tadah account has nothing to do with it. Without
+                // that sentence the button looks broken to anyone who expected
+                // it to find a purchase made under a different Apple ID.
                 Button { Task { await restore() } } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "arrow.clockwise").font(.system(size: 15))
                             .foregroundStyle(Color.accent).frame(width: 22)
-                        Text("Restore purchases").font(.body14).foregroundStyle(Color.ink)
-                        Spacer()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Restore purchases").font(.body14).foregroundStyle(Color.ink)
+                            Text("Brings back a subscription bought with the Apple ID signed in to this phone.")
+                                .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 8)
                         if isRestoring { ProgressView().controlSize(.small) }
                     }
                     .padding(.vertical, 12)
@@ -189,13 +202,15 @@ struct MembershipCard: View {
     private func restore() async {
         isRestoring = true
         defer { isRestoring = false }
-        switch await plus.restore() {
+        switch await plus.restore(as: account.account?.userID) {
         case .restored:
             restoreMessage = String(localized: "Your Tadah Plus membership is back on this phone.")
         case .expired:
             restoreMessage = String(localized: "Your previous Tadah Plus subscription has expired. You can start it again from the Tadah Plus screen.")
         case .nothingToRestore:
-            restoreMessage = String(localized: "This Apple ID has no Tadah Plus purchase to restore.")
+            restoreMessage = account.isSignedIn
+                ? String(localized: "We couldn't find a Tadah Plus purchase on your account, or on the Apple ID signed in to this phone. If you bought it with a different Apple ID, switch to that one in Settings and try again.")
+                : String(localized: "We couldn't find a purchase on the Apple ID signed in to this phone. If you bought Tadah Plus while signed in to a Tadah account, sign in to that account instead — your membership comes back with it.")
         case .failed:
             restoreMessage = String(localized: "We couldn't reach the App Store. Please check your connection and try again.")
         }

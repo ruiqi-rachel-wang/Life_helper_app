@@ -85,4 +85,29 @@ struct ConsentDefaultTests {
             #expect(Metrics.uploadsEnabled == false)
         }
     }
+
+    // ASKED ONCE, AND A "NO" STAYS NO. The first-launch sheet (FirstRunPrompts)
+    // appears only while the answer is `.notAsked`, so if declining didn't count
+    // as an answer the app would ask the same question at every single launch —
+    // which is nagging, not consent. Both answers must therefore leave
+    // `.notAsked` behind, and only one of them may switch uploads on.
+    @Test func decliningUsageStatsCountsAsAnAnswerAndIsNotReAsked() {
+        withCleanDefault(Metrics.shareUsageKey) {
+            #expect(Metrics.usageConsent == .notAsked)
+
+            Metrics.recordUsageConsent(false)
+            #expect(Metrics.usageConsent == .declined)        // answered — don't ask again
+            #expect(Metrics.uploadsEnabled == false)
+
+            Metrics.recordUsageConsent(true)
+            #expect(Metrics.usageConsent == .granted)
+            #expect(Metrics.uploadsEnabled == true)
+
+            // The Profile toggle writes the same key, and switching it back off
+            // has to stop uploads AND still count as answered.
+            UserDefaults.standard.set(false, forKey: Metrics.shareUsageKey)
+            #expect(Metrics.usageConsent == .declined)
+            #expect(Metrics.uploadsEnabled == false)
+        }
+    }
 }
