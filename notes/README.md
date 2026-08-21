@@ -17,6 +17,7 @@ deployed — it is the written record of what was decided and why.
 | File | What it is |
 | --- | --- |
 | `how_to_view_tester_data.md` | `wrangler d1 execute` queries for the metrics database. |
+| `hackathon_calls_plan.md` | **Part 6 — Tadah Calls.** Phases, guardrails, cost caps. |
 | `tadah_plus_setup.md` | RevenueCat + App Store Connect subscription setup. |
 | `paywall_copy.md` | Paywall wording. |
 | `sample_documents.md` | The scan-parser tuning corpus. Files live in `../testing files/`. |

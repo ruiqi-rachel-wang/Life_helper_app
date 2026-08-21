@@ -375,3 +375,17 @@ English — so the two items below are the credibility gap, not polish.
   (确认码 ↔ "Confirmation code") for forms/clerks. (Detailed note in build plan.)
 
 ---
+
+## Part 6 — Tadah Calls  *(added 2026-08-20)*
+
+An AI agent that phones a business on the user's behalf — book it, cancel it,
+chase it, ask whether they take your insurance — and reports the answer back
+onto the to-do. Plus-only, server-side (the user is never on the line).
+
+Doubles as the **CALL-E** hackathon submission: the feature and the entry are
+the same build, not a throwaway demo.
+
+**Full plan, phases, guardrails and cost caps: `hackathon_calls_plan.md`.**
+
+Gated on build 4 closing out — the App Privacy label is currently inaccurate,
+and a calling feature is not what you want to be carrying into that review.
