@@ -12,26 +12,16 @@
 
 ## 1 · Before the build is archived
 
-### 1.1 Fix the paywall's legal links ⚠️ most likely rejection
+### 1.1 Paywall legal links — ☑ DONE 2026-08-24
 
-The paywall currently links to **RevenueCat's** legal pages, not yours —
-verified in the live offering on 2026-08-23:
+Was pointing at `revenuecat.com/terms` and `/privacy` (template defaults), which
+is a Guideline 3.1.2 rejection. Now `tadah-legal.pages.dev/terms` and `/privacy`
+in all three locales — verified against the API at paywall revision 36, with no
+`revenuecat.com` left anywhere in the paywall.
 
-```
-https://revenuecat.com/terms      ← wrong
-https://revenuecat.com/privacy    ← wrong
-```
-
-Apple requires your own Terms of Use and Privacy Policy on a subscription
-paywall (Guideline 3.1.2).
-
-- ☐ RevenueCat → **Paywalls** → the `default` offering's paywall → find the
-      Terms and Privacy components → repoint them at
-      `https://tadah-legal.pages.dev/terms` and `https://tadah-legal.pages.dev/privacy`
-- ☐ Do it in **all three locales** (en, es, zh-Hans) — separate strings each
-
-Dashboard-side, so it takes effect immediately, on build 4 too. Tell me when
-it's done and I'll verify it against the API rather than you clicking around.
+> The label and the destination are separate components: the Text child holds
+> "Terms", the parent **Button** holds the Action URL. Editing the visible words
+> does not change where the link goes. Same trap if this ever needs redoing.
 
 ### 1.2 The two D1 privacy purges
 
