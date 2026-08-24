@@ -1,5 +1,9 @@
 # TestFlight build 3 — upload checklist & What to Test
 
+> ⚠️ **URLs below are historical.** The legal pages moved to
+> `tadah-legal.pages.dev` on 2026-08-24 (the `cuevi-legal` project is still up
+> and serving the same content, but it is no longer the one to update).
+
 > Prepared 2026-07-08 (pre-ship review + Part 1 close-out). Build number is
 > already **3**; version 1.0. Everything below was verified from the repo —
 > the four ☐ steps need Rachel (Apple/Cloudflare accounts).

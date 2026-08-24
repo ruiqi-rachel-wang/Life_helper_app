@@ -141,9 +141,9 @@ ad identifiers, no data shared with data brokers.)
 
 ## 4. Privacy Policy URL (required field)
 Use the live, free, public Cloudflare Pages URL:
-`https://cuevi-legal.pages.dev/privacy.html`
+`https://tadah-legal.pages.dev/privacy.html`
 (Verify it loads in a **private/incognito** browser window — i.e. anonymously — before
-you submit. Terms: `https://cuevi-legal.pages.dev/terms.html`.)
+you submit. Terms: `https://tadah-legal.pages.dev/terms.html`.)
 
 ---
 

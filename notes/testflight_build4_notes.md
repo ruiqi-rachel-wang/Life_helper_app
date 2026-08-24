@@ -1305,7 +1305,7 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
    `part3-accounts-backup-sync` while the project's production branch is `main` —
    three earlier "deploys" all landed on preview, which is why the live page sat
    at August 16. Always pass the branch:
-   `npx wrangler pages deploy docs --project-name cuevi-legal --branch main --commit-dirty=true`
+   `npx wrangler pages deploy docs --project-name tadah-legal --branch main --commit-dirty=true`
    Kept for reference:
    The live page is still the **August 7** version and still describes Sign in
    with Apple. `docs/privacy.html` and `docs/terms.html` were regenerated on
@@ -1317,12 +1317,12 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
    `wrangler.toml` missing `pages_build_output_dir`:
    ```
    cd "/Users/rachelwang/Project!/notie_life_helper_app"
-   npx wrangler pages deploy docs --project-name cuevi-legal
+   npx wrangler pages deploy docs --project-name tadah-legal
    ```
    Then confirm it actually replaced the live copy:
    ```
-   curl -s https://cuevi-legal.pages.dev/privacy | grep -o 'Last updated:</strong> [A-Za-z0-9, ]*'
-   curl -s https://cuevi-legal.pages.dev/privacy | grep -ci 'sign in with apple'
+   curl -s https://tadah-legal.pages.dev/privacy | grep -o 'Last updated:</strong> [A-Za-z0-9, ]*'
+   curl -s https://tadah-legal.pages.dev/privacy | grep -ci 'sign in with apple'
    ```
    Expect **August 16, 2026** and **0**. If the date is still August 7, the deploy
    did not land.

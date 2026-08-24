@@ -32,5 +32,5 @@ deployed — it is the written record of what was decided and why.
 - `../legal/` — privacy policy and terms **source**, plus `make_legal_pages.py`.
   Edit `LegalContent.swift`, then run that script. Never edit the HTML by hand.
 - `../docs/` — the generated legal pages. Deployed with
-  `npx wrangler pages deploy docs --project-name cuevi-legal` **from the repo root**.
+  `npx wrangler pages deploy docs --project-name tadah-legal` **from the repo root**.
 - `../testing files/` — personal test documents (PII). Gitignored, never commit.

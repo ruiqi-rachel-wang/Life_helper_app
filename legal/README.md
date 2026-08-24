@@ -22,13 +22,13 @@ If you form an LLC or move states later, update the responsible-party and
 governing-law sections in both documents.
 
 ## Hosting (live now — Cloudflare Pages, free)
-These docs are deployed to **https://cuevi-legal.pages.dev/** (`privacy.html`, `terms.html`).
+These docs are deployed to **https://tadah-legal.pages.dev/** (`privacy.html`, `terms.html`).
 GitHub Pages is **not** used: this repo is private, and GitHub Pages needs a paid plan for
 private repos (and raw GitHub file URLs aren't public).
 
 To re-publish after editing the policy: regenerate the HTML in `docs/` (the generator
 lives in the project history), then from the repo root run
-`npx wrangler@3 pages deploy docs --project-name=cuevi-legal --branch=main`.
+`npx wrangler@3 pages deploy docs --project-name=tadah-legal --branch=main`.
 Verify the URL loads in a **private/incognito** window (anonymously) before submitting.
 
 ## How the app shows these

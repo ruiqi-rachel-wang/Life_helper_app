@@ -27,7 +27,7 @@ paywall (Guideline 3.1.2).
 
 - ☐ RevenueCat → **Paywalls** → the `default` offering's paywall → find the
       Terms and Privacy components → repoint them at
-      `https://cuevi-legal.pages.dev/terms` and `https://cuevi-legal.pages.dev/privacy`
+      `https://tadah-legal.pages.dev/terms` and `https://tadah-legal.pages.dev/privacy`
 - ☐ Do it in **all three locales** (en, es, zh-Hans) — separate strings each
 
 Dashboard-side, so it takes effect immediately, on build 4 too. Tell me when
@@ -136,6 +136,8 @@ me and I'll create an iPhone 14 Plus one, which is exactly that.
 
 ### 3.5 The rest of the version page
 
+- ☐ **Privacy Policy URL → `https://tadah-legal.pages.dev/privacy`** (App
+      Information). It currently points at the old cuevi-legal host.
 - ☐ Description, keywords, promotional text, support URL, marketing URL
 - ☐ Age rating questionnaire
 - ☐ Content rights (third-party content?)
@@ -188,8 +190,12 @@ me and I'll create an iPhone 14 Plus one, which is exactly that.
 ## Already done — don't redo
 
 - ☑ Paid Apps Agreement, banking, W-9 — **Active 2026-08-23**
-- ☑ Legal pages live and current (August 20, 2026), verified byte-identical to
-      the local copy on 2026-08-24, retention disclosure included
+- ☑ Legal pages live and current (August 20, 2026), retention disclosure
+      included, verified byte-identical to `docs/` on 2026-08-24
+- ☑ Legal pages moved to **tadah-legal.pages.dev** on 2026-08-24 — the old
+      `cuevi-legal.pages.dev` is deliberately left running (build 4 testers and
+      the current App Store Connect field still point at it) but is no longer
+      updated. Deploy target is now `--project-name tadah-legal`.
 - ☑ Worker deployed with `MAX_TOKENS` 6000 and the `opened` event kind
 - ☑ RevenueCat offering `default` Current, both products, en/es/zh-Hans
 - ☑ Subscriptions created, priced $6.99 / $59.99, Ready for Review

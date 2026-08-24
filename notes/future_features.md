@@ -54,7 +54,7 @@ launch/background with a per-install UUID (no PII — never titles/amounts/notes
 Privacy policy + Apple label + Profile opt-out all landed; build number bumped to 3.
 
 - **2026-07-08 — the "re-host the policy page" blocker turned out already done:**
-  the live `cuevi-legal.pages.dev/privacy` is byte-identical to `docs/` and
+  the live `tadah-legal.pages.dev/privacy` is byte-identical to `docs/` and
   discloses the usage stats. Verified from here. What WAS stale: the July terms
   §6 clarification — now synced across md / in-app / html; needs one
   `pages deploy` to publish.
@@ -231,7 +231,7 @@ and Tadah Plus needs the Apple Paid Apps Agreement signed before any of it can c
   copies can't drift. `legal/app-store-privacy-label.md` gained a **Linked-to-Identity**
   section (User ID / user content / Purchases) — the old label declared everything as
   not-linked, which stopped being true with accounts.
-  - ✅ **Published 2026-08-07** — https://cuevi-legal.pages.dev/privacy and /terms both
+  - ✅ **Published 2026-08-07** — https://tadah-legal.pages.dev/privacy and /terms both
     live and verified showing "Last updated: August 7, 2026", the account/sync and
     one-device disclosures, RevenueCat in the third-party table, and no leaked dev
     banner. *(Note for next time: the production URL can serve a stale edge-cached copy

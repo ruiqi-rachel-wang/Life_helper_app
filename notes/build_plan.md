@@ -103,7 +103,7 @@ map, so nobody reads this file and thinks Tadah is still a device-only app.
   (Analytics, Not linked, No tracking); a **Profile → Privacy** opt-out toggle gates
   `Metrics.flush()`. Build bump **done** (`CURRENT_PROJECT_VERSION` is 3). ⚠️ Still TODO
   before/at submit: **re-host the public policy page**
-  `cuevi-legal.pages.dev/privacy.html` (App Store privacy URL) to match — unverified from
+  `tadah-legal.pages.dev/privacy.html` (App Store privacy URL) to match — unverified from
   here, a hosted resource outside this repo.
 - **How Rachel reads the data:** `notie_life_helper_app/notes/how_to_view_tester_data.md`.
 
