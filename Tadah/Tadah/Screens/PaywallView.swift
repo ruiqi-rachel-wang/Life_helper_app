@@ -38,6 +38,9 @@
 import SwiftUI
 import RevenueCat
 import RevenueCatUI
+#if DEBUG
+import StoreKit
+#endif
 
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
@@ -229,8 +232,31 @@ struct PaywallView: View {
         do {
             let offerings = try await Purchases.shared.offerings()
             let packages = offerings.current?.availablePackages ?? []
+            #if DEBUG
+            // The one line that separates the two ways this screen goes wrong.
+            // A non-nil current offering with 0 packages means RevenueCat is fine
+            // and StoreKit could not fetch the products from App Store Connect;
+            // a nil current offering means no offering is marked Current.
+            print("[Paywall] current=\(offerings.current?.identifier ?? "nil") "
+                + "packages=\(packages.count) "
+                + "wanted=\(offerings.current?.availablePackages.map(\.storeProduct.productIdentifier) ?? []) "
+                + "allOfferings=\(offerings.all.keys.sorted())")
+            #endif
             phase = packages.isEmpty ? .notForSaleYet : .ready
         } catch {
+            #if DEBUG
+            let ns = error as NSError
+            print("[Paywall] offerings() threw code=\(ns.code) \(ns.localizedDescription)")
+            print("[Paywall] underlying=\(String(describing: ns.userInfo[NSUnderlyingErrorKey]))")
+            print("[Paywall] treatedAs=\(Self.isStoreNotSetUp(error) ? "notForSaleYet" : "couldNotLoad")")
+            // Ask StoreKit directly for the two ids, with RevenueCat entirely out
+            // of the picture. This is the line that assigns blame: 0 products back
+            // means Apple is not serving them to this device (agreement, storefront
+            // propagation, a mistyped id, or the wrong app record), and no amount of
+            // RevenueCat configuration can fix that. 2 products back would mean the
+            // store is fine and the fault is on RevenueCat's side.
+            await Self.logStoreKitProbe()
+            #endif
             phase = Self.isStoreNotSetUp(error) ? .notForSaleYet : .couldNotLoad
         }
     }
@@ -247,4 +273,29 @@ struct PaywallView: View {
             return false
         }
     }
+
+    #if DEBUG
+    // The ids RevenueCat's Offering points at. Hardcoded on purpose: the whole
+    // point is to check them against Apple without going through the SDK that is
+    // already failing. Keep in step with the RevenueCat dashboard if they change.
+    private static let probeProductIDs = [
+        "com.ruiqiwang.cuevi.plus.monthly",
+        "com.ruiqiwang.cuevi.plus.yearly",
+    ]
+
+    private static func logStoreKitProbe() async {
+        do {
+            let products = try await Product.products(for: probeProductIDs)
+            let found = products.map(\.id).sorted()
+            let missing = probeProductIDs.filter { !found.contains($0) }
+            print("[Paywall] StoreKit returned \(products.count)/\(probeProductIDs.count) "
+                + "found=\(found) missing=\(missing)")
+            for p in products {
+                print("[Paywall]   \(p.id) \(p.displayPrice) \(p.displayName)")
+            }
+        } catch {
+            print("[Paywall] StoreKit Product.products(for:) failed: \(error)")
+        }
+    }
+    #endif
 }
