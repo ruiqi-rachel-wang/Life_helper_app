@@ -11,6 +11,7 @@ deployed — it is the written record of what was decided and why.
 | `future_features.md` | The current roadmap, organised as numbered Parts. |
 | `later_ideas.md` | Deferred further out than `future_features.md`. Includes §8 engineering debt. |
 | `testflight_build4_notes.md` | **Authoritative for the current build.** Upload checklist + What to Test. |
+| `release_1.0_checklist.md` | **Authoritative for shipping 1.0 to the App Store.** Step by step. |
 
 ## Reference
 

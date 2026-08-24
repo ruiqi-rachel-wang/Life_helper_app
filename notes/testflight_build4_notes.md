@@ -1243,9 +1243,16 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
 > of that is wrong now — the route is gone, the entitlement is gone, and following
 > those steps would waste an afternoon creating an Apple key nothing reads.
 
-1. ☑ **Worker deploy — DONE and verified 2026-08-20.** `wrangler deployments
-   list` shows the newest deployment at **2026-08-17 16:53**, after the final
-   Worker commit (`2ea218c`), and nothing app-side has touched the Worker since.
+1. ☑ **Worker deploy — DONE 2026-08-20 (version `f233422e`).** Two changes
+   shipped that evening, both required by the app build:
+   - `MAX_TOKENS` 4000 → **6000**, because a scan now returns per-step detail
+     (`stepDetails`) and the app asks 3000 visible + 2000 reasoning headroom. At
+     the old ceiling long documents truncated into "we couldn't read this".
+   - `VALID_KINDS` gained **`opened`**, the retention event. Without it the
+     Worker drops those rows silently and D1/D7/D30 stays empty forever.
+   Verified live: `POST /events` with `kind:"opened"` → `{"ok":true,"accepted":1}`
+   (smoke row deleted afterwards). Tests: 31/31 helper + 59/59 route.
+   For any future run: `export PATH="/usr/local/opt/node@22/bin:$PATH"` first.
    - **Node 22 is now installed** (`/usr/local/opt/node@22`), so the route tests
      run on this Mac at last: **31/31 helper + 59/59 route pass (2026-08-20)**.
      For any future wrangler/vitest use:
@@ -1254,11 +1261,19 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
      `PASSWORD_PEPPER`, `RESEND_KEY`, `EMAIL_FROM` all exist (each fails CLOSED
      if missing). Never rotate `PASSWORD_PEPPER` — rotating invalidates every
      stored password at once.
-   - ☐ `APPLE_AUDIENCE`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`
-     still exist and are **no longer read by anything** (a route test pins the
-     404). Delete them — *this needs to run by hand; the assistant's permission
-     layer blocks prod secret deletion:*
-     `cd Tadah/cloudflare-worker && for s in APPLE_AUDIENCE APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY; do npx wrangler secret delete "$s"; done`
+   - ☐ **OPTIONAL hygiene, NOT a gate.** Corrected 2026-08-20: `wrangler secret
+     list` shows **three** leftovers, not four — `APPLE_TEAM_ID`, `APPLE_KEY_ID`,
+     `APPLE_PRIVATE_KEY`. `APPLE_AUDIENCE` is already gone. All three are **read
+     by nothing** (`grep -c` on worker.js: 0 refs each; a route test pins the
+     404). They were the ES256 client-secret JWT ingredients for Sign in with
+     Apple, removed 2026-08-15 — unrelated to IAP, RevenueCat, App Store Connect
+     or the developer account.
+     ⚠️ Before deleting, know that an Apple `.p8` key can be downloaded ONCE. If
+     Sign in with Apple ever comes back and the file isn't saved, the key has to
+     be revoked and regenerated in the Apple Developer portal. Leaving them costs
+     nothing but an unused credential in prod.
+     *Run by hand; the assistant's permission layer blocks prod secret deletion:*
+     `cd Tadah/cloudflare-worker && for s in APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY; do npx wrangler secret delete "$s"; done`
    - ☐ Re-run `npx wrangler d1 execute cuevi-metrics --remote --file=schema.sql`
      (adds `sessions.plus_checked_at` and the accounts/reset tables; the Worker
      also creates them lazily). It no longer creates `used_nonces`. An existing
@@ -1280,9 +1295,18 @@ dark mode, iPad/landscape, and new end-to-end UI tests.
      `npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE sessions SET device_id = '';"`
      Harmless — worst case is one extra sign-in.
 
-2. ☑ **Legal pages — DONE, verified live 2026-08-20.** The live page shows
-   **August 16, 2026** and zero mentions of Sign in with Apple (both curl checks
-   below pass). Kept for reference:
+2. ☑ **Legal pages — DONE 2026-08-20, verified live.** Two policy changes went
+   out together: usage statistics are now ASKED on first launch ("we ask you, and
+   nothing is sent unless you say yes"), and the app-open retention event is
+   disclosed ("that you opened the app on a given day — the date only, once per
+   day"). Live page shows **August 20, 2026**.
+   ⚠️ **The plain deploy command goes to a PREVIEW alias, not production.** Pages
+   picks the environment from the git branch, and this repo sits on
+   `part3-accounts-backup-sync` while the project's production branch is `main` —
+   three earlier "deploys" all landed on preview, which is why the live page sat
+   at August 16. Always pass the branch:
+   `npx wrangler pages deploy docs --project-name cuevi-legal --branch main --commit-dirty=true`
+   Kept for reference:
    The live page is still the **August 7** version and still describes Sign in
    with Apple. `docs/privacy.html` and `docs/terms.html` were regenerated on
    **August 16** from `LegalContent.swift` (the single source — edit that, then
