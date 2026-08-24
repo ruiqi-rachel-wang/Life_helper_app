@@ -5,12 +5,17 @@
 //  REASONING — explain *why* they got this, find the root cause, and give
 //  conditional next steps — not just field extraction.
 //
-//  COST: ~$0.003/scan (was ~$0.02 on gpt-4o — gpt-5-mini is ~7x cheaper per
-//  token AND a newer model). The ~4,300-token system prompt dominates, not the
-//  document. Affordable anyway because scans+guides are rate-limited
-//  (see ScanQuota: 10/day, 20 per 30 days). Verify with the DEBUG usage log in
-//  extract() rather than trusting this comment — the last estimate here went
-//  4x stale as the prompt grew.
+//  COST: ~$0.005/scan (was ~$0.003 before per-step detail; ~$0.02 on gpt-4o).
+//  The system prompt dominates the INPUT side — it is now ~4,950 tokens, and it
+//  is sent in full on every scan whatever the document is. The OUTPUT side grew
+//  when `stepDetails` was added on 2026-08-20: the model now writes an
+//  explanation, links and a mini-checklist per step, so budget roughly 1,200-2,500
+//  output tokens (hidden reasoning tokens are billed at the output rate too).
+//  Affordable because scans+guides are rate-limited (see ScanQuota: free 10/day
+//  and 20 per 30 days; Plus 60/day and 300 per 30 days), which caps the worst
+//  case at a few cents per free user per month.
+//  Verify with the DEBUG usage log in extract() rather than trusting this
+//  comment — the estimate here went 4x stale once already as the prompt grew.
 //
 //  WEEK 5: calls api.openai.com DIRECTLY with the dev key in APIKeys.swift.
 //  Safe because this only runs on the Simulator. Before TestFlight the URL +
@@ -87,7 +92,10 @@ nonisolated struct OpenAIClient: Extractor {
 
         let body = ChatRequest.make(
             model: model,
-            visibleTokens: 2000,
+            // Raised from 2000 when `stepDetails` was added: the JSON now carries an
+            // explanation, links and a mini-checklist per step, and a truncated
+            // response is a badJSON error rather than a slightly shorter answer.
+            visibleTokens: 3000,
             messages: [
                 .init(role: "system", content: ScanPrompt.systemPrompt(language: language)),
                 .init(role: "user", content: ScanPrompt.userPrompt(text: text, hints: hints)),
@@ -243,6 +251,8 @@ nonisolated enum ExtractionJSON {
         }
         let steps = stringList("steps").map(stripLeadingNumber)
         let notes = stringList("notes")
+        // Per-step detail, parallel to `steps` — see stepDetails(from:count:).
+        let detailedSteps = stepDetails(dict["stepDetails"], for: steps)
         let due = parseDueDate(str("dueDate"))
         let lowConf = (dict["lowConfidenceFields"] as? [Any])?.compactMap { $0 as? String } ?? []
         // The model sometimes returns category as ["finance"] instead of "finance".
@@ -271,12 +281,80 @@ nonisolated enum ExtractionJSON {
             category: normalizedCategory(categoryRaw),
             summary: str("summary"),
             steps: steps,
+            detailedSteps: detailedSteps,
             notes: notes,
             siteURL: str("siteURL").flatMap { URL(string: $0) },
             repeats: parseRepeats(str("repeats")),
             confidence: confidence(),
             lowConfidenceFields: Set(lowConf)
         )
+    }
+
+    // THE "HOW" BEHIND EACH STEP, as a `ChecklistStep` array parallel to `steps`.
+    //
+    // Scanned steps used to be one flat line each, so the model had nowhere to put
+    // the how/where/what-to-keep and crammed it all onto the line: paragraphs that
+    // repeated the same reference number three times and said "(see step 4)". The
+    // step line is now short and this is where the instructions live — the same
+    // StepDetail guides have always used, so DetailView/ReviewView already render
+    // it (tap a step, read the detail) with no change and no schema migration.
+    //
+    // ⚠️ ALIGNMENT IS BY INDEX, and a model that miscounts must not shift every
+    // step's instructions onto the wrong step. Entry i is used ONLY for steps[i];
+    // extra entries are dropped, missing ones leave that step plain.
+    //
+    // Returns [] when nothing usable came back, which is exactly what an older
+    // response (no `stepDetails` key at all) produces — mapSteps then falls
+    // through to the plain-text path, so an in-flight build change is harmless.
+    static func stepDetails(_ raw: Any?, for steps: [String]) -> [ChecklistStep] {
+        guard let entries = raw as? [Any], !steps.isEmpty else { return [] }
+
+        func strings(_ v: Any?) -> [String] {
+            (v as? [Any])?.compactMap {
+                ($0 as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            }.filter { !$0.isEmpty } ?? []
+        }
+        func text(_ v: Any?) -> String {
+            ((v as? String) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        var built: [ChecklistStep] = []
+        var foundAny = false
+        for (i, step) in steps.enumerated() {
+            var detail: StepDetail?
+            if i < entries.count, let o = entries[i] as? [String: Any] {
+                // A link with no URL is a dead row in the UI; label falls back to
+                // the URL itself so it never renders as an empty tap target.
+                let links: [StepLink] = (o["links"] as? [Any])?.compactMap { item in
+                    guard let l = item as? [String: Any] else { return nil }
+                    let url = text(l["url"])
+                    guard !url.isEmpty else { return nil }
+                    let label = text(l["label"])
+                    return StepLink(label: label.isEmpty ? url : label, url: url)
+                } ?? []
+                // `fields` are prompts for the USER to fill in, so only the label
+                // comes from the model. Accepts a bare string too — the model
+                // reaches for ["Confirmation number"] about as often as [{...}].
+                let fields: [SavedField] = (o["fields"] as? [Any])?.compactMap { item in
+                    let label: String
+                    if let s = item as? String { label = text(s) }
+                    else if let o = item as? [String: Any] { label = text(o["label"]) }
+                    else { return nil }
+                    return label.isEmpty ? nil : SavedField(label: label)
+                } ?? []
+                let d = StepDetail(explanation: text(o["explanation"]),
+                                   miniChecklist: strings(o["miniChecklist"]),
+                                   links: links,
+                                   script: text(o["script"]),
+                                   needed: strings(o["needed"]),
+                                   fields: fields)
+                if !d.isEmpty { detail = d; foundAny = true }
+            }
+            built.append(ChecklistStep(text: step, detail: detail))
+        }
+        // All-empty details would still count as "detailed" downstream; say no
+        // instead, so nothing changes for a document whose steps need no detail.
+        return foundAny ? built : []
     }
 
     // Drop a leading "1." / "2)" the model sometimes adds — steps shouldn't be

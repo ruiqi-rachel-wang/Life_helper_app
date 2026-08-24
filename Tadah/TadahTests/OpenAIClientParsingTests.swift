@@ -117,6 +117,60 @@ struct OpenAIClientParsingTests {
         }
     }
 
+    // MARK: - per-step detail (the tap-to-open "how" behind a short step line)
+
+    @Test func stepDetailsAttachToTheirOwnStep() {
+        let json = #"""
+        {"steps":["Pay $1,623.47 online","Keep the confirmation"],
+         "stepDetails":[
+           {"explanation":"Search \"pay\" on the site and quote the assessment ID.",
+            "links":[{"label":"Pay online","url":"https://www.tax.ny.gov"}],
+            "needed":["Assessment ID L-064053027-4"],
+            "miniChecklist":["Have your card ready"],
+            "fields":[{"label":"Confirmation number"}]},
+           {}]}
+        """#
+        let r = ExtractionJSON.parse(json)
+        #expect(r?.steps.count == 2)
+        #expect(r?.detailedSteps.count == 2)
+
+        let first = r?.detailedSteps.first
+        #expect(first?.text == "Pay $1,623.47 online")   // text stays the step's own line
+        #expect(first?.detail?.links.first?.url == "https://www.tax.ny.gov")
+        #expect(first?.detail?.needed == ["Assessment ID L-064053027-4"])
+        #expect(first?.detail?.miniChecklist.map(\.text) == ["Have your card ready"])
+        #expect(first?.detail?.fields.map(\.label) == ["Confirmation number"])
+        #expect(first?.detail?.fields.first?.value == "")   // the USER fills this in
+
+        // `{}` means this step needs nothing more — plain, not an empty sheet.
+        #expect(r?.detailedSteps.last?.hasDetail == false)
+    }
+
+    // A model that returns FEWER details than steps must not slide everyone else's
+    // instructions up onto the wrong step — that would put "call this number" under
+    // "pay the fine". Alignment is strictly by index.
+    @Test func mismatchedStepDetailCountsNeverShiftOntoTheWrongStep() {
+        let json = #"""
+        {"steps":["First","Second","Third"],
+         "stepDetails":[{"explanation":"about first"},{},{"explanation":"about third"},{"explanation":"extra"}]}
+        """#
+        let r = ExtractionJSON.parse(json)
+        #expect(r?.detailedSteps.count == 3)                       // extra entry dropped
+        #expect(r?.detailedSteps[0].detail?.explanation == "about first")
+        #expect(r?.detailedSteps[1].hasDetail == false)
+        #expect(r?.detailedSteps[2].detail?.explanation == "about third")
+    }
+
+    // The old shape — and any response where no step needed detail — must stay a
+    // plain checklist rather than a list of empty tap targets.
+    @Test func stepsWithoutDetailStayPlain() {
+        #expect(ExtractionJSON.parse(#"{"steps":["Pay it","Save the receipt"]}"#)?.detailedSteps.isEmpty == true)
+        #expect(ExtractionJSON.parse(#"{"steps":["Pay it"],"stepDetails":[{}]}"#)?.detailedSteps.isEmpty == true)
+        // A link with no URL is a dead row in the UI, so it is dropped entirely.
+        let r = ExtractionJSON.parse(#"{"steps":["Pay it"],"stepDetails":[{"links":[{"label":"Nowhere"}]}]}"#)
+        #expect(r?.detailedSteps.isEmpty == true)
+    }
+
     @Test func parseItemsHandlesArrayAndBareObject() {
         let multi = #"{"items":[{"title":"A","amount":"1.00"},{"title":"B","amount":"2.00"}]}"#
         let r = ExtractionJSON.parseItems(multi)

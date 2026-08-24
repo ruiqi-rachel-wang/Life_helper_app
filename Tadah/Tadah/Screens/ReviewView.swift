@@ -416,7 +416,8 @@ struct ReviewView: View {
         }
     }
 
-    // Detail for milestone i (guides only), if it has any.
+    // Detail for step i, if it has any. No longer guides-only — a scan's steps
+    // now arrive with their own detail (see OpenAIClient.stepDetails).
     private func stepDetail(_ i: Int) -> StepDetail? {
         guard draft.detailedSteps.indices.contains(i) else { return nil }
         let d = draft.detailedSteps[i].detail
@@ -469,8 +470,8 @@ struct ReviewView: View {
 
     // Step edits must touch BOTH arrays: `steps` (text) and `detailedSteps` (which
     // carries StepDetail). If they fall out of sync, mapSteps falls back to the
-    // ORIGINAL detailedSteps and deleted/added steps reappear. detailedSteps is
-    // empty for scans, so we only mirror when it's present (guides).
+    // ORIGINAL detailedSteps and deleted/added steps reappear. It can still be
+    // empty (a document whose steps need no detail), so we only mirror when present.
     private func removeStep(_ i: Int) {
         draft.steps.remove(at: i)
         if draft.detailedSteps.indices.contains(i) { draft.detailedSteps.remove(at: i) }
@@ -487,9 +488,10 @@ struct ReviewView: View {
         Task { @MainActor in focused = field }
     }
 
-    // A scan's `detailedSteps` starts empty (only guides pre-author detail) — back
-    // it with one entry per step on first use, so any step can open a detail sheet
-    // to add a mini-checklist/explanation, same as the saved-item Detail page.
+    // `detailedSteps` can still be empty (a document whose steps needed no detail,
+    // or an older response) — back it with one entry per step on first use, so any
+    // step can open a detail sheet to add a mini-checklist/explanation, same as the
+    // saved-item Detail page.
     private func openStepDetail(_ i: Int) {
         if draft.detailedSteps.count != draft.steps.count {
             draft.detailedSteps = draft.steps.map { ChecklistStep(text: $0) }

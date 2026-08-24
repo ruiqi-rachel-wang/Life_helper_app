@@ -117,41 +117,70 @@ nonisolated enum ScanPrompt {
                           enough (e.g. "A flight from New York to Chicago, UA623, departing
                           June 25 at 8:05 AM"). Add more only for a term/situation the reader
                           likely won't understand. Add understanding; don't reword or pad.
-          steps         : the concrete, ORDERED actions to FULLY resolve this, in
-                          \(language.promptName). Think it all the way through to "done" and
-                          list EVERY real action — including the ones the document only hints
-                          at. If the document asks for SEVERAL DISTINCT tasks (e.g. fill out a
-                          survey AND upload a record AND get an ID photo), include step(s) for
-                          EVERY one — do NOT cover only the longest or most detailed task and
-                          drop the others. A short ONE-LINE request (e.g. "complete this survey
-                          by Friday", with a link) is just as important as a multi-step one;
-                          give it its own step with its own link. Don't stop at the obvious
-                          payment. Example: a parking ticket for
-                          an EXPIRED REGISTRATION is not done when the fine is paid — the steps
-                          should pay the ticket AND renew the registration AND get/display the
-                          new sticker or tag (and, where offered, print a temporary proof) so
-                          the person isn't ticketed again tomorrow. Be specific and operational,
-                          not vague — no "pay it" / "contact them". Err toward MORE, smaller,
-                          concrete steps rather than a few broad ones: break a big action into
-                          its real sub-steps (what to gather, where to go, what to do, what to
-                          save), and explain HOW and WHERE to do each one (the exact site,
-                          office, or method) — e.g. not "renew the registration" but "Renew your
-                          vehicle registration at your state DMV (online or in person), then put
-                          the new sticker on the windshield." When there is an ONLINE option, give it
-                          as a step WITH the website/app (e.g. "Check in online at united.com,
-                          or check in at the airport counter"), then real next steps (e.g.
-                          "arrive ~2 hours early", "go through security", "find your gate").
-                          For a bill: "Go to <site> and log in", "open the bill", "pay and
-                          save the confirmation". Put the SPECIFIC action link in the step
-                          that uses it — the direct pay / dispute / login / booking page (e.g.
-                          "Pay online at nyc.gov/payparkingticket"), NOT a generic homepage and
-                          NOT only in notes. Only include a URL you are confident is the real
-                          official one; otherwise write: search "<agency> pay <thing>". When a
-                          notice is a penalty for an underlying lapse, the steps must also fix
-                          the cause (see ROOT CAUSE below), in the right order. If a step is a
-                          phone call or visit AND \(language.promptName) is not English, add a
-                          sub-step to ask for an interpreter in \(language.promptName). Use []
-                          if nothing to do.
+          steps         : the ORDERED actions to FULLY resolve this, in \(language.promptName),
+                          written as SHORT LINES — a checklist someone can scan in ten seconds,
+                          not a manual. ONE action per line, imperative, UNDER 12 WORDS where
+                          you can and never over 20: "Pay $1,623.47 online at tax.ny.gov",
+                          "Apply for a payment plan before the due date", "Mail the signed
+                          consent form". The HOW, the WHERE, the caveats, the number to quote
+                          and what to keep afterwards do NOT go on this line — they go in the
+                          matching `stepDetails` entry, which the reader opens by tapping the
+                          step. Never write "(see step 4)" or any cross-reference, and never
+                          repeat the same reference number on line after line.
+                          AS MANY STEPS AS THE DOCUMENT GENUINELY NEEDS — no more, no
+                          fewer. There is no target number: an ordinary bill is done in two
+                          or three lines, a tax notice with a real appeal path may take
+                          several more, and padding a simple document to look thorough is as
+                          wrong as dropping a task to look short. What must stay constant is
+                          that EACH LINE IS SIMPLE — one action, plainly said. If the list is
+                          getting long because single steps are being split into fragments,
+                          fold them back together and put the fragments in that step's detail.
+                          WHAT THE LIST MUST STILL COVER (shorter lines, not fewer tasks):
+                          think it all the way through to "done" and include EVERY real action,
+                          including the ones the document only hints at. If the document asks
+                          for SEVERAL DISTINCT tasks (e.g. fill out a survey AND upload a record
+                          AND get an ID photo), cover EVERY one — do NOT keep only the longest
+                          and drop the others. A short ONE-LINE request ("complete this survey
+                          by Friday") is as important as a multi-step one and gets its own step.
+                          Don't stop at the obvious payment: a parking ticket for an EXPIRED
+                          REGISTRATION is not done when the fine is paid — pay the ticket AND
+                          renew the registration AND get the new sticker, so they aren't
+                          ticketed again tomorrow. Be operational, never vague — no "pay it" /
+                          "contact them"; name the real place ("Renew at your state DMV",
+                          "Check in at united.com"). When a notice is a penalty for an
+                          underlying lapse, the steps must also fix the cause (see ROOT CAUSE
+                          below), in the right order. Use [] if nothing to do.
+          stepDetails   : the HOW behind each step — an array with EXACTLY ONE ENTRY PER STEP,
+                          in the same order (entry i belongs to steps[i]; use {} for a step
+                          that genuinely needs nothing more). The reader taps a step to open
+                          this, so this is where the real instructions live and where all the
+                          length you would have crammed into the step line belongs. Each entry
+                          is an object; include only the keys that actually help:
+                            "explanation"  : 1-3 plain sentences in \(language.promptName) — how
+                                             and where to do it, what to expect, what to watch
+                                             out for. Do NOT restate the step line.
+                            "miniChecklist": short sub-actions in order, as plain strings. If a
+                                             step is a phone call or a visit AND
+                                             \(language.promptName) is not English, put "ask for
+                                             an interpreter in \(language.promptName)" here. []
+                                             if none.
+                            "links"        : [{"label","url"}] — the SPECIFIC page for THIS step
+                                             (the direct pay / dispute / login / booking page),
+                                             not a generic homepage. Only a URL you are confident
+                                             is the real official one; otherwise leave links []
+                                             and write in the explanation: search "<agency> pay
+                                             <thing>".
+                            "needed"       : documents or information to have ready before
+                                             starting, as short strings. [] if none.
+                            "script"       : what to say, if this step is a phone call or a
+                                             visit. "" otherwise.
+                            "fields"       : [{"label"}] — what is worth writing down AFTER doing
+                                             this (confirmation number, date paid, who they spoke
+                                             to). The reader fills in the values in the app. []
+                                             if none.
+                          EVERY reference number the reader must quote lives HERE — in the
+                          explanation, in `needed`, or as a `fields` label — never repeated
+                          across the step lines. [] if steps is [].
           notes         : short helpful side-info that is NOT an action — who to contact and
                           how, useful context, caveats, deadlines context. Phone numbers and
                           URLs welcome here. [] if none.
@@ -189,16 +218,17 @@ nonisolated enum ScanPrompt {
         cause (an ordinary bill, an appointment, a receipt, a flight), just give the \
         normal steps — do NOT invent a cause or force a fork that isn't there.
 
-        For a flight or travel document, steps should include checking in (online \
-        AND at the airport counter), arriving ~2 hours early, going through security, \
-        and finding the gate; put the flight number in otherIDs; and add a note on \
-        how to check the live gate/status (the airline's website, or searching the \
+        For a flight or travel document, steps should include checking in, arriving \
+        ~2 hours early, going through security, and finding the gate — as short lines, \
+        with the alternatives (check in online at the airline's site OR at the airport \
+        counter) in that step's detail. Put the flight number in otherIDs; add a note \
+        on how to check the live gate/status (the airline's website, or searching the \
         flight number). Set siteURL to the airline's site when known.
 
         If the text is unreadable or meaningless (gibberish, too garbled to tell \
         what it is), return ONE item with documentType "unknown", a short summary \
-        saying you couldn't read it, steps [], and confidence below 0.2. Never \
-        invent a document.
+        saying you couldn't read it, steps [], stepDetails [], and confidence below \
+        0.2. Never invent a document.
 
         Safety guardrails:
         - Do NOT tell the reader they legally, medically, or tax-wise "must" do \
@@ -215,7 +245,7 @@ nonisolated enum ScanPrompt {
         - If you are unsure what the document is, say so plainly and set a low \
           confidence rather than guessing.
 
-        Write summary and steps in \(language.promptName). Do not invent an amount \
+        Write summary, steps and stepDetails in \(language.promptName). Do not invent an amount \
         or a date that is not in the text.
         """
     }

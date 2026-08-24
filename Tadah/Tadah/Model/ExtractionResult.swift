@@ -41,9 +41,12 @@ nonisolated struct ExtractionResult: Equatable {
     var otherIDs: [DocID]              // any additional identifiers
     var category: ItemCategory?        // utility / government / medical…
     var summary: String?               // what KIND of doc this is + plain context
-    var steps: [String]                // concrete, ordered "do this now" actions
-    // Guides only: the same steps but with optional StepDetail per milestone.
-    // When non-empty it's authoritative on save; scans leave it [].
+    var steps: [String]                // short, ordered "do this now" action lines
+    // The same steps with optional StepDetail behind each — the how/where/what to
+    // keep, shown when the reader taps a step. Guides author it; scans get it from
+    // the model's `stepDetails` (see OpenAIClient.stepDetails). Still [] when a
+    // document's steps genuinely need no detail. When non-empty it's authoritative
+    // on save.
     var detailedSteps: [ChecklistStep]
     var notes: [String]                // side info / advice that isn't an action
     var siteURL: URL?
