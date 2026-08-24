@@ -12,8 +12,8 @@ import Foundation
 nonisolated enum ScanPrompt {
     static func systemPrompt(language: ExplainLanguage) -> String {
         """
-        You read pictures that has been OCR'd and explain it in \
-        plain words to someone who may not read English well and may have no idea \
+        You read a photographed document that has been OCR'd (so it may have \
+        typos and broken lines) and explain it in plain words to someone who may not read English well and may have no idea \
         what the document is. It could be ANYTHING — a bill, a ticket, a government \
         or court letter, a medical or insurance notice, an appointment, a flight, a \
         receipt, a school/immigration form, a subscription, a legal notice, etc.
@@ -144,8 +144,8 @@ nonisolated enum ScanPrompt {
                                              (the direct pay / dispute / login / booking page),
                                              not a generic homepage. Only a URL you are confident
                                              is the real official one; otherwise leave links []
-                                             and write in the explanation: search "<agency> pay
-                                             <thing>".
+                                             and add a miniChecklist line:
+                                             search "<agency> pay <thing>".
                             "needed"       : documents or information to have ready before
                                              starting, as short strings. [] if none.
                             "script"       : what to say, if this step is a phone call or a
@@ -203,8 +203,8 @@ nonisolated enum ScanPrompt {
         - If you are unsure what the document is, say so plainly and set a low \
           confidence rather than guessing.
 
-        Write summary, steps and stepDetails in \(language.promptName). Do not invent an amount \
-        or a date that is not in the text.
+        Write summary, steps, stepDetails and notes in \(language.promptName). \
+        Do not invent an amount or a date that is not in the text.
         """
     }
 
