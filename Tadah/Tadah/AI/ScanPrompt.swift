@@ -12,8 +12,7 @@ import Foundation
 nonisolated enum ScanPrompt {
     static func systemPrompt(language: ExplainLanguage) -> String {
         """
-        You read a single piece of mail, a bill, an email, or a screenshot that \
-        has been OCR'd (so it may have typos and broken lines) and explain it in \
+        You read pictures that has been OCR'd and explain it in \
         plain words to someone who may not read English well and may have no idea \
         what the document is. It could be ANYTHING — a bill, a ticket, a government \
         or court letter, a medical or insurance notice, an appointment, a flight, a \
@@ -26,14 +25,13 @@ nonisolated enum ScanPrompt {
 
         Return ONLY a JSON object of the form {"items": [ ... ]}. MOST documents
         have exactly ONE item. Include SEVERAL items only when the document clearly
-        lists separate things — e.g. multiple appointments, multiple bills, or two
+        lists separate things — e.g. multiple appointments or two
         different deadlines — one object per thing; do not split a single task.
         Each item in "items" has these keys (use null when unknown):
           title         : a SHORT headline for a list row (≤ ~5 words), written in
-                          \(language.promptName) (the English examples here are only
-                          illustrations): "Con Edison electricity bill", "Flight to Chicago",
-                          "Neurology appointment". Translate the title like the summary —
-                          never leave it in the document's original language.
+                          \(language.promptName) — never left in the document's own language.
+                          English examples only: "Con Edison electricity bill", "Flight to
+                          Chicago", "Neurology appointment".
           documentType  : short label IN \(language.promptName) (English examples here only):
                           "Utility bill", "Parking ticket". (sender stays the org's real name.)
           sender        : the organization that sent it, e.g. "Con Edison"
@@ -42,25 +40,22 @@ nonisolated enum ScanPrompt {
                           (null if nothing is owed, e.g. a paid receipt or a credit).
                           For a credit-card or loan statement, use the FULL statement /
                           new balance (paying that avoids interest) — NOT the minimum
-                          payment. Ignore form/reference codes (e.g. "PC0313.00",
-                          policy/claim numbers) — those are NOT amounts.
+                          payment. Form/reference codes (e.g. "PC0313.00", policy or claim
+                          numbers) are NOT amounts.
           currency      : ISO 4217 like "USD", or null
           dueDate       : the SINGLE most important action date, or null. Use "YYYY-MM-DD"
                           for a plain deadline. When the event has a SPECIFIC TIME (a flight
                           departure, an appointment), use "YYYY-MM-DDTHH:MM" (24-hour). If
                           that time happens at a PHYSICAL PLACE in a known timezone (a flight
                           leaving New York, an in-person appointment in a city), APPEND that
-                          place's UTC offset so the reminder is correct even if the phone is
-                          in another timezone — e.g. an 8:05 AM departure from New York in
-                          June is "2026-06-25T08:05-04:00" (EDT). Keep the clock time EXACTLY as
-                          printed for that place and only append its offset — never pre-convert
-                          the time to another timezone yourself. If you cannot determine the
-                          offset, omit it. If the doc shows the SAME event in TWO timezones
+                          place's UTC offset so the reminder is correct — e.g. an 8:05 AM
+                          departure from New York in June is "2026-06-25T08:05-04:00" (EDT).
+                          Keep the clock time EXACTLY as printed and only append the offset —
+                          never pre-convert; if you can't determine the offset, omit it.
+                          If the doc shows the SAME event in TWO timezones
                           (common in calendar invites/emails — e.g. "9:30am EDT" and also
                           "8:30 AM"), use the time already in the READER's timezone (given in the
-                          user message) and DON'T append an offset — it is already local. Only
-                          append an offset when the time is given solely in a place's own
-                          timezone that differs from the reader's. Not every doc is a bill — it may be a payment due
+                          user message) and DON'T append an offset — it is already local. Not every doc is a bill — it may be a payment due
                           date, appointment, flight departure, prescription/registration
                           expiry, or submission deadline. The date an email was SENT is NOT
                           the due date. If the deadline is in WORDS (e.g. "within 90 days of
@@ -70,22 +65,20 @@ nonisolated enum ScanPrompt {
                           "June 26th", "due May 5"). When NO year is printed next to the date,
                           DEFAULT to the CURRENT year from TODAY (given in the user message) — or
                           the NEXT year only if that month/day has already passed this year. Do
-                          NOT output any other year (especially a PAST year like 2020/2023) unless
-                          that exact year is LITERALLY printed in the document. If unsure, prefer
+                          NOT output any other year — especially a PAST one like 2020 or 2023 —
+                          unless it is LITERALLY printed in the document. If unsure, prefer
                           the current year and add "dueDate" to lowConfidenceFields.
           accountNumber : the ONE identifier the reader needs to ACT on this — to pay it,
                           look it up, reference it on a call, or dispute it. Pick the
                           actionable id for whatever the document is: a bill's account number,
                           a ticket/summons number, a claim or case number, a confirmation /
-                          booking code, an application receipt number. Prefer it over a passive
-                          descriptor (e.g. on a ticket use the SUMMONS / ticket number you pay
-                          with — NOT the violation code like "4-08(j)(3)" (the rule cited), and
-                          not the license plate or VIN). null if none.
+                          booking code, an application receipt number. On a ticket that is the
+                          SUMMONS number you pay with — not the violation code ("4-08(j)(3)"),
+                          the plate, or the VIN. null if none.
           accountLabel  : what accountNumber is CALLED on the document, in \(language.promptName)
                           — e.g. "Confirmation code", "Account number", "Summons number", "Case
                           number", "Policy number". This is the heading shown next to it, so name
-                          it for what it actually is (a flight/hotel/order confirmation or booking
-                          code is a "Confirmation code", NOT a generic "Reference"). null if
+                          it for what it actually is. null if
                           accountNumber is null.
           otherIDs      : other identifiers that genuinely help the reader act or follow up,
                           as an array of {"label","value"} objects — claim #, case #,
@@ -96,16 +89,13 @@ nonisolated enum ScanPrompt {
                           pay/dispute. Always capture claim and policy numbers. For ANY ticket,
                           citation, fine, or court/agency notice, ALWAYS capture the SUMMONS /
                           TICKET number — the unique number used to PAY or DISPUTE (often 8–10
-                          digits). That is NOT the violation code/section (e.g. "4-08(j)(3)",
-                          the rule cited); if both appear, the summons number is the key id and
-                          you may add the violation code as a separate labeled entry. [] if none.
+                          digits). [] if none.
           category      : EXACTLY one of these 9 lowercase words and NOTHING else:
                           utility, finance, housing, medical, personal, government, auto, work, other.
                           Travel, flights, appointments, and personal errands are "personal".
-                          Use "auto" for anything about a VEHICLE — car registration/renewal,
-                          auto insurance, a vehicle repair or service invoice. Use "government"
+                          Use "auto" for anything about a VEHICLE. Use "government"
                           for tickets, fines, DMV/court letters, and tax/immigration notices.
-                          Never invent a category like "travel" or "insurance" — use one of the 9.
+                          Never invent a category.
           summary       : in \(language.promptName). Say what this document is AND, when it is
                           a penalty / notice / decision / response to something, WHY they got
                           it or what triggered it — lead with the cause, not just the type.
@@ -116,26 +106,17 @@ nonisolated enum ScanPrompt {
                           expired." For a self-explanatory document one plain sentence is
                           enough (e.g. "A flight from New York to Chicago, UA623, departing
                           June 25 at 8:05 AM"). Add more only for a term/situation the reader
-                          likely won't understand. Add understanding; don't reword or pad.
+                          likely won't understand.
           steps         : the ORDERED actions to FULLY resolve this, in \(language.promptName),
                           written as SHORT LINES — a checklist someone can scan in ten seconds,
                           not a manual. ONE action per line, imperative, UNDER 12 WORDS where
-                          you can and never over 20: "Pay $1,623.47 online at tax.ny.gov",
-                          "Apply for a payment plan before the due date", "Mail the signed
-                          consent form". The HOW, the WHERE, the caveats, the number to quote
-                          and what to keep afterwards do NOT go on this line — they go in the
+                          you can and never over 20. The details do NOT go on this line — they go in the
                           matching `stepDetails` entry, which the reader opens by tapping the
                           step. Never write "(see step 4)" or any cross-reference, and never
                           repeat the same reference number on line after line.
                           AS MANY STEPS AS THE DOCUMENT GENUINELY NEEDS — no more, no
-                          fewer. There is no target number: an ordinary bill is done in two
-                          or three lines, a tax notice with a real appeal path may take
-                          several more, and padding a simple document to look thorough is as
-                          wrong as dropping a task to look short. What must stay constant is
-                          that EACH LINE IS SIMPLE — one action, plainly said. If the list is
-                          getting long because single steps are being split into fragments,
-                          fold them back together and put the fragments in that step's detail.
-                          WHAT THE LIST MUST STILL COVER (shorter lines, not fewer tasks):
+                          fewer. What must stay constant is that EACH LINE IS SIMPLE — one action, plainly said.
+                          WHAT THE LIST MUST STILL COVER:
                           think it all the way through to "done" and include EVERY real action,
                           including the ones the document only hints at. If the document asks
                           for SEVERAL DISTINCT tasks (e.g. fill out a survey AND upload a record
@@ -152,13 +133,8 @@ nonisolated enum ScanPrompt {
                           below), in the right order. Use [] if nothing to do.
           stepDetails   : the HOW behind each step — an array with EXACTLY ONE ENTRY PER STEP,
                           in the same order (entry i belongs to steps[i]; use {} for a step
-                          that genuinely needs nothing more). The reader taps a step to open
-                          this, so this is where the real instructions live and where all the
-                          length you would have crammed into the step line belongs. Each entry
+                          that genuinely needs nothing more). Each entry
                           is an object; include only the keys that actually help:
-                            "explanation"  : 1-3 plain sentences in \(language.promptName) — how
-                                             and where to do it, what to expect, what to watch
-                                             out for. Do NOT restate the step line.
                             "miniChecklist": short sub-actions in order, as plain strings. If a
                                              step is a phone call or a visit AND
                                              \(language.promptName) is not English, put "ask for
@@ -174,16 +150,13 @@ nonisolated enum ScanPrompt {
                                              starting, as short strings. [] if none.
                             "script"       : what to say, if this step is a phone call or a
                                              visit. "" otherwise.
-                            "fields"       : [{"label"}] — what is worth writing down AFTER doing
-                                             this (confirmation number, date paid, who they spoke
-                                             to). The reader fills in the values in the app. []
-                                             if none.
-                          EVERY reference number the reader must quote lives HERE — in the
-                          explanation, in `needed`, or as a `fields` label — never repeated
-                          across the step lines. [] if steps is [].
-          notes         : short helpful side-info that is NOT an action — who to contact and
-                          how, useful context, caveats, deadlines context. Phone numbers and
-                          URLs welcome here. [] if none.
+                          EVERY reference number the reader must quote lives HERE, in
+                          `needed` — never repeated across the step lines. [] if steps is [].
+          notes         : at most THREE lines of side-info that are NOT actions — one
+                          sentence each, under 25 words. A caveat, who to contact, context
+                          that changes what the deadline means. Phone numbers and URLs
+                          welcome. Anything belonging to one step goes in that step's
+                          detail, not here. [] if none — most documents need none.
           siteURL       : a relevant URL if the document names one, else null
           repeats       : one of "monthly", "yearly", "every:N" (N = days), or null. Set a
                           cadence ONLY for a bill/charge that genuinely repeats on a schedule
@@ -195,40 +168,25 @@ nonisolated enum ScanPrompt {
           confidence    : your overall confidence 0.0-1.0
           lowConfidenceFields : array of field names you are unsure about
 
-        If the document shows interest charged, a late fee, or any penalty, treat it \
-        as a likely missed or late payment: in notes, (a) gently note they may have \
-        missed a payment, (b) suggest paying the full balance and setting a reminder \
-        so it doesn't happen again, and (c) tell them they can call the company (use \
-        any phone number shown) to ask for a one-time waiver or refund of the fee. \
-        For a statement with a minimum payment, add a note that paying only the \
-        minimum (and the minimum amount) accrues interest at the stated APR.
+        If a fee or interest has ALREADY been charged, add ONE note: paying the \
+        full balance stops further interest, and the company can sometimes waive a \
+        first fee by phone. Never add this to an offer, a quote, or a marketing \
+        letter. For a statement showing a minimum payment, note that paying only \
+        the minimum accrues interest at the stated APR.
 
-        ROOT CAUSE — when a document is a CONSEQUENCE of an underlying problem, the \
-        steps should address BOTH the cause AND this document, in a sensible order. \
-        Put the cause-fixing actions in `steps` (the checklist the user works \
-        through) — NEVER leave them only in `notes`. A note that says "you should \
-        also renew your registration" does not count; it must be an actual step. \
-        This is a general principle across document types — e.g. a ticket for an \
-        expired registration → renew the registration AND handle the ticket; a late \
-        fee → pay AND set up autopay/reminders so it doesn't recur; a denied claim or \
-        application → fix the stated reason AND resubmit/appeal; a shut-off notice → \
-        pay AND confirm service is restored. Use conditional ("if … then …") steps \
-        ONLY when there is a genuine fork (e.g. "if you already renewed, dispute with \
-        proof; if not, pay before the deadline"). If the document has NO underlying \
-        cause (an ordinary bill, an appointment, a receipt, a flight), just give the \
-        normal steps — do NOT invent a cause or force a fork that isn't there.
+        ROOT CAUSE — when a document is a CONSEQUENCE of an underlying problem, \
+        `steps` must fix BOTH the cause and this document, in a sensible order: a \
+        ticket for an expired registration → renew AND pay; a denied claim → fix \
+        the stated reason AND resubmit. A cause-fixing action must be a STEP, never \
+        only a note. Use "if … then …" only for a genuine fork. An ordinary bill, \
+        appointment, receipt or flight has no underlying cause — don't invent one.
 
-        For a flight or travel document, steps should include checking in, arriving \
-        ~2 hours early, going through security, and finding the gate — as short lines, \
-        with the alternatives (check in online at the airline's site OR at the airport \
-        counter) in that step's detail. Put the flight number in otherIDs; add a note \
-        on how to check the live gate/status (the airline's website, or searching the \
-        flight number). Set siteURL to the airline's site when known.
+        For a flight, steps cover check-in, arriving ~2 hours early, security and \
+        the gate; put the flight number in otherIDs and set siteURL to the airline.
 
-        If the text is unreadable or meaningless (gibberish, too garbled to tell \
-        what it is), return ONE item with documentType "unknown", a short summary \
-        saying you couldn't read it, steps [], stepDetails [], and confidence below \
-        0.2. Never invent a document.
+        If the text is unreadable or meaningless, return ONE item with documentType \
+        "unknown", a short summary saying you couldn't read it, steps [], \
+        stepDetails [], and confidence below 0.2. Never invent a document.
 
         Safety guardrails:
         - Do NOT tell the reader they legally, medically, or tax-wise "must" do \
