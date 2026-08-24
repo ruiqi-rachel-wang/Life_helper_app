@@ -17,7 +17,10 @@ import CryptoKit
 
 // One logged moment in the confirm → complete loop.
 nonisolated struct MetricEvent: Codable, Equatable {
-    enum Kind: String, Codable { case confirmed, completed }
+    // `opened` is DELIBERATELY DIFFERENT from the other two. They describe a
+    // to-do; this one describes the person, which is the whole reason it needs
+    // care — see Metrics.recordAppOpen for what is and isn't recorded.
+    enum Kind: String, Codable { case confirmed, completed, opened }
     var id = UUID()         // stable per-event id; the backend de-dupes uploads on it
     var kind: Kind
     var date: Date
@@ -50,6 +53,10 @@ nonisolated struct MetricsSummary: Equatable {
     var completedOnTime = 0      // done on or before the due date
     var completedWithDue = 0     // completed items that HAD a due date
     var bySource: [String: Int] = [:]   // confirmed count per source
+    // How many distinct DAYS this install opened the app. The completion rate
+    // says the loop works; this says whether anyone came back to use it — and
+    // those are different questions with different answers.
+    var openDays = 0
 
     // Headline: of confirmed items, how many came back completed at all.
     var completionRate: Double { confirmed == 0 ? 0 : Double(completed) / Double(confirmed) }
@@ -73,9 +80,16 @@ nonisolated struct MetricsSummary: Equatable {
                 if confirmedSource[id] == nil { confirmedSource[id] = e.source ?? "other" }
             case .completed:
                 if !firstOnTime.keys.contains(id) { firstOnTime[id] = e.onTime }
+            case .opened:
+                continue   // not about an item; counted separately, below
             }
         }
         var s = MetricsSummary()
+        // Distinct calendar days with an open. Counted from the event dates
+        // rather than a running total, so a re-sent or duplicated event can't
+        // inflate it.
+        s.openDays = Set(events.filter { $0.kind == .opened }
+            .map { Calendar.current.startOfDay(for: $0.date) }).count
         s.confirmed = confirmedSource.count
         for src in confirmedSource.values { s.bySource[src, default: 0] += 1 }
         // Only completions of confirmed items count toward the funnel.
@@ -182,8 +196,9 @@ nonisolated enum Metrics {
         return dir.appendingPathComponent("metrics.json")
     }()
 
-    static func record(_ kind: MetricEvent.Kind, itemID: UUID? = nil, source: String? = nil, onTime: Bool? = nil) {
-        let event = MetricEvent(kind: kind, date: .now, itemID: itemID, source: source, onTime: onTime)
+    static func record(_ kind: MetricEvent.Kind, itemID: UUID? = nil, source: String? = nil,
+                       onTime: Bool? = nil, date: Date = .now) {
+        let event = MetricEvent(kind: kind, date: date, itemID: itemID, source: source, onTime: onTime)
         queue.async {
             var events = readFile()
             events.append(event)
@@ -192,6 +207,43 @@ nonisolated enum Metrics {
             }
         }
     }
+
+    // DID THIS INSTALL COME BACK? The one question the funnel cannot answer.
+    //
+    // `confirmed` and `completed` say the loop works for someone already using
+    // the app on a given day. They say nothing about whether that person ever
+    // opens it again — and for a subscription, returning IS the business. Two
+    // months of data with a healthy 66% completion rate hid the fact that only
+    // one install had ever come back across weeks, because nothing was counting.
+    //
+    // WHAT IS RECORDED, AND WHY IT IS THE MINIMUM THAT WORKS:
+    //  • ONE event per CALENDAR DAY. A second open ten minutes later adds
+    //    nothing a retention curve can use, so it isn't logged. This also keeps
+    //    an idle-but-installed phone from filling upload batches.
+    //  • Dated to LOCAL MIDNIGHT, not the moment of opening. D1/D7/D30 needs the
+    //    day; the hour would say when someone is awake, at work, or up at 3am
+    //    worrying about a letter. We don't need that, so we don't take it.
+    //  • No item, no source, no content — the event is "this install was here on
+    //    this date" and nothing else.
+    //
+    // Consent still gates the upload like everything else: with usage sharing
+    // off, this stays on the device (and still drives the local `openDays`).
+    //
+    // Safe to call on every launch and every foreground; the day check makes it
+    // idempotent.
+    static func recordAppOpen(now: Date = .now, calendar: Calendar = .current) {
+        let day = calendar.startOfDay(for: now)
+        let stamp = ISO8601DateFormatter.dayOnly.string(from: day)
+        let d = UserDefaults.standard
+        guard d.string(forKey: lastOpenDayKey) != stamp else { return }   // already counted today
+        d.set(stamp, forKey: lastOpenDayKey)
+        record(.opened, date: day)
+    }
+
+    // The last calendar day (yyyy-MM-dd, local) an `opened` event was logged.
+    // A plain string rather than a Date so a clock change or a timezone move
+    // can only ever cost or gain one day's count, never corrupt the series.
+    static let lastOpenDayKey = "tadah.metrics.lastOpenDay"
 
     static func load() -> [MetricEvent] { queue.sync { readFile() } }
 
@@ -369,4 +421,16 @@ nonisolated enum Device {
     static let idKey = "tadah.account.deviceID"
 
     static var id: String { Install.stableID(forKey: idKey) }
+}
+
+// A local-day stamp ("2026-08-20") for the app-open counter. Deliberately
+// `.current` timezone: the question is "did this person come back on a new
+// day", which is a question about their day, not UTC's.
+private extension ISO8601DateFormatter {
+    static let dayOnly: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withFullDate]
+        f.timeZone = .current
+        return f
+    }()
 }

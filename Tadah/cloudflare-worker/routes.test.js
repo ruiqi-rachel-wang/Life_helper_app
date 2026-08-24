@@ -824,11 +824,22 @@ describe("events", () => {
         events: [
           { id: "e1", kind: "confirmed", date: "2026-08-10T10:00:00Z", source: "scanned" },
           { id: "e2", kind: "not-a-kind", date: "2026-08-10T10:00:00Z" },
+          // The retention signal. Carries no item and no source — if the kind
+          // allow-list ever loses this, D1/D7/D30 goes silently to zero and
+          // nothing else breaks, which is the worst way for it to fail.
+          { id: "e-open", kind: "opened", date: "2026-08-10T00:00:00Z" },
         ],
       },
     });
     expect(r.status).toBe(200);
-    expect(r.body.accepted).toBe(1);
+    expect(r.body.accepted).toBe(2);   // the confirmed one and the open; junk kind dropped
+
+    const stored = await env.DB.prepare(
+      "SELECT kind, item_id, source FROM events WHERE event_id = 'e-open'"
+    ).first();
+    expect(stored.kind).toBe("opened");
+    expect(stored.item_id).toBe(null);
+    expect(stored.source).toBe(null);
   });
 
   it("413s a batch over the limit", async () => {

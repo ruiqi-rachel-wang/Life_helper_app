@@ -31,10 +31,18 @@
 // testers' phones still ask for it, and dropping it would 400 every scan they make.
 // Remove it only once those builds are gone.
 const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
-// Hard ceiling AND the default when the client sends none. 4000 (not 2000)
-// because reasoning models spend part of this budget on hidden reasoning tokens
-// before writing any JSON — too low a ceiling truncates the answer.
-const MAX_TOKENS = 4000;
+// Hard ceiling AND the default when the client sends none. Reasoning models
+// spend part of this budget on hidden reasoning tokens before writing any JSON,
+// so the ceiling must cover BOTH that and the answer — too low and the JSON is
+// truncated, which reaches the user as "we couldn't read this document".
+//
+// Raised 4000 → 6000 on 2026-08-20, when a scan started returning per-step
+// detail (`stepDetails`) alongside the steps. The app asks for 3000 visible +
+// 2000 reasoning headroom; at the old ceiling that was silently clamped to 4000
+// and a long document would truncate. This is a CEILING, not an allowance —
+// each request still gets what it asks for, and the spend cap below is what
+// actually bounds the bill.
+const MAX_TOKENS = 6000;
 
 // INPUT bounds for the AI proxy. MAX_TOKENS only ever capped the response; the
 // prompt side was unbounded, and prompt tokens are most of the bill on a document
@@ -106,7 +114,11 @@ const GLOBAL_DAY_LIMIT = 3000;
 // write failed, the client never advanced its cursor, and the same doomed batch
 // retried forever. 25 leaves headroom for the lazy DDL and any read on the path.
 const MAX_BATCH = 25;                                // events accepted per request
-const VALID_KINDS = new Set(["confirmed", "completed"]);
+// `opened` (added 2026-08-20) is one row per install per CALENDAR DAY, dated to
+// the device's local midnight — the retention signal. It carries no item, no
+// source and no time of day; see Metrics.recordAppOpen for why that is the
+// minimum that still answers D1/D7/D30.
+const VALID_KINDS = new Set(["confirmed", "completed", "opened"]);
 const MAX_STR = 64;                                  // clamp every stored string
 
 // /sync + /auth guardrails (Part 3 account task sync).

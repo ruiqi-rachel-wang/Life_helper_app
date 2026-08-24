@@ -10,7 +10,10 @@ CREATE TABLE IF NOT EXISTS events (
   event_id    TEXT PRIMARY KEY,   -- the device's per-event UUID. PRIMARY KEY makes
                                   -- re-sends idempotent (INSERT OR IGNORE = no dupes).
   install_id  TEXT NOT NULL,      -- anonymous per-install UUID (no PII, not a person)
-  kind        TEXT NOT NULL,      -- 'confirmed' | 'completed'
+  kind        TEXT NOT NULL,      -- 'confirmed' | 'completed' | 'opened'
+                                  -- 'opened' = one row per install per local
+                                  -- calendar day (no item, no time of day):
+                                  -- the D1/D7/D30 retention signal.
   source      TEXT,               -- 'scanned' | 'guide' | 'custom' (on 'confirmed')
   on_time     INTEGER,            -- 1 = on/before due, 0 = late, NULL = no due date
   item_id     TEXT,               -- the item's UUID (lets the funnel match confirm->complete)

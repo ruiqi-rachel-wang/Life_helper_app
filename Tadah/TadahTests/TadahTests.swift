@@ -559,6 +559,66 @@ struct MetricsTests {
         #expect(s.onTimeRate == 0)
     }
 
+    // RETENTION, THE HALF THE FUNNEL COULDN'T SEE.
+    //
+    // `openDays` counts DISTINCT calendar days, not events, because the upload
+    // is idempotent-by-id but a device can still log the same day twice across a
+    // reinstall or a restored backup. Counting rows would then report a return
+    // visit that never happened — the exact flattering error this metric exists
+    // to prevent.
+    @Test func openDaysCountsDistinctDaysNotEvents() {
+        let a = UUID()
+        let s = MetricsSummary.from([
+            .init(kind: .opened, date: day(-2)),
+            .init(kind: .opened, date: day(-2)),          // same day again → still one day
+            .init(kind: .opened, date: day(-1)),
+            .init(kind: .opened, date: day(0)),
+            .init(kind: .confirmed, date: day(0), itemID: a, source: "scanned"),
+        ])
+        #expect(s.openDays == 3)
+        // …and an open must never touch the item funnel, in either direction.
+        #expect(s.confirmed == 1)
+        #expect(s.completed == 0)
+        #expect(s.bySource == ["scanned": 1])
+    }
+
+    // ONE ROW PER DAY. Opening the app fifty times on a Tuesday is one Tuesday
+    // to a retention curve; logging fifty rows would just fill upload batches
+    // (MAX_BATCH is 25) and delay the events that carry real information.
+    @MainActor
+    @Test func appOpenIsRecordedOncePerCalendarDay() {
+        // Leave the simulator exactly as found: this is the one metrics test that
+        // writes to the real log, so both the day marker and the file itself are
+        // snapshotted and put back.
+        let d = UserDefaults.standard
+        let saved = d.object(forKey: Metrics.lastOpenDayKey)
+        let savedLog = try? Data(contentsOf: Metrics.fileURL)
+        defer {
+            saved == nil ? d.removeObject(forKey: Metrics.lastOpenDayKey)
+                         : d.set(saved, forKey: Metrics.lastOpenDayKey)
+            if let savedLog { try? savedLog.write(to: Metrics.fileURL) }
+            else { try? FileManager.default.removeItem(at: Metrics.fileURL) }
+        }
+        d.removeObject(forKey: Metrics.lastOpenDayKey)
+
+        let before = Metrics.load().filter { $0.kind == .opened }.count
+        let morning = day(0).addingTimeInterval(9 * 3600)
+        let evening = day(0).addingTimeInterval(22 * 3600)
+
+        Metrics.recordAppOpen(now: morning)
+        Metrics.recordAppOpen(now: evening)      // same day → no second row
+        Metrics.recordAppOpen(now: day(1))       // new day → counted
+
+        let opens = Metrics.load().filter { $0.kind == .opened }
+        #expect(opens.count == before + 2)
+
+        // Dated to LOCAL MIDNIGHT, never the moment of opening: the day is what
+        // retention needs, and the hour would say when this person is awake.
+        let logged = opens.suffix(2).map(\.date)
+        #expect(logged.allSatisfy { $0 == Calendar.current.startOfDay(for: $0) })
+        #expect(opens.last?.itemID == nil)       // carries no item, no content
+    }
+
     @Test func emptyLogIsAllZeroNoDivideByZero() {
         let s = MetricsSummary.from([])
         #expect(s.confirmed == 0 && s.completed == 0)

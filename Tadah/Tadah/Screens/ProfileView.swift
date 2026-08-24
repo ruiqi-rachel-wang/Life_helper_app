@@ -792,6 +792,9 @@ struct ProfileView: View {
             metricRow("Confirmed", "\(metrics.confirmed)")
             metricRow("Completed", "\(metrics.completed)  ·  \(pct(metrics.completionRate))")
             metricRow("Done on time", "\(metrics.completedOnTime)/\(metrics.completedWithDue)  ·  \(pct(metrics.onTimeRate))")
+            // The retention half. Above this line is "does the loop work"; this
+            // is "did anyone come back", which is the harder question.
+            metricRow("Days opened", "\(metrics.openDays)")
             if !metrics.bySource.isEmpty {
                 Text("Confirmed by: " + metrics.bySource.sorted { $0.key < $1.key }
                         .map { "\($0.key) \($0.value)" }.joined(separator: " · "))

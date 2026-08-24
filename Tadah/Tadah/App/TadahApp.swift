@@ -38,7 +38,15 @@ struct TadahApp: App {
         // Purchases only work once, in RevenueCat: both products are attached to
         // the `Tadah Pro` entitlement (must match PlusStore.entitlementID and the
         // Worker's PLUS_ENTITLEMENT) and sit in an Offering marked Current.
+        // Debug builds get the SDK's full log so a "coming soon" paywall can be
+        // diagnosed from the device console: it names which product ids StoreKit
+        // was asked for and why the fetch came back empty. Release stays .warn —
+        // the debug stream is very chatty and would drown a shipping build's log.
+        #if DEBUG
+        Purchases.logLevel = .debug
+        #else
         Purchases.logLevel = .warn
+        #endif
         Purchases.configure(withAPIKey: "appl_NkpoJAXKXycQKzzekTUOmXaxedM")
 
         // Point every string lookup — ours, Apple's, and RevenueCat's — at the
@@ -138,6 +146,9 @@ struct TadahApp: App {
                     // first-launch explainer (NotificationPrimerView via
                     // RootTabView), not silently here.
                     refreshAllReminders()
+                    // Count the day BEFORE flushing, so today's open goes up in
+                    // the same batch instead of waiting for the next launch.
+                    Metrics.recordAppOpen()
                     Metrics.flush()   // send any metric events not yet uploaded
                     // Re-identify an ALREADY signed-in user to RevenueCat. Only the
                     // sign-in screen used to call logIn, so on every later launch
@@ -154,6 +165,11 @@ struct TadahApp: App {
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
                         refreshAllReminders()
+                        // Coming back from the background on a NEW day is a
+                        // return visit and must count — a phone that never fully
+                        // relaunches would otherwise look like a phone nobody
+                        // opened. Same-day re-entry is a no-op.
+                        Metrics.recordAppOpen()
                         // Pick up anything changed on another device while away.
                         Task { await sync.syncNow(context: container.mainContext, account: account) }
                     } else if phase == .background {
