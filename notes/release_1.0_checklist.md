@@ -156,11 +156,16 @@ me and I'll create an iPhone 14 Plus one, which is exactly that.
 
 - ☐ **Privacy Policy URL → `https://tadah-legal.pages.dev/privacy`** (App
       Information). It currently points at the old cuevi-legal host.
-- ☐ Description, keywords, promotional text, support URL, marketing URL
-- ☐ Age rating questionnaire
-- ☐ Content rights (third-party content?)
-- ☐ Export compliance — HTTPS only, so the standard exemption applies
-- ☐ Category and pricing (app itself free)
+- ☐ Description, keywords, promotional text, subtitle, support URL — **all
+      written and length-checked in `app_store_listing.md`, just paste**
+- ☐ Marketing URL — leave blank (a thin page is worse than none)
+- ☐ Age rating questionnaire — answers in `app_store_listing.md` (expect 4+;
+      the one to watch is "unrestricted web access" → **No**)
+- ☐ Content rights → **No** (your guides are your own; linking out to a .gov
+      page is not third-party content inside the app)
+- ☐ Export compliance → uses encryption **Yes**, qualifies for exemption **Yes**
+      (OS-provided HTTPS/TLS only, no custom crypto)
+- ☐ Category → Productivity primary, Utilities secondary. Pricing: app free.
 
 ---
 
