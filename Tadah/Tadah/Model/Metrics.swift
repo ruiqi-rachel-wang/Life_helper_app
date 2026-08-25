@@ -233,7 +233,12 @@ nonisolated enum Metrics {
     // idempotent.
     static func recordAppOpen(now: Date = .now, calendar: Calendar = .current) {
         let day = calendar.startOfDay(for: now)
-        let stamp = ISO8601DateFormatter.dayOnly.string(from: day)
+        // Built from the SAME calendar that decided the day boundary. A shared
+        // formatter would disagree with an injected calendar in another
+        // timezone, and a static one is main-actor isolated besides — which this
+        // nonisolated context cannot touch.
+        let c = calendar.dateComponents([.year, .month, .day], from: day)
+        let stamp = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
         let d = UserDefaults.standard
         guard d.string(forKey: lastOpenDayKey) != stamp else { return }   // already counted today
         d.set(stamp, forKey: lastOpenDayKey)
@@ -421,16 +426,4 @@ nonisolated enum Device {
     static let idKey = "tadah.account.deviceID"
 
     static var id: String { Install.stableID(forKey: idKey) }
-}
-
-// A local-day stamp ("2026-08-20") for the app-open counter. Deliberately
-// `.current` timezone: the question is "did this person come back on a new
-// day", which is a question about their day, not UTC's.
-private extension ISO8601DateFormatter {
-    static let dayOnly: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withFullDate]
-        f.timeZone = .current
-        return f
-    }()
 }
