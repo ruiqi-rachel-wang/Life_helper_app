@@ -87,10 +87,11 @@ RevenueCat's paywall templates surface it automatically.
   screenshot it. Apple rejects placeholder images here.
 - **Review Notes** — paste:
   > Tadah Plus is an optional subscription. Free accounts can save up to 20
-  > to-dos and run 20 scans/guides per 30 days, and can be used on one device at
-  > a time. Tadah Plus raises those limits and allows multiple devices. No
-  > account or purchase is required to use the app's core features. To test: open
-  > the Profile tab and tap UPGRADE.
+  > to-dos and run 20 AI scans/guides a day, up to 50 per rolling 30 days, on one
+  > device at a time. Tadah Plus raises these to 100 to-dos per profile and 60 a
+  > day / 300 per 30 days, and allows multiple devices. No account or purchase is
+  > required to use the app's core features. To test: open the Profile tab and
+  > tap UPGRADE.
 
 ### A7. Family Sharing — leave OFF for now
 ⚠️ **Once enabled it cannot be turned off.** Tadah's own "family" feature (adding

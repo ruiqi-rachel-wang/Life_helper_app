@@ -663,12 +663,16 @@ struct ScanQuotaTests {
         let cal = Calendar.current
         let start = cal.date(from: DateComponents(year: 2026, month: 3, day: 1))!
         var day = start
-        // 5 a day for 4 days = 20 — under the daily cap each day, hits the 30-day cap.
-        for _ in 0..<4 {
-            for _ in 0..<5 { ScanQuota.record(now: day, d) }
+        // Fill the 30-day window, never exceeding the daily cap on any one day.
+        // Derived from the constants so re-tuning a tier doesn't break the test.
+        var recorded = 0
+        while recorded < ScanQuota.perWindow {
+            let batch = min(ScanQuota.perDay, ScanQuota.perWindow - recorded)
+            for _ in 0..<batch { ScanQuota.record(now: day, d) }
+            recorded += batch
             day = cal.date(byAdding: .day, value: 1, to: day)!
         }
-        // 'day' is now Mar 5 — all 20 fall within the last 30 days.
+        // Every event so far falls within the last 30 days.
         #expect(ScanQuota.usedLast30Days(now: day, d) == ScanQuota.perWindow)
         #expect(!ScanQuota.canScan(now: day, d))       // window cap blocks even on a fresh day
         // 31 days past the first batch, the earliest events age out of the window.

@@ -1427,7 +1427,7 @@ Big update — thank you for testing! Two brand-new things: **accounts** and
   in their own list: Profile → Family. You can give each person their own
   reminder time. The name is just a label — it isn't an invitation, and they
   don't get a login.
-- **Please note the free limits:** 10 scans/guides a day, 20 per 30 days, and 20
+- **Please note the free limits:** 20 scans/guides a day, 50 per 30 days, and 20
   to-dos at a time. Tell us if you hit them while testing and they got in the way.
 - Scan a real bill or letter (Add → Scan). Are the amount, date, and steps right?
   Tap Edit on the review screen — do your edits stick and sync?

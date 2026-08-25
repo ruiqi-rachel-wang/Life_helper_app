@@ -6,7 +6,9 @@
 //    • a 30-day cap  — a rolling window (not a calendar month): "within the last
 //      30 days, at most N".
 //  Free vs Plus (pass `plus:` from PlusStore.isPlus):
-//    • Free: 10/day, 20 per 30 days.
+//    • Free: 20/day, 50 per 30 days. Raised from 10/20 on 2026-08-25 — 20 a month
+//      throttled ordinary users (the people who scan a lot are exactly the ones
+//      the app is for), and the free tier has to be usable enough to be liked.
 //    • Plus: 60/day, 300 per 30 days — effectively unlimited for real use, but a
 //      real backstop so a runaway loop can't run up the OpenAI bill.
 //  Local (UserDefaults) for now — a real per-user server limit comes with the
@@ -17,8 +19,8 @@
 import Foundation
 
 nonisolated enum ScanQuota {
-    static let perDay = 10          // free
-    static let perWindow = 20       // free, rolling 30 days
+    static let perDay = 20          // free
+    static let perWindow = 50       // free, rolling 30 days
     static let perDayPlus = 60      // Plus
     static let perWindowPlus = 300  // Plus, rolling 30 days
     static let windowDays = 30

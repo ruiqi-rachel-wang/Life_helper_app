@@ -74,7 +74,7 @@ map, so nobody reads this file and thinks Tadah is still a device-only app.
   `PaywallView` resolves the offering itself and shows an on-brand "coming soon"
   rather than the SDK's raw configuration error; Restore is reachable from every
   state.
-- **Per-tier limits.** Free 10 scans/day + 20 per 30 days + 20 to-dos; Plus 60/300
+- **Per-tier limits.** Free 20 scans/day + 50 per 30 days + 20 to-dos; Plus 60/300
   and 100 (`ScanQuota`, `TaskLimit`, per profile). The Worker's 200/2000 numbers are
   a **storage safety net, not the commercial limits** — it can't see profile
   membership.
@@ -186,7 +186,8 @@ map, so nobody reads this file and thinks Tadah is still a device-only app.
 - **AI model → `gpt-4o` for extraction** (guide polish stays `gpt-4o-mini`): extraction
   needs real reasoning; polish only rewords. ~$0.003–0.006/scan, affordable because
   scans are rate-limited.
-- **Scan rate limit** (`ScanQuota`): 10/day, 50/month per device. Gated in the Add flow.
+- **Scan rate limit** (`ScanQuota`): free 20/day, 50 per rolling 30 days per device
+  (Plus 60/300). Gated in the Add flow.
 - **Extraction prompt reworked** for: lead-with-the-reason summaries, *actionable*
   IDs (ticket/summons # over VIN/plate), specific action links *in the step*, and
   root-cause + conditional steps (fix the cause AND handle the notice).
