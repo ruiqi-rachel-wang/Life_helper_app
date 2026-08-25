@@ -83,8 +83,9 @@ RevenueCat's paywall templates surface it automatically.
 
 ### A6. Review Information (required before "Add for Review")
 - **Screenshot** — a 1284×2778 (or any iPhone size) capture of the **paywall as
-  it appears in the app**. You must run build 4, open Profile ▸ UPGRADE, and
-  screenshot it. Apple rejects placeholder images here.
+  it appears in the app**. Run the build you are submitting (build 5), open
+  Profile ▸ UPGRADE, and screenshot the REAL RevenueCat paywall — not the
+  "coming soon" fallback. Apple rejects placeholder images here.
 - **Review Notes** — paste:
   > Tadah Plus is an optional subscription. Free accounts can save up to 20
   > to-dos and run 20 AI scans/guides a day, up to 50 per rolling 30 days, on one

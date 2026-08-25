@@ -42,13 +42,24 @@ at a person.
 > ⚠️ `export PATH="/usr/local/opt/node@22/bin:$PATH"` first, every new terminal
 > tab — the default `node` is v20.6.0 and wrangler refuses to run on it.
 
-### 1.3 Raise or confirm the OpenAI spending cap
+### 1.3 OpenAI spending cap — ☑ DONE 2026-08-25
 
-- ☐ platform.openai.com → Settings → **Limits**. Cost per scan went from
-      ~$0.003 to ~$0.005 with per-step detail, and a public launch means
-      strangers scanning, not ten testers.
+Costed at gpt-5-mini's $0.25/1M input and $2.00/1M output: a typical scan is
+~$0.0045 (≈3,600 input tokens, ≈1,800 output), worst case ~$0.013 at the
+`MAX_TOKENS` 6000 ceiling. Output dominates — it bills at 8× the input rate.
 
----
+Blast radius: a maxed-out free user is ~$0.22/month, a maxed-out Plus user
+~$1.35 against $6.99 revenue, and the Worker's `GLOBAL_DAY_LIMIT = 3000/day`
+allows ~$13.50/day if fully saturated.
+
+> ⚠️ When the OpenAI hard cap trips, EVERY scan fails — including for paying
+> Plus subscribers. Treat the notification email as urgent, not informational.
+>
+> The Worker breaker (3000/day ≈ $405/month) sits far above the OpenAI cap, so
+> in a runaway the OpenAI limit fires first and users get a raw failure instead
+> of the app's graceful "AI is temporarily unavailable". Lowering
+> `GLOBAL_DAY_LIMIT` to ~500/day would make the nice error fire first. Not done
+> — decide before real traffic arrives.
 
 ## 2 · Build 5 on your phone
 
