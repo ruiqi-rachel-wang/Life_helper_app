@@ -84,11 +84,24 @@ StoreKit). All tests passing says nothing about these.
       Removing takes that person's to-dos with them.
 - ☐ **Free one-device rule**: sign in on a third device, first is signed out
       with a clear message.
-- ☐ **Scan a real document** and check the due date's timezone — round-1 tester
-      bug #10, fixed in code but never verified on a live scan.
+- ☐ **Scan 2-3 real documents.** This is the only check on the rewritten scan
+      prompt, which is 44% smaller than build 4's and structurally different —
+      the unit tests cover JSON parsing, never output quality. Look for:
+      - **notes ≤ 3 short lines** (was four paragraphs on a marketing letter)
+      - **no fee/waiver advice** on anything that is an offer or a quote
+      - **step lines under ~12 words**, with the how behind the tap
+      - **the due date's year and timezone** — round-1 tester bug #10, fixed in
+        code and never verified on a live scan. The home-warranty letter is the
+        best single case: it trips notes-length, the fee misfire and the
+        "8/28/20" past-year trap at once.
 
 ### The paywall, now that the agreement is Active
 
+- ☐ **Confirm the retention event reaches D1.** After the app has been opened on
+      the device, `SELECT COUNT(*) FROM events WHERE kind = 'opened'` should be
+      non-zero. The Worker accepting `opened` was deployed 2026-08-21 (version
+      `f233422e`) and verified then, but nothing has re-checked it since the app
+      side was committed. Silent failure mode: retention stays empty forever.
 - ☐ **Confirm Apple is serving the products**: scheme **Tadah (Real Store)** →
       your iPhone → ⌘R → Profile ▸ UPGRADE → console shows
       `[Paywall] StoreKit returned 2/2`. `0/2` means still propagating; wait.
