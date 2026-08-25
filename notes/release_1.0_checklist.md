@@ -23,20 +23,24 @@ in all three locales — verified against the API at paywall revision 36, with n
 > "Terms", the parent **Button** holds the Action URL. Editing the visible words
 > does not change where the link goes. Same trap if this ever needs redoing.
 
-### 1.2 The two D1 privacy purges
+### 1.2 D1 privacy purges — ☑ DONE 2026-08-25
 
-Both still pending. Do them **before** you fill in the App Privacy label — the
-label is a statement about what you hold, so make it true before you sign it.
+Verified after running: `events` rows carrying a raw task UUID went 39 → 0, and
+`sessions` rows with a joinable `device_id` went 11 → 0. Nothing re-identifiable
+is left.
 
-- ☐ 39 `events` rows carry raw task UUIDs joinable to a user:
-      ```
-      cd Tadah/cloudflare-worker
-      npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE events SET item_id = NULL;"
-      ```
-- ☐ 11 `sessions` rows carry a joinable `device_id` (worst case: one extra sign-in):
-      ```
-      npx wrangler d1 execute cuevi-metrics --remote --command "UPDATE sessions SET device_id = '';"
-      ```
+One `events` row still has an `item_id`, and that is correct — it is 32 hex
+chars with no dashes, i.e. the salted HMAC the current build uploads, not a raw
+UUID. The funnel can still match confirm→complete without the row pointing back
+at a person.
+
+> A transient `7403 not authorized` appeared on one invocation and meant
+> nothing: the next call hit the same account and database fine. Two wrangler
+> versions were in play (an `npx`-fetched 4.125.0 without credentials, and the
+> project's own 4.120.1 with them). Re-run rather than debug it.
+>
+> ⚠️ `export PATH="/usr/local/opt/node@22/bin:$PATH"` first, every new terminal
+> tab — the default `node` is v20.6.0 and wrangler refuses to run on it.
 
 ### 1.3 Raise or confirm the OpenAI spending cap
 
