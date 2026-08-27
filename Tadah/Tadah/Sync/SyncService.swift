@@ -622,6 +622,16 @@ enum SyncService {
                 needsReminderRefresh.append(local)
             } else {
                 let item = dto.makeItem()
+                // A to-do arriving for the first time may be one this device
+                // already had a picture for — the same phone signing back in after
+                // a sign-out cleared its rows. Photos are never uploaded, so the
+                // server cannot send one back; this is the only thing that
+                // reunites them. On a DIFFERENT device the stash is empty and the
+                // item simply arrives without a picture, as the policy says.
+                if let kept = PhotoStash.photo(for: dto.id) {
+                    item.imageData = kept
+                    PhotoStash.drop(dto.id)
+                }
                 context.insert(item)
                 byID[dto.id] = item
                 needsReminderRefresh.append(item)

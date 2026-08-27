@@ -360,6 +360,79 @@ final class SyncCoordinator {
         await abandonSession(token, account: account)
     }
 
+    // MARK: - sign-out
+
+    enum SignOutOutcome: Equatable {
+        case cleared             // synced, wiped, signed out — the normal path
+        case couldNotSync        // still signed in, nothing touched
+    }
+
+    // SIGN OUT AND TAKE THE ACCOUNT'S DATA OFF THIS DEVICE.
+    //
+    // The old behaviour left every to-do on the phone. That was deliberate ("your
+    // data survives sign-out") and it produced two bugs that look unrelated and
+    // are the same bug: local data is not account-scoped, so what stayed behind
+    // was indistinguishable from the next person's, and a task deleted while
+    // signed out could never be recovered from the account that still held it.
+    //
+    // A to-do belongs to the account. Signing out therefore leaves the phone with
+    // nothing personal on it, and signing back in brings the account's set down in
+    // full (afterSignIn resets the pull cursor).
+    //
+    // ORDER MATTERS, and it is: push → verify → erase → sign out.
+    //  • Push first, because anything not yet on the server exists ONLY here.
+    //  • If that push fails for any reason — offline, 500, expired session — stop.
+    //    Return .couldNotSync, change nothing, stay signed in. A sign-out that
+    //    destroys unsynced work to save a tap is the exact class of bug this whole
+    //    change exists to remove.
+    //  • Photos step aside into PhotoStash rather than dying with their rows: they
+    //    are never uploaded, so the row's copy is the only copy.
+    //  • The identity is cleared LAST. Anything failing before that leaves a
+    //    signed-in device with its data intact, which is always recoverable.
+    func signOutAndClear(context: ModelContext, account: AccountStore) async -> SignOutOutcome {
+        guard let userID = account.account?.userID, SessionStore.isAuthenticated else {
+            await account.signOutEverywhere()
+            return .cleared                       // nothing to protect
+        }
+
+        // 1. Everything local reaches the account, or we stop here.
+        guard await run(context: context, userID: userID) else { return .couldNotSync }
+
+        // 2. Keep the pictures. They cannot come back from the server.
+        do {
+            let items = try context.fetch(FetchDescriptor<ActionItem>())
+            for item in items where !item.isExample {
+                PhotoStash.keep(item.imageData, for: item.id)
+            }
+
+            // 3. Erase this account's data from the device. Examples are the app's
+            //    own furniture, not the person's, so they stay.
+            for item in items where !item.isExample { context.delete(item) }
+            for person in try context.fetch(FetchDescriptor<Profile>()) { context.delete(person) }
+            try context.save()
+        } catch {
+            // Nothing was signed out and the store rolled back: the person is
+            // still logged in with everything present. Safe to retry.
+            context.rollback()
+            return .couldNotSync
+        }
+
+        // 4. Forget the sync bookkeeping for this account, so the next sign-in is
+        //    a clean full pull rather than an incremental one against a device
+        //    that no longer holds what the cursor assumes.
+        SyncService.resetCursorForFullPull(userID)
+        SyncService.resetWatermark(userID)
+        // Only safe BECAUSE the items are gone — see LocalDataOwner. Releasing
+        // while data remained is what let one person's to-dos reach the next
+        // person's account.
+        LocalDataOwner.releaseAfterErasingItems()
+
+        // 5. Identity last.
+        await account.signOutEverywhere()
+        profiles?.reload(context)
+        return .cleared
+    }
+
     // MARK: - routine sync
 
     func syncNow(context: ModelContext, account: AccountStore) async {

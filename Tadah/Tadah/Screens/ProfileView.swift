@@ -50,6 +50,10 @@ struct ProfileView: View {
     @State private var showAccountDetails = false
     @State private var showLanguageSheet = false
     @State private var confirmSignOut = false
+    @State private var isSigningOut = false
+    // Set when the pre-sign-out sync fails. The person stays signed in with
+    // everything intact, and is told why rather than left guessing.
+    @State private var signOutFailed = false
     @State private var showPaywall = false
     @State private var showFamilySharing = false
 
@@ -103,6 +107,12 @@ struct ProfileView: View {
             }
         }
         .sheet(isPresented: $showSignIn) { SignInView() }
+        // Sign-out is refused rather than risk losing work that exists only here.
+        .alert("Still signing out", isPresented: $signOutFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Some of your to-dos haven't reached your account yet, so we didn't sign you out — nothing has been lost. Check your connection and try again.")
+        }
         .sheet(isPresented: $showAccountDetails) { AccountDetailsView() }
         .sheet(isPresented: $showLanguageSheet) { languageSheet }
         .sheet(isPresented: $showPaywall) { PaywallView() }
@@ -536,7 +546,7 @@ struct ProfileView: View {
             if confirmSignOut {
                 VStack(spacing: 12) {
                     Text("Sign out?").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
-                    Text("Your items are saved — signing back in brings them right back.")
+                    Text("Your to-dos stay in your account and are removed from this phone. Signing back in brings them right back.")
                         .font(.subline).foregroundStyle(Color.faded)
                         .multilineTextAlignment(.center).lineSpacing(2)
                     HStack(spacing: 10) {
@@ -546,18 +556,34 @@ struct ProfileView: View {
                                 .background(RoundedRectangle(cornerRadius: 10).stroke(Color.hairD, lineWidth: 1))
                         }
                         .buttonStyle(.plain)
-                        // signOutEverywhere, not signOut: revoke the session on the
-                        // server too, so the token really stops working (and the
-                        // privacy policy's "signing out ends the session" is true).
+                        // signOutAndClear, not signOutEverywhere: the to-dos have to
+                        // reach the account and come OFF this phone, and the whole
+                        // thing has to abort if they can't. It revokes the server
+                        // session too, so "signing out ends the session" stays true.
                         Button {
-                            confirmSignOut = false
-                            Task { await account.signOutEverywhere() }
+                            guard !isSigningOut else { return }
+                            isSigningOut = true
+                            Task {
+                                let outcome = await sync.signOutAndClear(context: modelContext,
+                                                                        account: account)
+                                isSigningOut = false
+                                confirmSignOut = false
+                                if outcome == .couldNotSync { signOutFailed = true }
+                            }
                         } label: {
-                            Text("Log out").font(.body14.weight(.semibold)).foregroundStyle(Color.paper)
-                                .frame(maxWidth: .infinity).padding(.vertical, 10)
-                                .background(RoundedRectangle(cornerRadius: 10).fill(Color.bad))
+                            Group {
+                                if isSigningOut {
+                                    ProgressView().tint(Color.paper)
+                                } else {
+                                    Text("Log out").font(.body14.weight(.semibold))
+                                        .foregroundStyle(Color.paper)
+                                }
+                            }
+                            .frame(maxWidth: .infinity).padding(.vertical, 10)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(Color.bad))
                         }
                         .buttonStyle(.plain)
+                        .disabled(isSigningOut)
                     }
                 }
                 .frame(maxWidth: .infinity)
