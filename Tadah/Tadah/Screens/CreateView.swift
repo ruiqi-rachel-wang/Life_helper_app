@@ -589,7 +589,7 @@ private struct CreateForm: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "plus.circle").font(.system(size: 16))
-                    Text(steps.isEmpty ? "Add a step (or leave empty for a reminder)"
+                    Text(steps.isEmpty ? "Add a step"
                                        : "Add a step").font(.body14)
                 }
                 .foregroundStyle(Color.accent)

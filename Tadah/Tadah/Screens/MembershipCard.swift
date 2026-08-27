@@ -29,7 +29,15 @@ struct MembershipCard: View {
     @State private var isRestoring = false
     @State private var restoreMessage: String?
 
-    var body: some View { membershipCard }
+    var body: some View {
+        membershipCard
+            // Ask the App Store directly, not RevenueCat's cache. This is the one
+            // screen that states a renewal date, and a cancellation made in the
+            // App Store's Settings reaches the app no other way — there is no
+            // callback for it, so without this the card keeps promising a renewal
+            // that is not going to happen.
+            .task { await plus.refresh(fresh: true) }
+    }
 
     //
     // WHAT YOU CAN AND CANNOT DO ABOUT A SUBSCRIPTION FROM INSIDE AN APP.

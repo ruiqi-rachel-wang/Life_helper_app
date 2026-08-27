@@ -95,8 +95,23 @@ final class PlusStore {
     }
 
     // One-shot fetch (used on launch + after restore).
-    func refresh() async {
-        guard let info = try? await Purchases.shared.customerInfo() else { return }
+    // `fresh: true` goes to the network instead of RevenueCat's cache.
+    //
+    // WHY IT HAS TO EXIST: cancelling a subscription happens in the App Store's
+    // own Settings, and nothing tells the app. customerInfoStream only fires when
+    // RevenueCat itself has news — a purchase, a restore, an expiry — and a
+    // cancellation is none of those. Plain customerInfo() then answers from cache,
+    // so the account page went on saying "Renews automatically on the 4th" to
+    // someone who had already cancelled, until the app was relaunched.
+    //
+    // The default stays cached: launch and sign-in call this and must not add a
+    // network round trip to every cold start. Only the screen that SHOWS the
+    // renewal date asks for the truth.
+    func refresh(fresh: Bool = false) async {
+        let info = fresh
+            ? try? await Purchases.shared.customerInfo(fetchPolicy: .fetchCurrent)
+            : try? await Purchases.shared.customerInfo()
+        guard let info else { return }
         apply(info)
     }
 

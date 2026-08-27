@@ -1175,29 +1175,13 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añadir un paso"
+            "value": "Añade un paso"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "添加步骤"
-          }
-        }
-      }
-    },
-    "Add a step (or leave empty for a reminder)": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añade un paso (o déjalo vacío para un recordatorio)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加步骤（留空则仅作提醒）"
           }
         }
       }
