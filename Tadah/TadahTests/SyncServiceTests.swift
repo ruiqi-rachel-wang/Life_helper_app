@@ -394,6 +394,33 @@ struct SyncServiceTests {
         #expect(SyncService.watermark("userA", .tasks, d).at == .distantPast)
     }
 
+    // THE PULL CURSOR AND THE PUSH WATERMARK ARE TWO DIFFERENT DECISIONS.
+    //
+    // suppressPush answers "what leaves this phone". It must not also decide "what
+    // arrives", and for a while it effectively did: signing back into your own
+    // account suppressed the push (right) while the stale cursor meant the server
+    // only ever mentioned rows newer than last session (wrong). A task deleted on
+    // the device while signed out was therefore never restored — the account still
+    // held it, but it had not changed, so it was never sent again. Unreachable
+    // from that phone, forever.
+    @Test func resettingTheCursorDoesNotDisturbTheWatermark() {
+        let d = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
+        d.set("2026-08-05T00:00:00Z", forKey: "sync.cursor.userA")
+        d.set("2026-08-05T00:00:00Z", forKey: "sync.cursor.userB")
+        SyncService.suppressPush("userA", d)
+        let pushMark = SyncService.watermark("userA", .tasks, d).at
+
+        SyncService.resetCursorForFullPull("userA")   // standard defaults, not `d`
+        SyncService.resetCursorForFullPull("userA", d)
+
+        // The whole account is pulled again…
+        #expect(SyncService.cursor("userA", d) == "")
+        // …without re-uploading what was already here.
+        #expect(SyncService.watermark("userA", .tasks, d).at == pushMark)
+        // …and no other account is touched.
+        #expect(SyncService.cursor("userB", d) == "2026-08-05T00:00:00Z")
+    }
+
     // The server compares these as plain strings, so they must sort lexically in
     // time order — including within the same second.
     @Test func isoStampsSortLexicallyByTime() {

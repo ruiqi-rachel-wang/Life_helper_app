@@ -250,6 +250,7 @@ final class SyncCoordinator {
             // unclaimed guest data: they become its starting set.
             LocalDataOwner.claim(userID)
             SyncService.resetWatermark(userID)
+            SyncService.resetCursorForFullPull(userID)
             SessionStore.markSetupComplete()           // durable half…
             ReconciliationGate.clear(for: userID)      // …then the fast path
             return await run(context: context, userID: userID) ? .backedUp : .signedInLocally
@@ -281,6 +282,15 @@ final class SyncCoordinator {
         } else if localCount > 0 {
             SyncService.resetWatermark(userID)
         }
+        // ALWAYS pull the account's whole set, whichever branch ran above.
+        //
+        // The push watermark decides what leaves this phone; the pull cursor
+        // decides what arrives. They were being treated as one decision, and
+        // suppressPush silently answered both: returning to your own account
+        // pushed nothing (right) and also pulled nothing older than the cursor
+        // (wrong). A task deleted on the device while signed out therefore stayed
+        // deleted here and alive on the server, invisible forever.
+        SyncService.resetCursorForFullPull(userID)
         SessionStore.markSetupComplete()               // durable half…
         ReconciliationGate.clear(for: userID)          // …then the fast path
         return await run(context: context, userID: userID) ? .backedUp : .signedInLocally

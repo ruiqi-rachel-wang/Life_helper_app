@@ -73,6 +73,23 @@ enum SyncService {
     static func cursor(_ userID: String, _ d: UserDefaults = .standard) -> String {
         d.string(forKey: cursorKey(userID)) ?? ""
     }
+
+    // Pull the account's WHOLE set on the next sync, not just what changed since
+    // last time.
+    //
+    // The pull is incremental — the server returns only rows newer than the
+    // cursor — which is right while a session is running and wrong the moment a
+    // sign-in begins. Signing out leaves the cursor behind, so a task deleted from
+    // the device while signed out was never restored on the way back in: the
+    // account still held it, but it had not CHANGED since the cursor, so the
+    // server never mentioned it again. The row existed on the backend and was
+    // unreachable from that phone, permanently.
+    //
+    // Resetting on sign-in is what makes "your tasks live with your account" true.
+    // It costs one full page-through of the account's tasks, once, at sign-in.
+    static func resetCursorForFullPull(_ userID: String, _ d: UserDefaults = .standard) {
+        d.removeObject(forKey: cursorKey(userID))
+    }
     // The push watermark is COMPOSITE — (timestamp, id) — for the same reason the
     // pull cursor is.
     //
