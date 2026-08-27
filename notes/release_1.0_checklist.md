@@ -80,6 +80,11 @@ StoreKit). All tests passing says nothing about these.
 - ☐ **Sync between two devices**: add an item on one, see it on the other;
       change a reminder time and confirm the *notification* moves, not just the
       displayed time.
+- ☐ **Sign-out round trip — NEW in build 5, and the bug you reported.** Sign in,
+      add a to-do with a photo, sign out, confirm the phone is now empty, sign
+      back in, confirm the to-do AND its photo return. Then try signing out with
+      airplane mode ON: it must REFUSE, say so, and leave you signed in with
+      everything intact.
 - ☐ **Family profiles**: add, rename, reassign a to-do, remove a profile.
       Removing takes that person's to-dos with them.
 - ☐ **Free one-device rule**: sign in on a third device, first is signed out

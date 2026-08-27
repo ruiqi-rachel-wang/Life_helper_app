@@ -682,7 +682,18 @@ private struct CreateForm: View {
         .onChange(of: photoItem) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                    imageData = data
+                    // Store a display-sized JPEG, never the picker's original. A
+                    // modern iPhone hands over 3-8 MB of HEIC/JPEG here, and this
+                    // photo is only ever shown on the Detail screen — keeping the
+                    // original cost tens of MB per item for pixels nobody sees, and
+                    // twenty of them filled a meaningful slice of the device.
+                    // The scan path has always compressed (ReviewView.scanImageData);
+                    // this one never did. Falls back to the original if the bytes
+                    // aren't a decodable image, so nothing is lost to a re-encode
+                    // that couldn't happen.
+                    imageData = UIImage(data: data)?
+                        .downscaled(maxDimension: 1500)
+                        .jpegData(compressionQuality: 0.7) ?? data
                 }
             }
         }
