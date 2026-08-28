@@ -21,7 +21,7 @@
 
 **Changed 2026-08-13 (build 4 = accounts + sync + family + Plus; ARCHITECTURE SUMMARY).**
 This doc had drifted badly — it was last accurate on 2026-07-27, before any of the
-Part 3 work existed. The detail lives in `testflight_build4_notes.md` (fifteen
+Part 3 work existed. The detail lives in `archive/testflight_build4_notes.md` (fifteen
 review passes, authoritative) and `future_features.md` Part 3; what follows is the
 map, so nobody reads this file and thinks Tadah is still a device-only app.
 
@@ -482,7 +482,7 @@ expiries / departures, not just bills); `Extractor` protocol → `OpenAIClient`
 (GPT-4o-mini, JSON mode) + `MockExtractor`; `ExtractionService` runs the parser
 then the LLM and **merges** (parser wins on exact amount/date/account; skips the
 LLM only on empty OCR). Tolerant JSON parsing (handles `"confidence":"high"`,
-category-as-array) + a category synonym map. Tuning corpus in `sample_documents.md`.
+category-as-array) + a category synonym map. Tuning corpus in `archive/sample_documents.md`.
 
 **API key (DECIDED 2026-06-06):** dev calls OpenAI directly with the key in a
 **gitignored `AI/APIKeys.swift`** — **never commit it.** Before TestFlight the
@@ -1041,7 +1041,7 @@ Rachel reviewed the 2026-07-19 depth pass for "too much / don't overwhelm the us
   strings pruned only after a grep confirmed 0 remaining `.swift` references, so
   shared strings (SSN/ITIN/CFPB link/…) survived.
 - Catalog trajectory: 902 → 882 (trims) → **845** (after build_credit removal).
-- Companion doc: `guide_depth_before_after.md` (build-2 vs. now, per step).
+- Companion doc: `archive/guide_depth_before_after.md` (build-2 vs. now, per step).
   GuideTests green at 14; build clean. **All still uncommitted** with the rest of
   the build-3 work.
 

@@ -1,7 +1,7 @@
 //  RealSampleParserTests.swift
 //
 //  Runs the rule parser against the REAL Week-4 OCR samples (see
-//  notes/sample_documents.md) plus two standard bills. Documents exactly what the
+//  notes/archive/sample_documents.md) plus two standard bills. Documents exactly what the
 //  free parser is expected to nail vs. what it deliberately defers to the LLM
 //  (ambiguous dates with no cue). Pure/local — no network, no cost.
 //

@@ -43,7 +43,7 @@ Do not start Day 1 until build 4 is **live with testers**. Not archived — rele
   family removal, one-device rule)
 - ☐ Build 4 actually released to the tester group
 
-Full detail: `testflight_build4_notes.md`.
+Full detail: `archive/testflight_build4_notes.md`.
 
 **Why this is a hard gate, not caution:** a calling feature draws far more App
 Review attention than a notes app does. Walking into that review with a privacy
