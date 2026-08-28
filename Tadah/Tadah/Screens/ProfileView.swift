@@ -204,17 +204,28 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
             }
-            // PLUS DOES NOT REQUIRE AN ACCOUNT — you can buy it signed out. But
-            // the only route to managing it was Account Details, which is
-            // signed-in only, so those buyers had nowhere to see their renewal
-            // date, reach Apple's cancel screen, or restore a purchase.
+            // PLUS BELONGS TO A TADAH ACCOUNT (decided 2026-08-27), so a
+            // signed-out phone has no membership to show and says exactly that.
             //
-            // ALWAYS shown to guests, not just when a purchase is already found.
-            // Gating on `plus.isPlus || membership != nil` hid it in the one
-            // situation it exists for: a previous subscriber on a NEW install,
-            // who needs Restore precisely BECAUSE RevenueCat hasn't found their
-            // purchase yet. The card handles the free case on its own.
-            MembershipCard()
+            // It used to render the full MembershipCard here — plan, renewal date,
+            // Restore — on the reasoning that Plus could be bought signed out.
+            // Buying now requires an account (see CreateView.startUpgrade), which
+            // removes the case that justified it and removes the bug it caused:
+            // the card kept showing the DEPARTED user's plan to whoever held the
+            // phone next.
+            //
+            // Restore has not gone anywhere. It lives on the paywall and on the
+            // account page, both of which are reachable once signed in, which is
+            // all Apple requires.
+            card {
+                VStack(alignment: .leading, spacing: 6) {
+                    sectionHeader("MEMBERSHIP")
+                    Text("Sign in to see your membership.")
+                        .font(.body14).foregroundStyle(Color.faded)
+                        .padding(.vertical, 6)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 
