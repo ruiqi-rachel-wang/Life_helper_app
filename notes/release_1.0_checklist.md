@@ -85,6 +85,21 @@ Prompt is 44% smaller; no test covers its output.
 
 ---
 
+## ⚠️ Decide before you submit — auth hardening
+
+Your own note (2026-08-15) says these three must close **before the App Store,
+not before TestFlight**. Re-verified in code 2026-08-28 — all three still open.
+Apple will not reject you for them; they are abuse risks that arrive with
+strangers. Full detail in `roadmap.md`.
+
+- ☐ **Email verification doesn't exist** — `verified_at` written NULL, never read
+- ☐ **No per-account throttle** on register / login / reset — the limiter keys on
+      caller-controlled headers, so rotating the install id walks past it
+- ☐ **Password min 8, no blocklist** — add a common-password list, don't raise length
+
+**Either do them now, or decide out loud to ship 1.0 without them and fix in
+1.0.1.** What must not happen is discovering this after launch.
+
 ## Likely rejections, ranked
 
 1. Privacy label ≠ shipped manifest (§6)

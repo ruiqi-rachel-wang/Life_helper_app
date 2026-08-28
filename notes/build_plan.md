@@ -2,7 +2,7 @@
 
 > Canonical build reference. Living doc — update as decisions change.
 > Companion docs: the Phase 1 Spec (HTML render), design prototype, and
-> **`future_features.md`** (deferred / post-TestFlight features — accounts &
+> **`archive/future_features.md`** (deferred / post-TestFlight features — accounts &
 > family sharing, configurable reminder time, …). NOTE: multi-page scan and
 > first-launch onboarding are now BUILT (2026-06-18), despite older "deferred" notes.
 
@@ -17,12 +17,12 @@
 - **Build number already bumped to 3** (`CURRENT_PROJECT_VERSION`), so the boundary is
   concrete in App Store Connect once this build is archived and uploaded.
 - The next version's roadmap is now organized as numbered **Parts** in
-  `future_features.md`. **Part 1 = metrics tracking backend** (in progress, see below).
+  `archive/future_features.md`. **Part 1 = metrics tracking backend** (in progress, see below).
 
 **Changed 2026-08-13 (build 4 = accounts + sync + family + Plus; ARCHITECTURE SUMMARY).**
 This doc had drifted badly — it was last accurate on 2026-07-27, before any of the
 Part 3 work existed. The detail lives in `archive/testflight_build4_notes.md` (fifteen
-review passes, authoritative) and `future_features.md` Part 3; what follows is the
+review passes, authoritative) and `archive/future_features.md` Part 3; what follows is the
 map, so nobody reads this file and thinks Tadah is still a device-only app.
 
 - **Accounts. EMAIL + PASSWORD** (`SignInView`, `AccountStore`, `Sync/AuthService`,
@@ -80,7 +80,7 @@ map, so nobody reads this file and thinks Tadah is still a device-only app.
   membership.
 - **Photos are NOT backed up** — deliberate (large external blobs; D1 stays cheap),
   stated plainly in the privacy policy rather than worked around.
-- Deferred engineering debt from these passes is in **`later_ideas.md` §8**.
+- Deferred engineering debt from these passes is in **`archive/later_ideas.md` §8**.
 
 **Changed 2026-06-23 (Part 1: metrics tracking backend — IN PROGRESS):**
 - **Decision:** KEEP and EXTEND the local `Metrics.swift` (it already logs
@@ -826,7 +826,7 @@ first 10-user beta. It matters before a **paid** or **public** App Store launch.
 - **Use Apple In-App Purchase / subscriptions** for digital features — Apple takes 15%
   (Small Business Program, under $1M/yr) to 30%. You may **not** use outside payment for
   digital goods.
-- **RevenueCat** (decided 2026-07-01, see `future_features.md` Part 3) manages the IAP
+- **RevenueCat** (decided 2026-07-01, see `archive/future_features.md` Part 3) manages the IAP
   subscription on top of StoreKit — entitlements, upgrade/downgrade/restore, paywall —
   instead of hand-rolling it. Free up to $2.5k/mo tracked revenue, then a small rev-share
   **on top of** Apple's cut, not instead of it.
