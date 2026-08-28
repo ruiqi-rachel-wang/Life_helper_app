@@ -880,6 +880,61 @@ const login = (email, derivedKey = KEY_A, extra = {}) =>
     body: { email, derivedKey, deviceId: "device-1", ...extra },
   });
 
+describe("login throttle", () => {
+  // The global limiter keys on headers the caller sets, so rotating
+  // X-Cuevi-Install makes every guess look like a new phone. These pin the one
+  // thing an attacker cannot rotate: the address they are trying to break into.
+  const wrong = (email) => login(email, KEY_B);
+
+  it("blocks after ten wrong guesses, even from a fresh install id each time", async () => {
+    await register("target@example.com");
+
+    for (let i = 0; i < 9; i++) {
+      const r = await call("/auth/email/login", {
+        headers: { "X-Cuevi-Install": `install-${i}` },   // a new "phone" every time
+        body: { email: "target@example.com", derivedKey: KEY_B, deviceId: "d" },
+      });
+      expect(r.status).toBe(401);                          // still just wrong
+    }
+
+    const tenth = await wrong("target@example.com");
+    expect(tenth.status).toBe(401);
+
+    // Door closed — and the RIGHT password does not open it either, or the
+    // throttle would be trivially bypassed by guessing it.
+    const blocked = await login("target@example.com");
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.error).toBe("too_many_attempts");
+  });
+
+  it("counts unknown addresses too, so it cannot be used to enumerate accounts", async () => {
+    // A distinct address on purpose: blocking one poisons it for 15 minutes, and
+    // the enumeration test below reuses `ghost@example.com` expecting a 401.
+    for (let i = 0; i < 10; i++) await wrong("never-registered@example.com");
+    const r = await wrong("never-registered@example.com");
+    expect(r.status).toBe(429);   // same treatment as a real account
+  });
+
+  it("a correct password clears the record", async () => {
+    await register("clears@example.com");
+    for (let i = 0; i < 3; i++) expect((await wrong("clears@example.com")).status).toBe(401);
+
+    expect((await login("clears@example.com")).status).toBe(200);
+    const row = await env.DB.prepare(
+      "SELECT * FROM login_attempts WHERE email = ?").bind("clears@example.com").first();
+    expect(row).toBeFalsy();
+  });
+
+  it("is scoped per email — one account under attack doesn't lock out another", async () => {
+    await register("victim@example.com");
+    await register("bystander@example.com");
+    for (let i = 0; i < 10; i++) await wrong("victim@example.com");
+
+    expect((await login("victim@example.com")).status).toBe(429);
+    expect((await login("bystander@example.com")).status).toBe(200);
+  });
+});
+
 describe("email auth", () => {
   it("registers an account and returns a usable session", async () => {
     const r = await register("rachel@example.com");

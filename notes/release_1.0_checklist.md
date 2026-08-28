@@ -85,18 +85,22 @@ Prompt is 44% smaller; no test covers its output.
 
 ---
 
-## ⚠️ One security fix before strangers arrive
+## ⚠️ Deploy the login throttle
 
-**Login attempts aren't limited per account.** The rate limiter keys on
-`X-Cuevi-Install`, a header the caller controls — change it each request and you
-look like a new phone every time, so password guessing runs unthrottled. It also
-fails open entirely if `RATE_LIMITER` is unbound.
+Built and tested 2026-08-28 — **not deployed.** Worker-only, so it needs no app
+release and can ship before or after 1.0.
 
-- ☐ Count failed attempts **per email** in D1 and refuse after a threshold
+- ☐ ```
+      cd Tadah/cloudflare-worker
+      export PATH="/usr/local/opt/node@22/bin:$PATH"
+      npx wrangler deploy
+      ```
+- ☐ Then confirm: 10 wrong passwords for one email → the 11th returns 429
 
-**Worker-side only — no app change, no build 6, no resubmission.** Can ship
-before or after 1.0. Email verification and the password blocklist are deferred
-to `roadmap.md`.
+Ten wrong guesses in 15 minutes puts that **email** in a 15-minute cooldown. A
+cooldown, not a lockout — a permanent lock would let anyone freeze a real user
+out of their own account by guessing wrong on purpose. The table is created
+lazily, so no migration step.
 
 ## Likely rejections, ranked
 

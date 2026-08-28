@@ -613,6 +613,15 @@ async function ensureSyncTables(db) {
   await db.exec("CREATE TABLE IF NOT EXISTS accounts (user_id TEXT PRIMARY KEY, email TEXT NOT NULL, pw_hash TEXT NOT NULL, pw_salt TEXT NOT NULL, pw_iterations INTEGER NOT NULL, pw_version INTEGER NOT NULL DEFAULT 1, verified_at TEXT, created_at TEXT NOT NULL)");
   await db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)");
   await db.exec("CREATE TABLE IF NOT EXISTS password_resets (user_id TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)");
+  // Failed sign-in attempts, keyed on the EMAIL BEING ATTACKED.
+  //
+  // The global limiter keys on session -> install id -> IP, all of which the
+  // caller supplies, so rotating X-Cuevi-Install makes every guess look like a
+  // brand-new phone and password guessing runs unthrottled. It also does nothing
+  // at all when RATE_LIMITER is unbound. An attacker can change every one of
+  // those; the one thing they cannot change is which account they are trying to
+  // break into, so that is what this counts.
+  await db.exec("CREATE TABLE IF NOT EXISTS login_attempts (email TEXT PRIMARY KEY, failures INTEGER NOT NULL DEFAULT 0, window_start TEXT NOT NULL, blocked_until TEXT)");
   await db.exec("CREATE TABLE IF NOT EXISTS account_deletions (user_id TEXT PRIMARY KEY, revenuecat_deleted INTEGER NOT NULL DEFAULT 0, started_at TEXT NOT NULL)");
   // Added after the sessions table shipped, so it's an ALTER rather than part of
   // the CREATE above. Harmless duplicate-column error on an already-migrated DB.
@@ -1748,6 +1757,60 @@ async function handleEmailRegister(request, env) {
 }
 
 // LOG IN.
+// How many wrong guesses inside the window before the door closes, and for how
+// long. A COOLDOWN, not a lockout: a permanent lock would let anyone deny a real
+// user access to their own account just by guessing wrong on purpose, which
+// trades one attack for a worse one. Fifteen minutes is nothing to someone who
+// mistyped their password twice and everything to a script.
+const LOGIN_MAX_FAILURES = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_COOLDOWN_MS = 15 * 60 * 1000;
+
+// True when this email is in cooldown. Read-only — callers that are about to do
+// real work check this first.
+async function loginIsBlocked(db, email) {
+  if (!email) return false;
+  const row = await db.prepare(
+    "SELECT blocked_until FROM login_attempts WHERE email = ?").bind(email).first();
+  if (!row?.blocked_until) return false;
+  return new Date(row.blocked_until).getTime() > Date.now();
+}
+
+// One more wrong guess. Starts a fresh window when the old one has expired, so a
+// person who mistypes twice a week never accumulates their way into a block.
+async function noteLoginFailure(db, email) {
+  if (!email) return;
+  const now = Date.now();
+  const row = await db.prepare(
+    "SELECT failures, window_start FROM login_attempts WHERE email = ?").bind(email).first();
+  const started = row?.window_start ? new Date(row.window_start).getTime() : 0;
+  const withinWindow = row && now - started < LOGIN_WINDOW_MS;
+  const failures = (withinWindow ? row.failures : 0) + 1;
+  const windowStart = withinWindow ? new Date(started).toISOString() : new Date(now).toISOString();
+  const blockedUntil = failures >= LOGIN_MAX_FAILURES
+    ? new Date(now + LOGIN_COOLDOWN_MS).toISOString()
+    : null;
+  await db.prepare(
+    `INSERT INTO login_attempts (email, failures, window_start, blocked_until)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(email) DO UPDATE SET failures = excluded.failures,
+                                      window_start = excluded.window_start,
+                                      blocked_until = excluded.blocked_until`
+  ).bind(email, failures, windowStart, blockedUntil).run();
+}
+
+// A correct password clears the record. Someone who fumbled four times and then
+// got it right starts clean, rather than carrying those four into next week.
+async function clearLoginFailures(db, email) {
+  if (!email) return;
+  await db.prepare("DELETE FROM login_attempts WHERE email = ?").bind(email).run();
+}
+
+function tooManyAttempts() {
+  return json({ error: "too_many_attempts",
+                message: "Too many sign-in attempts. Please wait 15 minutes and try again." }, 429);
+}
+
 async function handleEmailLogin(request, env) {
   if (!env.DB) return json({ error: "Sync not configured" }, 503);
   if (!env.PASSWORD_PEPPER) {
@@ -1764,6 +1827,10 @@ async function handleEmailLogin(request, env) {
   const deviceId = clamp(body.deviceId);
   if (!deviceId) return json({ error: "Device id required" }, 400);
 
+  // Checked BEFORE the password hash, which is deliberately expensive — letting a
+  // blocked caller through to it would turn the throttle into a CPU amplifier.
+  if (await loginIsBlocked(env.DB, email)) return tooManyAttempts();
+
   const row = email
     ? await env.DB.prepare(
         "SELECT user_id, pw_hash, pw_salt FROM accounts WHERE email = ?").bind(email).first()
@@ -1776,8 +1843,13 @@ async function handleEmailLogin(request, env) {
   const computed = await derivePasswordHash(env, derived || "0".repeat(64),
                                             row?.pw_salt || "no-such-account");
   if (!email || !derived || !row || !timingSafeEqual(computed, row.pw_hash)) {
+    // Counted for the address that was TRIED, whether or not it exists. Skipping
+    // unknown addresses would leak which ones are registered — the same thing the
+    // constant-time path above exists to hide.
+    await noteLoginFailure(env.DB, email);
     return json({ error: "invalid_credentials" }, 401);
   }
+  await clearLoginFailures(env.DB, email);
 
   const session = await issueSession(row.user_id, deviceId, env);
   if (!session.ok) return session.response;

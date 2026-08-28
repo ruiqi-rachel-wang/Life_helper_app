@@ -166,3 +166,14 @@ CREATE TABLE IF NOT EXISTS password_resets (
   attempts   INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL
 );
+
+-- Failed sign-in attempts, keyed on the EMAIL BEING ATTACKED.
+-- The global rate limiter keys on session/install/IP, all caller-supplied, so
+-- rotating the install header makes every guess look like a new phone. The one
+-- thing an attacker cannot change is which account they are trying to open.
+CREATE TABLE IF NOT EXISTS login_attempts (
+  email         TEXT PRIMARY KEY,
+  failures      INTEGER NOT NULL DEFAULT 0,
+  window_start  TEXT NOT NULL,
+  blocked_until TEXT            -- NULL until the threshold is crossed
+);
