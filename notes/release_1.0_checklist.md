@@ -85,20 +85,18 @@ Prompt is 44% smaller; no test covers its output.
 
 ---
 
-## ⚠️ Decide before you submit — auth hardening
+## ⚠️ One security fix before strangers arrive
 
-Your own note (2026-08-15) says these three must close **before the App Store,
-not before TestFlight**. Re-verified in code 2026-08-28 — all three still open.
-Apple will not reject you for them; they are abuse risks that arrive with
-strangers. Full detail in `roadmap.md`.
+**Login attempts aren't limited per account.** The rate limiter keys on
+`X-Cuevi-Install`, a header the caller controls — change it each request and you
+look like a new phone every time, so password guessing runs unthrottled. It also
+fails open entirely if `RATE_LIMITER` is unbound.
 
-- ☐ **Email verification doesn't exist** — `verified_at` written NULL, never read
-- ☐ **No per-account throttle** on register / login / reset — the limiter keys on
-      caller-controlled headers, so rotating the install id walks past it
-- ☐ **Password min 8, no blocklist** — add a common-password list, don't raise length
+- ☐ Count failed attempts **per email** in D1 and refuse after a threshold
 
-**Either do them now, or decide out loud to ship 1.0 without them and fix in
-1.0.1.** What must not happen is discovering this after launch.
+**Worker-side only — no app change, no build 6, no resubmission.** Can ship
+before or after 1.0. Email verification and the password blocklist are deferred
+to `roadmap.md`.
 
 ## Likely rejections, ranked
 

@@ -12,22 +12,24 @@ Part 1 metrics · Part 2 onboarding · Part 3 accounts, family, monetization
 
 ---
 
-## ⚠️ Before the App Store — not before TestFlight
+## ⚠️ Auth hardening
 
-Raised 2026-08-15, **re-verified in code 2026-08-28, all three still open.**
-Deliberately skipped for a 10-person beta; "deliberate" stops being a defence
-once strangers can sign up.
+Raised 2026-08-15, re-verified in code 2026-08-28 — all three still open.
 
-1. **Email verification doesn't exist.** `verified_at` is written NULL and never
-   read — registration issues a session immediately. Anyone can claim an address
-   they don't own, and a typo becomes an unreachable live account.
-2. **No per-account throttle on register / login / reset.** The only limiter keys
-   on session → install id → IP, all caller-controlled, so rotating
-   `X-Cuevi-Install` walks straight past it — and it vanishes entirely if
-   `RATE_LIMITER` is unbound. Wants a D1 attempt counter per email.
-3. **Password minimum 8, no blocklist.** Don't raise the length — this audience
-   manages a parent's paperwork and 15 characters means writing it down. Add a
-   **common-password blocklist** instead.
+**Doing before strangers arrive** *(Worker-only, no app release needed)*
+- **No per-account throttle on register / login / reset.** The limiter keys on
+  session → install id → IP, all caller-controlled, so rotating
+  `X-Cuevi-Install` looks like a new phone each time and password guessing runs
+  unthrottled. It also fails open if `RATE_LIMITER` is unbound. Fix: a D1 attempt
+  counter keyed on the email, which an attacker cannot change.
+
+**Deferred to a future version** *(decided 2026-08-28)*
+- **Email verification.** `verified_at` is written NULL and never read, so
+  registration issues a session immediately and anyone can claim an address they
+  don't own. A typo becomes a live account nobody can reach.
+- **Common-password blocklist.** Minimum is 8 with no list. Don't raise the
+  length — this audience manages a parent's paperwork and 15 characters means
+  writing it down. A blocklist buys far more.
 
 Also: `pw_iterations` is stored per account but never read at login, so raising
 the client iteration count later would lock everyone out. Read it, or freeze the
