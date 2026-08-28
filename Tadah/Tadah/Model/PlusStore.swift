@@ -174,6 +174,29 @@ final class PlusStore {
         }
     }
 
+    // FORGET THE PERSON WHO JUST SIGNED OUT.
+    //
+    // Purchases.logOut() switches RevenueCat to a fresh anonymous user, but this
+    // object keeps whatever the last CustomerInfo said until the stream happens to
+    // emit again — and nothing guarantees it does promptly. The Profile page then
+    // shows the DEPARTED user's plan and renewal date, and offers "Manage in the
+    // App Store" (which only appears when `membership != nil`), to whoever is
+    // holding the phone next.
+    //
+    // Reset to "not known yet" rather than to "free": we genuinely don't know yet.
+    // `.unknown` renders as "One moment while we check with the App Store" instead
+    // of asserting a free plan we haven't verified, and `paidFeaturesUnlocked`
+    // stays permissive while tierKnown is false, so a signed-out Plus buyer is not
+    // briefly downgraded mid-session.
+    //
+    // The truth comes straight back: if this Apple ID really is entitled, the
+    // stream (or Restore) re-applies it within moments.
+    func forgetSignedOutUser() {
+        membership = nil
+        isPlus = false
+        tierKnown = false
+    }
+
     private func apply(_ info: CustomerInfo) {
         let entitlement = info.entitlements[Self.entitlementID]
         isPlus = entitlement?.isActive == true

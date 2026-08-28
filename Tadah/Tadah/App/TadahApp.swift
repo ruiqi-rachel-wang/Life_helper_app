@@ -132,6 +132,9 @@ struct TadahApp: App {
                     // question would have its identity reshaped for the signing-in
                     // account before anyone consented.
                     sync.configure(container: container, account: account, profiles: profiles)
+                    // Whatever ends the session, the previous user's membership
+                    // must not outlive it on this screen. See AccountStore.didSignOut.
+                    account.didSignOut = { [plus] in plus.forgetSignedOutUser() }
                     // …and SKIP identity work entirely while the gate is up.
                     // Restoring the gate isn't enough on its own: this call can
                     // rename the owner and adopt unassigned to-dos, so running it

@@ -94,4 +94,37 @@ struct AccountStoreTests {
         #expect(apple("u", email: "mei@example.com").displayName == "mei@example.com")
         #expect(apple("u", email: "mei@example.com").initials == "M")
     }
+
+    // THREE WAYS OUT, ONE CLEANUP.
+    //
+    // Someone taps Log out, the server revokes the session, or the account is
+    // deleted. All three end the session, so all three must forget the departed
+    // user — the Profile page keeps a membership in memory otherwise and shows
+    // the previous person's plan, renewal date and "Manage in the App Store" to
+    // whoever picks the phone up next. Wiring the cleanup at one call site is
+    // exactly how the other two got missed.
+    @Test func everySignOutPathRunsTheCleanupHook() async {
+        for path in ["signOutEverywhere", "signOutAfterSessionEnded"] {
+            let store = AccountStore(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)")!)
+            var ran = 0
+            store.didSignOut = { ran += 1 }
+
+            switch path {
+            case "signOutEverywhere":        await store.signOutEverywhere()
+            default:                         await store.signOutAfterSessionEnded()
+            }
+            #expect(ran == 1, "\(path) did not run didSignOut")
+        }
+    }
+
+    // The plain synchronous signOut is the local half used by paths that cannot
+    // await. It deliberately does NOT run the hook — its callers do, after the
+    // RevenueCat logout they also own.
+    @Test func theSynchronousSignOutLeavesTheHookToItsCaller() {
+        let store = AccountStore(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)")!)
+        var ran = false
+        store.didSignOut = { ran = true }
+        store.signOut()
+        #expect(!ran)
+    }
 }

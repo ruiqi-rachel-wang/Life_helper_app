@@ -56,6 +56,16 @@ final class AccountStore {
     private(set) var account: Account?
     var isSignedIn: Bool { account != nil }
 
+    // Run after EVERY sign-out, however it happened. There are three routes out —
+    // the person taps Log out, the server revokes the session, or the account is
+    // deleted — and anything that must be forgotten has to be forgotten on all
+    // three. Wiring it at one call site is how two of them get missed.
+    //
+    // Today this clears PlusStore, which otherwise keeps showing the departed
+    // user's plan and renewal date to whoever holds the phone next. Set once at
+    // launch; AccountStore stays unaware of what it is clearing.
+    var didSignOut: (@MainActor () -> Void)?
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         load()
@@ -104,6 +114,7 @@ final class AccountStore {
         // this the next person on this phone can inherit the previous user's
         // entitlement (or the previous user's purchases follow a new account).
         _ = try? await Purchases.shared.logOut()
+        didSignOut?()
     }
 
     // Signed out WITHOUT the user asking: the server revoked this session (a free
@@ -117,6 +128,7 @@ final class AccountStore {
     func signOutAfterSessionEnded() async {
         signOut()
         _ = try? await Purchases.shared.logOut()
+        didSignOut?()
     }
 
     // Delete the whole account: the backend verifies the password, deletes the
@@ -136,6 +148,7 @@ final class AccountStore {
         SessionStore.clear()
         save()
         _ = try? await Purchases.shared.logOut()
+        didSignOut?()
     }
 
     // Let the user edit their own name/email on the Account Details screen.
