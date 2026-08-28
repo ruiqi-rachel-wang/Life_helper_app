@@ -51,14 +51,39 @@ Prompt is 44% smaller; no test covers its output.
 - ☐ **Screenshot the real paywall** — required by ASC, rejects placeholders
 - ☐ RevenueCat → transfer behaviour = **stay with original account**
 
-## 5 · Remaining smoke tests
+## 5 · Auth lifecycle — the sequence that proves the schema
+
+§2 covers the data side. This is the credential side, once, in order:
+
+- ☐ Log in → sync → **log out** → old token stops working
+- ☐ Log back in → data is there
+- ☐ **Delete the account** → old token AND the synced rows are gone
+
+## 6 · Clean the database before public launch
+
+Not before TestFlight — 19 sessions against 2 accounts is just what repeated
+install/login testing looks like. But production should start clean.
+
+- ☐ Delete the test accounts (use the in-app Delete account — it exercises the
+      real path and cascades to tasks, profiles and sessions)
+- ☐ Confirm afterwards: `accounts`, `tasks`, `profiles`, `sessions` all 0
+- ☐ Drop the dead Sign-in-with-Apple leftovers: `used_nonces`, `account_deletions`
+
+Retention runs itself — cron `12 4 * * *` sweeps tombstones at 180 days, revoked
+sessions at 30, usage rows at 60. Nothing has aged out yet, so it is unproven in
+production; first real sweep is late September. Worth one look then.
+
+**`cuevi-metrics` keeps its name.** Renaming a production database to match the
+app's is not worth the risk, and the same reasoning already froze the bundle id.
+
+## 7 · Remaining smoke tests
 
 - ☐ Password reset end to end (live Resend + real DNS); old password fails
 - ☐ Two-device sync — and the **notification** moves, not just the shown time
 - ☐ Family profiles: add, rename, reassign, remove (removal takes their to-dos)
 - ☐ Free one-device rule: 3rd device signs the 1st out
 
-## 6 · App Store Connect
+## 8 · App Store Connect
 
 - ☐ **Screenshots** — 3 min, 10 max, 1284×2778. Simulator ready:
       `xcrun simctl create "iPhone 14 Plus" com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus`
@@ -72,7 +97,7 @@ Prompt is 44% smaller; no test covers its output.
 - ☐ Privacy Policy URL → `https://tadah-legal.pages.dev/privacy`
 - ☐ Age rating (all None → 4+; **web access = No**) · Export compliance (encryption Yes, exempt Yes) · Content rights No · Productivity / Utilities
 
-## 7 · Submit
+## 9 · Submit
 
 - ☐ Attach build 5
 - ☐ Draft Submission holds the app **and both subscriptions** — separately = two review rounds
@@ -104,9 +129,9 @@ lazily, so no migration step.
 
 ## Likely rejections, ranked
 
-1. Privacy label ≠ shipped manifest (§6)
-2. No demo account (§6)
-3. Subscription review screenshot missing or a placeholder (§6)
+1. Privacy label ≠ shipped manifest (§8)
+2. No demo account (§8)
+3. Subscription review screenshot missing or a placeholder (§8)
 4. 3.1.1 — paywall must state price, period, what Plus adds; Restore reachable
 
 ## Not gates
