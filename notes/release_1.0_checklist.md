@@ -65,12 +65,22 @@ OCR, and the rows below still stand.
 
 ## 4 · Paywall
 
-- ☐ Scheme **Tadah (Real Store)** → your iPhone → console says `StoreKit returned 2/2`
-- ☐ Sandbox purchase → limits actually rise (60/day, 100 tasks)
-- ☐ Restore after delete-and-reinstall
-- ☐ Cancel in App Store Settings → Profile says "Cancelled" **without relaunch**
-- ☐ **Screenshot the real paywall** — required by ASC, rejects placeholders
+☑ Real Store scheme on iPhone: paywall shows real prices ($6.99 / $59.99) — 2026-09-02.
+      (The plain **Tadah** scheme has a `.storekit` test file in its Run action and
+      shows "test mode"; Archive ignores it and nothing ships. Use Real Store to test.)
+☑ Sandbox purchase went through — Apple's own Edit Subscription sheet showed it.
+☑ Cancel in App Store Settings → Profile says "Cancelled" without relaunch.
+☑ Real paywall screenshot taken (Chinese locale, real prices) — for subscription review.
+- ☐ Restore after delete-and-reinstall — not exercised; purchase + cancel were the
+      risky paths and both work. Non-blocking.
 - ☐ RevenueCat → transfer behaviour = **stay with original account**
+
+Known, accepted: the paywall has no visible auto-renewal sentence. The string
+("Billed through your App Store account… renew automatically until canceled") is
+translated in the catalog but nothing renders it, and the paywall is RevenueCat's.
+Moderate 3.1.2 risk; decided 2026-09-02 to ship without it. If review cites it, add
+the sentence as a footer block in the RevenueCat Paywall Editor and resubmit — no
+code change.
 
 ## 5 · Auth lifecycle — the sequence that proves the schema
 
