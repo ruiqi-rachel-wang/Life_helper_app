@@ -42,7 +42,7 @@ SCAN ANYTHING THAT ARRIVES
 Point your camera at a bill, a ticket, a school form, an insurance letter, a medical notice, a court or immigration document. Tadah pulls out the amount, the deadline, and the account or reference number you will actually need, and writes a short explanation of what triggered it.
 
 A CHECKLIST, NOT A WALL OF TEXT
-Every document becomes a short list of actions in order. Tap any step to see how and where to do it — the exact page to pay on, what to bring, what to say on the phone, and what to write down afterwards.
+Every document becomes a short list of actions in order. Tap any step to see how and where to do it — the exact page to pay on, what to bring, and what to say on the phone.
 
 DEADLINES THAT REMIND YOU
 Due dates become reminders. Tadah handles the awkward cases: a deadline written as "within 90 days", a year the document never printed, an appointment in another timezone.
@@ -67,11 +67,41 @@ disclaimer the app shows, and reviewers look for it on an app in these categorie
 ## Keywords (100 max, comma-separated, no spaces after commas)
 
 ```
-bill,mail,letter,scan,document,translate,deadline,reminder,immigrant,checklist,tax,notice,esl,forms
+bill,letter,document,translate,deadline,reminder,immigrant,checklist,tax,notice,esl,forms,explain
 ```
-*(99.)* Rules worth knowing: do NOT repeat words already in the name or
+*(97.)* ⚠️ `mail` and `scan` were removed on 2026-09-02: both already appear
+in the SUBTITLE ("Scan mail, know what to do"), which Apple indexes, so they were
+10 wasted characters by this file's own rule. `explain` replaces them — it is the
+app's core verb and appears in neither the name nor the subtitle.
+
+Rules worth knowing: do NOT repeat words already in the name or
 subtitle (Apple indexes those anyway — "tadah", "paperwork", "handled" would be
 wasted), do not use competitor names, singular covers plural.
+
+## Localized listings — the biggest findability gap
+
+Tadah ships **English, Spanish and Simplified Chinese** (`en.lproj`, `es.lproj`,
+`zh-Hans.lproj` are all in the bundle), so App Store Connect will offer a separate
+listing for each. Right now only English is written, which means a Spanish or
+Chinese speaker searching in their own language — exactly who this app is for —
+will not find it, and if they do, they read an English store page for an app that
+speaks their language.
+
+Each locale gets its own **name, subtitle, keywords, description and screenshots**,
+and the keyword field is indexed PER LOCALE. This is more valuable than any wording
+change on the English page: it is the difference between being findable and not.
+
+- 简体中文 (zh-Hans) and Español (es): add both under App Store Connect →
+  the version → the language selector at the top of the page.
+- Do NOT machine-translate the keywords. Search terms are not translations —
+  someone looking for help with a government letter in Chinese does not type the
+  translation of "notice". The description can be translated faithfully; the
+  keywords need to be written fresh in each language.
+- The app's own strings are already professionally translated in
+  `Localizable.xcstrings` — reuse that voice so the store page and the app agree.
+
+Not a launch blocker: you can ship English-only and add locales later without a
+new build, since listing metadata is edited independently of the binary.
 
 ## Support URL
 
