@@ -141,9 +141,14 @@ ad identifiers, no data shared with data brokers.)
 
 ## 4. Privacy Policy URL (required field)
 Use the live, free, public Cloudflare Pages URL:
-`https://tadah-legal.pages.dev/privacy.html`
+`https://tadah-legal.pages.dev/privacy`
 (Verify it loads in a **private/incognito** browser window — i.e. anonymously — before
-you submit. Terms: `https://tadah-legal.pages.dev/terms.html`.)
+you submit. Terms: `https://tadah-legal.pages.dev/terms`.)
+
+> Use the EXTENSIONLESS form, matching the release checklist. Checked 2026-09-02:
+> `/privacy` and `/terms` return 200, while `/privacy.html` and `/terms.html`
+> return a 308 redirect. Both reach the page, but there is no reason to hand
+> Apple a URL that redirects.
 
 ---
 

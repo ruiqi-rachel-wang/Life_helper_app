@@ -15,6 +15,10 @@
 ☑ `main` + `build-4` tag pushed to GitHub
 ☑ Scan speed: `reasoning_effort` reaches OpenAI again (was dropped by the proxy
    allow-list since 2026-08-09). 38.0s → 18.5s median. Worker live + verified.
+☑ Scan prompt rewritten and cut to 2,978 tokens (10ba282). Ships with build 5.
+☑ Legal URLs re-checked 2026-09-02: `/privacy` and `/terms` return 200. Use those,
+   NOT the `.html` variants, which 308-redirect.
+☑ Version numbers correct for build 5: MARKETING_VERSION 1.0, CURRENT_PROJECT_VERSION 5.
 
 ---
 
@@ -48,7 +52,14 @@ date, summons/receipt number and category all correct, and the flight kept its
 `-04:00` offset and clock time. That is NOT the same as a real photo through
 OCR, and the rows below still stand.
 
-- ☐ Scan 2–3 real documents, incl. the **home-warranty letter**
+☑ Rachel scanned real documents on device 2026-09-02. Prompt then changed again
+      that night: `miniChecklist` and `needed` were redefined (a checklist must
+      transcribe a sequence the DOCUMENT gives; `needed` is noun phrases, max 4),
+      `otherIDs` no longer duplicates `accountNumber`, and the whole prompt was cut
+      3,847 → 2,978 tokens. Verified against a real NYS DTF-948 letter, but by
+      posting OCR TEXT to the Worker — never through Vision OCR on a photo.
+
+- ☐ Re-scan 2–3 real documents on the FINAL build, incl. the **home-warranty letter**
 - ☐ Notes ≤ 3 short lines · no fee/waiver advice on an offer · steps under ~12
       words · due-date **year and timezone** correct (tester bug #10)
 
