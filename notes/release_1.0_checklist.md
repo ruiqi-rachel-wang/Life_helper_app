@@ -1,6 +1,6 @@
 # Release 1.0 — your checklist
 
-> Updated 2026-08-28. Only things **you** do: App Store Connect, RevenueCat,
+> Updated 2026-09-01. Only things **you** do: App Store Connect, RevenueCat,
 > production D1, your phone. Code and tests are handled separately.
 > Shipping **build 5**.
 
@@ -13,6 +13,8 @@
 ☑ Legal pages live and Tadah-branded
 ☑ Subscriptions created, $6.99 / $59.99, Ready for Review
 ☑ `main` + `build-4` tag pushed to GitHub
+☑ Scan speed: `reasoning_effort` reaches OpenAI again (was dropped by the proxy
+   allow-list since 2026-08-09). 38.0s → 18.5s median. Worker live + verified.
 
 ---
 
@@ -36,7 +38,15 @@ All new in build 5, none of it has run on a device, and it deletes user data.
 
 ## 3 · Scans — the only check on the rewritten prompt
 
-Prompt is 44% smaller; no test covers its output.
+Prompt is 44% smaller; no test covers its output. Changed again on 2026-09-01
+(padding rules, no per-step explanation, no `fields`) and the model now runs at
+`reasoning_effort: low` — a scan went 38s → ~16-19s.
+
+Checked on 2026-09-01 against three SYNTHETIC documents sent straight to the
+Worker (parking ticket, USCIS "within 90 days", flight itinerary): amount, due
+date, summons/receipt number and category all correct, and the flight kept its
+`-04:00` offset and clock time. That is NOT the same as a real photo through
+OCR, and the rows below still stand.
 
 - ☐ Scan 2–3 real documents, incl. the **home-warranty letter**
 - ☐ Notes ≤ 3 short lines · no fee/waiver advice on an offer · steps under ~12
@@ -110,17 +120,14 @@ app's is not worth the risk, and the same reasoning already froze the bundle id.
 
 ---
 
-## ⚠️ Deploy the login throttle
+## ⚠️ Login throttle — DEPLOYED 2026-09-01, not yet verified
 
-Built and tested 2026-08-28 — **not deployed.** Worker-only, so it needs no app
-release and can ship before or after 1.0.
+☑ Deployed. **It rode along with the scan-performance fix**, not as a separate
+decision: a Worker deploy ships the whole of `worker.js`, and the throttle
+(ae764ed, 2026-08-28) was already committed there. Version `4e544827` is live.
 
-- ☐ ```
-      cd Tadah/cloudflare-worker
-      export PATH="/usr/local/opt/node@22/bin:$PATH"
-      npx wrangler deploy
-      ```
-- ☐ Then confirm: 10 wrong passwords for one email → the 11th returns 429
+- ☐ Still confirm on production: 10 wrong passwords for one email → the 11th
+      returns 429. This is now testing LIVE auth behaviour, not a staging build.
 
 Ten wrong guesses in 15 minutes puts that **email** in a 15-minute cooldown. A
 cooldown, not a lockout — a permanent lock would let anyone freeze a real user
