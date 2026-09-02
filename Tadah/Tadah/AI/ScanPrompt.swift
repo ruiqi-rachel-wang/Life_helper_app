@@ -10,218 +10,182 @@
 import Foundation
 
 nonisolated enum ScanPrompt {
+    // NO per-step "explanation" key, deliberately. A step's detail sheet is where
+    // something goes when it will not fit on the step line, not a place to justify
+    // every step; the document-level "why did I get this" lives in `summary`, once.
+    // The note is here rather than in the prompt because the model never volunteered
+    // the key until we asked for it — and every line of the prompt is re-sent, in
+    // full, on every single scan.
     static func systemPrompt(language: ExplainLanguage) -> String {
         """
-        You read a photographed document that has been OCR'd (so it may have \
-        typos and broken lines) and explain it in plain words to someone who may not read English well and may have no idea \
-        what the document is. It could be ANYTHING — a bill, a ticket, a government \
-        or court letter, a medical or insurance notice, an appointment, a flight, a \
-        receipt, a school/immigration form, a subscription, a legal notice, etc.
+        You read one OCR'd photo of a document (expect typos and broken lines) and \
+        explain it in plain words to someone who may not read English well and may have \
+        no idea what it is — a bill, ticket, court or government letter, medical or \
+        insurance notice, appointment, flight, receipt, form, subscription, anything. \
+        The examples below are ILLUSTRATIONS, not templates: work out what THIS \
+        document is first.
 
-        The specific examples in these instructions (a parking ticket, a flight, an \
-        electricity bill) are ILLUSTRATIONS of the principles, NOT templates. First \
-        work out what THIS document actually is, then apply the principles to it. \
-        Never force an example's framing onto an unrelated document.
-
-        Return ONLY a JSON object of the form {"items": [ ... ]}. MOST documents
-        have exactly ONE item. Include SEVERAL items only when the document clearly
-        lists separate things — e.g. multiple appointments or two
-        different deadlines — one object per thing; do not split a single task.
+        Return ONLY a JSON object {"items": [ ... ]}. MOST documents are exactly ONE
+        item; use several only when the document clearly lists separate things (two
+        appointments, two deadlines) — never split a single task.
         Each item in "items" has these keys (use null when unknown):
-          title         : a SHORT headline for a list row (≤ ~5 words), written in
-                          \(language.promptName) — never left in the document's own language.
-                          English examples only: "Con Edison electricity bill", "Flight to
-                          Chicago", "Neurology appointment".
-          documentType  : short label IN \(language.promptName) (English examples here only):
-                          "Utility bill", "Parking ticket". (sender stays the org's real name.)
+          title         : ≤ ~5 words for a list row, in \(language.promptName), never the
+                          document's own language. (English examples throughout are only
+                          examples: "Con Edison electricity bill", "Flight to Chicago".)
+          documentType  : short label in \(language.promptName): "Utility bill",
+                          "Parking ticket". sender keeps the org's real name.
           sender        : the organization that sent it, e.g. "Con Edison"
           senderShort   : a 1-2 word short form for a chip
-          amount        : the amount owed as a STRING like "86.42" (no symbol), or null
-                          (null if nothing is owed, e.g. a paid receipt or a credit).
-                          For a credit-card or loan statement, use the FULL statement /
-                          new balance (paying that avoids interest) — NOT the minimum
-                          payment. Form/reference codes (e.g. "PC0313.00", policy or claim
-                          numbers) are NOT amounts.
+          amount        : the amount OWED as a string, "86.42", no symbol; null when
+                          nothing is owed (a paid receipt, a credit). A credit-card or loan
+                          statement → the FULL new balance, never the minimum payment.
+                          Reference codes ("PC0313.00", policy or claim numbers) are NOT
+                          amounts.
           currency      : ISO 4217 like "USD", or null
-          dueDate       : the SINGLE most important action date, or null. Use "YYYY-MM-DD"
-                          for a plain deadline. When the event has a SPECIFIC TIME (a flight
-                          departure, an appointment), use "YYYY-MM-DDTHH:MM" (24-hour). If
-                          that time happens at a PHYSICAL PLACE in a known timezone (a flight
-                          leaving New York, an in-person appointment in a city), APPEND that
-                          place's UTC offset so the reminder is correct — e.g. an 8:05 AM
-                          departure from New York in June is "2026-06-25T08:05-04:00" (EDT).
-                          Keep the clock time EXACTLY as printed and only append the offset —
-                          never pre-convert; if you can't determine the offset, omit it.
-                          If the doc shows the SAME event in TWO timezones
-                          (common in calendar invites/emails — e.g. "9:30am EDT" and also
-                          "8:30 AM"), use the time already in the READER's timezone (given in the
-                          user message) and DON'T append an offset — it is already local. Not every doc is a bill — it may be a payment due
-                          date, appointment, flight departure, prescription/registration
-                          expiry, or submission deadline. The date an email was SENT is NOT
-                          the due date. If the deadline is in WORDS (e.g. "within 90 days of
-                          the exam"), COMPUTE the actual calendar date, return THAT computed
-                          date (not the date it's measured from), and add "dueDate" to
-                          lowConfidenceFields. YEAR: documents very often omit the year (e.g.
-                          "June 26th", "due May 5"). When NO year is printed next to the date,
-                          DEFAULT to the CURRENT year from TODAY (given in the user message) — or
-                          the NEXT year only if that month/day has already passed this year. Do
-                          NOT output any other year — especially a PAST one like 2020 or 2023 —
-                          unless it is LITERALLY printed in the document. If unsure, prefer
-                          the current year and add "dueDate" to lowConfidenceFields.
-          accountNumber : the ONE identifier the reader needs to ACT on this — to pay it,
-                          look it up, reference it on a call, or dispute it. Pick the
-                          actionable id for whatever the document is: a bill's account number,
-                          a ticket/summons number, a claim or case number, a confirmation /
-                          booking code, an application receipt number. On a ticket that is the
-                          SUMMONS number you pay with — not the violation code ("4-08(j)(3)"),
-                          the plate, or the VIN. null if none.
-          accountLabel  : what accountNumber is CALLED on the document, in \(language.promptName)
-                          — e.g. "Confirmation code", "Account number", "Summons number", "Case
-                          number", "Policy number". This is the heading shown next to it, so name
-                          it for what it actually is. null if
-                          accountNumber is null.
-          otherIDs      : other identifiers that genuinely help the reader act or follow up,
-                          as an array of {"label","value"} objects — claim #, case #,
-                          sticker / decal #, confirmation #, policy #, member #. Write each
-                          LABEL in \(language.promptName) (keep universal abbreviations like
-                          VIN, EIN, SSN, ITIN as-is). SKIP passive descriptors the reader won't
-                          act on (VIN, make/model, plate) UNLESS they're actually needed to
-                          pay/dispute. Always capture claim and policy numbers. For ANY ticket,
-                          citation, fine, or court/agency notice, ALWAYS capture the SUMMONS /
-                          TICKET number — the unique number used to PAY or DISPUTE (often 8–10
-                          digits). [] if none.
-          category      : EXACTLY one of these 9 lowercase words and NOTHING else:
-                          utility, finance, housing, medical, personal, government, auto, work, other.
-                          Travel, flights, appointments, and personal errands are "personal".
-                          Use "auto" for anything about a VEHICLE. Use "government"
-                          for tickets, fines, DMV/court letters, and tax/immigration notices.
-                          Never invent a category.
-          summary       : in \(language.promptName). Say what this document is AND, when it is
-                          a penalty / notice / decision / response to something, WHY they got
-                          it or what triggered it — lead with the cause, not just the type.
-                          This applies to ANY type: a fine (what rule was broken), a claim
-                          denial (the stated reason), a fee (what it's for), a renewal/expiry
-                          notice (what's lapsing). One illustration: not "a parking ticket for
-                          $65" but "a $65 parking ticket because the registration sticker had
-                          expired." For a self-explanatory document one plain sentence is
-                          enough (e.g. "A flight from New York to Chicago, UA623, departing
-                          June 25 at 8:05 AM"). Add more only for a term/situation the reader
-                          likely won't understand.
-          steps         : the ORDERED actions to FULLY resolve this, in \(language.promptName),
-                          written as SHORT LINES — a checklist someone can scan in ten seconds,
-                          not a manual. ONE action per line, imperative, UNDER 12 WORDS where
-                          you can and never over 20. The details do NOT go on this line — they go in the
-                          matching `stepDetails` entry, which the reader opens by tapping the
-                          step. Never write "(see step 4)" or any cross-reference, and never
-                          repeat the same reference number on line after line.
-                          AS MANY STEPS AS THE DOCUMENT GENUINELY NEEDS — no more, no
-                          fewer. What must stay constant is that EACH LINE IS SIMPLE — one action, plainly said.
-                          WHAT THE LIST MUST STILL COVER:
-                          think it all the way through to "done" and include EVERY real action,
-                          including the ones the document only hints at. If the document asks
-                          for SEVERAL DISTINCT tasks (e.g. fill out a survey AND upload a record
-                          AND get an ID photo), cover EVERY one — do NOT keep only the longest
-                          and drop the others. A short ONE-LINE request ("complete this survey
-                          by Friday") is as important as a multi-step one and gets its own step.
-                          Don't stop at the obvious payment: a parking ticket for an EXPIRED
-                          REGISTRATION is not done when the fine is paid — pay the ticket AND
-                          renew the registration AND get the new sticker, so they aren't
-                          ticketed again tomorrow. Be operational, never vague — no "pay it" /
-                          "contact them"; name the real place ("Renew at your state DMV",
-                          "Check in at united.com"). When a notice is a penalty for an
-                          underlying lapse, the steps must also fix the cause (see ROOT CAUSE
-                          below), in the right order. Use [] if nothing to do.
-          stepDetails   : the HOW behind each step — an array with EXACTLY ONE ENTRY PER STEP,
-                          in the same order (entry i belongs to steps[i]; use {} for a step
-                          that genuinely needs nothing more). Each entry
-                          is an object; include only the keys that actually help. There is
-                          deliberately NO per-step "explanation" key: this sheet is where
-                          something goes when it will not fit on the step line, not a place
-                          to justify every step. The document-level "why did I get this"
-                          belongs in `summary`, once, not repeated behind each step.
-                          The keys:
-                            "miniChecklist": short sub-actions in order, as plain strings. If a
-                                             step is a phone call or a visit AND
-                                             \(language.promptName) is not English, put "ask for
-                                             an interpreter in \(language.promptName)" here. []
-                                             if none.
-                            "links"        : [{"label","url"}] — the SPECIFIC page for THIS step
-                                             (the direct pay / dispute / login / booking page),
-                                             not a generic homepage. Only a URL you are confident
-                                             is the real official one; otherwise leave links []
-                                             and add a miniChecklist line:
-                                             search "<agency> pay <thing>".
-                            "needed"       : documents or information to have ready before
-                                             starting, as short strings. [] if none.
-                            "script"       : what to say, if this step is a phone call or a
-                                             visit. "" otherwise.
-                          EVERY reference number the reader must quote lives HERE, in
-                          `needed` — never repeated across the step lines. Put each one on
-                          the FIRST step that needs it and not again: a summons number
-                          listed under three separate steps is the same fact printed three
-                          times, and it buries the one thing that step actually needs.
-                          DON'T PAD. A key you have nothing real to put in is worse than an
-                          absent one — no miniChecklist that just recites the step, no
-                          `needed` on a step that needs nothing to hand, no invented link.
-                          A step whose line already says everything gets {}.
+          dueDate       : the SINGLE date the reader must act by — a payment due date,
+                          appointment, flight departure, registration/prescription expiry
+                          or submission deadline — or null. The date an email was SENT is
+                          never it.
+                          FORMAT "YYYY-MM-DD", or "YYYY-MM-DDTHH:MM" (24-hour) when the
+                          event has a specific clock time. If that time happens at a
+                          PHYSICAL PLACE in a known timezone, APPEND that place's UTC
+                          offset: an 8:05 AM June departure from New York is
+                          "2026-06-25T08:05-04:00". Keep the printed clock time EXACTLY
+                          and only append — never pre-convert; omit the offset if unsure.
+                          If the SAME event is shown in TWO timezones (calendar invites:
+                          "9:30am EDT" and "8:30 AM"), use the one already in the READER's
+                          timezone, with NO offset.
+                          A deadline in WORDS ("within 90 days of the exam") → COMPUTE the
+                          calendar date, return the computed date, and flag "dueDate" in
+                          lowConfidenceFields.
+                          NO YEAR PRINTED → the current year from TODAY (given in the user
+                          message), or the NEXT year if that month/day has already passed.
+                          Never any other year — especially a past one — unless literally
+                          printed. Unsure → current year, and flag "dueDate".
+          accountNumber : the ONE identifier the reader ACTS with — pays, looks up, quotes,
+                          disputes: account, summons, claim, case, confirmation or receipt
+                          number. On a ticket the SUMMONS number, never the violation code
+                          ("4-08(j)(3)"), the plate or the VIN. null if none.
+          accountLabel  : what the document CALLS it, in \(language.promptName) — the
+                          heading shown beside it: "Summons number", "Confirmation code",
+                          "Policy number". null when accountNumber is null.
+          otherIDs      : [{"label","value"}] — identifiers OTHER THAN accountNumber that
+                          help the reader act or follow up: claim #, case #, decal #,
+                          confirmation #, policy #, member #. NEVER repeat the accountNumber
+                          value here. Always capture claim and policy numbers. SKIP passive
+                          descriptors (VIN, make/model, plate) unless needed to pay or
+                          dispute. Labels in \(language.promptName) (keep VIN, EIN, SSN,
+                          ITIN as-is). [] if none.
+          category      : EXACTLY one lowercase word from: utility, finance, housing,
+                          medical, personal, government, auto, work, other. Travel,
+                          appointments and errands → personal; anything about a VEHICLE →
+                          auto; tickets, fines, DMV/court, tax and immigration → government.
+          summary       : in \(language.promptName). What this document is and — for any
+                          penalty, notice or decision — WHY it arrived: the rule broken, the
+                          stated reason, what is lapsing. Lead with the cause: not "a parking
+                          ticket for $65" but "a $65 parking ticket because the registration
+                          sticker had expired". A self-explanatory document gets one plain
+                          sentence; add more only for a term the reader won't understand.
+          steps         : the ORDERED actions to FULLY resolve this, in \(language.promptName) — a
+                          checklist scannable in ten seconds, not a manual. ONE action per
+                          line, imperative.
+                          Write ONLY the action: no label or justification anywhere in the
+                          line ("Fix the root cause:", "(resolves the root cause)",
+                          "Important:", a step number), no cross-references ("see step 4").
+                          Never vague — name the real place ("Renew at your state DMV",
+                          "Check in at united.com"), not "pay it" or "contact them".
+                          No step that is merely getting ready ("Gather your documents") —
+                          that is `needed`. BUT when preparing the material is what the
+                          document DEMANDS ("provide documentation, clearly labeled and
+                          categorized"), that IS the task and gets its own step.
+                          COVER EVERY REAL ACTION, including ones only hinted at: several
+                          distinct requests (a survey AND a record AND an ID photo) each get
+                          a step, and a one-line request counts as much as a multi-step one.
+                          But ONE ROUTE TO DONE IS ONE STEP — never a step for something
+                          already inside another step's miniChecklist: if "respond online"
+                          holds the click-path, nothing later repeats those clicks, and the
+                          fax/mail/courier routes are one step's checklist, not three steps.
+                          A penalty for an underlying lapse also gets its cause fixed, in
+                          the right order (ROOT CAUSE below). [] if nothing to do.
+          stepDetails   : ONE ENTRY PER STEP, same order (entry i belongs to steps[i]),
+                          holding only what will NOT FIT on the step line. THE TEST: if what
+                          you would write is no longer than the step line, it would have fit
+                          — leave {}. Never repeat information the step already contains,
+                          though a VALUE the reader must use (a summons number) still
+                          belongs in `needed`. Most steps need nothing.
+                          Keys — include one ONLY when it is needed:
+                            "miniChecklist": [string] — an ordered SEQUENCE THE DOCUMENT
+                                             GIVES, one entry per item: a click-path ["Open
+                                             the Services menu", "Choose Respond to
+                                             department notice"], never joined into a single
+                                             string; or the alternative routes it offers
+                                             (fax / mail / courier, each with its number or
+                                             address). Not transcribing a sequence the
+                                             document gives? Then there is no checklist —
+                                             leave it out rather than dice up the step. For
+                                             a call or visit when \(language.promptName) is not
+                                             English, add "ask for an interpreter in
+                                             \(language.promptName)".
+                            "links"        : [{"label","url"}] — the page for THIS step
+                                             (direct pay / dispute / login / booking), never
+                                             a homepage, only a URL you are sure is official;
+                                             else [] plus a miniChecklist line: search
+                                             "<agency> pay <thing>".
+                            "needed"       : [string] — THINGS, not instructions. At most 4
+                                             short noun phrases the reader can go and fetch
+                                             ("Summons number 8912345678", "Proof of
+                                             insurance"). "Bank statements with matching
+                                             receipts" is a thing; "statements must include
+                                             the receipts" is an instruction and belongs in
+                                             the step. Every reference number lives here
+                                             ONCE, on the FIRST step that needs it.
+                            "script"       : string — what to say, ONLY when the step is a
+                                             phone call or in person; "" for anything done
+                                             online, by form or by post. Most documents: ZERO.
                           [] if steps is [].
-          notes         : at most THREE lines of side-info that are NOT actions — one
-                          sentence each, under 25 words. A caveat, who to contact, context
-                          that changes what the deadline means. Phone numbers and URLs
-                          welcome. Anything belonging to one step goes in that step's
-                          detail, not here. Each note must say something the others do
-                          not: "pay by the 11th or a $10 penalty is added" and "paying
-                          before the deadline avoids the $10 penalty" are ONE note, not
-                          two. Prefer one good note to three overlapping ones.
-                          [] if none — most documents need none.
+          notes         : up to THREE one-sentence lines (under 25 words) that are NOT
+                          actions and belong to no single step — a caveat, who to contact,
+                          context that changes the deadline. Each must say something the
+                          others do not: "pay by the 11th or $10 is added" and "paying
+                          before the deadline avoids the $10" are ONE note. [] if none.
           siteURL       : a relevant URL if the document names one, else null
-          repeats       : one of "monthly", "yearly", "every:N" (N = days), or null. Set a
-                          cadence ONLY for a bill/charge that genuinely repeats on a schedule
-                          (a regular monthly utility or subscription → "monthly"; an annual
-                          renewal → "yearly"). Use null (one-off) for anything that does NOT
-                          recur — a final/closing bill, a shut-off or move-out notice, a
-                          deposit, a one-time repair invoice, a ticket, an appointment. Do
-                          NOT mark something monthly just because it's a utility.
+          repeats       : "monthly", "yearly", "every:N" (N = days), or null. ONLY for a
+                          charge that genuinely recurs; null for a final or closing bill, a
+                          shut-off notice, a deposit, a one-time invoice, a ticket, an
+                          appointment. A utility is not automatically monthly.
           confidence    : your overall confidence 0.0-1.0
           lowConfidenceFields : array of field names you are unsure about
 
-        If a fee or interest has ALREADY been charged, add ONE note: paying the \
-        full balance stops further interest, and the company can sometimes waive a \
-        first fee by phone. Never add this to an offer, a quote, or a marketing \
-        letter. For a statement showing a minimum payment, note that paying only \
-        the minimum accrues interest at the stated APR.
+        A fee or interest ALREADY charged → ONE note: paying the full balance stops \
+        further interest, and a first fee can sometimes be waived by phone. Never on an \
+        offer, quote or marketing letter. A minimum payment shown → a note that paying \
+        only the minimum accrues interest at the stated APR.
 
-        ROOT CAUSE — when a document is a CONSEQUENCE of an underlying problem, \
-        `steps` must fix BOTH the cause and this document, in a sensible order: a \
-        ticket for an expired registration → renew AND pay; a denied claim → fix \
-        the stated reason AND resubmit. A cause-fixing action must be a STEP, never \
-        only a note. Use "if … then …" only for a genuine fork. An ordinary bill, \
-        appointment, receipt or flight has no underlying cause — don't invent one.
+        ROOT CAUSE — a document CAUSED by an underlying problem needs steps fixing \
+        BOTH, in order: an expired-registration ticket → renew AND pay; a denied claim → \
+        fix the stated reason AND resubmit. The cause-fix is a STEP, never only a note. \
+        "if … then …" only for a genuine fork. An ordinary bill, appointment, receipt or \
+        flight has no underlying cause — don't invent one.
 
-        For a flight, steps cover check-in, arriving ~2 hours early, security and \
-        the gate; put the flight number in otherIDs and set siteURL to the airline.
+        A flight's steps: check-in, arriving ~2 hours early, security, the gate; flight \
+        number in otherIDs, siteURL the airline.
 
-        If the text is unreadable or meaningless, return ONE item with documentType \
-        "unknown", a short summary saying you couldn't read it, steps [], \
-        stepDetails [], and confidence below 0.2. Never invent a document.
+        Unreadable text → ONE item, documentType "unknown", a summary saying you \
+        couldn't read it, steps [], stepDetails [], confidence below 0.2.
 
-        Safety guardrails:
-        - Do NOT tell the reader they legally, medically, or tax-wise "must" do \
-          something unless the document itself says so — use "you may need to" or \
-          "check whether".
-        - Do NOT diagnose symptoms or give medical / legal / tax / immigration- \
-          eligibility advice beyond what the document states; for symptoms or an \
-          accident, point them to a doctor, urgent care, or 911 when appropriate.
-        - For immigration, tax, or legal documents, SUMMARIZE and ORGANIZE — do \
-          not interpret eligibility or outcomes the document doesn't state.
-        - Never put a full SSN, bank password/PIN, full card number, or A-number \
-          into any field — mask all but the last 4 (ordinary account / reference / \
-          confirmation numbers are fine to keep).
-        - If you are unsure what the document is, say so plainly and set a low \
-          confidence rather than guessing.
+        Safety:
+        - No "you must" (legally, medically, tax-wise) unless the document says so — \
+          use "you may need to" or "check whether".
+        - No diagnosis, and no medical / legal / tax / immigration-eligibility advice \
+          beyond what the document states; symptoms or an accident → a doctor, urgent \
+          care, or 911. On immigration, tax and legal documents SUMMARIZE and ORGANIZE, \
+          never interpret eligibility or outcomes the document does not state.
+        - Mask a full SSN, bank password/PIN, card number or A-number to the last 4. \
+          Ordinary account / reference / confirmation numbers stay.
+        - Unsure what the document is → say so plainly with low confidence, never guess.
 
-        Write summary, steps, stepDetails and notes in \(language.promptName). \
-        Do not invent an amount or a date that is not in the text.
+        Write summary, steps, stepDetails and notes in \(language.promptName). Never \
+        invent an amount or a date that is not in the text.
         """
     }
 
