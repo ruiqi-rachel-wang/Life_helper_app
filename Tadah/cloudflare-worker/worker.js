@@ -31,6 +31,32 @@
 // testers' phones still ask for it, and dropping it would 400 every scan they make.
 // Remove it only once those builds are gone.
 const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
+// Reasoning effort for the gpt-5 family, allow-listed like the model itself.
+//
+// ⚠️ THIS WAS THE SILENT SCAN SLOWDOWN. The app has always sent
+// `reasoning_effort: "low"` (see OpenAIClient.ChatRequest.make) because a scan is
+// field extraction, not a hard reasoning problem. When this route was hardened on
+// 2026-08-09 the request started being rebuilt from an allow-list, and this field
+// was not on it — so it was dropped and gpt-5-mini ran at its DEFAULT effort
+// instead. The app's setting had no effect for weeks: every scan paid for hidden
+// reasoning tokens it never asked for, in both latency and money.
+//
+// ONE VALUE, because the app only ever sends one. `ChatRequest.make` hardcodes
+// "low" for every reasoning model, so anything else arriving here did not come
+// from Tadah — and this route's token is public by assumption, so "not from
+// Tadah" is the case that matters. The two values it is tempting to also list
+// are the two that must NOT be reachable:
+//   • "medium" is the default that caused this whole slowdown. Listing it would
+//     buy a caller nothing TODAY — dropping the field already yields the default,
+//     which is medium — so it is pure widening of what the proxy accepts, for no
+//     use. It stops being harmless the day OpenAI changes that default.
+//   • "minimal" was measured on 2026-08-31 and rejected: it computed a "within
+//     90 days" USCIS deadline as 2026-08-01 instead of 2026-09-01, a month early,
+//     with lowConfidenceFields empty so nothing flagged it.
+// Unlike ALLOWED_MODELS — which lists three because builds already on testers'
+// phones still ask for gpt-4o — no shipped build has ever sent a second effort.
+// Changing what the app asks for means changing this line too, on purpose.
+const ALLOWED_EFFORTS = new Set(["low"]);
 // Hard ceiling AND the default when the client sends none. Reasoning models
 // spend part of this budget on hidden reasoning tokens before writing any JSON,
 // so the ceiling must cover BOTH that and the answer — too low and the JSON is
@@ -261,14 +287,7 @@ async function handleChat(request, env) {
   const messages = sanitizeMessages(body.messages);
   if (!messages) return json({ error: "Invalid messages" }, 400);
 
-  const safeBody = { model: body.model, messages };
-  // The app relies on JSON mode for extraction; allow only that exact shape.
-  if (body.response_format && body.response_format.type === "json_object") {
-    safeBody.response_format = { type: "json_object" };
-  }
-  if (Number.isFinite(Number(body.temperature))) {
-    safeBody.temperature = Math.min(Math.max(Number(body.temperature), 0), 2);
-  }
+  const safeBody = buildChatBody(body, messages);
 
   // Per-install quota (see header note at the top).
   //
@@ -342,15 +361,6 @@ async function handleChat(request, env) {
   if (globalUsage.day > GLOBAL_DAY_LIMIT) {
     return json({ error: "quota", message: "AI is temporarily unavailable. Please try again later." }, 429);
   }
-
-  // Cap tokens even if the client omitted the field (the previously-broken cap).
-  // Cap whichever field this client used — reasoning models (gpt-5) take
-  // max_completion_tokens, the 4o family takes max_tokens — so old builds and new
-  // ones are both bounded. Never write the field the client DIDN'T send: OpenAI
-  // rejects max_tokens on a reasoning model.
-  const field = body.max_completion_tokens !== undefined ? "max_completion_tokens" : "max_tokens";
-  const requested = Number(body[field]);
-  safeBody[field] = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
 
   const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -447,6 +457,46 @@ function sanitizeMessages(messages) {
     out.push({ role: m.role, content: m.content });
   }
   return out;
+}
+
+// Build the request that actually goes to OpenAI, from an allow-list.
+//
+// Everything the app sends and nothing else: forwarding the caller's object made
+// every OpenAI parameter reachable (`n: 50`, `stream`, tool definitions, future
+// billable features). The flip side is that a field the app DOES rely on is
+// silently ignored unless it is listed here — which is how `reasoning_effort`
+// came to be dropped for weeks. Anything added to the app's ChatRequest must be
+// added here too, or it will do nothing in production while working in dev.
+//
+// Pure and exported so worker.test.js can assert the exact shape without a
+// network call — this is the layer that bounds what Tadah ever spends.
+function buildChatBody(body, messages) {
+  const safeBody = { model: body.model, messages };
+
+  // The app relies on JSON mode for extraction; allow only that exact shape.
+  if (body.response_format && body.response_format.type === "json_object") {
+    safeBody.response_format = { type: "json_object" };
+  }
+  if (Number.isFinite(Number(body.temperature))) {
+    safeBody.temperature = Math.min(Math.max(Number(body.temperature), 0), 2);
+  }
+  // Only the listed efforts, so a caller can lower cost/latency but never raise
+  // it. An unrecognised value is dropped rather than 400'd: an older build that
+  // sends something else keeps scanning, just at the model's default.
+  if (ALLOWED_EFFORTS.has(body.reasoning_effort)) {
+    safeBody.reasoning_effort = body.reasoning_effort;
+  }
+
+  // Cap tokens even if the client omitted the field (the previously-broken cap).
+  // Cap whichever field this client used — reasoning models (gpt-5) take
+  // max_completion_tokens, the 4o family takes max_tokens — so old builds and new
+  // ones are both bounded. Never write the field the client DIDN'T send: OpenAI
+  // rejects max_tokens on a reasoning model.
+  const field = body.max_completion_tokens !== undefined ? "max_completion_tokens" : "max_tokens";
+  const requested = Number(body[field]);
+  safeBody[field] = Math.min(Number.isFinite(requested) ? requested : MAX_TOKENS, MAX_TOKENS);
+
+  return safeBody;
 }
 
 // Count this call against the install's day + month windows and return the new
@@ -1897,6 +1947,7 @@ export {
   validID,
   validStamp,
   sanitizeMessages,
+  buildChatBody,
   clamp,
   MAX_MESSAGES,
   MAX_MESSAGE_CHARS,

@@ -14,6 +14,7 @@ import {
   validID,
   validStamp,
   sanitizeMessages,
+  buildChatBody,
   clamp,
   readJSON,
   MAX_BODY_BYTES,
@@ -124,6 +125,68 @@ test("sanitizeMessages refuses image / multimodal content", () => {
   assert.equal(sanitizeMessages([
     { role: "user", content: [{ type: "image_url", image_url: { url: "https://x/y.png" } }] },
   ]), null);
+});
+
+// ── chat body shaping ────────────────────────────────────────────────────────
+//
+// The regression these cover: the app sends `reasoning_effort: "low"` on every
+// scan, the proxy rebuilt the request from an allow-list that omitted it, and so
+// gpt-5-mini quietly ran at its default effort for weeks — slower and dearer
+// than the app asked for, with nothing failing to show it. A dropped field is
+// invisible at runtime, so the shape is asserted here instead.
+
+const msgs = [{ role: "user", content: "BILL DUE 08/20" }];
+
+test("buildChatBody forwards the effort the app actually asks for", () => {
+  const out = buildChatBody(
+    { model: "gpt-5-mini", reasoning_effort: "low", max_completion_tokens: 5000 }, msgs);
+  assert.equal(out.reasoning_effort, "low");
+  assert.equal(out.max_completion_tokens, 5000);
+  assert.equal(out.max_tokens, undefined);       // never the 4o field on a gpt-5 call
+});
+
+// "medium" and "minimal" are in this list on purpose, not by oversight: the app
+// sends only "low", medium is the expensive default a leaked token could force
+// back on, and minimal measurably got a computed deadline a month wrong.
+test("buildChatBody drops an effort that is not allow-listed", () => {
+  for (const effort of ["medium", "minimal", "high", "totally-bogus", 3, null, { low: true }]) {
+    const out = buildChatBody({ model: "gpt-5-mini", reasoning_effort: effort }, msgs);
+    assert.equal(out.reasoning_effort, undefined, `should not forward ${JSON.stringify(effort)}`);
+  }
+});
+
+test("buildChatBody omits the effort entirely when the client sends none", () => {
+  const out = buildChatBody({ model: "gpt-4o-mini", temperature: 0.2, max_tokens: 2000 }, msgs);
+  assert.equal("reasoning_effort" in out, false);
+  assert.equal(out.temperature, 0.2);
+  assert.equal(out.max_tokens, 2000);
+});
+
+test("buildChatBody caps tokens and carries nothing the app never sends", () => {
+  const out = buildChatBody({
+    model: "gpt-5-mini",
+    max_completion_tokens: 999999,               // over the ceiling
+    n: 50,                                       // fifty completions
+    stream: true,
+    tools: [{ type: "function" }],
+  }, msgs);
+  assert.equal(out.max_completion_tokens, 6000);
+  assert.deepEqual(Object.keys(out).sort(), ["max_completion_tokens", "messages", "model"]);
+});
+
+test("buildChatBody clamps temperature into range and defaults the token cap", () => {
+  assert.equal(buildChatBody({ model: "gpt-4o", temperature: 9 }, msgs).temperature, 2);
+  assert.equal(buildChatBody({ model: "gpt-4o", temperature: -1 }, msgs).temperature, 0);
+  assert.equal(buildChatBody({ model: "gpt-4o" }, msgs).max_tokens, 6000);
+});
+
+test("buildChatBody keeps JSON mode, and only that response_format", () => {
+  assert.deepEqual(
+    buildChatBody({ model: "gpt-5-mini", response_format: { type: "json_object" } }, msgs).response_format,
+    { type: "json_object" });
+  assert.equal(
+    buildChatBody({ model: "gpt-5-mini", response_format: { type: "json_schema", json_schema: {} } }, msgs).response_format,
+    undefined);
 });
 
 test("sanitizeMessages refuses unknown roles and malformed entries", () => {

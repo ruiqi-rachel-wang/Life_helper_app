@@ -139,8 +139,11 @@ struct OpenAIClientParsingTests {
         #expect(first?.detail?.links.first?.url == "https://www.tax.ny.gov")
         #expect(first?.detail?.needed == ["Assessment ID L-064053027-4"])
         #expect(first?.detail?.miniChecklist.map(\.text) == ["Have your card ready"])
-        #expect(first?.detail?.fields.map(\.label) == ["Confirmation number"])
-        #expect(first?.detail?.fields.first?.value == "")   // the USER fills this in
+        // A scan never fills the per-step "save this value" slots, even when the
+        // model volunteers them: nothing in the app renders SavedField, and the
+        // scan prompt does not ask for it. The "fields" key is left in the JSON
+        // above on purpose, so this pins that it is IGNORED, not quietly parsed.
+        #expect(first?.detail?.fields.isEmpty == true)
 
         // `{}` means this step needs nothing more — plain, not an empty sheet.
         #expect(r?.detailedSteps.last?.hasDetail == false)

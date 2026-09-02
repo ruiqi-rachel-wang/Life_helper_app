@@ -134,7 +134,12 @@ nonisolated enum ScanPrompt {
           stepDetails   : the HOW behind each step — an array with EXACTLY ONE ENTRY PER STEP,
                           in the same order (entry i belongs to steps[i]; use {} for a step
                           that genuinely needs nothing more). Each entry
-                          is an object; include only the keys that actually help:
+                          is an object; include only the keys that actually help. There is
+                          deliberately NO per-step "explanation" key: this sheet is where
+                          something goes when it will not fit on the step line, not a place
+                          to justify every step. The document-level "why did I get this"
+                          belongs in `summary`, once, not repeated behind each step.
+                          The keys:
                             "miniChecklist": short sub-actions in order, as plain strings. If a
                                              step is a phone call or a visit AND
                                              \(language.promptName) is not English, put "ask for
@@ -151,12 +156,24 @@ nonisolated enum ScanPrompt {
                             "script"       : what to say, if this step is a phone call or a
                                              visit. "" otherwise.
                           EVERY reference number the reader must quote lives HERE, in
-                          `needed` — never repeated across the step lines. [] if steps is [].
+                          `needed` — never repeated across the step lines. Put each one on
+                          the FIRST step that needs it and not again: a summons number
+                          listed under three separate steps is the same fact printed three
+                          times, and it buries the one thing that step actually needs.
+                          DON'T PAD. A key you have nothing real to put in is worse than an
+                          absent one — no miniChecklist that just recites the step, no
+                          `needed` on a step that needs nothing to hand, no invented link.
+                          A step whose line already says everything gets {}.
+                          [] if steps is [].
           notes         : at most THREE lines of side-info that are NOT actions — one
                           sentence each, under 25 words. A caveat, who to contact, context
                           that changes what the deadline means. Phone numbers and URLs
                           welcome. Anything belonging to one step goes in that step's
-                          detail, not here. [] if none — most documents need none.
+                          detail, not here. Each note must say something the others do
+                          not: "pay by the 11th or a $10 penalty is added" and "paying
+                          before the deadline avoids the $10 penalty" are ONE note, not
+                          two. Prefer one good note to three overlapping ones.
+                          [] if none — most documents need none.
           siteURL       : a relevant URL if the document names one, else null
           repeats       : one of "monthly", "yearly", "every:N" (N = days), or null. Set a
                           cadence ONLY for a bill/charge that genuinely repeats on a schedule

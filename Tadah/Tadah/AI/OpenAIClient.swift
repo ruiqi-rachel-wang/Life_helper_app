@@ -5,12 +5,16 @@
 //  REASONING — explain *why* they got this, find the root cause, and give
 //  conditional next steps — not just field extraction.
 //
-//  COST: ~$0.005/scan (was ~$0.003 before per-step detail; ~$0.02 on gpt-4o).
-//  The system prompt dominates the INPUT side — it is now ~4,950 tokens, and it
-//  is sent in full on every scan whatever the document is. The OUTPUT side grew
-//  when `stepDetails` was added on 2026-08-20: the model now writes an
-//  explanation, links and a mini-checklist per step, so budget roughly 1,200-2,500
-//  output tokens (hidden reasoning tokens are billed at the output rate too).
+//  COST/SPEED, measured 2026-08-31 against the live Worker (median of 4 runs on a
+//  one-page parking ticket), not estimated:
+//    in ~3,480 · out ~1,380 (of which ~540 hidden reasoning) · ~18.5s end to end.
+//  Before that day's fixes the SAME document was in ~3,230 · out ~3,400
+//  (~2,620 reasoning) · ~38s — because `reasoning_effort` never reached OpenAI
+//  (see the note in `make` below) so gpt-5-mini ran at its default effort.
+//  Latency here is essentially OUTPUT tokens: they are generated serially, and
+//  hidden reasoning tokens cost both the wall-clock and the output-rate billing.
+//  So the lever on a slow scan is always "what is the model writing", never the
+//  prompt length — input is prefilled in parallel and is comparatively free.
 //  Affordable because scans+guides are rate-limited (see ScanQuota: free 10/day
 //  and 20 per 30 days; Plus 60/day and 300 per 30 days), which caps the worst
 //  case at a few cents per free user per month.
@@ -156,6 +160,12 @@ private nonisolated struct ChatRequest: Encodable {
         // need, a long think truncates the answer and we get badJSON. "low"
         // effort keeps both the cost and that headroom small — this is field
         // extraction, not a math olympiad.
+        //
+        // ⚠️ Only takes effect if the Worker forwards it. It rebuilds the request
+        // from an allow-list (worker.js, buildChatBody), and this field was missing
+        // from that list between 2026-08-09 and the fix — so every scan silently ran
+        // at the model's DEFAULT effort. Any parameter added here must be added there
+        // too, or it does nothing in TestFlight while working fine in dev.
         let cap = reasoning ? visibleTokens + 2000 : visibleTokens
         return ChatRequest(
             model: model,
@@ -332,22 +342,17 @@ nonisolated enum ExtractionJSON {
                     let label = text(l["label"])
                     return StepLink(label: label.isEmpty ? url : label, url: url)
                 } ?? []
-                // `fields` are prompts for the USER to fill in, so only the label
-                // comes from the model. Accepts a bare string too — the model
-                // reaches for ["Confirmation number"] about as often as [{...}].
-                let fields: [SavedField] = (o["fields"] as? [Any])?.compactMap { item in
-                    let label: String
-                    if let s = item as? String { label = text(s) }
-                    else if let o = item as? [String: Any] { label = text(o["label"]) }
-                    else { return nil }
-                    return label.isEmpty ? nil : SavedField(label: label)
-                } ?? []
+                // NO `fields` here on purpose. A scan does not fill the per-step
+                // "save this value" slots: nothing in the app renders them, the
+                // scan prompt does not ask for them, and a step detail is where
+                // something goes when it will not fit on the step line — not a
+                // place to invent a form. SavedField stays on the model for the
+                // guide-authored case; it is simply never produced from a scan.
                 let d = StepDetail(explanation: text(o["explanation"]),
                                    miniChecklist: strings(o["miniChecklist"]),
                                    links: links,
                                    script: text(o["script"]),
-                                   needed: strings(o["needed"]),
-                                   fields: fields)
+                                   needed: strings(o["needed"]))
                 if !d.isEmpty { detail = d; foundAny = true }
             }
             built.append(ChecklistStep(text: step, detail: detail))
