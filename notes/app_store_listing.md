@@ -61,7 +61,7 @@ An optional subscription that raises the scan and to-do limits, gives each perso
 
 Tadah organizes and explains documents. It is not legal, tax, medical, or immigration advice.
 
-Terms of Use: https://tadah-legal.pages.dev/terms
+Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Privacy Policy: https://tadah-legal.pages.dev/privacy
 ```
 
@@ -72,10 +72,19 @@ Privacy Policy: https://tadah-legal.pages.dev/privacy
 > functional link to the Terms of Use (EULA) in the app metadata that appears on
 > the app's App Store product page.
 
-Apple requires the EULA link in the metadata a customer sees on the product page.
-The Privacy Policy has its own ASC field; the Terms of Use does NOT, so unless you
-upload a custom EULA under App Information → License Agreement, it has to be a
-literal link in the DESCRIPTION. Do not remove these lines.
+Apple's message names exactly two compliant routes:
+  • standard Apple EULA  → link it in the DESCRIPTION  ← what we do
+  • a CUSTOM EULA        → upload the text in App Store Connect (App Information
+                           → License Agreement). Merely linking your own terms
+                           from the description is NOT one of the two routes.
+
+Use APPLE'S url, not tadah-legal.pages.dev/terms. Two reasons: it is the link
+Apple's own rejection message points at, and our Terms of Service mentions
+"subscription" zero times — §10 defers to Apple's EULA anyway, so Apple's is the
+document that actually covers renewal, cancellation and refunds.
+
+The app's own paywall still links to tadah-legal.pages.dev/terms. That is fine and
+separate: this is about the App Store product page. Do not remove these lines.
 *(~1,950 — well inside the limit, and the last line matters: it is the same
 disclaimer the app shows, and reviewers look for it on an app in these categories.)*
 
