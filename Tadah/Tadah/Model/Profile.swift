@@ -9,7 +9,7 @@
 //  there's no invite flow, no per-profile auth, and no cross-account permissions.
 //  A profile is a label on data, not a security boundary — everyone signed into the
 //  account can see every profile. That's the tradeoff of the shared-account model
-//  (decided 2026-08-07); per-member logins are in notes/later_ideas.md.
+//  (decided 2026-08-07); per-member logins are in notes/roadmap.md, "Not doing".
 //
 //  Caps (decided 2026-08-05): Free = 1 profile, Tadah Plus = 8. Profiles and
 //  devices are counted independently — any profile can be open on any device.
@@ -63,7 +63,7 @@ final class Profile {
         // "You" beats "Unnamed" — it's true, and it's friendlier than being told
         // the app doesn't know who you are. This is reachable on a first sign-in,
         // where the Apple display name arrives a launch after the profile is
-        // created (see later_ideas §8f).
+        // created.
         return String(localized: isOwner ? "You" : "Unnamed")
     }
 

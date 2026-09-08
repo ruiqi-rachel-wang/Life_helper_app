@@ -4,7 +4,7 @@
 // lived: cursor paging that silently dropped rows, validation that let hostile
 // ids through, and the request shaping that bounds what reaches OpenAI. Routing
 // and D1 behaviour need `wrangler dev` / a real binding and are verified by the
-// live probes recorded in testflight_build4_notes.md.
+// live probes recorded in the build-4 notes (deleted 2026-09-04; in git history).
 
 import test from "node:test";
 import assert from "node:assert/strict";

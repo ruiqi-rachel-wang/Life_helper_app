@@ -4,17 +4,17 @@ Working documents. Nothing here is compiled or deployed.
 
 | File | What it is |
 | --- | --- |
-| `release_1.0_checklist.md` | **Start here.** Every step left before submitting. |
+| `release_1.0_checklist.md` | **Start here.** Every step left to get build 5 through App Review. |
+| `roadmap.md` | **What's next.** Fixes, updates, new features, in order. |
+| `how_tadah_is_built.md` | **What exists.** Stack, folders, Worker routes, limits, the names that must never change. |
 | `app_store_listing.md` | Paste-ready App Store copy + questionnaire answers. |
-| `tadah_plus_setup.md` | Subscription fields + the App Review notes to paste. |
-| `build_plan.md` | **Where the project is.** Architecture + what is built. |
-| `roadmap.md` | **Where it's going.** Next parts, deferred pile, engineering debt. |
-| `photo_sync_plan.md` | Part 7 — photo sync, the next thing after 1.0. |
 | `how_to_view_tester_data.md` | `wrangler d1 execute` queries for the metrics DB. |
+| `sample_documents.md` | Real OCR samples with the ideal extraction, for tuning the scan prompt. |
 
-## `archive/` — history, don't edit
-
-Kept because they explain *why*. Nothing current points at them for instructions.
+Cleaned up 2026-09-04: the old build plan, twenty review-pass logs, the
+translation snapshot, the hackathon plan and the later-ideas piles were folded
+into `roadmap.md` / `how_tadah_is_built.md` or deleted. `git log -- notes/`
+still has every one of them.
 
 ## Not in here, on purpose
 

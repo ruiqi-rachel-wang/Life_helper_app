@@ -3,7 +3,7 @@
 > Written 2026-08-24 for version 1.0. Character limits are Apple's and are
 > checked in the counts below. Nothing here promises a specific usage number —
 > the App Store description is a commitment to the customer, and the limits live
-> in code (see `tadah_plus_setup.md` §A3).
+> in code (see `how_tadah_is_built.md` → Limits).
 
 ---
 
