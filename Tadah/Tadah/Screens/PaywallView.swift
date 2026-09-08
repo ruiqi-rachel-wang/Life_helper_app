@@ -26,6 +26,20 @@
 //  A transient network failure is NOT the same as "not for sale yet", so the two
 //  are distinguished: one offers Try again, the other says coming soon.
 //
+//  ⚠️ WHY A GUEST CAN BUY, AND WHAT THEY SEE AFTERWARDS
+//  Nothing here asks for a Tadah account. It did, from 2026-08-27: the upgrade
+//  buttons opened the sign-in sheet first, on the reasoning that sync and family
+//  profiles need an account anyway. App Review rejected build 5 for that
+//  (guideline 5.1.1, 2026-09-07): a purchase that isn't account-based may not
+//  require registration — an account may only be OFFERED, as the way to use the
+//  purchase on other devices, and must be available to make at any time.
+//
+//  So the purchase goes through on RevenueCat's anonymous id for this install,
+//  and a guest who just bought gets ONE extra screen (`.purchasedAsGuest`) that
+//  says Plus already works and that a free account would add other devices and
+//  family lists — with "Not now" as an equal choice. If they do make one,
+//  PlusStore.identify carries the purchase across to the account.
+//
 //  For local development, `Tadah.storekit` is attached to the scheme's Run action.
 //  It removes the App Store Connect dependency for *buying* — StoreKit resolves
 //  and transacts the product IDs locally — but it does NOT by itself make the real
@@ -55,11 +69,13 @@ struct PaywallView: View {
         case ready                 // a current offering with packages — show the real paywall
         case notForSaleYet         // reached the store, but nothing is on sale
         case couldNotLoad          // transient: network/backend hiccup, worth retrying
+        case purchasedAsGuest      // bought with no account: offer one, never demand it
     }
 
     @State private var phase: Phase = .checking
     @State private var isRestoring = false
     @State private var restoreMessage: String?
+    @State private var showSignIn = false
 
     // Follow the in-app language picker (English / 中文 / Español), not just the
     // phone's language — an ESL user may have an English phone but prefer 中文, and
@@ -83,10 +99,29 @@ struct PaywallView: View {
                 // clashing with this wrapper's name). The close button lets the
                 // user back out; a completed purchase or restore dismisses us.
                 RevenueCatUI.PaywallView(displayCloseButton: true)
-                    .onPurchaseCompleted { _ in dismiss() }
+                    // THE AUTO-RENEWAL DISCLOSURE, guideline 3.1.2 and Schedule 2.
+                    //
+                    // The dashboard paywall states the price, the period, what Plus
+                    // includes, and links Terms and Privacy. It does NOT say the
+                    // subscription renews by itself, what gets charged, or how to
+                    // stop it, and those are required before a purchase. Adding it
+                    // here rather than in the RevenueCat editor means it cannot go
+                    // missing when the paywall is redesigned in the dashboard, and
+                    // it is one less thing that depends on someone remembering.
+                    //
+                    // `safeAreaInset` rather than an overlay: it reserves the space
+                    // so the paywall's own buy button is never covered by it.
+                    .safeAreaInset(edge: .bottom, spacing: 0) { renewalDisclosure }
+                    .onPurchaseCompleted { _ in
+                        // Signed in: done. A guest gets the one screen that
+                        // mentions an account — AFTER the sale, as an offer.
+                        if account.isSignedIn { dismiss() } else { phase = .purchasedAsGuest }
+                    }
                     .onRestoreCompleted { info in
                         if info.entitlements[PlusStore.entitlementID]?.isActive == true { dismiss() }
                     }
+            case .purchasedAsGuest:
+                guestPurchased
             case .notForSaleYet:
                 fallback(
                     title: String(localized: "Tadah Plus is coming soon"),
@@ -103,6 +138,11 @@ struct PaywallView: View {
             }
         }
         .task { await checkAvailability() }
+        // Chosen from the post-purchase screen. Once they're signed in there is
+        // nothing left for this sheet to do, so it closes with the sign-in one.
+        .sheet(isPresented: $showSignIn, onDismiss: {
+            if account.isSignedIn { dismiss() }
+        }) { SignInView() }
         .alert("Restore purchases",
                isPresented: Binding(get: { restoreMessage != nil },
                                     set: { if !$0 { restoreMessage = nil } })) {
@@ -128,16 +168,7 @@ struct PaywallView: View {
         ZStack(alignment: .top) {
             Color.paper.ignoresSafeArea()
             VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill").font(.system(size: 28))
-                            .foregroundStyle(Color.faint)
-                    }
-                    .buttonStyle(.plain).accessibilityLabel("Close")
-                }
-                .padding(.top, 8)
-
+                closeBar
                 Spacer()
 
                 VStack(spacing: 14) {
@@ -186,6 +217,82 @@ struct PaywallView: View {
             }
             .padding(.horizontal, 22)
         }
+    }
+
+    // A guest has just paid. This is the ONLY place the app brings up an account
+    // to a buyer, and it comes after the purchase, as an offer with "Not now" as
+    // an equal answer.
+    //
+    // What's true, and what the copy says: Plus is on already — the entitlement
+    // sits on the App Store receipt of this device's Apple ID, which is what
+    // Restore reads on any other device using the same Apple ID. An account adds
+    // the two things a receipt can't carry, the same list on several devices and
+    // family profiles, and it can be made later from the Profile tab.
+    private var guestPurchased: some View {
+        ZStack(alignment: .top) {
+            Color.paper.ignoresSafeArea()
+            VStack(spacing: 0) {
+                closeBar
+                Spacer()
+
+                VStack(spacing: 14) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 34)).foregroundStyle(Color.accent)
+                    Text("You're on Tadah Plus")
+                        .font(.serifTitle).tracking(-0.6).foregroundStyle(Color.ink)
+                        .multilineTextAlignment(.center)
+                    Text("It works right away, with no account. Create a free account whenever you like to use Plus on your other devices and add family members — you'll find it on the Profile tab.")
+                        .font(.body14).foregroundStyle(Color.faded)
+                        .multilineTextAlignment(.center).lineSpacing(3)
+                }
+                .padding(.horizontal, 28)
+
+                Spacer()
+
+                VStack(spacing: 14) {
+                    Button { showSignIn = true } label: {
+                        Text("Create a free account").font(.body14.weight(.semibold))
+                            .foregroundStyle(Color.paper)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.ink))
+                    }
+                    .buttonStyle(.plain)
+                    Button("Not now") { dismiss() }
+                        .font(.body14.weight(.semibold)).foregroundStyle(Color.faded)
+                }
+                .padding(.bottom, 28)
+            }
+            .padding(.horizontal, 22)
+        }
+    }
+
+    // Deliberately plain and quiet: it is required text, not a selling point, and
+    // it sits under the buy button where Apple looks for it.
+    private var renewalDisclosure: some View {
+        Text("Payment is charged to your Apple Account at confirmation of purchase. Your subscription renews automatically unless you turn off auto-renew at least 24 hours before the end of the period. You can manage or cancel it in your App Store settings.")
+            .font(.system(size: 11))
+            .foregroundStyle(Color.faded)
+            .multilineTextAlignment(.center)
+            .lineSpacing(1)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity)
+            .background(Color.paper)
+    }
+
+    private var closeBar: some View {
+        HStack {
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark.circle.fill").font(.system(size: 28))
+                    .foregroundStyle(Color.faint)
+            }
+            .buttonStyle(.plain).accessibilityLabel("Close")
+        }
+        .padding(.top, 8)
     }
 
     // MARK: - actions

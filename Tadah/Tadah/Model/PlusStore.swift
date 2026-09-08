@@ -166,6 +166,34 @@ final class PlusStore {
         }
     }
 
+    // TIE THIS DEVICE TO A TADAH ACCOUNT — and bring a guest's purchase with it.
+    //
+    // Buying Plus never needs an account (App Review, guideline 5.1.1, 2026-09-07),
+    // so a normal order of events is: buy as a guest, on RevenueCat's anonymous
+    // id for this install, and sign in later for the family and multi-device
+    // half of what Plus sells. `logIn` handles the common case by itself — an
+    // anonymous id signing in to a BRAND-NEW account is aliased to it, and the
+    // subscription comes along.
+    //
+    // It does NOT handle signing in to an account that already exists. Every
+    // Tadah account already carries an anonymous alias from the install that
+    // created it, and that is exactly the case RevenueCat documents as "no merge,
+    // no transfer". The guest's subscription then stays on the old anonymous id,
+    // and this phone would LOSE Plus by signing in — the worst possible reward for
+    // making an account. So when the device was Plus a moment ago and the account
+    // isn't, post the receipt again under the account id: with the project's
+    // restore behaviour (Transfer to new App User ID, RevenueCat's default) the
+    // subscription moves to the account, where the Worker's tier check can see
+    // it. ⚠️ Do not switch that setting to "Keep with original App User ID" — it
+    // makes this exact step fail with an error.
+    func identify(as accountUserID: String) async {
+        let hadPlusAsGuest = tierKnown && isPlus
+        guard let result = try? await Purchases.shared.logIn(accountUserID) else { return }
+        apply(result.customerInfo)
+        guard hadPlusAsGuest, !isPlus else { return }
+        if let restored = try? await Purchases.shared.restorePurchases() { apply(restored) }
+    }
+
     // Live updates: RevenueCat pushes a new CustomerInfo whenever entitlements
     // change (purchase, renewal, expiry), so the UI reacts on its own.
     private func listenForChanges() async {

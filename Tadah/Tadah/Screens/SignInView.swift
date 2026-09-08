@@ -24,7 +24,6 @@
 
 import SwiftUI
 import SwiftData
-import RevenueCat
 
 struct SignInView: View {
     private enum Phase: Equatable {
@@ -44,6 +43,7 @@ struct SignInView: View {
     }
 
     @Environment(AccountStore.self) private var account
+    @Environment(PlusStore.self) private var plus
     @Environment(SyncCoordinator.self) private var sync
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -238,7 +238,10 @@ struct SignInView: View {
             // RevenueCat is identified with OUR account id now, not an Apple `sub`
             // — the Worker asks RevenueCat about this same id when it checks the
             // tier, so the two must agree or a paying user gets free-tier limits.
-            _ = try? await Purchases.shared.logIn(session.userID)
+            // PlusStore also carries a subscription bought BEFORE this account
+            // existed across to it: buying never needs an account (guideline
+            // 5.1.1), so "paid first, signed up later" is a normal order now.
+            await plus.identify(as: session.userID)
 
             // `.email` provider — the enum already had the case waiting.
             account.signIn(Account(userID: session.userID, provider: .email,

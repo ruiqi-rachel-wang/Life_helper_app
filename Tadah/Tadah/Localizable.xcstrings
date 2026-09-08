@@ -9959,6 +9959,23 @@
         }
       }
     },
+    "It works right away, with no account. Create a free account whenever you like to use Plus on your other devices and add family members — you'll find it on the Profile tab.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funciona de inmediato, sin cuenta. Crea una cuenta gratis cuando quieras para usar Plus en tus otros dispositivos y agregar familiares; la encontrarás en la pestaña Perfil."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需账户，立即可用。随时创建免费账户，即可在你的其他设备上使用 Plus 并添加家庭成员——在“我的”标签页即可找到。"
+          }
+        }
+      }
+    },
     "Item": {
       "extractionState": "manual",
       "localizations": {
@@ -10960,6 +10977,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "月度维护费（以及如何免除）。"
+          }
+        }
+      }
+    },
+    "More scans and a bigger to-do list, no account needed. Add a free account any time to use Plus on your other devices and add family members.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más escaneos y una lista de tareas más grande, sin necesidad de cuenta. Añade una cuenta gratis cuando quieras para usar Plus en tus otros dispositivos y agregar familiares."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更多扫描次数和更大的待办清单，无需账户。随时添加免费账户，即可在你的其他设备上使用 Plus 并添加家庭成员。"
           }
         }
       }
@@ -13211,6 +13245,23 @@
         }
       }
     },
+    "Payment is charged to your Apple Account at confirmation of purchase. Your subscription renews automatically unless you turn off auto-renew at least 24 hours before the end of the period. You can manage or cancel it in your App Store settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El pago se cargará a tu cuenta de Apple al confirmar la compra. Tu suscripción se renueva automáticamente a menos que desactives la renovación automática al menos 24 horas antes de que termine el periodo. Puedes gestionarla o cancelarla en los ajustes del App Store."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认购买后将从你的 Apple 账户扣款。除非在当前订阅期结束前至少 24 小时关闭自动续期，否则订阅将自动续期。你可以在 App Store 设置中管理或取消订阅。"
+          }
+        }
+      }
+    },
     "Personal": {
       "localizations": {
         "es": {
@@ -13511,6 +13562,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "请检查网络连接后重试。"
+          }
+        }
+      }
+    },
+    "Plus already works on this phone. An account adds your other devices and family.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus ya funciona en este teléfono. Una cuenta añade tus otros dispositivos y a tu familia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus 已在这台手机上生效。创建账户即可添加你的其他设备和家庭成员。"
           }
         }
       }
@@ -16317,22 +16385,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "登录以备份你的事项。"
-          }
-        }
-      }
-    },
-    "Sign in to see your membership.": {
-      "localizations": {
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inicia sesión para ver tu suscripción."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录后可查看你的会员信息。"
           }
         }
       }
@@ -19238,6 +19290,23 @@
         }
       }
     },
+    "Use Plus on your other devices": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa Plus en tus otros dispositivos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在你的其他设备上使用 Plus"
+          }
+        }
+      }
+    },
     "Use Tadah on all your devices, in sync.": {
       "extractionState": "manual",
       "localizations": {
@@ -20577,6 +20646,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "你在另一台设备上登录了。免费账户一次只能在一台设备上使用。升级 Tadah Plus 可同时使用多台设备。你的待办事项仍保存在此设备上。"
+          }
+        }
+      }
+    },
+    "You're on Tadah Plus": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya tienes Tadah Plus"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已开通 Tadah Plus"
           }
         }
       }

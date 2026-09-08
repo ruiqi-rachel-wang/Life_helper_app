@@ -31,8 +31,6 @@ struct CreateView: View {
     @Environment(TourGuide.self) private var tourGuide
     @Environment(AppRouter.self) private var router
     @Environment(PlusStore.self) private var plus
-    @Environment(AccountStore.self) private var account
-    @State private var showSignInForPlus = false
     @AppStorage(ExplainLanguage.storageKey) private var explainLanguageRaw = ""
     @State private var showCamera = false
     @State private var showPhotoPicker = false
@@ -201,21 +199,13 @@ struct CreateView: View {
             }
             Button("OK", role: .cancel) {}
         } message: { Text(quotaMessage ?? "") }
+        // Straight to the paywall, signed in or not. Buying used to start with a
+        // sign-in sheet (2026-08-27), and App Review rejected build 5 for exactly
+        // that (guideline 5.1.1, 2026-09-07): a subscription that isn't tied to
+        // an account may not require registration. The account is offered AFTER
+        // a purchase instead — see PaywallView — as the way to use Plus on other
+        // devices and to add family members.
         .sheet(isPresented: $showPaywall) { PaywallView() }
-        // PLUS BELONGS TO A TADAH ACCOUNT, so buying starts with having one.
-        //
-        // Apple charges an Apple ID, and that is the only thing Apple records. If
-        // the purchase happens with nobody signed in there is no account to attach
-        // it to, and Plus ends up owned by a temporary anonymous identity — which
-        // is how a subscription came to be showing on a signed-out phone. Two of
-        // the three things Plus sells (sync, family profiles) cannot work without
-        // an account anyway, so someone buying signed-out is paying for something
-        // they then cannot use.
-        //
-        // Restore is unaffected: it lives on the paywall and in the account page.
-        .sheet(isPresented: $showSignInForPlus, onDismiss: {
-            if account.isSignedIn { showPaywall = true }   // signed in just now → carry on
-        }) { SignInView() }
         // Asked once, at the first scan or upload. Agreeing resumes the way in
         // the user actually chose, so the tap isn't wasted; declining returns to
         // the Add screen with everything else still working.
@@ -315,10 +305,8 @@ struct CreateView: View {
         }
     }
 
-    // Signed in → the paywall. Signed out → an account first, then the paywall.
-    private func startUpgrade() {
-        if account.isSignedIn { showPaywall = true } else { showSignInForPlus = true }
-    }
+    // The paywall, with or without an account (guideline 5.1.1 — see the sheet).
+    private func startUpgrade() { showPaywall = true }
 
 }
 
@@ -371,8 +359,6 @@ private struct CreateForm: View {
     @Environment(AppRouter.self) private var router
     @Environment(TourGuide.self) private var tourGuide
     @Environment(PlusStore.self) private var plus
-    @Environment(AccountStore.self) private var account
-    @State private var showSignInForPlus = false
     @Environment(ProfileStore.self) private var profiles
 
     @State private var title = ""
@@ -460,21 +446,13 @@ private struct CreateForm: View {
             }
             Button("OK", role: .cancel) {}
         } message: { Text(limitMessage ?? "") }
+        // Straight to the paywall, signed in or not. Buying used to start with a
+        // sign-in sheet (2026-08-27), and App Review rejected build 5 for exactly
+        // that (guideline 5.1.1, 2026-09-07): a subscription that isn't tied to
+        // an account may not require registration. The account is offered AFTER
+        // a purchase instead — see PaywallView — as the way to use Plus on other
+        // devices and to add family members.
         .sheet(isPresented: $showPaywall) { PaywallView() }
-        // PLUS BELONGS TO A TADAH ACCOUNT, so buying starts with having one.
-        //
-        // Apple charges an Apple ID, and that is the only thing Apple records. If
-        // the purchase happens with nobody signed in there is no account to attach
-        // it to, and Plus ends up owned by a temporary anonymous identity — which
-        // is how a subscription came to be showing on a signed-out phone. Two of
-        // the three things Plus sells (sync, family profiles) cannot work without
-        // an account anyway, so someone buying signed-out is paying for something
-        // they then cannot use.
-        //
-        // Restore is unaffected: it lives on the paywall and in the account page.
-        .sheet(isPresented: $showSignInForPlus, onDismiss: {
-            if account.isSignedIn { showPaywall = true }   // signed in just now → carry on
-        }) { SignInView() }
     }
 
     // MARK: header
@@ -753,10 +731,8 @@ private struct CreateForm: View {
         .disabled(!canSave)
     }
 
-    // Signed in → the paywall. Signed out → an account first, then the paywall.
-    private func startUpgrade() {
-        if account.isSignedIn { showPaywall = true } else { showSignInForPlus = true }
-    }
+    // The paywall, with or without an account (guideline 5.1.1 — see the sheet).
+    private func startUpgrade() { showPaywall = true }
 
     private func save() {
         if let reason = TaskLimit.blockedReason(context, plus: plus.paidFeaturesUnlocked,

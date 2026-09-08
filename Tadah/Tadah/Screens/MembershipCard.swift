@@ -15,6 +15,13 @@
 //  can buy Plus without ever making an account — and until 2026-08-17 those
 //  buyers had no route to their own subscription anywhere in the app.
 //
+//  That "without an account" is not optional. Between 2026-08-27 and 2026-09-07
+//  buying required a sign-in and the guest Profile hid this card; App Review
+//  rejected build 5 for it (guideline 5.1.1 — registration may only be offered
+//  for a purchase that isn't account-based, never required). The guest card is
+//  back, and it carries the UPGRADE row too (`onUpgrade`), since it is the one
+//  place a signed-out person can start a subscription.
+//
 
 import SwiftUI
 import StoreKit
@@ -28,6 +35,12 @@ struct MembershipCard: View {
     @Environment(\.openURL) private var openURL
     @State private var isRestoring = false
     @State private var restoreMessage: String?
+
+    // Where "UPGRADE" should go, if this card is the place to offer it. The guest
+    // card on Profile passes the paywall; Account Details passes nothing, because
+    // the account card above it already carries the row for signed-in users, and
+    // two UPGRADE buttons a screen apart would look like a mistake.
+    var onUpgrade: (() -> Void)? = nil
 
     var body: some View {
         membershipCard
@@ -71,6 +84,16 @@ struct MembershipCard: View {
                     Spacer(minLength: 8)
                 }
                 .padding(.vertical, 12)
+
+                // THE WAY TO BUY, for whoever has nothing active. A guest is told
+                // in the subtitle that no account is needed and what one would
+                // add — guideline 5.1.1's "you may register at any time to extend
+                // access to more devices", said where the purchase starts.
+                if let onUpgrade, canUpgrade {
+                    divider
+                    PlusUpgradeRow(subtitle: "More scans and a bigger to-do list, no account needed. Add a free account any time to use Plus on your other devices and add family members.",
+                                   topPadding: 12, bottomPadding: 12, action: onUpgrade)
+                }
 
                 if plus.membership != nil {
                     divider
@@ -127,6 +150,26 @@ struct MembershipCard: View {
                         .padding(.bottom, 12)
                 }
             }
+        }
+    }
+
+    // Hide the row ONLY when we positively know there is an active subscription.
+    //
+    // `.unknown` deliberately shows it. The opposite reading is tempting — don't
+    // pitch an upgrade before RevenueCat has answered — but this card is the one
+    // place a signed-out person can buy, and our own review notes tell App Review
+    // to "open the Profile tab and tap UPGRADE". A first launch with no network
+    // leaves the tier unknown indefinitely, and a reviewer who finds no purchase
+    // button there writes the SAME 5.1.1 rejection again. The cost of the other
+    // mistake is a Plus guest seeing "UPGRADE" for the moment before the cached
+    // CustomerInfo lands. That trade is not close.
+    //
+    // An EXPIRED subscription counts too: the row is how a lapsed member restarts.
+    private var canUpgrade: Bool {
+        switch plus.membershipState {
+        case .unknown:               return true
+        case .free:                  return true
+        case .subscribed(let m):     return !m.isActive
         }
     }
 

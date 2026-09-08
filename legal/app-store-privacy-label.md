@@ -7,6 +7,9 @@
 > devices**; and **Tadah Plus subscriptions billed by Apple via RevenueCat**.
 > Re-check before each submission.
 >
+> **⚠️ Corrected 2026-09-07:** §2 now says LINKED, matching
+> `Tadah/PrivacyInfo.xcprivacy`. See the warning in §2.
+>
 > **⚠️ Rewritten 2026-08-15 for email + password.** Sign in with Apple is gone
 > (it authenticated the device's Apple ID, so a family member could never reach a
 > shared account). Earlier revisions of this file argued with themselves — the
@@ -30,7 +33,7 @@ declare User Content as below.
 
 **Recommended declaration** (accurate + deliberately over-inclusive). Because a scanned
 document's recognized text is sent off-device to OpenAI and can contain almost anything,
-declare each of these as **Collected · purpose: App Functionality · NOT linked to
+declare each of these as **Collected · purpose: App Functionality · LINKED to
 identity · NOT used for tracking**:
 
 - **Other User Content** — the recognized text of scanned documents.
@@ -38,6 +41,16 @@ identity · NOT used for tracking**:
 - **Health & Fitness** — e.g. medical bills or appointment notes.
 - **Financial Info** — e.g. bank, tax, or billing statements.
 - **Sensitive Info** — e.g. immigration or legal documents.
+
+> ⚠️ **These say LINKED, corrected 2026-09-07.** This section used to say "NOT
+> linked", and §2.5 below then said to declare a linked instance as well — so the
+> file contradicted itself, and anyone filling in the form from the top answered
+> "not linked" and stopped. **`Tadah/PrivacyInfo.xcprivacy` declares all five as
+> `Linked = true`**, Apple cross-checks the label against the shipped manifest,
+> and that mismatch is the release checklist's #1 ranked rejection risk. The
+> manifest is right: once a user signs in, the saved item is stored under their
+> account, which is Apple's definition of linked. App Store Connect takes one
+> answer per data type, so the linked answer is the only honest one.
 
 > Why declare so much: Apple judges collection by the data's *nature*, not the field you
 > ask for. OCR text can include all of the above and it **leaves the device** (OpenAI may
@@ -103,7 +116,7 @@ data is **Linked to You**, and the label must say so. Declare:
 > **Passwords are NOT collected.** The phone derives an unreadable verifier and the
 > raw password never leaves the device, so there is nothing to declare for it under
 > Contact Info or Sensitive Info.
-- **Other User Content** — also declare a **LINKED** instance for signed-in backup:
+- **Other User Content** — already declared LINKED in §2 above, for this reason:
   the item's title, amount, due date, notes, checklist steps, and any reference numbers
   the user saves are stored on our backend under that User ID. Same for the
   **Contact Info / Financial Info / Health / Sensitive Info** categories above, since an
@@ -112,10 +125,10 @@ data is **Linked to You**, and the label must say so. Declare:
   used for tracking. (Tadah Plus subscription status, via Apple's App Store and
   RevenueCat.)
 
-> How to express this in App Store Connect: a data type can be declared twice — once
-> **not linked** (the anonymous, signed-out paths) and once **linked** (the signed-in
-> account). If the form makes that awkward, declare the **linked** version — it is the
-> stronger, safer statement.
+> How to express this in App Store Connect: answer **linked** for each of these
+> types. The form takes one answer per data type, the shipped privacy manifest
+> says linked, and the two must agree. Do not try to split a type into a linked
+> and an unlinked instance — that is what made this file contradict itself.
 >
 **Family profiles (added 2026-08-08).** Tadah Plus lets a user add profiles for family
 members. Each profile stores **a name they type and a colour** — nothing else, no contact

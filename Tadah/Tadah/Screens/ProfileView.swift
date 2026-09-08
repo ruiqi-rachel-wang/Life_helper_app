@@ -190,9 +190,26 @@ struct ProfileView: View {
             card {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("No account").font(.cardTitle).foregroundStyle(Color.ink)
-                        Text("Sign in to keep your items backed up.")
-                            .font(.subline).foregroundStyle(Color.faded)
+                        // A GUEST WHO ALREADY PAYS MUST NOT BE TOLD THEY HAVE
+                        // NOTHING. "No account" is accurate for a free guest, but
+                        // to someone who just bought Plus it frames the absence of
+                        // an account as a fault — an error state at the one moment
+                        // they should feel good about paying. So for them the card
+                        // names what an account ADDS instead: other devices and
+                        // family lists, which is also the "register at any time to
+                        // extend access to more devices" that guideline 5.1.1 asks
+                        // an app to offer. (Rachel chose this over reframing both
+                        // states, 2026-09-08.)
+                        Text(plus.isPlus
+                             ? String(localized: "Use Plus on your other devices")
+                             : String(localized: "No account"))
+                            .font(.cardTitle).foregroundStyle(Color.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(plus.isPlus
+                             ? String(localized: "Plus already works on this phone. An account adds your other devices and family.")
+                             : String(localized: "Sign in to keep your items backed up."))
+                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Button { showSignIn = true } label: {
                         Text("Create a free account").font(.body14.weight(.semibold))
@@ -204,28 +221,19 @@ struct ProfileView: View {
                     .buttonStyle(.plain)
                 }
             }
-            // PLUS BELONGS TO A TADAH ACCOUNT (decided 2026-08-27), so a
-            // signed-out phone has no membership to show and says exactly that.
+            // The full membership card, the same one Account Details shows: plan,
+            // renewal date, Manage, Restore — and the UPGRADE row, which is the
+            // thing App Review could not find on build 5.
             //
-            // It used to render the full MembershipCard here — plan, renewal date,
-            // Restore — on the reasoning that Plus could be bought signed out.
-            // Buying now requires an account (see CreateView.startUpgrade), which
-            // removes the case that justified it and removes the bug it caused:
-            // the card kept showing the DEPARTED user's plan to whoever held the
-            // phone next.
-            //
-            // Restore has not gone anywhere. It lives on the paywall and on the
-            // account page, both of which are reachable once signed in, which is
-            // all Apple requires.
-            card {
-                VStack(alignment: .leading, spacing: 6) {
-                    sectionHeader("MEMBERSHIP")
-                    Text("Sign in to see your membership.")
-                        .font(.body14).foregroundStyle(Color.faded)
-                        .padding(.vertical, 6)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            // From 2026-08-27 to 2026-09-07 this card said "Sign in to see your
+            // membership", because buying Plus required an account. Apple rejected
+            // build 5 for that under guideline 5.1.1: a subscription that isn't
+            // account-based may not demand registration, and an account may only
+            // be OFFERED, as the way to use the purchase on other devices. So a
+            // guest buys, sees and restores Plus right here. The bug that once
+            // justified hiding the card — the departed user's plan lingering on a
+            // signed-out phone — is handled by PlusStore.forgetSignedOutUser.
+            MembershipCard(onUpgrade: { showPaywall = true })
         }
     }
 
@@ -392,31 +400,18 @@ struct ProfileView: View {
             }
             .buttonStyle(.plain)
         } else {
-            Button { showPaywall = true } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "sparkles").font(.system(size: 17)).foregroundStyle(Color.accent)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Tadah Plus").font(.body14.weight(.semibold)).foregroundStyle(Color.ink)
-                        // A little more on what Plus unlocks (Rachel's ask).
-                        // NOT "share tasks" — that implies your mum signs in with her
-                        // own Apple ID and you share between accounts, which is a
-                        // different product (later_ideas §6). What Plus actually
-                        // buys is separate lists on ONE account.
-                        Text("Add family members, keep a separate list for each person, and use Tadah on more than one device.")
-                            .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 8)
-                    Text("UPGRADE")
-                        .font(.eyebrow).tracking(0.8).foregroundStyle(Color.accent)
-                        .padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(Capsule().fill(Color.accent.opacity(0.12)))
-                }
-                .padding(.top, 14)
-                .contentShape(Rectangle())
+            // The shared row (Components/PlusUpgradeRow) — the guest's membership
+            // card shows the same one, so "open Profile and tap UPGRADE" holds
+            // with or without an account.
+            //
+            // Subtitle: a little more on what Plus unlocks (Rachel's ask). NOT
+            // "share tasks" — that implies your mum signs in with her own Apple ID
+            // and you share between accounts, which is a different product
+            // (roadmap.md, "Not doing"). What Plus actually buys is separate lists
+            // on ONE account.
+            PlusUpgradeRow(subtitle: "Add family members, keep a separate list for each person, and use Tadah on more than one device.") {
+                showPaywall = true
             }
-            .buttonStyle(.plain)
         }
     }
 
