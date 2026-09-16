@@ -25,7 +25,7 @@ struct SignInFailureTests {
     }
 
     private func session(_ userID: String, token: String) -> AuthService.Session {
-        AuthService.Session(token: token, userID: userID, plus: false, verified: false, hasServerData: false)
+        AuthService.Session(token: token, userID: userID, plus: false, hasServerData: false)
     }
 
     // A coordinator that was never `configure`d has no ProfileStore, so

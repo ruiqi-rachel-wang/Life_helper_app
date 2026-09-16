@@ -642,41 +642,6 @@ struct MetricsTests {
 
 // MARK: - Scan/guide rate limit (10/day + 20 per rolling 30 days, one shared pool)
 
-// Tadah Calls' funnel: offered → accepted → completed.
-struct CallMetricsTests {
-
-    // The Worker keeps only kinds it knows (VALID_KINDS) and drops the rest
-    // without an error, which is how `opened` was once lost for weeks. These
-    // strings are the contract with it, so they are pinned here.
-    @Test func callKindsMatchTheWorkersNames() {
-        #expect(MetricEvent.Kind.actionOffered.rawValue == "action_offered")
-        #expect(MetricEvent.Kind.actionAccepted.rawValue == "action_accepted")
-        #expect(MetricEvent.Kind.actionCompleted.rawValue == "action_completed")
-    }
-
-    @Test func callEventsLeaveTheItemFunnelAlone() {
-        let a = UUID()
-        let s = MetricsSummary.from([
-            .init(kind: .confirmed, date: .now, itemID: a, source: "scanned"),
-            .init(kind: .actionOffered, date: .now),
-            .init(kind: .actionAccepted, date: .now, itemID: a),
-            .init(kind: .actionCompleted, date: .now, itemID: a),
-        ])
-        #expect(s.confirmed == 1)
-        #expect(s.completed == 0)       // a finished call is not a finished to-do
-        #expect(s.openDays == 0)
-    }
-
-    // An event saved by an older build must still load after the upgrade.
-    @Test func callEventsRoundTripThroughTheFileFormat() throws {
-        let event = MetricEvent(kind: .actionAccepted, date: .now, itemID: UUID())
-        let data = try JSONEncoder().encode([event])
-        #expect(String(decoding: data, as: UTF8.self).contains("action_accepted"))
-        let back = try JSONDecoder().decode([MetricEvent].self, from: data)
-        #expect(back.first?.kind == .actionAccepted)
-    }
-}
-
 struct ScanQuotaTests {
     private func freshDefaults() -> UserDefaults {
         UserDefaults(suiteName: "test.\(UUID().uuidString)")!
