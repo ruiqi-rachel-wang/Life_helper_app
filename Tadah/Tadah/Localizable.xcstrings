@@ -21666,6 +21666,7 @@
       }
     },
     "What was said is kept for 30 days so you can check it, then deleted. The call is never recorded as audio." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
