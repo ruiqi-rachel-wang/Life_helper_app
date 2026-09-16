@@ -63,6 +63,8 @@ struct ReviewView: View {
     @State private var callController = CallController()
     @State private var showCallConfirm = false
     @State private var showVerifyEmail = false
+    // Once per Review screen, however often the card re-renders.
+    @State private var loggedCallOffer = false
     @State private var callItem: ActionItem?
 
     // Focus for rows appended by the "Add a …" buttons — see DetailView.Field.
@@ -322,6 +324,11 @@ struct ReviewView: View {
                     CallCard(offer: offer, controller: callController,
                              onSetUp: { showCallConfirm = true },
                              onVerify: { showVerifyEmail = true })
+                    .onAppear {
+                        guard !loggedCallOffer else { return }
+                        loggedCallOffer = true
+                        Metrics.record(.actionOffered)
+                    }
                 }
             }
             if !draft.notes.isEmpty || isEditing { card { notesSection } }
@@ -778,6 +785,9 @@ struct ReviewView: View {
             itemID: item.id.uuidString,
             language: explainLanguage.bcp47)
 
+        // Counted when the person says yes, whether or not the call then goes
+        // through: this is the intent the funnel is measuring.
+        Metrics.record(.actionAccepted, itemID: item.id)
         callController.start(request, itemID: item.id, business: offer.business, recoverPlus: {
             // Only runs if the Worker said "Plus required". It asks RevenueCat
             // about THIS ACCOUNT's id, so a subscription still filed under a
@@ -788,6 +798,7 @@ struct ReviewView: View {
             return await plus.reattachToAccount(userID)
         }) { record in
             CallHistory.save(record, for: item.id)
+            if !record.didFail { Metrics.record(.actionCompleted, itemID: item.id) }
         }
     }
 

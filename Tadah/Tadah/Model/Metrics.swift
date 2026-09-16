@@ -20,7 +20,17 @@ nonisolated struct MetricEvent: Codable, Equatable {
     // `opened` is DELIBERATELY DIFFERENT from the other two. They describe a
     // to-do; this one describes the person, which is the whole reason it needs
     // care — see Metrics.recordAppOpen for what is and isn't recorded.
-    enum Kind: String, Codable { case confirmed, completed, opened }
+    //
+    // The three `action_*` kinds are Tadah Calls' funnel — offered → accepted →
+    // completed — and answer the one question the feature has to answer: does
+    // anyone actually let Tadah make the call? Like the others they carry no
+    // content: never the number, the question, or what was said.
+    enum Kind: String, Codable {
+        case confirmed, completed, opened
+        case actionOffered = "action_offered"
+        case actionAccepted = "action_accepted"
+        case actionCompleted = "action_completed"
+    }
     var id = UUID()         // stable per-event id; the backend de-dupes uploads on it
     var kind: Kind
     var date: Date
@@ -82,6 +92,8 @@ nonisolated struct MetricsSummary: Equatable {
                 if !firstOnTime.keys.contains(id) { firstOnTime[id] = e.onTime }
             case .opened:
                 continue   // not about an item; counted separately, below
+            case .actionOffered, .actionAccepted, .actionCompleted:
+                continue   // Calls' own funnel, read on the backend; not part of this one
             }
         }
         var s = MetricsSummary()

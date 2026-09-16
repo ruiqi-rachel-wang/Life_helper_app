@@ -1,15 +1,28 @@
-# Release 1.1 (build 7) — what's left
+# Release 1.1 (build 8) — what's left
 
-Updated 2026-09-16. **Done:** build 7 uploaded; Worker and legal pages deployed;
-a real call tested end to end; the demo account `support.tadah@gmail.com` is
-verified and has Plus. Everything below is still to do, in order.
+Updated 2026-09-16. **Done:** a real call tested end to end; Worker deployed; the
+demo account `support.tadah@gmail.com` is verified and has Plus. **Build 8** is
+uploaded and replaces build 7 (it adds the Calls usage events the plan asked
+for). Everything below is still to do, in order.
+
+## 0. Redeploy the legal pages
+
+The privacy policy now lists the call usage events, so publish it again:
+
+```bash
+cd "/Users/rachelwang/Project!/notie_life_helper_app/Tadah/cloudflare-worker"
+export PATH="/usr/local/opt/node@22/bin:$PATH"
+npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main
+```
+
+---
 
 ---
 
 ## 1. App Store Connect — submit 1.1
 
 1. **Add the version.** App Store Connect → Tadah → the **+** next to *iOS App* → **1.1**.
-2. **Build.** Select **build 7** (it appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
+2. **Build.** Select **build 8**, not 7 (it appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
 3. **What's New in This Version** — paste:
 
    ```

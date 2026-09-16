@@ -56,7 +56,10 @@ enum CallWatcher {
                   final.isFinished
             else { return }
 
-            CallHistory.save(CallRecord(final, business: call.business), for: itemID)
+            let record = CallRecord(final, business: call.business)
+            CallHistory.save(record, for: itemID)
+            // The other way a call can finish: after the Review screen was gone.
+            if !record.didFail { Metrics.record(.actionCompleted, itemID: itemID) }
             PendingCall.forget(itemID)
         }
     }
