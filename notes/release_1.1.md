@@ -3,13 +3,10 @@
 Updated 2026-09-16, evening. **Done:** a real call tested end to end; Worker
 deployed; the demo account `support.tadah@gmail.com` is verified and has Plus.
 
-⚠️ **The build 8 in App Store Connect is out of date.** It was uploaded at
-4:12 pm, before the evening fixes: "Call now" opens the to-do, calls survive
-leaving the screen, the confirm page is fully translated, and "How calls work"
-no longer mentions checking a transcript. The project still says build 8, but
-App Store Connect refuses a second upload numbered 8 for version 1.1, so these
-fixes can only reach Apple as **build 9**. Don't submit until that upload is
-done.
+⚠️ **Not uploaded yet.** The build 8 in App Store Connect was uploaded at 4:12 pm,
+before the evening fixes ("Call now" opens the to-do, calls survive leaving the
+screen, confirm page translated, no transcript wording). Upload when Rachel says
+it's good; don't submit before that.
 
 ## 0. Deploy the Worker and the legal pages
 
@@ -31,7 +28,7 @@ npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main --
 ## 1. App Store Connect — submit 1.1
 
 1. **Add the version.** App Store Connect → Tadah → the **+** next to *iOS App* → **1.1**.
-2. **Build.** Select the newest build: **9** once it is uploaded, never 7 or 8 (a build appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
+2. **Build.** Select the newest upload, the one with the evening fixes (it appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
 3. **What's New in This Version** — paste:
 
    ```
