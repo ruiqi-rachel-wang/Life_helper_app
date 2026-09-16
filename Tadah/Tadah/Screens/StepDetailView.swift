@@ -39,10 +39,10 @@ struct StepDetailView: View {
     }
     private var d: StepDetail { step.detail ?? StepDetail() }
 
-    // Jargon found anywhere in this step (title + explanation + checklist + needed),
+    // Jargon found anywhere this page shows (title + explanation + checklist + needed),
     // explained in plain English. Auto-detected — no per-guide authoring.
     private var glossaryTerms: [GlossaryTerm] {
-        let text = ([step.text, d.explanation, d.script]
+        let text = ([step.text, d.explanation]
                     + d.miniChecklist.map(\.text) + d.needed).joined(separator: "\n")
         return Glossary.found(in: text)
     }
@@ -138,14 +138,10 @@ struct StepDetailView: View {
                 }
             }
         }
-        // A phone script, when authored ("say this when you call").
-        if !d.script.isEmpty {
-            section("WHAT TO SAY") {
-                Text(linkified(d.script))
-                    .font(.body14).foregroundStyle(Color.ink).lineSpacing(3)
-                    .tint(Color.accent)
-            }
-        }
+        // No "WHAT TO SAY" section, removed 2026-09-16: the scan's phone script
+        // is now the question on Review's call card ("Tadah can make this
+        // call"), so showing the same words here was a repeat. `d.script` is
+        // still extracted and stored, because the call card needs it.
         if !d.needed.isEmpty {
             section("WHAT YOU'LL NEED") {
                 ForEach(Array(d.needed.enumerated()), id: \.offset) { _, line in bullet(line) }
