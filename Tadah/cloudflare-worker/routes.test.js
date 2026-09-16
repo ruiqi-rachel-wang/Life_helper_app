@@ -10,6 +10,7 @@
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
 import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT, hashedIP, ipDayScope, ipMonthScope, verifyCodeHash } from "./worker.js";
+import { CALL_MONTH_LIMIT } from "./actions.js";
 
 const USER = "apple-sub-test-user";
 const OTHER = "apple-sub-other-user";
@@ -1519,7 +1520,9 @@ describe("actions — placing one", () => {
     expect(res.status).toBe(200);
     expect(res.body.dryRun).toBe(true);
     expect(res.body.callsUsed).toBe(1);
-    expect(res.body.callsLimit).toBe(10);
+    expect(res.body.callsLimit).toBe(CALL_MONTH_LIMIT);
+    // Pinned on purpose: at ~$1.56 a call, the allowance is a pricing decision.
+    expect(CALL_MONTH_LIMIT).toBe(5);
 
     const row = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(res.body.actionId).first();
     expect(row.status).toBe("in_progress");
@@ -1536,8 +1539,8 @@ describe("actions — placing one", () => {
   });
 
   it("stops at the monthly allowance and does not charge past it", async () => {
-    // Ten placed calls, each finished so the one-live-call rule doesn't fire.
-    for (let i = 0; i < 10; i++) {
+    // A full month's allowance, each finished so the one-live-call rule doesn't fire.
+    for (let i = 0; i < CALL_MONTH_LIMIT; i++) {
       const res = await actionsCall(PLUS_TOKEN, GOOD_CALL);
       expect(res.status).toBe(200);
       await env.DB.prepare("UPDATE actions SET status = 'completed' WHERE id = ?").bind(res.body.actionId).run();
@@ -1550,7 +1553,7 @@ describe("actions — placing one", () => {
     const used = await env.DB.prepare(
       "SELECT count FROM action_usage WHERE scope = ? AND period = ?"
     ).bind(PLUS_USER, new Date().toISOString().slice(0, 7)).first();
-    expect(used.count).toBe(10);
+    expect(used.count).toBe(CALL_MONTH_LIMIT);
   });
 });
 

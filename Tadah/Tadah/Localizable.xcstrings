@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Tadah Plus includes %lld calls a month." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah Plus incluye %lld llamadas al mes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah Plus 每月包含 %lld 次通话。"
+          }
+        }
+      }
+    },
     "Verify your email" : {
       "localizations" : {
         "es" : {

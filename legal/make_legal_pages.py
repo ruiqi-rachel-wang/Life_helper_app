@@ -9,7 +9,9 @@ There used to be three hand-maintained copies and they drifted: the live privacy
 page still said "Tadah has no accounts and no sign-in" months after accounts
 shipped. Always edit LegalContent.swift, then run this, then deploy:
 
-    npx wrangler pages deploy docs --project-name cuevi-legal
+    npx wrangler pages deploy docs --project-name tadah-legal --branch main
+
+(tadah-legal.pages.dev is the live site; cuevi-legal is the old pre-rename copy.)
 """
 import re, html, os
 

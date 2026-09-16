@@ -21,7 +21,9 @@
 // ── Limits ──────────────────────────────────────────────────────────────────
 // Calls are billed PER CALL by the provider, not per minute, so every cap here
 // is a count. Sized against $6.99/month Plus at ~$0.05 a call.
-export const CALL_MONTH_LIMIT = 10;          // per user, per calendar month
+// 5, not 10, decided 2026-09-16: a real call has cost about $1.56 in CALL-E
+// credits, so ten a month could cost more than a $6.99 Plus subscription earns.
+export const CALL_MONTH_LIMIT = 5;          // per user, per calendar month
 export const CALL_GLOBAL_MONTH_LIMIT = 300;  // circuit breaker across everybody
 export const GLOBAL_SCOPE = "*global*";      // reserved scope key in action_usage
 

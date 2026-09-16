@@ -40,7 +40,7 @@ struct CallConfirmView: View {
     @FocusState private var goalFocused: Bool
     @FocusState private var phoneFocused: Bool
 
-    init(offer: CallOffer, callsUsed: Int = 0, callsLimit: Int = 10,
+    init(offer: CallOffer, callsUsed: Int = 0, callsLimit: Int = 5,
          onCall: @escaping (String, String, String, Bool) -> Void) {
         self.offer = offer
         self.callsUsed = callsUsed
@@ -254,7 +254,10 @@ struct CallConfirmView: View {
                 Image(systemName: "lock.fill").font(.system(size: 12)).foregroundStyle(Color.faint)
             }
             if callsLimit > 0 {
-                Text("Call \(callsUsed + 1) of \(callsLimit) this month.")
+                // Not "Call N of M": the app can't know how many calls were already
+                // used this month until the Worker answers, so that line always said
+                // "Call 1" — wrong from the second call on.
+                Text("Tadah Plus includes \(callsLimit) calls a month.")
                     .font(.subline).foregroundStyle(Color.faint)
             }
         }
