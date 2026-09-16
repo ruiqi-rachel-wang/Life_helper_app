@@ -1,294 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Tadah Plus includes %lld calls a month." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tadah Plus incluye %lld llamadas al mes."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tadah Plus 每月包含 %lld 次通话。"
-          }
-        }
-      }
-    },
-    "Verify your email" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verifica tu correo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证你的邮箱"
-          }
-        }
-      }
-    },
-    "Tadah needs to know this address is yours before it calls anyone for you." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tadah necesita saber que este correo es tuyo antes de llamar a alguien por ti."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 Tadah 替你打电话之前，需要先确认这个邮箱是你的。"
-          }
-        }
-      }
-    },
-    "Send me a code" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Envíame un código"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "给我发送验证码"
-          }
-        }
-      }
-    },
-    "Sending…" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enviando…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在发送…"
-          }
-        }
-      }
-    },
-    "6-DIGIT CODE" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CÓDIGO DE 6 DÍGITOS"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "6 位验证码"
-          }
-        }
-      }
-    },
-    "Verify" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verificar"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证"
-          }
-        }
-      }
-    },
-    "Check your inbox. The code expires in 30 minutes." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revisa tu bandeja de entrada. El código caduca en 30 minutos."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请查看你的收件箱。验证码 30 分钟后失效。"
-          }
-        }
-      }
-    },
-    "Couldn't send the code just now. Please try again shortly." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo enviar el código ahora mismo. Inténtalo de nuevo en un momento."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暂时无法发送验证码，请稍后再试。"
-          }
-        }
-      }
-    },
-    "Couldn't send the code. Check your connection and try again." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo enviar el código. Revisa tu conexión e inténtalo de nuevo."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法发送验证码。请检查网络连接后重试。"
-          }
-        }
-      }
-    },
-    "That code didn't work. Check it and try again." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ese código no funcionó. Revísalo e inténtalo de nuevo."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证码不正确。请检查后重试。"
-          }
-        }
-      }
-    },
-    "That code didn't work. Codes expire after 30 minutes, and there are only five tries." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ese código no funcionó. Los códigos caducan a los 30 minutos y solo hay cinco intentos."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证码不正确。验证码 30 分钟后失效，且最多只能尝试五次。"
-          }
-        }
-      }
-    },
-    "Couldn't check the code. Please try again." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo comprobar el código. Inténtalo de nuevo."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法验证该验证码，请重试。"
-          }
-        }
-      }
-    },
-    "Verified" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verificado"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已验证"
-          }
-        }
-      }
-    },
-    "Not verified" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin verificar"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未验证"
-          }
-        }
-      }
-    },
-    "Verify my email" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verificar mi correo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证我的邮箱"
-          }
-        }
-      }
-    },
-    "Tadah Calls isn't open to everyone yet." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Las llamadas de Tadah aún no están disponibles para todos."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tadah 通话功能尚未对所有人开放。"
-          }
-        }
-      }
-    },
-    "Verify your email address before Tadah calls for you." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verifica tu correo electrónico antes de que Tadah llame por ti."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证邮箱后，Tadah 才能帮你打电话。"
-          }
-        }
-      }
-    },
     "" : {
 
     },
@@ -657,6 +369,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Código de 6 dígitos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "6 位验证码"
+          }
+        }
+      }
+    },
+    "6-DIGIT CODE" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CÓDIGO DE 6 DÍGITOS"
           }
         },
         "zh-Hans" : {
@@ -4049,6 +3777,7 @@
       }
     },
     "Call %lld of %lld this month." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5083,6 +4812,22 @@
         }
       }
     },
+    "Check your inbox. The code expires in 30 minutes." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa tu bandeja de entrada. El código caduca en 30 minutos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请查看你的收件箱。验证码 30 分钟后失效。"
+          }
+        }
+      }
+    },
     "Checking your membership…" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5826,6 +5571,22 @@
         }
       }
     },
+    "Couldn't check the code. Please try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo comprobar el código. Inténtalo de nuevo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法验证该验证码，请重试。"
+          }
+        }
+      }
+    },
     "Couldn't complete the purchase. Please try again." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5905,6 +5666,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法移除"
+          }
+        }
+      }
+    },
+    "Couldn't send the code just now. Please try again shortly." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo enviar el código ahora mismo. Inténtalo de nuevo en un momento."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法发送验证码，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Couldn't send the code. Check your connection and try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo enviar el código. Revisa tu conexión e inténtalo de nuevo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法发送验证码。请检查网络连接后重试。"
           }
         }
       }
@@ -13103,6 +12896,22 @@
         }
       }
     },
+    "Not verified" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin verificar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未验证"
+          }
+        }
+      }
+    },
     "Not yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -17001,6 +16810,22 @@
         }
       }
     },
+    "Send me a code" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envíame un código"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "给我发送验证码"
+          }
+        }
+      }
+    },
     "Send proof to your landlord if the lease requires it." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -17031,6 +16856,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "贷款机构要什么材料就尽快给，同时不要办新的信用卡或贷款，也不要换工作。过户前贷款会再审一次。"
+          }
+        }
+      }
+    },
+    "Sending…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在发送…"
           }
         }
       }
@@ -18414,7 +18255,6 @@
 
     },
     "Tadah called %@ · %@" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -18432,6 +18272,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tadah 已致电 %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "Tadah Calls isn't open to everyone yet." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las llamadas de Tadah aún no están disponibles para todos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah 通话功能尚未对所有人开放。"
           }
         }
       }
@@ -18581,6 +18437,22 @@
         }
       }
     },
+    "Tadah needs to know this address is yours before it calls anyone for you." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah necesita saber que este correo es tuyo antes de llamar a alguien por ti."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Tadah 替你打电话之前，需要先确认这个邮箱是你的。"
+          }
+        }
+      }
+    },
     "Tadah never accepts a fee or payment for you, and only commits you to what you allowed on the last screen." : {
       "localizations" : {
         "es" : {
@@ -18675,6 +18547,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tadah Plus 覆盖此账户下的所有成员，无需为每人额外付费。"
+          }
+        }
+      }
+    },
+    "Tadah Plus includes %lld calls a month." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah Plus incluye %lld llamadas al mes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah Plus 每月包含 %lld 次通话。"
           }
         }
       }
@@ -19199,6 +19087,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "路考被当场取消，多半是车的问题，不是开得不好。刹车灯坏了或者行驶证过期，车还没开动考试就结束了。"
+          }
+        }
+      }
+    },
+    "That code didn't work. Check it and try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese código no funcionó. Revísalo e inténtalo de nuevo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码不正确。请检查后重试。"
+          }
+        }
+      }
+    },
+    "That code didn't work. Codes expire after 30 minutes, and there are only five tries." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese código no funcionó. Los códigos caducan a los 30 minutos y solo hay cinco intentos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码不正确。验证码 30 分钟后失效，且最多只能尝试五次。"
           }
         }
       }
@@ -21038,6 +20958,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "内容"
+          }
+        }
+      }
+    },
+    "Verified" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已验证"
+          }
+        }
+      }
+    },
+    "Verify" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证"
+          }
+        }
+      }
+    },
+    "Verify my email" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificar mi correo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证我的邮箱"
+          }
+        }
+      }
+    },
+    "Verify your email" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica tu correo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证你的邮箱"
+          }
+        }
+      }
+    },
+    "Verify your email address before Tadah calls for you." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica tu correo electrónico antes de que Tadah llame por ti."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证邮箱后，Tadah 才能帮你打电话。"
           }
         }
       }
