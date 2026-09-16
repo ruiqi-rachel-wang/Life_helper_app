@@ -35,7 +35,7 @@
 // rather than importing them back from here, which would be circular.
 import {
   handleActionCreate, handleActionStatus, handleActionWebhook,
-  ensureActionTables, transcriptPurgeStatement,
+  ensureActionTables, transcriptPurgeStatement, reconcileCalls,
 } from "./actions.js";
 
 const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
@@ -227,8 +227,7 @@ let usageTableReady = false;
 let syncTablesReady = false;              // lazy DDL for tasks/sessions (see ensureSyncTables)
 
 export default {
-  // Daily retention sweep (cron in wrangler.toml). Separate from `fetch` on
-  // purpose: retention that depends on traffic isn't retention.
+  // Minute call reconciliation and daily retention run independently of app traffic.
   async scheduled(event, env, ctx) {
     if (!env.DB) {
       console.error("retention sweep skipped: no DB binding");
@@ -242,7 +241,9 @@ export default {
     // deployment where nobody has made a call yet, an unensured table would fail
     // the cron every night and take the other retention promises down with it.
     await ensureActionTables(env.DB);
-    await sweepRetention(env.DB);
+    await reconcileCalls(env);
+    // Minute-level call reconciliation is separate from the daily retention sweep.
+    if (event.cron !== "* * * * *") await sweepRetention(env.DB);
   },
 
   async fetch(request, env) {

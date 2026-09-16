@@ -305,3 +305,16 @@ test("a provider 5xx is never a definite rejection", async () => {
   assert.equal(placed.rejected, false);
   assert.equal(placed.keepCharge, true);
 });
+
+test("safety checks Spanish, simplified/traditional Chinese and normalized digits", () => {
+  for (const text of [
+    "Mi número de tarjeta es 1234", "Mi cuenta bancaria es 12345678",
+    "Mi contraseña es secreto", "Mi fecha de nacimiento es mañana",
+    "Mi número de seguro social es 123456789", "El IBAN es ES12345",
+    "信用卡号码是1234", "銀行帳號123456789", "银行账户123456789",
+    "验证码是123456", "密碼是abc", "出生日期是2000年1月1日", "社保号123456789",
+    "４１１１．１１１１．１１１１．１１１１", "4111\u200b1111\u200b1111\u200b1111",
+  ]) assert.notEqual(goalIsUnsafe(text), null, text);
+  for (const text of ["Pregunte por la factura 4829105512", "请问账单4829105512为什么涨价", "Ask for a later due date"])
+    assert.equal(goalIsUnsafe(text), null, text);
+});

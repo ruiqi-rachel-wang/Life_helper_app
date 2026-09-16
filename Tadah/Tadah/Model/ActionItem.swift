@@ -212,6 +212,9 @@ final class ActionItem {
     var reminders: [ReminderItem] = []
     var remindersCustomized: Bool = false
 
+    /// The reviewed recipient and question travel with the saved to-do.
+    var callOfferJSON: String = ""
+
     init(title: String,
          category: ItemCategory,
          amount: Decimal? = nil,
@@ -260,6 +263,9 @@ final class ActionItem {
         // Anchor month-based series to the original due day so they don't drift.
         if let due = r.dueDate, let rec = r.repeats, rec.isMonthBased {
             self.recurrenceAnchorDay = Calendar.current.component(.day, from: due)
+        }
+        if let offer = CallOffer.from(r), let data = try? JSONEncoder().encode(offer) {
+            self.callOfferJSON = String(decoding: data, as: UTF8.self)
         }
         self.summary = r.summary ?? ""
         self.documentType = r.documentType ?? ""

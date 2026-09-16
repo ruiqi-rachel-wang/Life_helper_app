@@ -6,8 +6,8 @@
 //  NOTHING NEW IS EXTRACTED FOR THIS. The scan prompt already produces
 //  `StepDetail.script` ("what to say, ONLY when the step is a phone call"), and
 //  the document's own identifiers are already parsed. So the offer is assembled
-//  from data the app has been generating all along — no prompt change, no schema
-//  change.
+//  from data the app has been generating all along. The reviewed offer is saved
+//  and synced with the to-do.
 //
 //  ⚠️ GETTING THE NUMBER RIGHT IS THE WHOLE JOB. A wrong number means Tadah rings
 //  a stranger on the user's behalf, which is worse than not offering at all.
@@ -28,7 +28,7 @@
 
 import Foundation
 
-nonisolated struct CallOffer: Equatable {
+nonisolated struct CallOffer: Codable, Equatable {
     /// As printed on the document, for display. The Worker normalizes it again.
     var phone: String
     /// Who is being called, if the document says. "Con Edison".
@@ -56,7 +56,7 @@ nonisolated struct CallOffer: Equatable {
 // a water bill is noise, and noise in an authorisation control is worse than
 // noise anywhere else — it trains people to pick without reading.
 
-nonisolated enum CallPermission: Hashable, Identifiable {
+nonisolated enum CallPermission: Codable, Hashable, Identifiable {
     case nothing
     case appointment
     case paymentPlan
@@ -236,7 +236,9 @@ extension CallOffer {
         if let modelPhone = result.phone?.trimmingCharacters(in: .whitespacesAndNewlines),
            !modelPhone.isEmpty,
            let phone = accept(modelPhone, excluding: identifiers) {
-            let goal = firstCallableGoal(in: result) ?? defaultGoal(for: result)
+            let goal = pairedGoal(phone: phone, steps: result.steps.enumerated().map { index, text in
+                (text, index < result.detailedSteps.count ? result.detailedSteps[index].detail : nil)
+            }) ?? defaultGoal(for: result)
             return offer(phone: phone, goal: goal, from: result)
         }
 
@@ -252,8 +254,7 @@ extension CallOffer {
             let texts = [detail?.script ?? "", stepText, detail?.explanation ?? ""]
             guard let phone = bestPhone(in: texts, excluding: identifiers) else { continue }
 
-            let script = (detail?.script ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let goal = script.isEmpty ? stepText.trimmingCharacters(in: .whitespacesAndNewlines) : script
+            let goal = pairedGoal(phone: phone, steps: [(stepText, detail)]) ?? defaultGoal(for: result)
             guard !goal.isEmpty else { continue }
 
             return offer(phone: phone, goal: goal, from: result)
@@ -267,10 +268,10 @@ extension CallOffer {
         let callish = result.steps.first { step in
             phoneWords.contains { step.lowercased().contains($0) }
         }
-        guard let callish else { return nil }
+        guard callish != nil else { return nil }
         let documentWide = result.notes + [result.summary ?? ""]
         guard let phone = bestPhone(in: documentWide, excluding: identifiers) else { return nil }
-        return offer(phone: phone, goal: callish.trimmingCharacters(in: .whitespacesAndNewlines), from: result)
+        return offer(phone: phone, goal: defaultGoal(for: result), from: result)
     }
 
     /// Validate a number we were HANDED (by the model, or later by the user).
@@ -296,18 +297,26 @@ extension CallOffer {
         return raw
     }
 
-    /// The best thing to say, taken from the first step that reads like a call.
-    private static func firstCallableGoal(in result: ExtractionResult) -> String? {
-        for (index, stepText) in result.steps.enumerated() {
-            let detail: StepDetail? = index < result.detailedSteps.count
-                ? result.detailedSteps[index].detail : nil
+    /// A script can be attached only to its own recipient. Multiple offices or
+    /// multiple unlabelled call steps are ambiguous, so leave a neutral question.
+    private static func pairedGoal(phone: String, steps: [(String, StepDetail?)]) -> String? {
+        let target = String(phoneDigits(phone).suffix(10))
+        var unnumbered: [String] = []
+        var matched: [String] = []
+        var hasOtherRecipient = false
+        for (text, detail) in steps {
             let script = (detail?.script ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if !script.isEmpty { return script }
-            if phoneWords.contains(where: { stepText.lowercased().contains($0) }) {
-                return stepText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let goal = script.isEmpty ? text.trimmingCharacters(in: .whitespacesAndNewlines) : script
+            let numbers = Set(candidates(in: [text, script, detail?.explanation ?? ""].joined(separator: " "))
+                .map { String($0.digits.suffix(10)) })
+            if numbers == [target] { if !goal.isEmpty { matched.append(goal) }; continue }
+            if !numbers.isEmpty { hasOtherRecipient = true; continue }
+            if !script.isEmpty || phoneWords.contains(where: { text.lowercased().contains($0) }) {
+                unnumbered.append(goal)
             }
         }
-        return nil
+        if matched.count == 1 { return matched[0] }
+        return matched.isEmpty && !hasOtherRecipient && unnumbered.count == 1 ? unnumbered[0] : nil
     }
 
     /// When the document prints a number but no step says to ring it, the user
@@ -333,13 +342,16 @@ extension CallOffer {
     /// Same, for a saved to-do — so the card can travel with the task.
     static func from(_ item: ActionItem) -> CallOffer? {
         let identifiers: [String?] = item.otherIDs.map { $0.value as String? }
+        if let stored = try? JSONDecoder().decode(CallOffer.self, from: Data(item.callOfferJSON.utf8)),
+           accept(stored.phone, excluding: identifiers) != nil { return stored }
 
         for step in item.steps {
             let texts = [step.detail?.script ?? "", step.text, step.detail?.explanation ?? ""]
             guard let phone = bestPhone(in: texts, excluding: identifiers) else { continue }
 
-            let script = (step.detail?.script ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let goal = script.isEmpty ? step.text.trimmingCharacters(in: .whitespacesAndNewlines) : script
+            let who = item.sender.isEmpty ? String(localized: "them") : item.sender
+            let goal = pairedGoal(phone: phone, steps: [(step.text, step.detail)])
+                ?? String(localized: "Ask \(who) about this document.")
             guard !goal.isEmpty else { continue }
 
             // A saved item folds the primary accountNumber into otherIDs at index
@@ -482,6 +494,7 @@ nonisolated enum PendingCall {
         /// it is only watched, and its answer only looked for, while that
         /// account is signed in. Nil on breadcrumbs from before 2026-09-16.
         var owner: String? = nil
+        var uncertain: Bool? = nil
 
         /// Whether the account signed in now may watch this call.
         func belongs(to userID: String?) -> Bool { owner == nil || owner == userID }

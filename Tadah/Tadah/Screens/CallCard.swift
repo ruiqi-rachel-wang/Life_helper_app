@@ -24,10 +24,11 @@ extension CallRecord {
     /// was agreed, and what happens next.
     init(_ status: ActionsService.ActionStatus, business: String?) {
         let structured = status.result?.structured
+        let question = status.result?.questions?.joined(separator: " ")
         self.init(business: business,
                   endedAt: status.endedDate ?? Date.now,
                   didFail: status.status != "completed",
-                  detail: structured?.detail,
+                  detail: question.flatMap { $0.isEmpty ? nil : String(localized: "Before calling, Tadah needs to know: \($0) Add the answer to what Tadah should ask, then try again.") } ?? structured?.detail,
                   summary: status.result?.summary,
                   agreed: structured?.agreed,
                   nextStep: structured?.nextStep,
@@ -90,6 +91,10 @@ struct CallStatusCard: View {
             switch phase {
             case .calling(let since, let business, let dryRun):
                 callingBody(since: since, business: business, dryRun: dryRun)
+            case .checking:
+                Text("Checking whether the call went through…").font(.cardTitle)
+                Text("The connection was interrupted. Tadah will check for the answer without placing another call.")
+                    .font(.subline).foregroundStyle(Color.faded)
             case .finished(let record):
                 CallResultCard(record: record)
             case .refused(let refusal):

@@ -39,6 +39,8 @@ enum ActionsService {
         /// English — that gap is the whole point of the feature — but the
         /// write-up is for the user to read.
         var language: String = "en"
+        var requestID: String? = nil
+        var business: String? = nil
     }
 
     struct Placed {
@@ -82,6 +84,7 @@ enum ActionsService {
         var taskCompleted: Bool?
         var confidence: Confidence?
         var evidence: [String] = []
+        var questions: [String]? = nil
     }
 
     struct ActionStatus: Decodable, Equatable {
@@ -93,10 +96,12 @@ enum ActionsService {
         /// When the Worker saw the call end, as ISO 8601. A call picked up the
         /// next morning is dated by this, not by when the phone noticed.
         var endedAt: String? = nil
+        var createdAt: String? = nil
+        var business: String? = nil
 
         enum CodingKeys: String, CodingKey {
             case actionID = "actionId"
-            case status, result, transcript, failureCode, endedAt
+            case status, result, transcript, failureCode, endedAt, createdAt, business
         }
 
         /// Nothing more will change. The caller can stop polling.
@@ -188,6 +193,8 @@ enum ActionsService {
             "language": request.language,
         ]
         if let itemID = request.itemID { body["itemId"] = itemID }
+        if let id = request.requestID { body["requestId"] = id }
+        if let business = request.business { body["business"] = business }
 
         let (data, http) = try await send(to: endpoint, session: token, body: body)
         guard (200..<300).contains(http.statusCode) else {
@@ -208,10 +215,18 @@ enum ActionsService {
     /// Where the call has got to. The Worker asks the provider on our behalf, so
     /// this is authoritative even if the provider's callback never arrived.
     static func status(of actionID: String) async throws -> ActionStatus {
+        try await readStatus(["actionId": actionID])
+    }
+
+    static func status(for itemID: UUID) async throws -> ActionStatus {
+        try await readStatus(["itemId": itemID.uuidString])
+    }
+
+    private static func readStatus(_ body: [String: String]) async throws -> ActionStatus {
         guard let endpoint = BackendConfig.actionStatusEndpoint else { throw ActionError.notConfigured }
         guard let token = SessionStore.token else { throw ActionError.noSession }
 
-        let (data, http) = try await send(to: endpoint, session: token, body: ["actionId": actionID])
+        let (data, http) = try await send(to: endpoint, session: token, body: body)
         guard (200..<300).contains(http.statusCode) else {
             throw error(from: data, status: http.statusCode)
         }

@@ -45,11 +45,13 @@ struct TaskDTO: Codable, Equatable {
     var source: ItemSource
     var reminderLeadHours: Int
     var reminders: [ReminderItem]
+    var callOfferJSON: String
     var remindersCustomized: Bool
 
     // MARK: from a live item
 
     init(_ item: ActionItem) {
+        callOfferJSON = item.callOfferJSON
         id = item.id
         title = item.title
         category = item.category
@@ -95,6 +97,7 @@ struct TaskDTO: Codable, Equatable {
     // Overwrite an existing item's synced fields (used by last-writer-wins). Never
     // touches imageData, so a pulled update can't wipe a device-local photo.
     func apply(to item: ActionItem) {
+        item.callOfferJSON = callOfferJSON
         item.id = id
         item.title = title
         item.category = category
@@ -128,6 +131,7 @@ struct TaskDTO: Codable, Equatable {
     // MARK: tolerant decode (older backups missing a field just default)
 
     enum CodingKeys: String, CodingKey {
+        case callOfferJSON
         case id, title, category, amount, currency, dueDate, note, status, steps
         case recurrence, seriesID, recurrenceAnchorDay, isExample, createdAt, updatedAt, profileID
         case summary, documentType, sender, senderShort, dueHasTime, siteURL
@@ -136,6 +140,7 @@ struct TaskDTO: Codable, Equatable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        callOfferJSON = try c.decodeIfPresent(String.self, forKey: .callOfferJSON) ?? ""
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
         category = try c.decodeIfPresent(ItemCategory.self, forKey: .category) ?? .other

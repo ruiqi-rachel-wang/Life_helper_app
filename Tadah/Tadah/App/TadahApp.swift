@@ -88,7 +88,7 @@ struct TadahApp: App {
 
     // Shared with SchemaVersioningTests (which points it at a temp file).
     static func versionedContainer(url: URL? = nil) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: TadahSchemaV3.self)
+        let schema = Schema(versionedSchema: TadahSchemaV4.self)
         let config = url.map { ModelConfiguration(schema: schema, url: $0) }
             ?? ModelConfiguration(schema: schema)
         return try ModelContainer(for: schema,

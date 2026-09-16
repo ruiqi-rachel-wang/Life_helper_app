@@ -9,17 +9,20 @@ screen, confirm page translated, no transcript wording). Upload when Rachel says
 it's good; don't submit before that.
 
 **Source review, September 16:** see [review_1.1.md](review_1.1.md) for the changes
-since 1.0 build 6, the local small fixes, and ten prioritized follow-ups. Its P1
-items should be resolved before public release. The review fixes are not deployed
-or included in the uploaded build.
+since 1.0 build 6 and each follow-up's status. The original fixes are committed as
+`7f6d966`; subsequent working-tree changes add durable call IDs, saved call offers,
+server reconciliation and multilingual checks. **Worker deployed:**
+`0d2b1746-6e3a-4e05-8d2c-7a76cc6788fe` (daily retention + minute recovery).
+Validation: **354 iOS, 68 helper and 116 route tests pass**, including V3→V4 store
+migration. The continuation is not yet committed or included in the uploaded app.
+A fresh end-to-end call test remains; provider recovery and recipient-matching
+limits are recorded in the review.
 
 ## 0. Deploy the Worker and the legal pages
 
-Two commands, from the same folder. The Worker gets one fix to the call route:
-a call row left "live" by a request that never finished no longer blocks that
-person's calls for good (it stops counting after 30 minutes). The legal pages
-publish the privacy policy's line about call usage events, which the live site
-still lacks.
+**Worker: deployed September 16 with the review fixes.** The command below is
+retained for future Worker changes; it does not need repeating for this version.
+The legal-page deployment remains separate and was not performed in this step.
 
 ```bash
 cd "/Users/rachelwang/Project!/notie_life_helper_app/Tadah/cloudflare-worker"
@@ -118,4 +121,4 @@ npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main --
 
 - **Paid call packs** for Plus users past 5 a month. Needs consumable products in App Store Connect and RevenueCat, a credit ledger in the Worker, and a purchase screen. Break-even is about $1.85–$2.25 a call after Apple's cut.
 - **CALL-E redirect hardening is fixed locally** by the September 16 review:
-  both provider requests now use `redirect: "error"`. It still needs deployment.
+  both provider requests now use `redirect: "error"`. Deployed with `7f6d966`.

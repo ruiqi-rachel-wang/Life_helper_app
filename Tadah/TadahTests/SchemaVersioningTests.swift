@@ -77,12 +77,40 @@ struct SchemaVersioningTests {
         #expect(item.updatedAt.timeIntervalSince1970 > 0)
     }
 
-    // NOTE (2026-08-15): there is deliberately no V3-store migration test here.
-    // Freezing V3 to write one introduced a second @Model class named "Profile",
-    // which makes SwiftData fail every live Profile fetch. See TadahSchema.swift
-    // for the full reasoning and why this is survivable only while V3 is
-    // unshipped. Reinstating a frozen version is a blocker for the build AFTER
-    // accounts ship.
+    @MainActor
+    @Test func v3StoreMigratesWithTasksAndProfilesIntact() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("v3-\(UUID().uuidString).store")
+        defer {
+            for suffix in ["", "-shm", "-wal"] { try? FileManager.default.removeItem(atPath: url.path + suffix) }
+        }
+        let profileID = UUID()
+        do {
+            let schema = Schema(versionedSchema: TadahSchemaV3.self)
+            let legacy = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, url: url))
+            let context = ModelContext(legacy)
+            let profile = Profile(name: "Mom", id: profileID)
+            profile.reminderMinutes = 570
+            context.insert(profile)
+            let item = TadahSchemaV3.ActionItem(title: "Water bill", category: .utility)
+            item.profileID = profileID
+            item.steps = [ChecklistStep(text: "Call billing", detail: StepDetail(explanation: "Check the charges", script: "Ask why the amount changed"))]
+            item.notes = ["Keep this note"]
+            context.insert(item)
+            try context.save()
+        }
+        let current = try TadahApp.versionedContainer(url: url)
+        let context = ModelContext(current)
+        let item = try #require(try context.fetch(FetchDescriptor<ActionItem>()).first)
+        #expect(item.title == "Water bill")
+        #expect(item.profileID == profileID)
+        #expect(item.steps.first?.detail?.script == "Ask why the amount changed")
+        #expect(item.notes == ["Keep this note"])
+        #expect(item.callOfferJSON.isEmpty)
+        let profile = try #require(try context.fetch(FetchDescriptor<Profile>()).first)
+        #expect(profile.id == profileID)
+        #expect(profile.name == "Mom")
+        #expect(profile.reminderMinutes == 570)
+    }
 
     // The store this test writes is the one every tester has. If it can't be
     // opened, TadahApp must NOT delete it — losing everyone's to-dos silently is

@@ -49,6 +49,43 @@ struct CallOfferTests {
         return r
     }
 
+    @MainActor @Test func savedOfferSurvivesSyncWithoutNumberInSteps() throws {
+        var scan = result(steps: ["Ask about the bill"], details: [nil], account: "4829105512")
+        scan.phone = "(212) 555-0100"
+        let item = ActionItem(from: scan)
+        let expected = try #require(CallOffer.from(scan))
+        #expect(CallOffer.from(item) == expected)
+        let data = try JSONEncoder().encode(TaskDTO(item))
+        let restored = try JSONDecoder().decode(TaskDTO.self, from: data).makeItem()
+        #expect(CallOffer.from(restored) == expected)
+        #expect(!expected.goal.contains("4829105512"))
+    }
+
+    @Test func pairsModelNumberWithItsOwnOfficeQuestion() {
+        var scan = result(steps: ["Call clinic at (212) 555-0100", "Call insurer at (800) 555-0200"],
+            details: [StepDetail(explanation: "", script: "Book my appointment"),
+                      StepDetail(explanation: "", script: "Ask about coverage")])
+        scan.phone = "(800) 555-0200"
+        #expect(CallOffer.from(scan)?.goal == "Ask about coverage")
+        scan.phone = "(718) 555-0300"
+        #expect(CallOffer.from(scan)?.goal.contains("appointment") == false)
+        #expect(CallOffer.from(scan)?.goal.contains("coverage") == false)
+    }
+
+    @Test func multipleNumbersInOneStepDoNotBorrowItsScript() {
+        var scan = result(steps: ["Call (212) 555-0100 or (800) 555-0200"],
+                          details: [StepDetail(explanation: "", script: "Book a visit at the clinic")])
+        scan.phone = "(800) 555-0200"
+        #expect(CallOffer.from(scan)?.goal.contains("Book a visit") == false)
+    }
+
+    @MainActor @Test func unknownCreationErrorsAreNotPresentedAsSafeRetries() {
+        #expect(!CallCenter.isDefiniteRefusal(URLError(.timedOut)))
+        #expect(!CallCenter.isDefiniteRefusal(ActionsService.ActionError.decode))
+        #expect(!CallCenter.isDefiniteRefusal(ActionsService.ActionError.server(502)))
+        #expect(CallCenter.isDefiniteRefusal(ActionsService.ActionError.needsDetail("Which office?")))
+    }
+
     // ── The number ──────────────────────────────────────────────────────────
 
     @Test func findsTheNumberInsideAScript() {
@@ -489,13 +526,20 @@ struct CallRefusalTests {
         #expect(error.errorDescription?.contains("Should the call be in Chinese?") == true)
     }
 
+    @Test func aLostRefusalReplyKeepsTheClarifyingQuestion() throws {
+        let json = #"{"actionId":"a","status":"rejected","result":{"questions":["Which office?"],"evidence":[]}}"#
+        let status = try JSONDecoder().decode(ActionsService.ActionStatus.self, from: Data(json.utf8))
+        #expect(CallRecord(status, business: "Clinic").detail?.contains("Which office?") == true)
+    }
+
     @Test func aQuestionlessClarificationStillSaysWhatToDo() {
         let error = ActionsService.error(from: Data(#"{"error":"call_not_ready"}"#.utf8), status: 400)
         #expect(error == .needsDetail(""))
         #expect(error.errorDescription?.contains("more detail") == true)
     }
 
-    // A definite rejection is over; nothing should keep watching it.
+    // A definite rejection is over; nothing should keep watching it. But it was
+    // never dialled, so it must not be kept as a call record either.
     @Test func aRejectedCallIsFinished() {
         let status = ActionsService.ActionStatus(actionID: "a", status: "rejected", result: nil,
                                                  transcript: nil, failureCode: "call_not_ready")

@@ -1,25 +1,37 @@
 # Tadah 1.1 review — Call-E and changes since 1.0
 
-Reviewed 2026-09-16. **The happy path is substantially implemented, but the open P1 issues below should be resolved before a public release.** Small fixes from this review are local, uncommitted, and not deployed or uploaded.
+Reviewed 2026-09-16. The original findings are preserved below; the status table records the subsequent fixes. The first fixes are committed as `7f6d966` and were deployed as `ddcc4a7e-3f88-4443-84ed-f8328d6fa36d`. The continuation below is a subsequent working-tree change; the updated app has not been uploaded.
 
 ## Status after fixes (2026-09-16, evening)
 
-Fixed in code and tested (Worker 67 helper + 109 route; iOS call, consent, metrics and guide suites). Not deployed until `npx wrangler deploy` runs.
+Continuation validated: **354 iOS tests** (31 suites), **68 Worker helper tests**, and **116 route tests** pass. `git diff --check` passes. Worker deployed on September 16 as **`0d2b1746-6e3a-4e05-8d2c-7a76cc6788fe`**, including both the daily retention and minute call-recovery triggers. Unauthenticated item-status lookup returns 401. These follow-up source changes are not yet committed or uploaded as an app build. A new live call still needs testing.
 
 | Item | Status | What changed |
 | --- | --- | --- |
 | C1 deletion | **Fixed (account + local)** | Account delete also removes `actions`, their `action_events`, the user's `action_usage` and `email_verifications`; the global counter stays. A create racing a deletion re-checks the account before dialling. Deleting a to-do (here or synced from another device) clears its local call answer and pointer. CALL-E's own records are not deleted. Server `actions` rows survive a single to-do's deletion, as the privacy policy describes. |
 | C2 account change | **Fixed (minimal)** | Pending calls record their owner. Only the owner's session watches or resumes them; a different account stops the watch without deleting the pointer; the Plus-recovery retry refuses to send under a changed account; calls resume on sign-in. |
-| C3 lost responses | **Partly** | Retry keys are now scoped to the exact request (stored `intent`), so an edited request's refusal can't re-key an uncertain one; `idempotency_conflict` and 5xx never earn a fresh key. Still open: durable client intent, recovery of an accepted call whose reply was lost, the hour boundary. |
+| C3 lost responses | **Implemented, with a provider limitation** | The app persists a request UUID before sending; Worker replays that ID without another provider POST or charge, regardless of hour/month. Uncertain creation stays live, malformed success is checked, and authenticated webhook metadata recovers an unknown provider ID. No automatic redial. See remaining limitations below. |
 | C4 admission race | **Fixed** | One conditional INSERT claims the live slot before charging; quota refusals release it. Test: two simultaneous creates → one 200, one 409, one charge. |
 | C5 reference consent | **Fixed** | The suggested question is built without the account number (plain, spaced, dashed, `#`, inside Chinese text), and the request strips it whenever the switch is off. Switch on sends it once. |
-| C6 saved tasks | Open (design) | "What to say" was removed on Rachel's request. An offer on saved to-dos and cross-device answers are a design change. |
-| C7 recipient pairing | Open (design) | |
+| C6 saved tasks | **Implemented** | New saves persist/sync the reviewed offer through a V4 migration. Saved to-dos offer a call with sign-in/Plus/verification gates; when no number is available, retained scripts appear in a separate “For your call” card. Status lookup by to-do retrieves answers on another device in the same account. The removed step-detail section stays removed. |
+| C7 recipient pairing | **Improved conservatively** | Explicit phone matches select the corresponding step/question, instead of the first script. Multiple unnumbered call steps, conflicting numbers, or multiple numbers in one step fall back to an editable neutral question. One unnumbered call step is still an inferred match; explicit per-office extraction remains a follow-up. |
 | C8 lengths | **Fixed** | The confirm page counts the question as sent (UTF-16, like the Worker) and blocks Call now over 600, with how much to cut; custom permission over 200 is blocked. The Worker refuses an over-long authorisation instead of truncating it, and the app says "too long" instead of the catch-all. |
-| C9 safety filter | **Partly** | The task text no longer forbids the payment plan or due date the user authorised. Multilingual sensitive-data rules remain open. |
-| C10 webhook recovery | Open | Status polling still recovers any call the phone knows about. |
+| C9 safety filter | **Implemented for supported languages** | Added Spanish and simplified/traditional Chinese sensitive-data patterns, Unicode/full-width normalization, zero-width removal and dotted card numbers; legitimate bill references remain allowed. User-authorized payment plans/due dates remain permitted. This is a text heuristic, not comprehensive detection of arbitrary encodings. |
+| C10 webhook recovery | **Implemented** | Minute cron reads up to 25 known provider calls; app/cron share an atomic refresh claim. Webhook fetch failures return 503 and are not deduplicated until successful processing. Verified metadata can recover an uncertain creation. Neither path places another call. |
 
 Also fixed tonight: CALL-E's `call_not_ready` question is shown on the to-do instead of "couldn't place the call", and a definite CALL-E refusal is stored as `rejected`.
+
+## Continuation: validation and remaining limits
+
+Validation logs: `/tmp/tadah-remaining-ios-verified.log`, `/tmp/tadah-remaining-worker-final.log`, `/tmp/tadah-remaining-deploy.log`.
+
+- Automated coverage: durable request replay, simultaneous delivery/one charge, malformed provider success, lost provider reply recovered by webhook, webhook retry after a provider outage, mismatched authenticated metadata, app/cron refresh races, scheduled completion without app polling, and account-scoped lookup by to-do.
+- iOS coverage: V1 and V3 stores migrate, V3 profiles/reminders/steps survive, a model-extracted number survives save and DTO sync, office/question pairing, and uncertain transport/decode errors are not presented as safe retries.
+- **C3 residual:** if both the provider creation reply and every webhook are lost, Tadah has no provider ID to read. [CALL-E's documented API](https://docs.heycall-e.com/api-reference/calls) exposes call reads by ID; no lookup by Tadah's request UUID was found. The app keeps an uncertain state. A request that never reached the Worker can likewise remain uncertain; recovery/abandonment UX still needs a design that cannot redial an accepted call. Old app builds without request IDs retain the legacy hour-key behavior.
+- **C6 legacy data:** old to-dos that discarded the extracted phone cannot reconstruct it unless a retained step contains a number. New saves preserve it. Older app versions can also drop the new field when editing/syncing; use the new build on devices testing this path.
+- **C7 residual:** fully reliable named-office pairing needs a structured recipient/number/question tuple from extraction. Current matching uses explicit numbers when available and declines to borrow an ambiguous script; a single unnumbered script remains inferred.
+- **Device test still required:** new scan → confirm → background/close app → reopen saved to-do; a saved to-do call; Spanish/Chinese text; account switch; same-account answer on another device. No live call was placed by this continuation.
+- Minute scheduling uses [Cloudflare Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/); the daily retention schedule remains separate.
 
 ## Scope and release baseline
 

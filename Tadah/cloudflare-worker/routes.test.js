@@ -10,7 +10,7 @@
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
 import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT, hashedIP, ipDayScope, ipMonthScope, verifyCodeHash } from "./worker.js";
-import { CALL_MONTH_LIMIT, LIVE_CALL_WINDOW_MINUTES } from "./actions.js";
+import { CALL_MONTH_LIMIT, LIVE_CALL_WINDOW_MINUTES, reconcileCalls } from "./actions.js";
 
 const USER = "apple-sub-test-user";
 const OTHER = "apple-sub-other-user";
@@ -1606,19 +1606,21 @@ describe("actions — placing one", () => {
 
   it("preserves a webhook that arrives before the create response", async () => {
     const original = globalThis.fetch;
+    let metadata;
     env.CALLE_DRY_RUN = "0";
     env.CALLE_API_KEY = "test-key";
     globalThis.fetch = async (url, init) => {
       if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
       if (init.method === "POST") {
         const payload = JSON.parse(init.body);
+        metadata = payload.metadata;
         const hook = await call("/actions/webhook/test-webhook-secret", {
           body: { id: "early-review-event", data: { id: "early-review-call", metadata: payload.metadata } },
         });
         expect(hook.status).toBe(200);
         return Response.json({ id: "early-review-call" });
       }
-      return Response.json({ id: "early-review-call", status: "completed", summary: "Already finished" });
+      return Response.json({ id: "early-review-call", metadata, status: "completed", summary: "Already finished" });
     };
     try {
       const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
@@ -1709,7 +1711,7 @@ describe("actions — placing one", () => {
 
   // A conflict can mean the first call went through and only its reply was
   // lost, so it must NOT free a new key.
-  it("keeps the same key after an idempotency conflict", async () => {
+  it("does not submit again after an idempotency conflict", async () => {
     const original = globalThis.fetch;
     const keys = [];
     env.CALLE_DRY_RUN = "0";
@@ -1722,8 +1724,7 @@ describe("actions — placing one", () => {
     try {
       await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-c" });
       await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-c" });
-      expect(keys).toHaveLength(2);
-      expect(keys[1]).toBe(keys[0]);
+      expect(keys).toHaveLength(1);
     } finally {
       globalThis.fetch = original;
       env.CALLE_DRY_RUN = "1";
@@ -2054,5 +2055,151 @@ describe("email verification", () => {
     const confirmed = await call("/auth/email/verify/confirm", {
       headers: { "X-Tadah-Session": VTOKEN }, body: { code: "000000" } });
     expect(confirmed.body).toMatchObject({ ok: true, verified: true });
+  });
+});
+
+describe("actions — recovery without redialling", () => {
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await seedSession(FREE_TOKEN, USER);
+    await resetActionState();
+  });
+
+  it("replays a durable request across time without reserving twice", async () => {
+    const body = { ...GOOD_CALL, requestId: uuid(801), itemId: uuid(802), business: "Clinic" };
+    const first = await actionsCall(PLUS_TOKEN, body);
+    await env.DB.prepare("UPDATE actions SET created_at = '2020-01-01T00:00:00.000Z' WHERE id = ?").bind(body.requestId).run();
+    const again = await actionsCall(PLUS_TOKEN, body);
+    expect(again.body.actionId).toBe(first.body.actionId);
+    expect(again.status).toBe(200);
+    expect((await env.DB.prepare("SELECT count FROM action_usage WHERE scope = ?").bind(PLUS_USER).first()).count).toBe(1);
+    const changed = await actionsCall(PLUS_TOKEN, { ...body, goal: "Something different" });
+    expect(changed.status).toBe(409);
+    expect(changed.body.error).toBe("request_conflict");
+  });
+
+  it("simultaneous delivery of one request has one action and one charge", async () => {
+    const body = { ...GOOD_CALL, requestId: uuid(803) };
+    const responses = await Promise.all([actionsCall(PLUS_TOKEN, body), actionsCall(PLUS_TOKEN, body)]);
+    expect(responses.map(r => r.status)).toEqual([200, 200]);
+    expect(new Set(responses.map(r => r.body.actionId)).size).toBe(1);
+    expect((await env.DB.prepare("SELECT count FROM action_usage WHERE scope = ?").bind(PLUS_USER).first()).count).toBe(1);
+  });
+
+  it("the scheduled job finishes a call without an app status request", async () => {
+    const made = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: uuid(804), business: "Clinic" });
+    const ctx = createExecutionContext();
+    await worker.scheduled({ cron: "* * * * *" }, env, ctx);
+    await waitOnExecutionContext(ctx);
+    const row = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(made.body.actionId).first();
+    expect(row.status).toBe("completed");
+    const answer = await call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { itemId: uuid(804) } });
+    expect(answer.body.business).toBe("Clinic");
+    expect(answer.body.actionId).toBe(made.body.actionId);
+    const other = await call("/actions/status", { headers: { "X-Tadah-Session": FREE_TOKEN }, body: { itemId: uuid(804) } });
+    expect(other.status).toBe(404);
+  });
+
+  it("recovers a lost provider reply through a verified, retryable webhook", async () => {
+    const original = globalThis.fetch;
+    env.CALLE_DRY_RUN = "0"; env.CALLE_API_KEY = "test-key";
+    let metadata, posts = 0, reads = 0;
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      if (init.method === "POST") {
+        posts++; metadata = JSON.parse(init.body).metadata;
+        throw new Error("reply lost after accepting");
+      }
+      reads++;
+      if (reads === 1) return new Response("", { status: 503 });
+      return Response.json({ id: "lost-call", metadata, status: "completed", summary: "Recovered answer" });
+    };
+    try {
+      const body = { ...GOOD_CALL, requestId: uuid(805) };
+      const made = await actionsCall(PLUS_TOKEN, body);
+      expect(made.body.status).toBe("uncertain");
+      expect((await actionsCall(PLUS_TOKEN, body)).body.actionId).toBe(body.requestId);
+      await reconcileCalls(env);
+      expect(posts).toBe(1);
+      const hook = { body: { id: "lost-event", data: { id: "lost-call", metadata } } };
+      expect((await call("/actions/webhook/test-webhook-secret", hook)).status).toBe(503);
+      expect((await call("/actions/webhook/test-webhook-secret", hook)).status).toBe(200);
+      const row = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(body.requestId).first();
+      expect(row.provider_call_id).toBe("lost-call");
+      expect(row.status).toBe("completed");
+      expect(JSON.parse(row.result_json).summary).toBe("Recovered answer");
+      expect((await call("/actions/webhook/test-webhook-secret", hook)).body.duplicate).toBe(true);
+      expect(reads).toBe(2);
+      expect(posts).toBe(1);
+    } finally {
+      globalThis.fetch = original; env.CALLE_DRY_RUN = "1"; delete env.CALLE_API_KEY;
+    }
+  });
+
+  it("an invalid success body stays uncertain and is never dialled again", async () => {
+    const original = globalThis.fetch;
+    env.CALLE_DRY_RUN = "0"; env.CALLE_API_KEY = "test-key";
+    let posts = 0;
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      posts++; return Response.json({ status: "queued" });
+    };
+    try {
+      const body = { ...GOOD_CALL, requestId: uuid(806) };
+      expect((await actionsCall(PLUS_TOKEN, body)).body.status).toBe("uncertain");
+      expect((await actionsCall(PLUS_TOKEN, body)).body.status).toBe("uncertain");
+      expect(posts).toBe(1);
+    } finally {
+      globalThis.fetch = original; env.CALLE_DRY_RUN = "1"; delete env.CALLE_API_KEY;
+    }
+  });
+});
+
+describe("actions — authenticated recovery and shared refresh", () => {
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await resetActionState();
+  });
+
+  it("rejects a webhook whose authenticated call metadata belongs elsewhere", async () => {
+    const made = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, requestId: uuid(811) });
+    await env.DB.prepare("UPDATE actions SET provider_call_id = NULL, status = 'uncertain' WHERE id = ?").bind(made.body.actionId).run();
+    const original = globalThis.fetch;
+    env.CALLE_DRY_RUN = "0"; env.CALLE_API_KEY = "test-key";
+    globalThis.fetch = async (url, init) => String(url).startsWith("https://api.heycall-e.com/")
+      ? Response.json({ id: "unrelated", status: "completed", metadata: { action_id: "another-action" } }) : original(url, init);
+    try {
+      const reply = await call("/actions/webhook/test-webhook-secret", {
+        body: { id: "bad-link", data: { id: "unrelated", metadata: { action_id: made.body.actionId } } },
+      });
+      expect(reply.status).toBe(400);
+      const row = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(made.body.actionId).first();
+      expect(row.status).toBe("uncertain");
+      expect(row.provider_call_id).toBeNull();
+    } finally {
+      globalThis.fetch = original; env.CALLE_DRY_RUN = "1"; delete env.CALLE_API_KEY;
+    }
+  });
+
+  it("app polling and cron share one provider refresh claim", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    await env.DB.prepare("UPDATE actions SET provider_call_id = 'shared-read' WHERE id = ?").bind(made.body.actionId).run();
+    const original = globalThis.fetch;
+    env.CALLE_DRY_RUN = "0"; env.CALLE_API_KEY = "test-key";
+    let reads = 0;
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      reads++;
+      return Response.json({ id: "shared-read", status: "in_progress" });
+    };
+    try {
+      await Promise.all([
+        reconcileCalls(env),
+        call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { actionId: made.body.actionId } }),
+      ]);
+      expect(reads).toBe(1);
+    } finally {
+      globalThis.fetch = original; env.CALLE_DRY_RUN = "1"; delete env.CALLE_API_KEY;
+    }
   });
 });

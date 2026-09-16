@@ -162,14 +162,24 @@ const UNSAFE_PHRASES = [
  *
  * Deliberately NOT triggered by long digit runs on their own: a legitimate call
  * very often needs "I'm calling about account 4829105512". Only a Luhn-valid
- * 13-19 digit run is treated as a card, because account numbers essentially
- * never satisfy Luhn by chance.
+ * 13-19 digit run is treated as a possible card. Luhn is a conservative
+ * heuristic, not proof: some long reference numbers will also match.
  */
 export function goalIsUnsafe(text) {
   if (typeof text !== "string") return "empty";
+  text = text.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .normalize("NFD").replace(/\p{M}/gu, "").replace(/[‐‑‒–—−]/g, "-");
   for (const [re, reason] of UNSAFE_PHRASES) if (re.test(text)) return reason;
-  for (const run of text.match(/\d[\d\s-]{11,}\d/g) || []) {
-    if (looksLikeCardNumber(run.replace(/[\s-]/g, ""))) return "card";
+  const translated = [
+    [/\b(?:seguro social|seguridad social|nss)\b|社会安全|社會安全|社会保障号|社會保障號|社保号|社保號/i, "ssn"],
+    [/\btarjeta (?:de )?(?:credito|debito)\b|\bnumero de (?:la )?tarjeta\b|\bcodigo de seguridad\b|信用卡|借记卡|借記卡|银行卡号|銀行卡號|安全码|安全碼/i, "card"],
+    [/\b(?:numero de ruta|cuenta bancaria|cuenta y ruta|iban|clabe)\b|银行账[号户]|銀行[帳賬][號戶]|路由号|路由號/i, "bank"],
+    [/\b(?:contrasena|codigo de acceso|mi pin|mi nip|codigo de verificacion)\b|密码|密碼|验证码|驗證碼/i, "credential"],
+    [/\bfecha de nacimiento\b|出生日期|出生年月/i, "dob"],
+  ];
+  for (const [re, reason] of translated) if (re.test(text)) return reason;
+  for (const run of text.match(/\d[\d\s.\-]{11,}\d/g) || []) {
+    if (looksLikeCardNumber(run.replace(/[\s.\-]/g, ""))) return "card";
   }
   return null;
 }
@@ -291,9 +301,8 @@ export async function ensureActionTables(db) {
   if (actionTablesReady) return;
   await db.exec("CREATE TABLE IF NOT EXISTS actions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, item_id TEXT, kind TEXT NOT NULL, status TEXT NOT NULL, input_json TEXT NOT NULL, result_json TEXT, transcript TEXT, provider_call_id TEXT, failure_code TEXT, created_at TEXT NOT NULL, ended_at TEXT, polled_at TEXT)");
   await db.exec("CREATE INDEX IF NOT EXISTS idx_actions_user ON actions(user_id, status)");
-  // Every webhook delivery is recorded by its provider event id BEFORE we act on
-  // it, so a duplicate delivery (which the provider explicitly warns about) is a
-  // no-op rather than a second write.
+  await db.exec("CREATE INDEX IF NOT EXISTS idx_actions_item ON actions(user_id, item_id, created_at)");
+  // Record successful processing only, so temporary provider failures can retry.
   await db.exec("CREATE TABLE IF NOT EXISTS action_events (event_id TEXT PRIMARY KEY, action_id TEXT NOT NULL, kind TEXT, received_at TEXT NOT NULL)");
   // Same shape as ai_usage: one row per scope per period, where scope is a user
   // id or the reserved global key.
@@ -321,14 +330,14 @@ async function reserveCallBudget(db, userID) {
     bump.bind(GLOBAL_SCOPE, period),
   ]);
   return {
+    period,
     mine: mine.results?.[0]?.count ?? Infinity,
     global: global.results?.[0]?.count ?? Infinity,
   };
 }
 
 /** Give the reservation back when we know for certain no call was placed. */
-async function refundCallBudget(db, userID) {
-  const period = monthKey();
+async function refundCallBudget(db, userID, period) {
   const give = db.prepare(
     "UPDATE action_usage SET count = count - 1 WHERE scope = ? AND period = ? AND count > 0"
   );
@@ -402,6 +411,7 @@ export async function createProviderCall(env, { actionID, task, phone, idempoten
     res = await fetch(`${env.CALLE_BASE_URL || CALLE_BASE_URL}/v1/calls`, {
       method: "POST",
       redirect: "error",
+      signal: AbortSignal.timeout(15000),
       headers: {
         Authorization: `Bearer ${env.CALLE_API_KEY}`,
         "Content-Type": "application/json",
@@ -421,9 +431,8 @@ export async function createProviderCall(env, { actionID, task, phone, idempoten
     });
   } catch {
     // We do not know whether the request reached the provider, so we do NOT
-    // refund and we do NOT retry. The user is told it failed; at worst one
-    // allowance is spent on a call that never happened, which is the cheap
-    // direction to be wrong in.
+    // refund and we do NOT retry. Keep it uncertain so a webhook can recover
+    // the accepted call without a second dial.
     return { ok: false, code: "provider_unreachable", status: 502, keepCharge: true };
   }
 
@@ -446,12 +455,16 @@ export async function createProviderCall(env, { actionID, task, phone, idempoten
     // call went through and only its reply was lost, and a fresh key there is
     // exactly how the business's phone would ring twice.
     return {
-      ok: false, code, status: res.status < 500 ? 400 : 502, keepCharge: res.status >= 500,
+      ok: false, code, status: res.status < 500 ? 400 : 502,
+      keepCharge: res.status >= 500 || code === "idempotency_conflict",
       rejected: res.status < 500 && code !== "idempotency_conflict",
       questions: code === "call_not_ready" ? clarifyingQuestions(body) : [],
     };
   }
-  return { ok: true, callID: body?.id || null };
+  if (typeof body?.id !== "string" || !body.id.trim()) {
+    return { ok: false, code: "provider_invalid_response", status: 502, keepCharge: true };
+  }
+  return { ok: true, callID: body.id };
 }
 
 /**
@@ -486,6 +499,7 @@ async function fetchProviderCall(env, callID) {
   try {
     const res = await fetch(`${env.CALLE_BASE_URL || CALLE_BASE_URL}/v1/calls/${encodeURIComponent(callID)}`, {
       redirect: "error",
+      signal: AbortSignal.timeout(15000),
       headers: { Authorization: `Bearer ${env.CALLE_API_KEY}` },
     });
     if (!res.ok) {
@@ -531,7 +545,7 @@ async function persistCallOutcome(db, actionID, call) {
   // A status fetch can finish after a webhook. Decide at write time so a stale
   // in-progress snapshot cannot erase the final answer or its retention date.
   await db.prepare(
-    "UPDATE actions SET status = ?, result_json = ?, transcript = ?, failure_code = ?, ended_at = ?, polled_at = ? WHERE id = ? AND status IN ('queued','in_progress')"
+    "UPDATE actions SET status = ?, result_json = ?, transcript = ?, failure_code = ?, ended_at = ?, polled_at = ? WHERE id = ? AND status IN ('queued','in_progress','uncertain')"
   ).bind(
     status, JSON.stringify(result), transcript, failureCode,
     terminal ? new Date().toISOString() : null, new Date().toISOString(), actionID,
@@ -640,14 +654,32 @@ export async function handleActionCreate(request, env, deps) {
     }, 400);
   }
 
-  const actionID = crypto.randomUUID();
+  const requestID = body.requestId;
+  if (requestID != null && (typeof requestID !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestID))) {
+    return json({ error: "invalid_request_id" }, 400);
+  }
+  const actionID = requestID || crypto.randomUUID();
   const now = new Date().toISOString();
   const itemId = typeof body.itemId === "string" ? body.itemId : null;
   const task = buildCallTask({ name, goal, mayAgreeTo, language });
   // The request's identity: same person, to-do, number and words, same hour.
   // Stored on the row so a retry can find ITS OWN earlier rejections (below).
-  const intent = await callIdempotencyKey({ userID, itemId, phone, task });
-  const input = { phone, goal, mayAgreeTo, name, language, itemId, intent };
+  const intent = requestID ? `tadah-${requestID}` : await callIdempotencyKey({ userID, itemId, phone, task });
+  const business = typeof body.business === "string" ? body.business.trim().slice(0, 200) : null;
+  const input = { phone, goal, mayAgreeTo, name, language, itemId, intent, business };
+  // The client persists this ID before sending. Replaying it only reads our row:
+  // no second reservation or provider POST, even across an hour boundary.
+  const replay = async () => {
+    const existing = await env.DB.prepare("SELECT * FROM actions WHERE id = ? AND user_id = ?")
+      .bind(actionID, userID).first();
+    if (!existing) return null;
+    if (existing.input_json !== JSON.stringify(input)) return json({ error: "request_conflict" }, 409);
+    if (existing.status === "rejected") return json({ error: existing.failure_code || "provider_error",
+      actionId: existing.id, questions: existing.result_json ? JSON.parse(existing.result_json).questions : [] }, 400);
+    return json({ ok: true, actionId: existing.id, status: existing.status,
+      dryRun: String(existing.provider_call_id || "").startsWith("dry_"), callsLimit: CALL_MONTH_LIMIT }, 200);
+  };
+  if (requestID) { const response = await replay(); if (response) return response; }
 
   // ONE LIVE CALL PER USER, CLAIMED ATOMICALLY. Two calls at once is how a bug
   // becomes a bill. This used to be a SELECT and then, later, an INSERT, and two
@@ -662,11 +694,12 @@ export async function handleActionCreate(request, env, deps) {
   // person out of calling for good. Nothing older than a real call can run is live.
   const liveSince = new Date(Date.now() - LIVE_CALL_WINDOW_MINUTES * 60_000).toISOString();
   const claim = await env.DB.prepare(
-    `INSERT INTO actions (id, user_id, item_id, kind, status, input_json, created_at)
+    `INSERT OR IGNORE INTO actions (id, user_id, item_id, kind, status, input_json, created_at)
      SELECT ?, ?, ?, 'call', 'queued', ?, ?
-     WHERE NOT EXISTS (SELECT 1 FROM actions WHERE user_id = ? AND status IN ('queued','in_progress') AND created_at > ?)`
+     WHERE NOT EXISTS (SELECT 1 FROM actions WHERE user_id = ? AND status IN ('queued','in_progress','uncertain') AND created_at > ?)`
   ).bind(actionID, userID, itemId, JSON.stringify(input), now, userID, liveSince).run();
   if (!claim.meta?.changes) {
+    if (requestID) { const response = await replay(); if (response) return response; }
     return json({ error: "call_in_progress", message: "Tadah is already on a call for you." }, 409);
   }
   // Nothing was placed on a slot we give back, so the row simply goes.
@@ -679,12 +712,12 @@ export async function handleActionCreate(request, env, deps) {
   // whenever we can be certain of that.
   const used = await reserveCallBudget(env.DB, userID);
   if (used.mine > CALL_MONTH_LIMIT) {
-    await refundCallBudget(env.DB, userID);
+    await refundCallBudget(env.DB, userID, used.period);
     await release();
     return json({ error: "quota_exceeded", limit: CALL_MONTH_LIMIT, message: `You've used all ${CALL_MONTH_LIMIT} calls this month.` }, 429);
   }
   if (used.global > CALL_GLOBAL_MONTH_LIMIT) {
-    await refundCallBudget(env.DB, userID);
+    await refundCallBudget(env.DB, userID, used.period);
     await release();
     return json({ error: "temporarily_unavailable", message: "Calling is paused right now. Please try again later." }, 503);
   }
@@ -693,7 +726,7 @@ export async function handleActionCreate(request, env, deps) {
   // someone who no longer exists, and don't leave their request behind.
   const stillThere = await env.DB.prepare("SELECT 1 AS ok FROM accounts WHERE user_id = ?").bind(userID).first();
   if (!stillThere) {
-    await refundCallBudget(env.DB, userID);
+    await refundCallBudget(env.DB, userID, used.period);
     await release();
     return json({ error: "Session invalid" }, 401);
   }
@@ -706,21 +739,22 @@ export async function handleActionCreate(request, env, deps) {
     "SELECT COUNT(*) AS n FROM actions WHERE user_id = ? AND status = 'rejected' AND json_extract(input_json, '$.intent') = ?"
   ).bind(userID, intent).first();
   const attempt = rejectedBefore?.n || 0;
-  const idempotencyKey = attempt ? await callIdempotencyKey({ userID, itemId, phone, task, attempt }) : intent;
+  const idempotencyKey = !requestID && attempt ? await callIdempotencyKey({ userID, itemId, phone, task, attempt }) : intent;
   const placed = await createProviderCall(env, { actionID, task, phone, idempotencyKey, language });
 
   if (!placed.ok) {
-    // 'rejected' = CALL-E said a definite no and nothing was dialled; 'failed'
+    // 'rejected' = CALL-E said a definite no and nothing was dialled; 'uncertain'
     // = anything we can't be sure about. Only 'rejected' earns a fresh key.
     const questions = placed.questions || [];
     await env.DB.prepare(
-      "UPDATE actions SET status = ?, failure_code = ?, result_json = ?, ended_at = ? WHERE id = ?"
+      "UPDATE actions SET status = ?, failure_code = ?, result_json = ?, ended_at = ? WHERE id = ? AND status IN ('queued','in_progress','uncertain')"
     ).bind(
-      placed.rejected ? "rejected" : "failed", placed.code,
+      placed.keepCharge ? "uncertain" : "rejected", placed.code,
       questions.length ? JSON.stringify({ questions, evidence: [] }) : null,
-      new Date().toISOString(), actionID,
+      placed.keepCharge ? null : new Date().toISOString(), actionID,
     ).run();
-    if (!placed.keepCharge) await refundCallBudget(env.DB, userID);
+    if (placed.keepCharge) return json({ ok: true, actionId: actionID, status: "uncertain", callsUsed: used.mine, callsLimit: CALL_MONTH_LIMIT }, 200);
+    if (!placed.keepCharge) await refundCallBudget(env.DB, userID, used.period);
     return json({
       error: placed.code, actionId: actionID, message: "Tadah couldn't place the call.",
       ...(questions.length ? { questions } : {}),
@@ -759,44 +793,21 @@ export async function handleActionStatus(request, env, deps) {
   const read = await readJSON(request);
   if (!read.ok) return read.response;
   const actionID = typeof read.body?.actionId === "string" ? read.body.actionId : "";
-  if (!actionID) return json({ error: "missing_action_id" }, 400);
-
-  // Scoped by user_id in the WHERE clause, never by the id alone — an action id
-  // is not a capability, and one account must not be able to read another's call.
-  let row = await env.DB.prepare(
-    "SELECT id, status, result_json, transcript, failure_code, created_at, ended_at, provider_call_id, polled_at FROM actions WHERE id = ? AND user_id = ?"
-  ).bind(actionID, session.user_id).first();
+  const itemID = typeof read.body?.itemId === "string" ? read.body.itemId : "";
+  if (!actionID && !itemID) return json({ error: "missing_action_id" }, 400);
+  let row = actionID
+    ? await env.DB.prepare("SELECT * FROM actions WHERE id = ? AND user_id = ?").bind(actionID, session.user_id).first()
+    : await env.DB.prepare("SELECT * FROM actions WHERE item_id = ? AND user_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1").bind(itemID, session.user_id).first();
   if (!row) return json({ error: "not_found" }, 404);
-
-  // ASK THE PROVIDER, don't just read our own row.
-  //
-  // The webhook is the fast path, not the only one. If a delivery is lost, or
-  // the webhook secret/base is unset, or the provider simply never calls back,
-  // a purely local read would leave this action "in progress" forever — after
-  // the user has already been charged a call and is watching a spinner. Polling
-  // the provider makes the webhook an optimisation rather than a single point
-  // of failure. Throttled, so many devices watching one call cost one request.
-  const live = row.status === "queued" || row.status === "in_progress";
-  const dueMs = Date.now() - (Date.parse(row.polled_at || 0) || 0);
-  if (live && row.provider_call_id && dueMs > POLL_REFRESH_MS) {
-    const fetched = await fetchProviderCall(env, row.provider_call_id);
-    if (fetched.ok) {
-      await persistCallOutcome(env.DB, row.id, fetched.call);
-      row = await env.DB.prepare(
-        "SELECT id, status, result_json, transcript, failure_code, created_at, ended_at, provider_call_id, polled_at FROM actions WHERE id = ?"
-      ).bind(row.id).first();
-    } else {
-      // Note the attempt even when it failed, so a provider outage can't turn
-      // one polling client into a hot loop against it.
-      await env.DB.prepare("UPDATE actions SET polled_at = ? WHERE id = ?")
-        .bind(new Date().toISOString(), row.id).run();
-    }
-  }
+  await refreshAction(env, row);
+  row = await env.DB.prepare("SELECT * FROM actions WHERE id = ? AND user_id = ?").bind(row.id, session.user_id).first();
+  if (!row) return json({ error: "not_found" }, 404);
 
   return json({
     ok: true,
     actionId: row.id,
     status: row.status,
+    business: JSON.parse(row.input_json)?.business || null,
     result: row.result_json ? JSON.parse(row.result_json) : null,
     transcript: row.transcript || null,
     failureCode: row.failure_code || null,
@@ -828,15 +839,9 @@ export async function handleActionWebhook(request, env, path, deps) {
   if (!read.ok) return read.response;
   const event = read.body || {};
 
-  // De-dupe on the provider's event id, recorded before we act. The provider
-  // documents that a delivery can repeat; without this, a repeat would overwrite
-  // a finished action with a second copy of itself.
   const eventID = request.headers.get("CALL-E-Event-Id") || event.id || "";
-  if (eventID) {
-    const seen = await env.DB.prepare(
-      "INSERT OR IGNORE INTO action_events (event_id, action_id, kind, received_at) VALUES (?, ?, ?, ?) RETURNING event_id"
-    ).bind(eventID, String(event?.data?.id || ""), String(event.type || ""), new Date().toISOString()).first();
-    if (!seen) return json({ ok: true, duplicate: true }, 200);
+  if (eventID && await env.DB.prepare("SELECT event_id FROM action_events WHERE event_id = ?").bind(eventID).first()) {
+    return json({ ok: true, duplicate: true }, 200);
   }
 
   // Find our action from the id we sent as metadata, falling back to the
@@ -849,15 +854,49 @@ export async function handleActionWebhook(request, env, path, deps) {
       ? await env.DB.prepare("SELECT id, user_id, provider_call_id, status FROM actions WHERE provider_call_id = ?").bind(providerCallID).first()
       : null;
   if (!row) return json({ ok: true, unknown: true }, 200);   // 200: never make the provider retry
-  if (row.status === "completed" || row.status === "failed" || row.status === "canceled") {
+  if (row.status === "completed" || row.status === "failed" || row.status === "canceled" || row.status === "rejected") {
     return json({ ok: true, alreadyFinal: true }, 200);
   }
 
   const fetched = await fetchProviderCall(env, row.provider_call_id || providerCallID);
-  if (!fetched.ok) return json({ ok: true, deferred: true }, 200);
-
+  if (!fetched.ok) return json({ error: "provider_unavailable" }, 503);
+  // On an uncertain create, only the authenticated provider payload can bind
+  // an otherwise unknown call ID to this action.
+  if (fetched.call?.id !== (row.provider_call_id || providerCallID) ||
+      (!row.provider_call_id && fetched.call?.metadata?.action_id !== row.id)) {
+    return json({ error: "call_mismatch" }, 400);
+  }
+  await env.DB.prepare("UPDATE actions SET provider_call_id = ? WHERE id = ? AND provider_call_id IS NULL")
+    .bind(row.provider_call_id || providerCallID, row.id).run();
   await persistCallOutcome(env.DB, row.id, fetched.call);
+  // Record success AFTER the fetch and write. A temporary read failure must
+  // remain retryable; repeated successful delivery is a harmless no-op.
+  if (eventID) await env.DB.prepare(
+    "INSERT OR IGNORE INTO action_events (event_id, action_id, kind, received_at) SELECT ?, id, ?, ? FROM actions WHERE id = ?"
+  ).bind(eventID, String(event.type || ""), new Date().toISOString(), row.id).run();
   return json({ ok: true }, 200);
+}
+
+/** One shared, atomic refresh claim for status reads and the scheduled job. */
+async function refreshAction(env, row) {
+  if (!row.provider_call_id) return;
+  const due = new Date(Date.now() - POLL_REFRESH_MS).toISOString();
+  const claimed = await env.DB.prepare(
+    "UPDATE actions SET polled_at = ? WHERE id = ? AND status IN ('queued','in_progress','uncertain') AND (polled_at IS NULL OR polled_at < ?) RETURNING id"
+  ).bind(new Date().toISOString(), row.id, due).first();
+  if (!claimed) return;
+  const fetched = await fetchProviderCall(env, row.provider_call_id);
+  if (fetched.ok) await persistCallOutcome(env.DB, row.id, fetched.call);
+}
+
+/** Read-only provider reconciliation: never POST a call or spend an allowance. */
+export async function reconcileCalls(env) {
+  if (!env.DB) return;
+  await ensureActionTables(env.DB);
+  const rows = await env.DB.prepare(
+    "SELECT * FROM actions WHERE status IN ('queued','in_progress','uncertain') AND provider_call_id IS NOT NULL ORDER BY COALESCE(polled_at, created_at) LIMIT 25"
+  ).all();
+  for (const row of rows.results || []) await refreshAction(env, row);
 }
 
 /** Drop transcripts past their retention window. Called from sweepRetention. */

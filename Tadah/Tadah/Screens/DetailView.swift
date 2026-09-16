@@ -35,6 +35,7 @@ struct DetailView: View {
     @State private var callRetry: CallCenter.Retry?
     @State private var showVerifyEmail = false
     @State private var showPaywall = false
+    @State private var showSignIn = false
 
     // Which field the keyboard is in. Tapping "Add a step / detail / note" used to
     // append a row whose only visible sign was an empty placeholder — testers read
@@ -63,17 +64,35 @@ struct DetailView: View {
                     if !item.steps.isEmpty || isEditing { checklistCard }
                     if !item.otherIDs.isEmpty || siteURLToShow != nil || isEditing { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
-                    // Tadah's call about this to-do: live while it runs, then
-                    // the answer. "Call now" on Review lands here. Same place
-                    // the offer sat on Review (after what-to-do, before the
-                    // user's own notes). No OFFER here: a new call needs the
-                    // scan's extraction, which a saved to-do doesn't carry.
                     if let call = CallCenter.shared.phase(for: item.id) {
                         card {
                             CallStatusCard(phase: call, emailVerified: account.emailVerified,
                                            onTryAgain: { callRetry = $0 },
                                            onVerify: { showVerifyEmail = true },
                                            onSeePlus: { showPaywall = true })
+                            if case .finished(let record) = call, record.didFail,
+                               let offer = CallOffer.from(item) {
+                                Button("Try again") { setUpCall(offer) }
+                                    .font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
+                            }
+                        }
+                    }
+                    if !isEditing, CallCenter.shared.phase(for: item.id) == nil {
+                        if let offer = CallOffer.from(item) {
+                            card { CallCard(offer: offer) { setUpCall(offer) } }
+                        } else {
+                            let scripts = item.steps.compactMap { $0.detail?.script }
+                                .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                            if !scripts.isEmpty {
+                                card {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("For your call").font(.cardTitle)
+                                        ForEach(Array(scripts.enumerated()), id: \.offset) { _, script in
+                                            Text(script).font(.body14).textSelection(.enabled)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     if !item.notes.isEmpty || isEditing { noteCard }
@@ -108,6 +127,8 @@ struct DetailView: View {
                                         language: explainLanguage.bcp47, itemID: item.id)
             }
         }
+        .task(id: SessionStore.userID) { await CallCenter.shared.refresh(itemID: item.id) }
+        .sheet(isPresented: $showSignIn) { SignInView() }
         .sheet(isPresented: $showVerifyEmail) { VerifyEmailView() }
         .sheet(isPresented: $showPaywall) { PaywallView() }
         // Reusing "List full" — it's the same ceiling the create flow reports.
@@ -131,6 +152,13 @@ struct DetailView: View {
                 ReminderScheduler.shared.reschedule(for: item)
             }
         }
+    }
+
+    private func setUpCall(_ offer: CallOffer) {
+        if SessionStore.token == nil { showSignIn = true }
+        else if !plus.paidFeaturesUnlocked { showPaywall = true }
+        else if !account.emailVerified { showVerifyEmail = true }
+        else { callRetry = CallCenter.Retry(offer: offer, phone: offer.phone, goal: offer.goal) }
     }
 
     // Reassigning the to-do to a different person.

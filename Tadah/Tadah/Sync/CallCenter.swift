@@ -28,6 +28,7 @@ final class CallCenter {
     enum Phase: Equatable {
         /// "Call now" was tapped. The answer isn't in yet.
         case calling(since: Date, business: String?, dryRun: Bool)
+        case checking
         case finished(CallRecord)
         /// The Worker refused to place it. Nothing was dialled.
         case refused(Refusal)
@@ -55,6 +56,7 @@ final class CallCenter {
     /// Calls this session knows about, by to-do. Observed, so the to-do page
     /// changes the moment its call does.
     private var phases: [UUID: Phase] = [:]
+    private var owners: [UUID: String] = [:]
     /// Action ids with a poller running, so two can never watch one call.
     @ObservationIgnored private var watching: Set<String> = []
 
@@ -62,9 +64,10 @@ final class CallCenter {
 
     /// What the to-do page shows about a call, or nil when there never was one.
     func phase(for itemID: UUID) -> Phase? {
-        if let phase = phases[itemID] { return phase }
+        if let phase = phases[itemID], owners[itemID] == SessionStore.userID { return phase }
         // Not seen this session: fall back to what's on disk.
-        if let call = PendingCall.inFlight(for: itemID) {
+        if let call = PendingCall.inFlight(for: itemID), call.belongs(to: SessionStore.userID) {
+            if call.uncertain == true { return .checking }
             return .calling(since: call.startedAt ?? .now, business: call.business, dryRun: false)
         }
         return CallHistory.record(for: itemID).map(Phase.finished)
@@ -75,16 +78,24 @@ final class CallCenter {
     /// "Call now". The to-do must already be saved: the answer lands on it.
     func place(offer: CallOffer, phone: String, goal: String, mayAgreeTo: String,
                shareAccount: Bool, name: String, language: String, itemID: UUID) {
+        if case .checking = phase(for: itemID) { return }
         if case .calling = phase(for: itemID) { return }   // one tap, one call
 
-        let request = Self.request(offer: offer, phone: phone, goal: goal, mayAgreeTo: mayAgreeTo,
+        var request = Self.request(offer: offer, phone: phone, goal: goal, mayAgreeTo: mayAgreeTo,
                                    shareAccount: shareAccount, name: name, language: language,
                                    itemID: itemID)
+        request.requestID = UUID().uuidString
+        request.business = offer.business
         let retry = Retry(offer: offer, phone: phone, goal: goal)
         let startedAt = Date()
         // Captured once. Every later step checks it is still this account: a
         // sign-out and a different sign-in can happen during any await.
         let owner = SessionStore.userID
+        owners[itemID] = owner
+        let pending = PendingCall.InFlight(actionID: request.requestID!, business: offer.business,
+                                            startedAt: startedAt, owner: owner, uncertain: true)
+        // Persist BEFORE the network request: its reply is not required to find it.
+        PendingCall.remember(pending, for: itemID)
         phases[itemID] = .calling(since: startedAt, business: offer.business, dryRun: false)
         // Counted when the person says yes, whether or not the call then goes
         // through: this is the intent the funnel measures.
@@ -98,16 +109,27 @@ final class CallCenter {
             defer { backgroundTime.end() }
             do {
                 let placed = try await send(request, owner: owner)
+                guard PendingCall.inFlight(for: itemID)?.actionID == pending.actionID else { return }
                 let call = PendingCall.InFlight(actionID: placed.actionID, business: offer.business,
-                                                startedAt: startedAt, owner: owner)
+                                                startedAt: startedAt, owner: owner, uncertain: placed.status == "uncertain")
                 // Remembered even if the account changed meanwhile: the call is
                 // real and belongs to `owner`, whose next sign-in picks it up.
                 PendingCall.remember(call, for: itemID)
                 guard call.belongs(to: SessionStore.userID) else { return }
-                phases[itemID] = .calling(since: startedAt, business: offer.business, dryRun: placed.dryRun)
+                phases[itemID] = placed.status == "uncertain" ? .checking : .calling(since: startedAt, business: offer.business, dryRun: placed.dryRun)
                 watch(call, for: itemID)
             } catch {
+                guard PendingCall.inFlight(for: itemID)?.actionID == pending.actionID else { return }
                 let actionError = error as? ActionsService.ActionError
+                guard Self.isDefiniteRefusal(error) else {
+                    if pending.belongs(to: SessionStore.userID) {
+                        phases[itemID] = .checking
+                        watch(pending, for: itemID)
+                    }
+                    return
+                }
+                PendingCall.forget(itemID)
+                guard !Task.isCancelled, SessionStore.userID == owner else { return }
                 phases[itemID] = .refused(Refusal(
                     message: actionError?.errorDescription
                         ?? String(localized: "Tadah couldn't place the call. Please try again."),
@@ -150,6 +172,7 @@ final class CallCenter {
     /// second request can't be a second call. ONE retry, never a loop: if the
     /// recovery finds no subscription, the original refusal stands, and it's true.
     private func send(_ request: ActionsService.CallRequest, owner: String?) async throws -> ActionsService.Placed {
+        guard SessionStore.userID == owner else { throw ActionsService.ActionError.noSession }
         do {
             return try await ActionsService.placeCall(request)
         } catch let error as ActionsService.ActionError where error.needsPlus {
@@ -169,8 +192,9 @@ final class CallCenter {
     func resumeAll() {
         let signedIn = SessionStore.userID
         for (itemID, call) in PendingCall.all where call.belongs(to: signedIn) {
+            owners[itemID] = signedIn
             if phases[itemID] == nil {
-                phases[itemID] = .calling(since: call.startedAt ?? .now, business: call.business, dryRun: false)
+                phases[itemID] = call.uncertain == true ? .checking : .calling(since: call.startedAt ?? .now, business: call.business, dryRun: false)
             }
             watch(call, for: itemID)
         }
@@ -185,22 +209,23 @@ final class CallCenter {
                 // Another account signed in: stop, and keep the breadcrumb for
                 // the owner. Polling under the new session would get a 404 and
                 // throw the owner's call away.
-                guard call.belongs(to: SessionStore.userID) else { return }
+                guard call.belongs(to: SessionStore.userID), PendingCall.inFlight(for: itemID)?.actionID == call.actionID else { return }
                 // ASK FIRST, THEN WAIT. A watch that slept through the app being
                 // in the background wakes up asking, so coming back to the app
                 // always gets a fresh answer.
                 do {
                     let status = try await ActionsService.status(of: call.actionID)
+                    guard call.belongs(to: SessionStore.userID), PendingCall.inFlight(for: itemID)?.actionID == call.actionID else { return }
                     if status.isFinished {
                         finish(status, call: call, itemID: itemID)
                         return
                     }
+                    phases[itemID] = status.status == "uncertain" ? .checking : .calling(since: startedAt, business: call.business, dryRun: false)
                 } catch ActionsService.ActionError.server(404) {
-                    // Not this account's call (someone else has signed in), so
-                    // there is nothing here to wait for.
-                    PendingCall.forget(itemID)
-                    phases[itemID] = nil
-                    return
+                    // A lost POST may still be arriving at the server. Keep its
+                    // durable ID and never turn a missing read into a new call.
+                    guard call.belongs(to: SessionStore.userID), PendingCall.inFlight(for: itemID)?.actionID == call.actionID else { return }
+                    phases[itemID] = .checking
                 } catch let error as ActionsService.ActionError
                             where error == .noSession || error == .notConfigured {
                     // Signed out. The breadcrumb stays, so signing back in picks
@@ -220,6 +245,48 @@ final class CallCenter {
         }
     }
 
+    static func isDefiniteRefusal(_ error: Error) -> Bool {
+        guard let error = error as? ActionsService.ActionError else { return false }
+        switch error {
+        case .decode, .providerFailed: return false
+        case .server(let status): return (400..<500).contains(status)
+        default: return true
+        }
+    }
+
+    /// A synced to-do can find its answer without this device placing the call.
+    func refresh(itemID: UUID) async {
+        guard let owner = SessionStore.userID else { return }
+        do {
+            let status = try await ActionsService.status(for: itemID)
+            guard !Task.isCancelled, SessionStore.userID == owner else { return }
+            // A newer local confirmation must not be replaced by an older call.
+            if let pending = PendingCall.inFlight(for: itemID), pending.actionID != status.actionID { return }
+            // ⚠️ A REJECTED CALL NEVER HAPPENED. CALL-E refused it before dialling
+            // (a clarifying question, a refused number). Saving it as a finished
+            // call showed "Nobody could be reached. Nothing was agreed." on the
+            // to-do, which is false: nobody was ever rung. Show the offer again.
+            if status.status == "rejected" {
+                PendingCall.forget(itemID)
+                if case .refused = phases[itemID] {} else { phases[itemID] = nil }
+                return
+            }
+            owners[itemID] = owner
+            let call = PendingCall.InFlight(actionID: status.actionID, business: status.business,
+                startedAt: status.createdAt.flatMap { try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse($0) },
+                owner: owner, uncertain: status.status == "uncertain")
+            if status.isFinished {
+                CallHistory.save(CallRecord(status, business: status.business), for: itemID)
+                phases[itemID] = .finished(CallRecord(status, business: status.business))
+                PendingCall.forget(itemID)
+            } else {
+                PendingCall.remember(call, for: itemID)
+                phases[itemID] = call.uncertain == true ? .checking : .calling(since: call.startedAt ?? .now, business: call.business, dryRun: false)
+                watch(call, for: itemID)
+            }
+        } catch { /* A missing or offline read does not alter a local call. */ }
+    }
+
     /// Seconds until the next status check, or nil to stop for now.
     ///
     /// Every 5 seconds for the first 10 minutes, when the answer usually lands
@@ -235,6 +302,12 @@ final class CallCenter {
     }
 
     private func finish(_ status: ActionsService.ActionStatus, call: PendingCall.InFlight, itemID: UUID) {
+        // Refused before dialling: nothing to record as a call. See `refresh`.
+        guard status.status != "rejected" else {
+            PendingCall.forget(itemID)
+            if case .refused = phases[itemID] {} else { phases[itemID] = nil }
+            return
+        }
         let record = CallRecord(status, business: call.business)
         CallHistory.save(record, for: itemID)
         PendingCall.forget(itemID)

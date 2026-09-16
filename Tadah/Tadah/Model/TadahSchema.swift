@@ -129,34 +129,83 @@ nonisolated enum TadahSchemaV2: VersionedSchema {
     }
 }
 
-// ── V3 — CURRENT. Family sharing: Profile + ProfileTombstone and
-// ActionItem.profileID. This version alone points at the LIVE types, so it tracks
-// the app automatically.
-//
-// ⚠️ 2026-08-15 — WHY THERE IS NO FROZEN V3 / V4 PAIR, THOUGH THE HEADER SAYS
-// THERE SHOULD BE.
-//
-// Adding `Profile.reminderMinutes` did redefine what "V3" means, and a store
-// written by the earlier V3 no longer opens. The by-the-book fix is to freeze V3
-// and add V4 — and that was tried. It made things WORSE: a second @Model class
-// named "Profile" in the same process makes SwiftData fail every live fetch with
-// "Failed to cast model Tadah.Profile to Profile", crashing the whole test suite.
-// (V1/V2 nest `ActionItem` without this, so the conflict is not universal — but it
-// is real here and not worth guessing at hours before an upload.)
-//
-// It is survivable ONLY because V3 HAS NEVER SHIPPED. Build 2 is V1/V2, which have
-// no Profile entity at all, so no tester holds a V3 store — the affected devices
-// are development phones, whose fix is to delete and reinstall the app.
-//
-// ⚠️ THE MOMENT ACCOUNTS SHIP, THIS BECOMES UNACCEPTABLE. Freezing has to work
-// before a real user has a V3 store, or their to-dos become unreadable on update
-// with no reinstall that doesn't lose them. Investigate the cast conflict
-// properly then — it is a blocker for the build AFTER this one, not for this one.
-//
-// profileID is optional, so existing rows migrate untouched and are adopted onto
-// the owner profile at launch by ProfileStore.ensureOwnerProfile.
+// V3's ActionItem is frozen at the shipped shape. Profile is unchanged, so
+// reuse its type: a duplicate nested Profile breaks SwiftData model resolution.
 nonisolated enum TadahSchemaV3: VersionedSchema {
     static let versionIdentifier = Schema.Version(3, 0, 0)
+    static var models: [any PersistentModel.Type] {
+        [ActionItem.self, TaskTombstone.self, Profile.self, ProfileTombstone.self]
+    }
+    @Model
+    final class ActionItem {
+        var id: UUID = UUID()
+        var title: String = ""
+        var category: ItemCategory = ItemCategory.other
+        var amount: Decimal?
+        var currency: String = "USD"
+        var dueDate: Date?
+        var note: String = ""
+        // Photo stored as an external file (not inline in the SQLite store) so big
+        // images don't bloat the database. SwiftData manages the file for us.
+        @Attribute(.externalStorage) var imageData: Data?
+        var status: WorkStatus = WorkStatus.todo
+        var steps: [ChecklistStep] = []
+        // nil = a one-off. A cadence read from the document or set by the user.
+        // Marking a recurring item done spawns the next cycle; see makeNextOccurrence().
+        var recurrence: Recurrence?
+        // Shared across every occurrence of one recurring series, so we can keep the
+        // series tidy (at most one active + one done). nil = singleton/legacy; use
+        // `effectiveSeriesID`. Stamped the first time a cycle spawns.
+        var seriesID: UUID?
+        // The day-of-month the series should land on (e.g. 31). Captured from the
+        // first occurrence's due date so month-based recurrence doesn't drift after a
+        // short month (see Recurrence.nextDate). nil = no anchor (use the due day).
+        var recurrenceAnchorDay: Int?
+        // First-launch onboarding examples. They render normally but never schedule
+        // reminders (so a tutorial item can't nag the user) and aren't real user data.
+        var isExample: Bool = false
+        var createdAt: Date = Date.now
+        // Last time this item meaningfully changed. Basis for last-writer-wins sync
+        // (Part 3, cross-device). Stamped at creation; bump with touch() on edits.
+        var updatedAt: Date = Date.now
+        // Which family profile this belongs to (Part 3, family sharing). Optional so
+        // items saved before profiles existed stay valid — ProfileStore adopts those
+        // orphans onto the owner profile at launch.
+        var profileID: UUID?
+
+        // Rich detail from AI extraction (Week 6). All optional with defaults, so
+        // adding them is a lightweight SwiftData migration and manual items just
+        // leave them empty. `confidence`/`lowConfidenceFields` are intentionally NOT
+        // stored — they only matter at Review time (the accent underlines).
+        var summary: String = ""
+        var documentType: String = ""
+        var sender: String = ""
+        var senderShort: String = ""
+        var dueHasTime: Bool = false        // dueDate carries a real time (flight/appt)
+        var siteURL: String = ""
+        var otherIDs: [DocID] = []          // claim/policy/confirmation numbers
+        var notes: [String] = []            // side info (not action steps)
+        var source: ItemSource = ItemSource.custom
+        // How many hours before a TIMED event (dueHasTime) to remind — seeds the
+        // default schedule (flight ~3h, appointment ~1h). Ignored for plain dates.
+        var reminderLeadHours: Int = 2
+        // User-customized reminders (fire-time + optional banner note). Empty +
+        // !customized = use the smart defaults (defaultReminders). Once the user
+        // edits, `customized` flips on and THIS list is authoritative (even if
+        // emptied = no reminders).
+        var reminders: [ReminderItem] = []
+        var remindersCustomized: Bool = false
+
+        init(title: String = "", category: ItemCategory = .other) {
+            self.title = title
+            self.category = category
+        }
+    }
+}
+
+// V4: persist the scan's reviewed call offer, including model-extracted phone.
+nonisolated enum TadahSchemaV4: VersionedSchema {
+    static let versionIdentifier = Schema.Version(4, 0, 0)
     static var models: [any PersistentModel.Type] {
         [ActionItem.self, TaskTombstone.self, Profile.self, ProfileTombstone.self]
     }
@@ -164,9 +213,12 @@ nonisolated enum TadahSchemaV3: VersionedSchema {
 
 nonisolated enum TadahMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [TadahSchemaV1.self, TadahSchemaV2.self, TadahSchemaV3.self]
+        [TadahSchemaV1.self, TadahSchemaV2.self, TadahSchemaV3.self, TadahSchemaV4.self]
     }
-    static var stages: [MigrationStage] { [migrateV1toV2, migrateV2toV3] }
+    static var stages: [MigrationStage] { [migrateV1toV2, migrateV2toV3, migrateV3toV4] }
+
+    static let migrateV3toV4 = MigrationStage.lightweight(
+        fromVersion: TadahSchemaV3.self, toVersion: TadahSchemaV4.self)
 
     // Additive only (new fields with defaults + new models) → lightweight.
     static let migrateV1toV2 = MigrationStage.lightweight(
