@@ -3,6 +3,10 @@
 > Updated 2026-09-06. How the app is built → `how_tadah_is_built.md`.
 > Getting build 5 through App Review → `release_1.0_checklist.md`.
 
+> September 16 review: [Call-E fixes and prioritized issues](review_1.1.md).
+> Address C1–C5 before broad release; use [the 1.1 checklist](release_1.1.md)
+> for current shipping steps.
+
 ## The idea
 
 Tadah's promise: **"let me do that for you."** V1 (1.0, in App Review)

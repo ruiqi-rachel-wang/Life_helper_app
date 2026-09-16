@@ -123,7 +123,12 @@ struct TadahApp: App {
                 // a paying family's profiles away at every launch.
                 .onChange(of: plus.isPlus, initial: true) { _, _ in syncFamilyLock() }
                 .onChange(of: plus.tierKnown) { _, _ in syncFamilyLock() }
-                .onChange(of: account.isSignedIn) { _, _ in syncFamilyLock() }
+                .onChange(of: account.isSignedIn) { _, signedIn in
+                    syncFamilyLock()
+                    // Calls are watched only while their own account is signed
+                    // in, so a returning account's calls resume right here.
+                    if signedIn { CallCenter.shared.resumeAll() }
+                }
                 .task {
                     // GATE FIRST. `ensureOwnerProfile` mutates local identity —
                     // it can rename the owner and adopt unassigned items — so it

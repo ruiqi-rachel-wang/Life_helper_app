@@ -82,6 +82,9 @@ final class CallCenter {
                                    itemID: itemID)
         let retry = Retry(offer: offer, phone: phone, goal: goal)
         let startedAt = Date()
+        // Captured once. Every later step checks it is still this account: a
+        // sign-out and a different sign-in can happen during any await.
+        let owner = SessionStore.userID
         phases[itemID] = .calling(since: startedAt, business: offer.business, dryRun: false)
         // Counted when the person says yes, whether or not the call then goes
         // through: this is the intent the funnel measures.
@@ -94,10 +97,13 @@ final class CallCenter {
         Task {
             defer { backgroundTime.end() }
             do {
-                let placed = try await send(request)
+                let placed = try await send(request, owner: owner)
                 let call = PendingCall.InFlight(actionID: placed.actionID, business: offer.business,
-                                                startedAt: startedAt)
+                                                startedAt: startedAt, owner: owner)
+                // Remembered even if the account changed meanwhile: the call is
+                // real and belongs to `owner`, whose next sign-in picks it up.
                 PendingCall.remember(call, for: itemID)
+                guard call.belongs(to: SessionStore.userID) else { return }
                 phases[itemID] = .calling(since: startedAt, business: offer.business, dryRun: placed.dryRun)
                 watch(call, for: itemID)
             } catch {
@@ -116,7 +122,9 @@ final class CallCenter {
     static func request(offer: CallOffer, phone: String, goal: String, mayAgreeTo: String,
                         shareAccount: Bool, name: String, language: String,
                         itemID: UUID) -> ActionsService.CallRequest {
-        var goalText = goal
+        // Switch off = the account number is not sent, even if it is still in
+        // the question (a script that named it, or the user typing it in).
+        var goalText = shareAccount ? goal : CallOffer.removingReference(offer.accountNumber, from: goal)
         if shareAccount, let account = offer.accountNumber, !account.isEmpty {
             let label = offer.accountLabel ?? String(localized: "account")
             goalText += "\n\n" + String(localized: "My \(label) number is \(account).")
@@ -141,11 +149,14 @@ final class CallCenter {
     /// once more. The Worker refuses Plus BEFORE it charges or dials, so the
     /// second request can't be a second call. ONE retry, never a loop: if the
     /// recovery finds no subscription, the original refusal stands, and it's true.
-    private func send(_ request: ActionsService.CallRequest) async throws -> ActionsService.Placed {
+    private func send(_ request: ActionsService.CallRequest, owner: String?) async throws -> ActionsService.Placed {
         do {
             return try await ActionsService.placeCall(request)
         } catch let error as ActionsService.ActionError where error.needsPlus {
-            guard let recoverPlus, await recoverPlus() else { throw error }
+            guard let recoverPlus, SessionStore.userID == owner, await recoverPlus() else { throw error }
+            // The recovery awaited too. Never send one account's confirmed call
+            // under a different account's session.
+            guard SessionStore.userID == owner else { throw error }
             return try await ActionsService.placeCall(request)
         }
     }
@@ -156,7 +167,8 @@ final class CallCenter {
     /// launch and whenever the app comes back. Safe to call as often as you
     /// like: a call already being watched is skipped.
     func resumeAll() {
-        for (itemID, call) in PendingCall.all {
+        let signedIn = SessionStore.userID
+        for (itemID, call) in PendingCall.all where call.belongs(to: signedIn) {
             if phases[itemID] == nil {
                 phases[itemID] = .calling(since: call.startedAt ?? .now, business: call.business, dryRun: false)
             }
@@ -170,6 +182,10 @@ final class CallCenter {
         Task {
             defer { watching.remove(call.actionID) }
             while true {
+                // Another account signed in: stop, and keep the breadcrumb for
+                // the owner. Polling under the new session would get a 404 and
+                // throw the owner's call away.
+                guard call.belongs(to: SessionStore.userID) else { return }
                 // ASK FIRST, THEN WAIT. A watch that slept through the app being
                 // in the background wakes up asking, so coming back to the app
                 // always gets a fresh answer.

@@ -3135,6 +3135,22 @@
         }
       }
     },
+    "Before calling, Tadah needs to know: %@ Add the answer to what Tadah should ask, then try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antes de llamar, Tadah necesita saber: %@ Añade la respuesta a lo que Tadah debe preguntar y vuelve a intentarlo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拨打之前，Tadah 需要知道：%@ 请把答案补充到要问的内容里，然后再试一次。"
+          }
+        }
+      }
+    },
     "Before Tadah calls" : {
       "localizations" : {
         "es" : {
@@ -10978,6 +10994,22 @@
         }
       }
     },
+    "Keep this to 200 characters or fewer." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa 200 caracteres o menos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请控制在 200 个字符以内。"
+          }
+        }
+      }
+    },
     "Keep your lease, your deposit receipt and your move-in photos — they're how you show the unit's condition later. Deposit rules vary by state." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -18463,6 +18495,22 @@
         }
       }
     },
+    "Tadah needs more detail before it can call. Add more to what Tadah should ask, then try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah necesita más detalles antes de llamar. Añade más a lo que Tadah debe preguntar y vuelve a intentarlo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tadah 需要更多细节才能拨打。请补充要问的内容，然后再试一次。"
+          }
+        }
+      }
+    },
     "Tadah needs to know this address is yours before it calls anyone for you." : {
       "localizations" : {
         "es" : {
@@ -19229,6 +19277,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "该成员的清单已满。请先从中删除一项待办事项，再移动这一项。"
+          }
+        }
+      }
+    },
+    "That's too long for one call. Shorten what Tadah should ask, then try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es demasiado largo para una llamada. Acorta lo que Tadah debe preguntar y vuelve a intentarlo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容太长，一通电话放不下。请缩短要问的内容，然后再试一次。"
+          }
+        }
+      }
+    },
+    "That's too long for one call. Shorten it by %lld characters." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es demasiado largo para una llamada. Acórtalo %lld caracteres."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容太长，一通电话放不下。请删减 %lld 个字符。"
           }
         }
       }

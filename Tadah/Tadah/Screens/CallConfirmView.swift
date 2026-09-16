@@ -71,11 +71,30 @@ struct CallConfirmView: View {
     /// and is the authority. This exists so a typo is caught while the user is
     /// still looking at the field, rather than as a failure after "Call now".
     private var phoneIsDialable: Bool {
-        CallOffer.isValidNANP(phone.filter(\.isNumber))
+        CallOffer.isValidNANP(CallOffer.phoneDigits(phone))
     }
+
+    // The Worker's limits, counted the way it counts (JavaScript string length,
+    // which is UTF-16), on the question AS SENT: with whom it's to and, if
+    // shared, the account number. Past these the Worker refuses, and a refusal
+    // after "Call now" lands on the to-do instead of here where it can be fixed.
+    private static let maxQuestion = 600
+    private static let maxAgreement = 200
+    private static let lengthProbeItem = UUID()   // any id; only the length is read
+
+    private var questionLength: Int {
+        CallCenter.request(offer: offer, phone: phone,
+                           goal: goal.trimmingCharacters(in: .whitespacesAndNewlines),
+                           mayAgreeTo: "", shareAccount: shareAccount, name: "", language: "en",
+                           itemID: Self.lengthProbeItem).goal
+            .trimmingCharacters(in: .whitespacesAndNewlines).utf16.count
+    }
+    private var questionOver: Int { max(0, questionLength - Self.maxQuestion) }
+    private var agreementTooLong: Bool { authorisationText.utf16.count > Self.maxAgreement }
 
     private var canCall: Bool {
         !goal.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && phoneIsDialable
+            && questionOver == 0 && !agreementTooLong
     }
 
     var body: some View {
@@ -197,6 +216,11 @@ struct CallConfirmView: View {
                                 .allowsHitTesting(false)
                         }
                     }
+                if questionOver > 0 {
+                    Text("That's too long for one call. Shorten it by \(questionOver) characters.")
+                        .font(.subline).foregroundStyle(Color.bad)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 // The call is in English whatever language the app is in — that
                 // gap is the whole point of the feature, so say it plainly
                 // rather than letting someone wonder.
@@ -221,6 +245,10 @@ struct CallConfirmView: View {
                     TextField("For example: a delivery date", text: $customPermission, axis: .vertical)
                         .font(.body14).foregroundStyle(Color.ink)
                         .textFieldStyle(.roundedBorder)
+                    if agreementTooLong {
+                        Text("Keep this to 200 characters or fewer.")
+                            .font(.subline).foregroundStyle(Color.bad)
+                    }
                 }
                 Text(permission == .nothing
                      ? String(localized: "Tadah will only ask. It won't agree to anything for you.")

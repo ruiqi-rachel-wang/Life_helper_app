@@ -753,6 +753,7 @@ async function handleLogout(request, env) {
 async function handleAccountDelete(request, env) {
   if (!env.DB) return json({ error: "Sync not configured" }, 503);
   await ensureSyncTables(env.DB);
+  await ensureActionTables(env.DB);   // the delete batch names the call tables
   const token = request.headers.get("X-Tadah-Session") || "";
   const session = await resolveSession(env.DB, token);
   if (!session) return json({ error: "Session invalid" }, 401);
@@ -833,6 +834,13 @@ async function handleAccountDelete(request, env) {
       // re-registered, an old row keyed on a recycled user id is a mess nobody
       // wants to reason about.
       env.DB.prepare("DELETE FROM password_resets WHERE user_id = ?").bind(userID),
+      env.DB.prepare("DELETE FROM email_verifications WHERE user_id = ?").bind(userID),
+      // Calls: the number, the question, the name, the result and the transcript
+      // are all this person's. Only the '*global*' spend counter survives, and it
+      // holds no one's content.
+      env.DB.prepare("DELETE FROM action_events WHERE action_id IN (SELECT id FROM actions WHERE user_id = ?)").bind(userID),
+      env.DB.prepare("DELETE FROM actions WHERE user_id = ?").bind(userID),
+      env.DB.prepare("DELETE FROM action_usage WHERE scope = ?").bind(userID),
       env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userID),
       // The credentials themselves. Leaving this row behind would keep the email
       // address registered forever — the user's data would be gone but they could
@@ -1879,13 +1887,14 @@ async function handleVerifyRequest(request, env) {
   const code = newResetCode();
   const now = new Date();
   const expires = new Date(now.getTime() + VERIFY_TTL_MINUTES * 60_000);
+  const codeHash = await verifyCodeHash(env, code);
   await env.DB.prepare(
     `INSERT INTO email_verifications (user_id, code_hash, expires_at, attempts, created_at)
      VALUES (?, ?, ?, 0, ?)
      ON CONFLICT(user_id) DO UPDATE SET
        code_hash = excluded.code_hash, expires_at = excluded.expires_at,
        attempts = 0, created_at = excluded.created_at`
-  ).bind(context.userID, await verifyCodeHash(env, code), expires.toISOString(), now.toISOString()).run();
+  ).bind(context.userID, codeHash, expires.toISOString(), now.toISOString()).run();
 
   try {
     await sendEmail(env, {
@@ -1897,6 +1906,9 @@ async function handleVerifyRequest(request, env) {
   } catch {
     // The row is already written, so say plainly that the mail didn't go out
     // rather than leaving the user waiting for a code that will never arrive.
+    // Release this failed send's cooldown, without deleting a newer request.
+    await env.DB.prepare("DELETE FROM email_verifications WHERE user_id = ? AND code_hash = ? AND created_at = ?")
+      .bind(context.userID, codeHash, now.toISOString()).run();
     return json({ error: "email_failed",
                   message: "Couldn't send the code just now. Please try again shortly." }, 502);
   }

@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import {
   normalizePhone, phoneIsCallable, looksLikeCardNumber, goalIsUnsafe,
   buildCallTask, summarizeCall, secretsMatch, callIdempotencyKey,
+  clarifyingQuestions, createProviderCall,
   callLanguageName, callResultSchema, CALL_RESULT_SCHEMA,
 } from "./actions.js";
 
@@ -248,4 +249,59 @@ test("the result schema carries the language, because that is what CALL-E extrac
   // The English schema is untouched, and shared, so no copy can drift.
   assert.equal(callResultSchema("English"), CALL_RESULT_SCHEMA);
   assert.ok(!/Write this in/.test(CALL_RESULT_SCHEMA.properties.detail.description));
+});
+
+test("a retry after a definite rejection gets a fresh key; a first try's key is unchanged", async () => {
+  const intent = { userID: "u1", itemId: "i1", phone: "+12125550100", task: "Ask about the bill" };
+  const at = new Date("2026-09-16T22:02:00Z");
+  const first = await callIdempotencyKey(intent, at);
+  assert.equal(first, await callIdempotencyKey({ ...intent, attempt: 0 }, at));
+  const second = await callIdempotencyKey({ ...intent, attempt: 1 }, at);
+  assert.notEqual(first, second);
+  assert.notEqual(second, await callIdempotencyKey({ ...intent, attempt: 2 }, at));
+});
+
+test("clarifyingQuestions keeps what CALL-E asked, capped, and survives junk", () => {
+  const body = { error: { code: "call_not_ready", details: { questions: [" Which language? ", "", 7, "x".repeat(400), "b", "c"] } } };
+  const out = clarifyingQuestions(body);
+  assert.equal(out[0], "Which language?");
+  assert.equal(out[1].length, 300);
+  assert.equal(out.length, 3);
+  assert.deepEqual(clarifyingQuestions({ error: { code: "call_not_ready" } }), []);
+  assert.deepEqual(clarifyingQuestions(null), []);
+});
+
+async function withFetch(status, body, run) {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify(body), { status });
+  const quiet = console.error;
+  console.error = () => {};
+  try { return await run(); } finally { globalThis.fetch = original; console.error = quiet; }
+}
+
+const LIVE_ENV = { CALLE_API_KEY: "test-key", CALLE_BASE_URL: "https://api.heycall-e.com" };
+const CALL = { actionID: "a1", task: "t", phone: "+12125550100", idempotencyKey: "k", language: "English" };
+
+test("a clarifying question is a definite rejection, refunded, with the question kept", async () => {
+  const placed = await withFetch(422,
+    { error: { code: "call_not_ready", details: { questions: ["Should the call be in Chinese?"] } } },
+    () => createProviderCall(LIVE_ENV, CALL));
+  assert.equal(placed.ok, false);
+  assert.equal(placed.code, "call_not_ready");
+  assert.equal(placed.rejected, true);
+  assert.equal(placed.keepCharge, false);
+  assert.deepEqual(placed.questions, ["Should the call be in Chinese?"]);
+});
+
+test("an idempotency conflict is never a definite rejection", async () => {
+  const placed = await withFetch(409, { error: { code: "idempotency_conflict" } },
+    () => createProviderCall(LIVE_ENV, CALL));
+  assert.equal(placed.rejected, false);
+});
+
+test("a provider 5xx is never a definite rejection", async () => {
+  const placed = await withFetch(503, { error: { code: "provider_unavailable" } },
+    () => createProviderCall(LIVE_ENV, CALL));
+  assert.equal(placed.rejected, false);
+  assert.equal(placed.keepCharge, true);
 });

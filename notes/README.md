@@ -4,7 +4,9 @@ Working documents. Nothing here is compiled or deployed.
 
 | File | What it is |
 | --- | --- |
-| `release_1.0_checklist.md` | **Start here.** Every step left to get build 5 through App Review. |
+| `release_1.1.md` | **Current release.** Remaining deployment and App Review steps for 1.1. |
+| `review_1.1.md` | **Source review since 1.0 build 6.** Small fixes, prioritized Call-E issues, and validation. |
+| `release_1.0_checklist.md` | Previous release checklist and build 6 review history. |
 | `roadmap.md` | **What's next.** Fixes, updates, new features, in order. |
 | `how_tadah_is_built.md` | **What exists.** Stack, folders, Worker routes, limits, the names that must never change. |
 | `app_store_listing.md` | Paste-ready App Store copy + questionnaire answers. |

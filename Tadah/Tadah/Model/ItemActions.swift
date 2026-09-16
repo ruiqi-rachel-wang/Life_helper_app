@@ -51,6 +51,10 @@ enum ItemActions {
     // where there's room to ask.) Leaves a tombstone so the deletion syncs.
     static func delete(_ item: ActionItem, in context: ModelContext) {
         ReminderScheduler.shared.cancel(itemID: item.id)
+        // The call's answer lives beside the to-do, not in it, so it has to be
+        // removed on its own or it outlives the to-do on this phone.
+        CallHistory.forget(item.id)
+        PendingCall.forget(item.id)
         tombstone(item, in: context)
         context.delete(item)
         SyncCoordinator.shared.noteLocalChange()

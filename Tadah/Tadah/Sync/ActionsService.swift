@@ -100,7 +100,7 @@ enum ActionsService {
         }
 
         /// Nothing more will change. The caller can stop polling.
-        var isFinished: Bool { ["completed", "failed", "canceled"].contains(status) }
+        var isFinished: Bool { ["completed", "failed", "canceled", "rejected"].contains(status) }
 
         /// `endedAt` as a date. The Worker writes `toISOString()`, which carries
         /// milliseconds, and the default ISO parser rejects those.
@@ -127,6 +127,11 @@ enum ActionsService {
         case callInProgress
         case unsafeGoal
         case undialable(String)        // invalid_phone / premium_rate / emergency_or_service
+        /// CALL-E asked a question before it would dial (`call_not_ready`), for
+        /// example which language to use. Nothing was dialled or charged.
+        case needsDetail(String)
+        /// The question or the authorisation is longer than one call allows.
+        case tooLong
         case providerFailed(String)
         case server(Int)
         case decode
@@ -151,6 +156,12 @@ enum ActionsService {
                 return String(localized: "Please take card, bank and Social Security numbers out of the request — Tadah never reads those out on a call.")
             case .undialable:
                 return String(localized: "Tadah can't call that number.")
+            case .tooLong:
+                return String(localized: "That's too long for one call. Shorten what Tadah should ask, then try again.")
+            case .needsDetail(let question):
+                return question.isEmpty
+                    ? String(localized: "Tadah needs more detail before it can call. Add more to what Tadah should ask, then try again.")
+                    : String(localized: "Before calling, Tadah needs to know: \(question) Add the answer to what Tadah should ask, then try again.")
             case .providerFailed, .server, .decode:
                 return String(localized: "Tadah couldn't place the call. Please try again.")
             }
@@ -229,8 +240,8 @@ enum ActionsService {
 
     /// Turn the Worker's `{ error, message, limit }` into something the UI can
     /// branch on. Falls back to the status code when the body isn't ours.
-    private static func error(from data: Data, status: Int) -> ActionError {
-        struct Failure: Decodable { let error: String?; let limit: Int? }
+    static func error(from data: Data, status: Int) -> ActionError {
+        struct Failure: Decodable { let error: String?; let limit: Int?; let questions: [String]? }
         let failure = try? JSONDecoder().decode(Failure.self, from: data)
         switch failure?.error {
         case "not_invited":          return .notInvited
@@ -240,6 +251,10 @@ enum ActionsService {
         case "quota_exceeded":       return .quotaExceeded(limit: failure?.limit ?? 0)
         case "call_in_progress":     return .callInProgress
         case "unsafe_goal":          return .unsafeGoal
+        case "goal_too_long", "agreement_too_long": return .tooLong
+        // Not a failure: CALL-E's planner wants an answer first. Showing its
+        // question is the difference between a fixable request and "try again".
+        case "call_not_ready":       return .needsDetail(failure?.questions?.joined(separator: " ") ?? "")
         case "invalid_phone", "premium_rate", "emergency_or_service":
             return .undialable(failure?.error ?? "invalid_phone")
         case .some(let code) where status >= 500 || status == 402:

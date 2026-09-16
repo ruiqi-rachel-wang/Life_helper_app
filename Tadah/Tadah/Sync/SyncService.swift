@@ -480,7 +480,12 @@ enum SyncService {
         // for items that never landed, and (worse) to have already cancelled
         // notifications for items that still exist: rollback restores the store,
         // but it cannot un-cancel a notification.
-        for id in toCancel { ReminderScheduler.shared.cancel(itemID: id) }
+        for id in toCancel {
+            ReminderScheduler.shared.cancel(itemID: id)
+            // Deleted on another device: its call answer goes from this one too.
+            CallHistory.forget(id)
+            PendingCall.forget(id)
+        }
         for item in rescheduled { ReminderScheduler.shared.reschedule(for: item) }
 
         return Outcome(pushedChanges: outChanges.count, pushedDeletes: outDeletes.count,

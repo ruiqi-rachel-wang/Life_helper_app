@@ -222,13 +222,16 @@ export function buildCallTask({ name, goal, mayAgreeTo, language = "English" }) 
     ``,
     `Rules:`,
     `- Never say a credit or debit card number, bank or routing number, Social Security number, date of birth, or any password or PIN. If asked for one, say ${who} will follow up directly.`,
-    `- Never agree to a charge, a fee, or any payment.`,
+    // The confirm screen can authorise a payment plan or a later due date, so
+    // "never any payment" and "do not negotiate" contradicted the user's own
+    // permission, and the agent had to pick which instruction to break.
+    `- Never agree to a charge or a fee, and never make a payment on the call. The only exception is an arrangement listed in what you may agree to above, such as a payment plan.`,
     `- Do not commit ${who} to anything beyond what you may agree to above. If pushed, say you will call back.`,
     `- If you are asked whether you are a recording or a robot, say plainly that you are an AI assistant calling for a real person.`,
     `- If you are put on hold for more than one minute, say you will call back, and end the call.`,
     `- End the call after four minutes, or sooner once the goal is met or is clearly not achievable.`,
     `- Speak only English on the call, even if the goal was written in another language.`,
-    `- Be brief and polite. Do not negotiate.`,
+    `- Be brief and polite. Do not bargain for anything beyond what you may agree to above.`,
   ].join("\n");
 }
 
@@ -357,14 +360,38 @@ async function refundCallBudget(db, userID) {
  * re-ask about the same thing go through later, while a panicked double-tap
  * cannot reach the business twice.
  */
-export async function callIdempotencyKey({ userID, itemId, phone, task }, now = new Date()) {
+export async function callIdempotencyKey({ userID, itemId, phone, task, attempt = 0 }, now = new Date()) {
   const hour = now.toISOString().slice(0, 13);
-  const bytes = new TextEncoder().encode([userID, itemId || "", phone, task, hour].join("\n"));
+  // `attempt` counts this intent's earlier REJECTED attempts this hour (see
+  // handleActionCreate). CALL-E stores a key with its first answer, so after a
+  // definite "no" (a clarifying question, a refused number) the same key can
+  // only ever conflict: every retry of that to-do failed with
+  // idempotency_conflict until the hour turned, on 2026-09-16. A rejection
+  // placed no call, so a fresh key is safe. Attempt 0 adds nothing, so the key
+  // for a first try is unchanged.
+  const parts = [userID, itemId || "", phone, task, hour];
+  if (attempt > 0) parts.push(`attempt:${attempt}`);
+  const bytes = new TextEncoder().encode(parts.join("\n"));
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   return "tadah-" + [...digest].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 48);
 }
 
-async function createProviderCall(env, { actionID, task, phone, idempotencyKey, language }) {
+/**
+ * CALL-E's clarifying question(s) from a 422 `call_not_ready`. CALL-E asks
+ * instead of guessing (for example which language to speak) and spends no call
+ * doing so. The question is the one thing the user can act on, so it goes back
+ * to the app instead of a blanket "couldn't place the call". Capped: it is
+ * shown on a card and stored on the action.
+ */
+export function clarifyingQuestions(body) {
+  const raw = body?.error?.details?.questions;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((q) => typeof q === "string" && q.trim())
+    .slice(0, 3)
+    .map((q) => q.trim().slice(0, 300));
+}
+
+export async function createProviderCall(env, { actionID, task, phone, idempotencyKey, language }) {
   if (env.CALLE_DRY_RUN === "1") {
     return { ok: true, callID: `dry_${actionID}`, dryRun: true };
   }
@@ -374,6 +401,7 @@ async function createProviderCall(env, { actionID, task, phone, idempotencyKey, 
   try {
     res = await fetch(`${env.CALLE_BASE_URL || CALLE_BASE_URL}/v1/calls`, {
       method: "POST",
+      redirect: "error",
       headers: {
         Authorization: `Bearer ${env.CALLE_API_KEY}`,
         "Content-Type": "application/json",
@@ -411,7 +439,17 @@ async function createProviderCall(env, { actionID, task, phone, idempotencyKey, 
     console.error("calle_create_rejected", JSON.stringify({ status: res.status, code }));
     // A 4xx means the provider rejected the request outright: no line was
     // seized, no money spent, so the allowance goes back.
-    return { ok: false, code, status: res.status < 500 ? 400 : 502, keepCharge: res.status >= 500 };
+    //
+    // `rejected` = a DEFINITE no, which frees the next attempt to use a fresh
+    // idempotency key. Not for a 5xx (we can't be sure nothing was created),
+    // and never for idempotency_conflict: that answer can mean the ORIGINAL
+    // call went through and only its reply was lost, and a fresh key there is
+    // exactly how the business's phone would ring twice.
+    return {
+      ok: false, code, status: res.status < 500 ? 400 : 502, keepCharge: res.status >= 500,
+      rejected: res.status < 500 && code !== "idempotency_conflict",
+      questions: code === "call_not_ready" ? clarifyingQuestions(body) : [],
+    };
   }
   return { ok: true, callID: body?.id || null };
 }
@@ -447,6 +485,7 @@ async function fetchProviderCall(env, callID) {
   if (!env.CALLE_API_KEY) return { ok: false };
   try {
     const res = await fetch(`${env.CALLE_BASE_URL || CALLE_BASE_URL}/v1/calls/${encodeURIComponent(callID)}`, {
+      redirect: "error",
       headers: { Authorization: `Bearer ${env.CALLE_API_KEY}` },
     });
     if (!res.ok) {
@@ -489,8 +528,10 @@ export function summarizeCall(call) {
 async function persistCallOutcome(db, actionID, call) {
   const { result, transcript, status, failureCode } = summarizeCall(call);
   const terminal = status === "completed" || status === "failed" || status === "canceled";
+  // A status fetch can finish after a webhook. Decide at write time so a stale
+  // in-progress snapshot cannot erase the final answer or its retention date.
   await db.prepare(
-    "UPDATE actions SET status = ?, result_json = ?, transcript = ?, failure_code = ?, ended_at = ?, polled_at = ? WHERE id = ?"
+    "UPDATE actions SET status = ?, result_json = ?, transcript = ?, failure_code = ?, ended_at = ?, polled_at = ? WHERE id = ? AND status IN ('queued','in_progress')"
   ).bind(
     status, JSON.stringify(result), transcript, failureCode,
     terminal ? new Date().toISOString() : null, new Date().toISOString(), actionID,
@@ -580,14 +621,18 @@ export async function handleActionCreate(request, env, deps) {
   if (!goal) return json({ error: "missing_goal" }, 400);
   if (goal.length > MAX_GOAL_CHARS) return json({ error: "goal_too_long" }, 400);
 
-  const mayAgreeTo = typeof body.mayAgreeTo === "string" ? body.mayAgreeTo.trim().slice(0, MAX_AGREE_CHARS) : "";
+  // Refused, never truncated: the end of an authorisation can be the limit on
+  // it ("…but nothing after the 30th"), and cutting it off would hand the agent
+  // more permission than the user gave.
+  const mayAgreeTo = typeof body.mayAgreeTo === "string" ? body.mayAgreeTo.trim() : "";
+  if (mayAgreeTo.length > MAX_AGREE_CHARS) return json({ error: "agreement_too_long" }, 400);
   const name = typeof body.name === "string" ? body.name.trim().slice(0, MAX_NAME_CHARS) : "";
   const language = callLanguageName(body.language);
 
   // Server-side safety scan of everything the user wrote. The system prompt says
   // the same thing to the agent, but a rule the model is asked to follow is not
   // a control — this is.
-  const unsafe = goalIsUnsafe(goal) || goalIsUnsafe(mayAgreeTo);
+  const unsafe = goalIsUnsafe(goal) || goalIsUnsafe(mayAgreeTo) || goalIsUnsafe(name);
   if (unsafe) {
     return json({
       error: "unsafe_goal", detail: unsafe,
@@ -595,8 +640,20 @@ export async function handleActionCreate(request, env, deps) {
     }, 400);
   }
 
-  // One live call per user. Two calls at once is how a bug becomes a bill, and
-  // there is no legitimate reason for it: the user is looking at one to-do.
+  const actionID = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const itemId = typeof body.itemId === "string" ? body.itemId : null;
+  const task = buildCallTask({ name, goal, mayAgreeTo, language });
+  // The request's identity: same person, to-do, number and words, same hour.
+  // Stored on the row so a retry can find ITS OWN earlier rejections (below).
+  const intent = await callIdempotencyKey({ userID, itemId, phone, task });
+  const input = { phone, goal, mayAgreeTo, name, language, itemId, intent };
+
+  // ONE LIVE CALL PER USER, CLAIMED ATOMICALLY. Two calls at once is how a bug
+  // becomes a bill. This used to be a SELECT and then, later, an INSERT, and two
+  // requests arriving together (two to-dos, two devices) could both read "no
+  // live call" before either wrote one. A single conditional INSERT is one
+  // statement, so D1 runs it alone: exactly one request gets the slot.
   //
   // ⚠️ ONLY RECENT ROWS COUNT. The row is written as 'queued' BEFORE CALL-E is
   // asked, and only this request ever moves it on. If the request is cut off in
@@ -604,47 +661,75 @@ export async function handleActionCreate(request, env, deps) {
   // app waits), the row stays 'queued' forever, and this check used to lock that
   // person out of calling for good. Nothing older than a real call can run is live.
   const liveSince = new Date(Date.now() - LIVE_CALL_WINDOW_MINUTES * 60_000).toISOString();
-  const live = await env.DB.prepare(
-    "SELECT id FROM actions WHERE user_id = ? AND status IN ('queued','in_progress') AND created_at > ? LIMIT 1"
-  ).bind(userID, liveSince).first();
-  if (live) return json({ error: "call_in_progress", message: "Tadah is already on a call for you." }, 409);
+  const claim = await env.DB.prepare(
+    `INSERT INTO actions (id, user_id, item_id, kind, status, input_json, created_at)
+     SELECT ?, ?, ?, 'call', 'queued', ?, ?
+     WHERE NOT EXISTS (SELECT 1 FROM actions WHERE user_id = ? AND status IN ('queued','in_progress') AND created_at > ?)`
+  ).bind(actionID, userID, itemId, JSON.stringify(input), now, userID, liveSince).run();
+  if (!claim.meta?.changes) {
+    return json({ error: "call_in_progress", message: "Tadah is already on a call for you." }, 409);
+  }
+  // Nothing was placed on a slot we give back, so the row simply goes.
+  const release = () => env.DB.prepare("DELETE FROM actions WHERE id = ?").bind(actionID).run();
 
-  // Charge BEFORE dialling. Checking and then charging leaves a window where two
+  // Charge BEFORE dialling, and after the slot: only the request that holds the
+  // slot can spend. Checking and then charging would leave a window where two
   // requests both see room; charging first means the worst case is an allowance
-  // spent on a call that didn't happen, which the refund below cleans up whenever
-  // we can be certain of that.
+  // spent on a call that didn't happen, which the refunds below clean up
+  // whenever we can be certain of that.
   const used = await reserveCallBudget(env.DB, userID);
   if (used.mine > CALL_MONTH_LIMIT) {
     await refundCallBudget(env.DB, userID);
+    await release();
     return json({ error: "quota_exceeded", limit: CALL_MONTH_LIMIT, message: `You've used all ${CALL_MONTH_LIMIT} calls this month.` }, 429);
   }
   if (used.global > CALL_GLOBAL_MONTH_LIMIT) {
     await refundCallBudget(env.DB, userID);
+    await release();
     return json({ error: "temporarily_unavailable", message: "Calling is paused right now. Please try again later." }, 503);
   }
 
-  const actionID = crypto.randomUUID();
-  const now = new Date().toISOString();
-  const input = { phone, goal, mayAgreeTo, name, language, itemId: typeof body.itemId === "string" ? body.itemId : null };
+  // The account can be deleted while this request is on its way. Don't dial for
+  // someone who no longer exists, and don't leave their request behind.
+  const stillThere = await env.DB.prepare("SELECT 1 AS ok FROM accounts WHERE user_id = ?").bind(userID).first();
+  if (!stillThere) {
+    await refundCallBudget(env.DB, userID);
+    await release();
+    return json({ error: "Session invalid" }, 401);
+  }
 
-  await env.DB.prepare(
-    "INSERT INTO actions (id, user_id, item_id, kind, status, input_json, created_at) VALUES (?, ?, ?, 'call', 'queued', ?, ?)"
-  ).bind(actionID, userID, input.itemId, JSON.stringify(input), now).run();
-
-  const task = buildCallTask({ name, goal, mayAgreeTo, language });
-  const idempotencyKey = await callIdempotencyKey({ userID, itemId: input.itemId, phone, task });
+  // A fresh key only after THIS request was definitely refused before — the
+  // same intent, not merely the same to-do. Counting every rejection on the
+  // to-do would let an edited request's refusal hand an earlier, uncertain one
+  // a new key, and that is how a business would be rung twice.
+  const rejectedBefore = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM actions WHERE user_id = ? AND status = 'rejected' AND json_extract(input_json, '$.intent') = ?"
+  ).bind(userID, intent).first();
+  const attempt = rejectedBefore?.n || 0;
+  const idempotencyKey = attempt ? await callIdempotencyKey({ userID, itemId, phone, task, attempt }) : intent;
   const placed = await createProviderCall(env, { actionID, task, phone, idempotencyKey, language });
 
   if (!placed.ok) {
+    // 'rejected' = CALL-E said a definite no and nothing was dialled; 'failed'
+    // = anything we can't be sure about. Only 'rejected' earns a fresh key.
+    const questions = placed.questions || [];
     await env.DB.prepare(
-      "UPDATE actions SET status = 'failed', failure_code = ?, ended_at = ? WHERE id = ?"
-    ).bind(placed.code, new Date().toISOString(), actionID).run();
+      "UPDATE actions SET status = ?, failure_code = ?, result_json = ?, ended_at = ? WHERE id = ?"
+    ).bind(
+      placed.rejected ? "rejected" : "failed", placed.code,
+      questions.length ? JSON.stringify({ questions, evidence: [] }) : null,
+      new Date().toISOString(), actionID,
+    ).run();
     if (!placed.keepCharge) await refundCallBudget(env.DB, userID);
-    return json({ error: placed.code, actionId: actionID, message: "Tadah couldn't place the call." }, placed.status || 502);
+    return json({
+      error: placed.code, actionId: actionID, message: "Tadah couldn't place the call.",
+      ...(questions.length ? { questions } : {}),
+    }, placed.status || 502);
   }
 
+  // A webhook may already have finished the call while creation was returning.
   await env.DB.prepare(
-    "UPDATE actions SET status = 'in_progress', provider_call_id = ? WHERE id = ?"
+    "UPDATE actions SET status = CASE WHEN status = 'queued' THEN 'in_progress' ELSE status END, provider_call_id = ? WHERE id = ?"
   ).bind(placed.callID, actionID).run();
 
   return json({

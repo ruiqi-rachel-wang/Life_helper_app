@@ -1318,6 +1318,40 @@ describe("reset abuse resistance", () => {
     expect((await login("race@example.com", KEY_A)).status).toBe(200);   // unchanged
   });
 
+  it("deleting the account takes its calls and verification code with it", async () => {
+    const made = await register("caller@example.com", KEY_A);
+    const me = made.body.userID;
+    const now = new Date().toISOString();
+    const period = now.slice(0, 7);
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO actions (id, user_id, item_id, kind, status, input_json, result_json, transcript, created_at) VALUES ('del-a', ?, 'i', 'call', 'completed', '{\"phone\":\"+12125550100\"}', '{}', 'Tadah: hi', ?)").bind(me, now),
+      env.DB.prepare("INSERT INTO actions (id, user_id, item_id, kind, status, input_json, created_at) VALUES ('keep-a', 'someone-else', 'i', 'call', 'completed', '{}', ?)").bind(now),
+      env.DB.prepare("INSERT INTO action_events (event_id, action_id, kind, received_at) VALUES ('ev-del', 'del-a', 'call.completed', ?)").bind(now),
+      env.DB.prepare("INSERT INTO action_events (event_id, action_id, kind, received_at) VALUES ('ev-keep', 'keep-a', 'call.completed', ?)").bind(now),
+      env.DB.prepare("INSERT INTO action_usage (scope, period, count) VALUES (?, ?, 2)").bind(me, period),
+      env.DB.prepare("INSERT OR REPLACE INTO action_usage (scope, period, count) VALUES ('*global*', ?, 9)").bind(period),
+      env.DB.prepare("INSERT INTO email_verifications (user_id, code_hash, expires_at, attempts, created_at) VALUES (?, 'h', ?, 0, ?)").bind(me, now, now),
+    ]);
+
+    const r = await call("/account/delete", {
+      headers: { "X-Tadah-Session": made.body.token },
+      body: { derivedKey: KEY_A },
+    });
+    expect(r.status).toBe(200);
+
+    const count = async (sql, ...args) => (await env.DB.prepare(sql).bind(...args).first()).n;
+    expect(await count("SELECT COUNT(*) AS n FROM actions WHERE user_id = ?", me)).toBe(0);
+    expect(await count("SELECT COUNT(*) AS n FROM action_events WHERE action_id = 'del-a'")).toBe(0);
+    expect(await count("SELECT COUNT(*) AS n FROM action_usage WHERE scope = ?", me)).toBe(0);
+    expect(await count("SELECT COUNT(*) AS n FROM email_verifications WHERE user_id = ?", me)).toBe(0);
+    // Someone else's call, and the shared spend counter, are untouched.
+    expect(await count("SELECT COUNT(*) AS n FROM actions WHERE id = 'keep-a'")).toBe(1);
+    expect(await count("SELECT COUNT(*) AS n FROM action_events WHERE event_id = 'ev-keep'")).toBe(1);
+    expect(await count("SELECT COUNT(*) AS n FROM action_usage WHERE scope = '*global*'")).toBe(1);
+    await env.DB.prepare("DELETE FROM actions WHERE id = 'keep-a'").run();
+    await env.DB.prepare("DELETE FROM action_events WHERE event_id = 'ev-keep'").run();
+  });
+
   it("deleting the account takes any outstanding reset code with it", async () => {
     const made = await register("cleanup@example.com", KEY_A);
     await plantResetCode(made.body.userID);
@@ -1538,6 +1572,68 @@ describe("actions — placing one", () => {
     expect(second.body.error).toBe("call_in_progress");
   });
 
+  it("checks personal numbers in the spoken name before charging", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, name: "My SSN is 123-45-6789" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("unsafe_goal");
+    expect(await env.DB.prepare("SELECT id FROM actions WHERE user_id = ?").bind(PLUS_USER).first()).toBeNull();
+  });
+
+  it("rejects redirects on both authenticated provider requests", async () => {
+    const original = globalThis.fetch;
+    const requests = [];
+    env.CALLE_DRY_RUN = "0";
+    env.CALLE_API_KEY = "test-key";
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      requests.push(init);
+      return Response.json(init.method === "POST"
+        ? { id: "provider-review" }
+        : { id: "provider-review", status: "completed" });
+    };
+    try {
+      const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+      expect(made.status).toBe(200);
+      await call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { actionId: made.body.actionId } });
+      expect(requests).toHaveLength(2);
+      for (const request of requests) expect(request.redirect).toBe("error");
+    } finally {
+      globalThis.fetch = original;
+      env.CALLE_DRY_RUN = "1";
+      delete env.CALLE_API_KEY;
+    }
+  });
+
+  it("preserves a webhook that arrives before the create response", async () => {
+    const original = globalThis.fetch;
+    env.CALLE_DRY_RUN = "0";
+    env.CALLE_API_KEY = "test-key";
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      if (init.method === "POST") {
+        const payload = JSON.parse(init.body);
+        const hook = await call("/actions/webhook/test-webhook-secret", {
+          body: { id: "early-review-event", data: { id: "early-review-call", metadata: payload.metadata } },
+        });
+        expect(hook.status).toBe(200);
+        return Response.json({ id: "early-review-call" });
+      }
+      return Response.json({ id: "early-review-call", status: "completed", summary: "Already finished" });
+    };
+    try {
+      const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+      expect(made.status).toBe(200);
+      const row = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(made.body.actionId).first();
+      expect(row.status).toBe("completed");
+      expect(row.provider_call_id).toBe("early-review-call");
+      expect(JSON.parse(row.result_json).summary).toBe("Already finished");
+    } finally {
+      globalThis.fetch = original;
+      env.CALLE_DRY_RUN = "1";
+      delete env.CALLE_API_KEY;
+    }
+  });
+
   // A request cut off between writing the row and hearing back from CALL-E
   // leaves the row 'queued' with nothing to ever finish it. That must not block
   // this person's calls for the rest of time.
@@ -1548,6 +1644,91 @@ describe("actions — placing one", () => {
     await env.DB.prepare("UPDATE actions SET status = 'queued', provider_call_id = NULL, created_at = ? WHERE id = ?")
       .bind(stale, first.body.actionId).run();
     expect((await actionsCall(PLUS_TOKEN, GOOD_CALL)).status).toBe(200);
+  });
+
+  // Two to-dos, or two devices, confirming at the same moment. A read-then-write
+  // check let both through; the slot is now one conditional INSERT.
+  it("lets only one of two simultaneous calls through, and charges once", async () => {
+    const [a, b] = await Promise.all([
+      actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-a" }),
+      actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-b" }),
+    ]);
+    expect([a.status, b.status].sort()).toEqual([200, 409]);
+    const used = await env.DB.prepare(
+      "SELECT count FROM action_usage WHERE scope = ? AND period = ?"
+    ).bind(PLUS_USER, new Date().toISOString().slice(0, 7)).first();
+    expect(used.count).toBe(1);
+  });
+
+  // The end of an authorisation can be its limit. Cutting it off would give the
+  // agent more permission than the user approved.
+  it("refuses an authorisation that is too long instead of cutting it short", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, mayAgreeTo: "a".repeat(201) });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("agreement_too_long");
+  });
+
+  // After CALL-E definitely refuses a request, retrying that SAME request needs
+  // a new key or it can only ever conflict. A refusal of a DIFFERENT request on
+  // the same to-do must not change it: that could re-key an uncertain call.
+  it("gives a refused request a fresh key, and only that request", async () => {
+    const original = globalThis.fetch;
+    const keys = [];
+    let reply = { status: 422, body: { error: { code: "call_not_ready", details: { questions: ["Which language?"] } } } };
+    env.CALLE_DRY_RUN = "0";
+    env.CALLE_API_KEY = "test-key";
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      keys.push(init.headers["Idempotency-Key"]);
+      return Response.json(reply.body, { status: reply.status });
+    };
+    try {
+      const first = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-q" });
+      expect(first.status).toBe(400);
+      expect(first.body.error).toBe("call_not_ready");
+      expect(first.body.questions).toEqual(["Which language?"]);
+      const row = await env.DB.prepare("SELECT status FROM actions WHERE id = ?").bind(first.body.actionId).first();
+      expect(row.status).toBe("rejected");
+
+      // An edited request on the same to-do is refused too…
+      await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-q", goal: "Ask something else" });
+      // …then the original is retried and succeeds.
+      reply = { status: 200, body: { id: "provider-ok" } };
+      const retry = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-q" });
+      expect(retry.status).toBe(200);
+
+      expect(keys).toHaveLength(3);
+      expect(keys[2]).not.toBe(keys[0]);            // its own refusal earned a fresh key
+      expect(new Set(keys).size).toBe(3);
+    } finally {
+      globalThis.fetch = original;
+      env.CALLE_DRY_RUN = "1";
+      delete env.CALLE_API_KEY;
+    }
+  });
+
+  // A conflict can mean the first call went through and only its reply was
+  // lost, so it must NOT free a new key.
+  it("keeps the same key after an idempotency conflict", async () => {
+    const original = globalThis.fetch;
+    const keys = [];
+    env.CALLE_DRY_RUN = "0";
+    env.CALLE_API_KEY = "test-key";
+    globalThis.fetch = async (url, init) => {
+      if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      keys.push(init.headers["Idempotency-Key"]);
+      return Response.json({ error: { code: "idempotency_conflict" } }, { status: 409 });
+    };
+    try {
+      await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-c" });
+      await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, itemId: "todo-c" });
+      expect(keys).toHaveLength(2);
+      expect(keys[1]).toBe(keys[0]);
+    } finally {
+      globalThis.fetch = original;
+      env.CALLE_DRY_RUN = "1";
+      delete env.CALLE_API_KEY;
+    }
   });
 
   it("stops at the monthly allowance and does not charge past it", async () => {
@@ -1653,6 +1834,40 @@ describe("actions — the provider's webhook", () => {
     expect((await call("/actions/webhook/", { body: {} })).status).toBe(401);
   });
 
+  it("a delayed poll cannot overwrite a webhook's finished result", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    await env.DB.prepare("UPDATE actions SET provider_call_id = 'provider-race' WHERE id = ?")
+      .bind(made.body.actionId).run();
+    const original = globalThis.fetch;
+    env.CALLE_DRY_RUN = "0";
+    env.CALLE_API_KEY = "test-key";
+    let started, release;
+    const pollStarted = new Promise(resolve => { started = resolve; });
+    const staleResponse = new Promise(resolve => { release = resolve; });
+    let reads = 0;
+    globalThis.fetch = async () => {
+      if (++reads === 1) { started(); return staleResponse; }
+      return Response.json({ id: "provider-race", status: "completed", summary: "Final answer" });
+    };
+    let polling;
+    try {
+      polling = call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { actionId: made.body.actionId } });
+      await pollStarted;
+      await call(HOOK, { body: terminal(made.body.actionId, "provider-race"), headers: { "CALL-E-Event-Id": "evt-race-review" } });
+      release(Response.json({ id: "provider-race", status: "in_progress", summary: "Still waiting" }));
+      const result = await polling;
+      expect(result.body.status).toBe("completed");
+      expect(result.body.result.summary).toBe("Final answer");
+      expect(result.body.endedAt).toBeTruthy();
+    } finally {
+      release(Response.json({ status: "in_progress" }));
+      if (polling) await polling;
+      globalThis.fetch = original;
+      env.CALLE_DRY_RUN = "1";
+      delete env.CALLE_API_KEY;
+    }
+  });
+
   it("is reachable WITHOUT the app's shared token", async () => {
     // The provider is not the app and has no X-Cuevi-Token. If this route ever
     // moves below the shared-secret gate, every result silently 401s and calls
@@ -1756,6 +1971,25 @@ describe("email verification", () => {
       const again = await call("/auth/email/verify/request", { headers: { "X-Tadah-Session": VTOKEN } });
       expect(again.body).toMatchObject({ ok: true, sent: false });
       expect(sent).toHaveLength(1);
+    } finally {
+      globalThis.fetch = original;
+      delete env.RESEND_KEY;
+    }
+  });
+
+  it("lets the user resend immediately after email delivery fails", async () => {
+    const original = globalThis.fetch;
+    env.RESEND_KEY = "test-resend-key";
+    let attempts = 0;
+    globalThis.fetch = async () => ++attempts === 1
+      ? new Response("unavailable", { status: 503 })
+      : Response.json({ id: "email-retry" });
+    try {
+      const options = { headers: { "X-Tadah-Session": VTOKEN } };
+      expect((await call("/auth/email/verify/request", options)).status).toBe(502);
+      const retry = await call("/auth/email/verify/request", options);
+      expect(retry.body.sent).toBe(true);
+      expect(attempts).toBe(2);
     } finally {
       globalThis.fetch = original;
       delete env.RESEND_KEY;

@@ -15,6 +15,20 @@ import Foundation
 @Suite("Call offer")
 struct CallOfferTests {
 
+    @Test func extensionsDoNotHideAValidCallOffer() {
+        for phone in ["(212) 555-0100 ext. 4", "212-555-0100 x229", "212-555-0100 extension 42"] {
+            var r = ExtractionResult.empty
+            r.phone = phone
+            #expect(CallOffer.from(r)?.phone == phone)
+            #expect(CallOffer.isValidNANP(CallOffer.phoneDigits(phone)))
+            #expect(CallOffer.accept(phone, excluding: ["2125550100"]) == nil)
+        }
+    }
+
+    @Test func phoneValidationRejectsNonASCIIDigits() {
+        #expect(!CallOffer.isValidNANP("２１２５５５０１００"))
+    }
+
     /// A scan result shaped the way OpenAIClient builds one: `steps` plus a
     /// parallel `detailedSteps` carrying the per-step detail.
     private func result(steps: [String],
@@ -458,4 +472,101 @@ struct CallCenterTests {
         #expect(status.endedDate == nil)
         #expect(CallRecord(status, business: nil).didFail)
     }
+}
+
+// ── What a refused call tells the user ──────────────────────────────────────
+
+@MainActor
+@Suite("Call refusals")
+struct CallRefusalTests {
+
+    // CALL-E asks before it dials rather than guessing. Folding that into
+    // "couldn't place the call" hid the one answerable thing (2026-09-16).
+    @Test func aClarifyingQuestionReachesTheUser() {
+        let data = Data(#"{"error":"call_not_ready","questions":["Should the call be in Chinese?"]}"#.utf8)
+        let error = ActionsService.error(from: data, status: 400)
+        #expect(error == .needsDetail("Should the call be in Chinese?"))
+        #expect(error.errorDescription?.contains("Should the call be in Chinese?") == true)
+    }
+
+    @Test func aQuestionlessClarificationStillSaysWhatToDo() {
+        let error = ActionsService.error(from: Data(#"{"error":"call_not_ready"}"#.utf8), status: 400)
+        #expect(error == .needsDetail(""))
+        #expect(error.errorDescription?.contains("more detail") == true)
+    }
+
+    // A definite rejection is over; nothing should keep watching it.
+    @Test func aRejectedCallIsFinished() {
+        let status = ActionsService.ActionStatus(actionID: "a", status: "rejected", result: nil,
+                                                 transcript: nil, failureCode: "call_not_ready")
+        #expect(status.isFinished)
+    }
+}
+
+// ── The account number goes only when it's shared ───────────────────────────
+
+@MainActor
+@Suite("Reference number consent")
+struct ReferenceConsentTests {
+
+    private func scan(script: String) -> ExtractionResult {
+        var r = ExtractionResult.empty
+        r.sender = "Con Edison"
+        r.accountNumber = "829105512347"
+        r.accountLabel = "Account"
+        r.phone = "(800) 752-6633"
+        r.steps = ["Call Con Edison"]
+        var step = ChecklistStep(text: "Call Con Edison")
+        step.detail = StepDetail(explanation: "", script: script)
+        r.detailedSteps = [step]
+        return r
+    }
+
+    @Test func theSuggestedQuestionLeavesTheAccountNumberOut() {
+        let offer = CallOffer.from(scan(script: "Ask why account 829105512347 went up."))
+        #expect(offer?.goal == "Ask why account went up.")
+    }
+
+    @Test func spacedDashedAndTranslatedSpellingsAreRemovedToo() {
+        for script in ["Ask about account 8291 0551 2347.", "Ask about account 829-105-512-347.",
+                       "询问账号829105512347的账单。", "Ask about account #829105512347."] {
+            let goal = CallOffer.from(scan(script: script))?.goal ?? ""
+            #expect(!goal.filter(\.isNumber).contains("829105512347"), "\(script) → \(goal)")
+        }
+    }
+
+    @Test func switchOffSendsNoReferenceEvenIfTyped() throws {
+        let offer = try #require(CallOffer.from(scan(script: "Ask why the bill went up.")))
+        let off = CallCenter.request(offer: offer, phone: offer.phone, goal: "Account 829105512347: why?",
+                                     mayAgreeTo: "", shareAccount: false, name: "", language: "en", itemID: UUID())
+        #expect(!off.goal.contains("829105512347"))
+    }
+
+    @Test func switchOnSendsItExactlyOnce() throws {
+        let offer = try #require(CallOffer.from(scan(script: "Ask why account 829105512347 went up.")))
+        let on = CallCenter.request(offer: offer, phone: offer.phone, goal: offer.goal,
+                                    mayAgreeTo: "", shareAccount: true, name: "", language: "en", itemID: UUID())
+        #expect(on.goal.components(separatedBy: "829105512347").count == 2)
+    }
+
+    @Test func otherNumbersInTheQuestionStay() {
+        let goal = CallOffer.removingReference("829105512347", from: "Ask about the $214.60 charge on 09/28.")
+        #expect(goal == "Ask about the $214.60 charge on 09/28.")
+    }
+
+    @Test func aScriptThatWasOnlyTheNumberStillHasAQuestion() {
+        let goal = CallOffer.questionWithoutReference("829105512347", reference: "829105512347", who: "Con Edison")
+        #expect(!goal.isEmpty)
+    }
+}
+
+// ── A pending call belongs to the account that placed it ────────────────────
+
+@Test func aPendingCallIsOnlyWatchedByItsOwnAccount() {
+    let mine = PendingCall.InFlight(actionID: "a", business: nil, startedAt: .now, owner: "user-a")
+    #expect(mine.belongs(to: "user-a"))
+    #expect(!mine.belongs(to: "user-b"))
+    #expect(!mine.belongs(to: nil))
+    // Written before owners were recorded: any signed-in account may pick it up.
+    #expect(PendingCall.InFlight(actionID: "b", business: nil).belongs(to: "user-b"))
 }

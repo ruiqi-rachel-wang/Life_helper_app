@@ -8,6 +8,11 @@ before the evening fixes ("Call now" opens the to-do, calls survive leaving the
 screen, confirm page translated, no transcript wording). Upload when Rachel says
 it's good; don't submit before that.
 
+**Source review, September 16:** see [review_1.1.md](review_1.1.md) for the changes
+since 1.0 build 6, the local small fixes, and ten prioritized follow-ups. Its P1
+items should be resolved before public release. The review fixes are not deployed
+or included in the uploaded build.
+
 ## 0. Deploy the Worker and the legal pages
 
 Two commands, from the same folder. The Worker gets one fix to the call route:
@@ -112,4 +117,5 @@ npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main --
 ## Later — not needed for 1.1
 
 - **Paid call packs** for Plus users past 5 a month. Needs consumable products in App Store Connect and RevenueCat, a credit ledger in the Worker, and a purchase screen. Break-even is about $1.85–$2.25 a call after Apple's cut.
-- **Harden the Worker's CALL-E requests** with `redirect: "error"`, as CALL-E's maintainer did in the hackathon PR (commit 59bf68e).
+- **CALL-E redirect hardening is fixed locally** by the September 16 review:
+  both provider requests now use `redirect: "error"`. It still needs deployment.

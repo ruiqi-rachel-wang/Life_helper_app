@@ -141,7 +141,7 @@ extension CallOffer {
     static func isValidNANP(_ digits: String) -> Bool {
         var d = digits
         if d.count == 11, d.hasPrefix("1") { d = String(d.dropFirst()) }
-        guard d.count == 10, d.allSatisfy(\.isNumber) else { return false }
+        guard d.count == 10, d.allSatisfy({ $0 >= "0" && $0 <= "9" }) else { return false }
         let npa = Array(d.prefix(3)), nxx = Array(d.dropFirst(3).prefix(3))
         // Area code and exchange both start 2-9. This is what rules out the
         // water bill's account number 416-025-0001: an exchange of "025".
@@ -277,8 +277,17 @@ extension CallOffer {
     /// No formatting or nearby-word scoring — those exist to guess which number
     /// is a phone number, and that question is already answered here. Only
     /// "can this be dialled, and is it secretly an identifier" remains.
+    static func phoneDigits(_ raw: String) -> String {
+        // Match the Worker's extension handling before counting digits. Keep
+        // the original text for display, but dial only the main number.
+        let marker = raw.range(of: #"(?:\bext(?:ension)?\b|\bx)\.?\s*\d"#,
+                               options: [.regularExpression, .caseInsensitive])
+        let main = marker.map { String(raw[..<$0.lowerBound]) } ?? raw
+        return main.filter(\.isNumber)
+    }
+
     static func accept(_ raw: String, excluding identifiers: [String?]) -> String? {
-        let digits = raw.filter(\.isNumber)
+        let digits = phoneDigits(raw)
         guard isValidNANP(digits) else { return nil }
         let banned = identifierDigits(identifiers)
         let tail10 = String(digits.suffix(10))
@@ -312,7 +321,8 @@ extension CallOffer {
         CallOffer(
             phone: phone,
             business: result.sender ?? result.senderShort,
-            goal: goal,
+            goal: questionWithoutReference(goal, reference: result.accountNumber,
+                                           who: result.sender ?? result.senderShort),
             accountNumber: result.accountNumber,
             accountLabel: result.accountLabel,
             permissions: CallPermission.forDocument(category: result.category,
@@ -338,7 +348,8 @@ extension CallOffer {
             return CallOffer(
                 phone: phone,
                 business: item.sender.isEmpty ? nil : item.sender,
-                goal: goal,
+                goal: questionWithoutReference(goal, reference: primary?.value,
+                                               who: item.sender.isEmpty ? nil : item.sender),
                 accountNumber: primary?.value,
                 accountLabel: primary?.label,
                 permissions: CallPermission.forDocument(category: item.category,
@@ -346,6 +357,49 @@ extension CallOffer {
                                                         hasDueDate: item.dueDate != nil))
         }
         return nil
+    }
+}
+
+// ── Keeping the reference number out unless it's shared ─────────────────────
+//
+// ⚠️ THE SWITCH MUST GOVERN WHAT IS SENT. The scan's phone script often names the
+// account ("Ask about account 829105512347"), and that script became the
+// question word for word. With "Share my account number" OFF the number still
+// went to CALL-E and was read to a stranger. So the suggested question is built
+// without it, and the request strips it again when the switch is off.
+
+extension CallOffer {
+
+    /// `text` with every spelling of `reference` removed: exactly as printed,
+    /// and the same digits written plain, spaced, dashed or dotted. References
+    /// under four digits are left alone; they can't be told apart from a date
+    /// or an amount.
+    static func removingReference(_ reference: String?, from text: String) -> String {
+        guard let reference = reference?.trimmingCharacters(in: .whitespacesAndNewlines),
+              reference.count >= 4 else { return text }
+        var out = text.replacingOccurrences(of: reference, with: "", options: .caseInsensitive)
+        let target = reference.filter { $0 >= "0" && $0 <= "9" }
+        if target.count >= 4, let runs = try? NSRegularExpression(pattern: #"#?\s?\d(?:[\s.\-]?\d)*"#) {
+            let ns = out as NSString
+            for match in runs.matches(in: out, range: NSRange(location: 0, length: ns.length)).reversed()
+            where ns.substring(with: match.range).filter({ $0 >= "0" && $0 <= "9" }) == target {
+                out = (out as NSString).replacingCharacters(in: match.range, with: "")
+            }
+        }
+        // Close the gap the number leaves: no double spaces, no space before
+        // punctuation.
+        out = out.replacingOccurrences(of: #"[ \t]{2,}"#, with: " ", options: .regularExpression)
+        out = out.replacingOccurrences(of: #"[ \t]+([.,;:!?。，；：！？])"#, with: "$1", options: .regularExpression)
+        return out.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// The suggested question, minus the reference. Never empty: a script that
+    /// was only the number falls back to an honest question to edit.
+    static func questionWithoutReference(_ goal: String, reference: String?, who: String?) -> String {
+        let cleaned = removingReference(reference, from: goal)
+        if !cleaned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return cleaned }
+        let name = who ?? String(localized: "them")
+        return String(localized: "Ask \(name) about this document.")
     }
 }
 
@@ -424,6 +478,13 @@ nonisolated enum PendingCall {
         /// relaunch, and tells the watcher how often to ask. Optional because a
         /// breadcrumb written by build 7 doesn't have it.
         var startedAt: Date? = nil
+        /// The Tadah account that placed it. A call belongs to that account:
+        /// it is only watched, and its answer only looked for, while that
+        /// account is signed in. Nil on breadcrumbs from before 2026-09-16.
+        var owner: String? = nil
+
+        /// Whether the account signed in now may watch this call.
+        func belongs(to userID: String?) -> Bool { owner == nil || owner == userID }
     }
 
     private static var map: [String: Data] {
