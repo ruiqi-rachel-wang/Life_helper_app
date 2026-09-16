@@ -148,6 +148,9 @@ nonisolated enum ScanPrompt {
                           context that changes the deadline. Each must say something the
                           others do not: "pay by the 11th or $10 is added" and "paying
                           before the deadline avoids the $10" are ONE note. [] if none.
+          phone         : the number the document prints to CALL — service, billing, clinic.
+                          Copy exactly as printed. Never an identifier, a fax, or one you
+                          recall; null if none.
           siteURL       : a relevant URL if the document names one, else null
           repeats       : "monthly", "yearly", "every:N" (N = days), or null. ONLY for a
                           charge that genuinely recurs; null for a final or closing bill, a

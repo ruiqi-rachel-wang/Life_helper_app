@@ -163,11 +163,19 @@ struct TadahApp: App {
                         await plus.refresh()
                     }
                     // (configure ran above, before any identity mutation.)
+                    // Any call still running from a previous session. A call
+                    // outlives the screen that started it, so the app — not
+                    // Review — is what makes sure the answer gets written down.
+                    CallWatcher.resumeAll()
                     await sync.syncNow(context: container.mainContext, account: account)
                 }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
                         refreshAllReminders()
+                        // Coming back from the background is the common way to
+                        // return to a call that was placed and then waited out
+                        // with the phone in a pocket.
+                        CallWatcher.resumeAll()
                         // Coming back from the background on a NEW day is a
                         // return visit and must count — a phone that never fully
                         // relaunches would otherwise look like a phone nobody

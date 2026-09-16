@@ -37,6 +37,10 @@ const workers = {
       // the point. Tests supply one so they exercise the real path.
       PASSWORD_PEPPER: "test-pepper",
       EMAIL_FROM: "noreply@test.invalid",
+      // No phone line in tests: the create path builds and stores everything
+      // exactly as in production, then synthesizes the provider's answer.
+      CALLE_DRY_RUN: "1",
+      CALLE_WEBHOOK_SECRET: "test-webhook-secret",
     },
     // Intercept ALL outbound fetch, so tests never touch the network and — more
     // importantly — so the tier is KNOWN.
@@ -50,7 +54,36 @@ const workers = {
       const url = new URL(request.url);
       if (url.hostname === "api.revenuecat.com") {
         if (request.method === "DELETE") return new Response("{}", { status: 200 });
+        // One reserved subscriber id reports PLUS, so the Plus-gated routes
+        // (/actions) can be tested at all. Everyone else stays on the free tier,
+        // which is where the profile/task caps bite.
+        if (url.pathname.endsWith("/plus-test-user")) {
+          return Response.json({ subscriber: { entitlements: { "Tadah Pro": { expires_date: null } } } });
+        }
+        // A subscriber whose renewal payment is BEING RETRIED: RevenueCat puts
+        // `expires_date` in the past and the grace period in the future, and its
+        // SDK still reports the entitlement as active. The Worker must agree, or
+        // it tells a paying customer to buy what they already have.
+        const hour = 60 * 60 * 1000;
+        if (url.pathname.endsWith("/grace-test-user")) {
+          return Response.json({ subscriber: { entitlements: { "Tadah Pro": {
+            expires_date: new Date(Date.now() - hour).toISOString(),
+            grace_period_expires_date: new Date(Date.now() + 12 * hour).toISOString(),
+          } } } });
+        }
+        // Genuinely lapsed: the grace period has run out too. Still free.
+        if (url.pathname.endsWith("/lapsed-test-user")) {
+          return Response.json({ subscriber: { entitlements: { "Tadah Pro": {
+            expires_date: new Date(Date.now() - 48 * hour).toISOString(),
+            grace_period_expires_date: new Date(Date.now() - hour).toISOString(),
+          } } } });
+        }
         return Response.json({ subscriber: { entitlements: {} } });   // free tier
+      }
+      // The calling provider. Tests run with CALLE_DRY_RUN, so this should never
+      // be reached; if a test ever does reach it, failing loudly is correct.
+      if (url.hostname === "api.heycall-e.com") {
+        return new Response(JSON.stringify({ error: { code: "should_not_be_called" } }), { status: 500 });
       }
       return new Response("unexpected outbound request", { status: 500 });
     },

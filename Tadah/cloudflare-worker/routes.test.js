@@ -42,6 +42,9 @@ async function seedSchema() {
   await env.DB.exec("CREATE TABLE IF NOT EXISTS account_deletions (user_id TEXT PRIMARY KEY, revenuecat_deleted INTEGER NOT NULL DEFAULT 0, started_at TEXT NOT NULL)");
   await env.DB.exec("CREATE TABLE IF NOT EXISTS ai_usage (install_id TEXT NOT NULL, period TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (install_id, period))");
   await env.DB.exec("CREATE TABLE IF NOT EXISTS events (event_id TEXT PRIMARY KEY, install_id TEXT NOT NULL, kind TEXT NOT NULL, source TEXT, on_time INTEGER, item_id TEXT, occurred_at TEXT NOT NULL, app_version TEXT, received_at TEXT)");
+  await env.DB.exec("CREATE TABLE IF NOT EXISTS actions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, item_id TEXT, kind TEXT NOT NULL, status TEXT NOT NULL, input_json TEXT NOT NULL, result_json TEXT, transcript TEXT, provider_call_id TEXT, failure_code TEXT, created_at TEXT NOT NULL, ended_at TEXT, polled_at TEXT)");
+  await env.DB.exec("CREATE TABLE IF NOT EXISTS action_events (event_id TEXT PRIMARY KEY, action_id TEXT NOT NULL, kind TEXT, received_at TEXT NOT NULL)");
+  await env.DB.exec("CREATE TABLE IF NOT EXISTS action_usage (scope TEXT NOT NULL, period TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (scope, period))");
 }
 
 async function seedSession(token = TOKEN, user = USER, revoked = 0) {
@@ -49,6 +52,29 @@ async function seedSession(token = TOKEN, user = USER, revoked = 0) {
   await env.DB.prepare(
     "INSERT OR REPLACE INTO sessions (token, user_id, device_id, created_at, last_seen, revoked) VALUES (?, ?, ?, ?, ?, ?)"
   ).bind(token, user, "device-1", now, now, revoked).run();
+  // A session cannot exist without the account that issued it, and /actions now
+  // reads `verified_at` off that account. OR IGNORE, never REPLACE: a test that
+  // registered a real (and deliberately UNVERIFIED) account through /auth must
+  // keep the row it made.
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO accounts (user_id, email, pw_hash, pw_salt, pw_iterations, pw_version, verified_at, created_at)
+     VALUES (?, ?, 'x', 'x', 600000, 1, ?, ?)`
+  ).bind(user, `${user}@example.test`, now, now).run();
+}
+
+/** Take the verified stamp off an account, to exercise the identity gate.
+ *
+ * ⚠️ ALWAYS RESTORE IT. `seedSession` creates accounts with OR IGNORE so it
+ * cannot clobber one an auth test made on purpose — which also means it will
+ * never put the stamp back. An unverified user left behind fails every /actions
+ * test that runs after it, in a way that looks like the gate is broken. */
+async function unverify(user) {
+  await env.DB.prepare("UPDATE accounts SET verified_at = NULL WHERE user_id = ?").bind(user).run();
+}
+
+async function reverify(user) {
+  await env.DB.prepare("UPDATE accounts SET verified_at = ? WHERE user_id = ?")
+    .bind(new Date().toISOString(), user).run();
 }
 
 const stamp = (iso) => iso;
@@ -1305,5 +1331,356 @@ describe("reset abuse resistance", () => {
     expect((await env.DB.prepare(
       "SELECT COUNT(*) AS n FROM password_resets WHERE user_id = ?"
     ).bind(made.body.userID).first()).n).toBe(0);
+  });
+});
+
+// ── Actions: Tadah makes a phone call ────────────────────────────────────────
+//
+// Every test here runs with CALLE_DRY_RUN=1 (see vitest.config.js), so the full
+// authorise → charge → store → report path is exercised and NOTHING is dialled.
+// That is the same switch the public module ships with, so this suite is also
+// the proof that the no-call path works.
+
+const PLUS_USER = "plus-test-user";          // vitest.config.js reports Plus for this id only
+const PLUS_TOKEN = "session-token-plus-aaaaaaaaaaaaaaaa";
+const FREE_TOKEN = "session-token-free-aaaaaaaaaaaaaaaa";
+// Payment being retried (entitled) vs. payment given up on (not entitled) —
+// vitest.config.js shapes each RevenueCat reply. See the grace-period tests.
+const GRACE_USER = "grace-test-user";
+const GRACE_TOKEN = "session-token-grace-aaaaaaaaaaaaaaa";
+const LAPSED_USER = "lapsed-test-user";
+const LAPSED_TOKEN = "session-token-lapsed-aaaaaaaaaaaaaa";
+const GOOD_CALL = { phone: "(212) 555-0100", goal: "Ask if they accept the Fidelis Essential Plan", name: "Maria" };
+
+async function actionsCall(token, body) {
+  return call("/actions", { headers: { "X-Tadah-Session": token }, body });
+}
+
+/** Clear this user's own state so a count assertion means what it says. */
+async function resetActionState(user = PLUS_USER) {
+  await env.DB.prepare("DELETE FROM actions WHERE user_id = ?").bind(user).run();
+  await env.DB.prepare("DELETE FROM action_usage WHERE scope = ? OR scope = '*global*'").bind(user).run();
+  await env.DB.exec("DELETE FROM action_events");
+}
+
+describe("actions — authorisation", () => {
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await seedSession(FREE_TOKEN, USER);
+    await resetActionState();
+  });
+
+  it("refuses without a session", async () => {
+    expect((await call("/actions", { body: GOOD_CALL })).status).toBe(401);
+  });
+
+  it("refuses a revoked session", async () => {
+    await seedSession("revoked-actions-token", PLUS_USER, 1);
+    expect((await actionsCall("revoked-actions-token", GOOD_CALL)).status).toBe(401);
+  });
+
+  it("refuses a free account, and says why", async () => {
+    const res = await actionsCall(FREE_TOKEN, GOOD_CALL);
+    expect(res.status).toBe(402);
+    expect(res.body.error).toBe("plus_required");
+  });
+
+  // ⚠️ A FAILED RENEWAL PAYMENT IS STILL A SUBSCRIPTION. Apple keeps the
+  // customer entitled while it retries the card, RevenueCat's SDK reports the
+  // entitlement as active, and the app therefore shows Tadah Plus. A server that
+  // only reads `expires_date` says "Plus required" to that same person — telling
+  // someone to buy what they already pay for, in the week their card bounced.
+  it("lets a subscriber in the payment grace period call", async () => {
+    await seedSession(GRACE_TOKEN, GRACE_USER);
+    await resetActionState(GRACE_USER);
+    const res = await actionsCall(GRACE_TOKEN, GOOD_CALL);
+    expect(res.status).toBe(200);
+  });
+
+  it("refuses once the grace period has run out too", async () => {
+    await seedSession(LAPSED_TOKEN, LAPSED_USER);
+    await resetActionState(LAPSED_USER);
+    const res = await actionsCall(LAPSED_TOKEN, GOOD_CALL);
+    expect(res.status).toBe(402);
+    expect(res.body.error).toBe("plus_required");
+  });
+
+  // ⚠️ AN UNVERIFIED EMAIL IS AN UNOWNED ONE — anyone can type a stranger's.
+  // This feature hands whoever holds the account an agent that rings real
+  // businesses and speaks as them, so identity is checked BEFORE the tier:
+  // Plus is a payment, not proof of who you are.
+  it("refuses an account whose email was never verified", async () => {
+    try {
+      await unverify(PLUS_USER);
+      const res = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe("email_unverified");
+    } finally {
+      await reverify(PLUS_USER);
+    }
+  });
+
+  it("charges nothing for an unverified account either", async () => {
+    try {
+      await unverify(PLUS_USER);
+      await actionsCall(PLUS_TOKEN, GOOD_CALL);
+      const used = await env.DB.prepare(
+        "SELECT COUNT(*) AS n FROM action_usage WHERE scope = ?"
+      ).bind(PLUS_USER).first();
+      expect(used.n).toBe(0);
+    } finally {
+      await reverify(PLUS_USER);
+    }
+  });
+
+  // Calling ships gated. An UNSET allowlist means open, so going public is a
+  // secret deletion rather than a deploy — which is also why every other test
+  // in this file places a call and gets through: not-gated-by-default IS the
+  // rest of the suite. Only the refusal needs its own test, and it deliberately
+  // makes ONE call that is rejected before anything is stored, so it leaves no
+  // in-progress action behind to fail the tests that run after it.
+  it("refuses anyone off the allow-list", async () => {
+    const original = env.CALLE_ALLOWLIST;
+    try {
+      env.CALLE_ALLOWLIST = "someone-else,and-another";
+      const out = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+      expect(out.status).toBe(403);
+      expect(out.body.error).toBe("not_invited");
+    } finally {
+      env.CALLE_ALLOWLIST = original;
+    }
+  });
+
+  it("charges nothing when the caller is refused", async () => {
+    await actionsCall(FREE_TOKEN, GOOD_CALL);
+    const used = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM action_usage WHERE scope = ?"
+    ).bind(USER).first();
+    expect(used.n).toBe(0);
+  });
+});
+
+describe("actions — what it refuses to dial", () => {
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await resetActionState();
+  });
+
+  it("rejects a number it cannot dial", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, phone: "555-0100" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid_phone");
+  });
+
+  it("rejects premium-rate and service numbers", async () => {
+    expect((await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, phone: "+19005550100" })).body.error).toBe("premium_rate");
+    expect((await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, phone: "+19115550100" })).body.error).toBe("emergency_or_service");
+  });
+
+  it("still dials an ordinary mobile — 'businesses only' is not a number-type guess", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, phone: "+19295550123" });
+    expect(res.status).toBe(200);
+  });
+
+  it("refuses a goal carrying a card number, and charges nothing for it", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, goal: "Pay it with 4111 1111 1111 1111" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("unsafe_goal");
+    const used = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM action_usage WHERE scope = ?"
+    ).bind(PLUS_USER).first();
+    expect(used.n).toBe(0);
+  });
+
+  it("refuses an unsafe 'may agree to' as well as an unsafe goal", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, mayAgreeTo: "charge my card number" });
+    expect(res.body.error).toBe("unsafe_goal");
+  });
+
+  it("requires a goal", async () => {
+    expect((await actionsCall(PLUS_TOKEN, { phone: GOOD_CALL.phone, goal: "   " })).body.error).toBe("missing_goal");
+  });
+
+  it("rejects an action kind it does not implement", async () => {
+    const res = await actionsCall(PLUS_TOKEN, { ...GOOD_CALL, kind: "email" });
+    expect(res.body.error).toBe("unsupported_action");
+  });
+});
+
+describe("actions — placing one", () => {
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await resetActionState();
+  });
+
+  it("stores the call and reports the allowance", async () => {
+    const res = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    expect(res.status).toBe(200);
+    expect(res.body.dryRun).toBe(true);
+    expect(res.body.callsUsed).toBe(1);
+    expect(res.body.callsLimit).toBe(10);
+
+    const row = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(res.body.actionId).first();
+    expect(row.status).toBe("in_progress");
+    expect(row.user_id).toBe(PLUS_USER);
+    // The number is stored NORMALIZED, not as the user typed it.
+    expect(JSON.parse(row.input_json).phone).toBe("+12125550100");
+  });
+
+  it("allows only one live call at a time", async () => {
+    expect((await actionsCall(PLUS_TOKEN, GOOD_CALL)).status).toBe(200);
+    const second = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    expect(second.status).toBe(409);
+    expect(second.body.error).toBe("call_in_progress");
+  });
+
+  it("stops at the monthly allowance and does not charge past it", async () => {
+    // Ten placed calls, each finished so the one-live-call rule doesn't fire.
+    for (let i = 0; i < 10; i++) {
+      const res = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+      expect(res.status).toBe(200);
+      await env.DB.prepare("UPDATE actions SET status = 'completed' WHERE id = ?").bind(res.body.actionId).run();
+    }
+    const over = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    expect(over.status).toBe(429);
+    expect(over.body.error).toBe("quota_exceeded");
+
+    // The refused attempt must not have left a charge behind.
+    const used = await env.DB.prepare(
+      "SELECT count FROM action_usage WHERE scope = ? AND period = ?"
+    ).bind(PLUS_USER, new Date().toISOString().slice(0, 7)).first();
+    expect(used.count).toBe(10);
+  });
+});
+
+describe("actions — reading one back", () => {
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await seedSession(FREE_TOKEN, USER);
+    await resetActionState();
+  });
+
+  it("returns the action to its owner, refreshed from the provider", async () => {
+    // The status read does not just echo our own row: it asks the provider, so a
+    // lost webhook cannot strand a paid-for call at "in progress" forever.
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    const res = await call("/actions/status", {
+      headers: { "X-Tadah-Session": PLUS_TOKEN },
+      body: { actionId: made.body.actionId },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("completed");
+    expect(res.body.result.structured.outcome).toBe("unknown");   // dry-run payload
+  });
+
+  it("finishes a call whose webhook never arrived", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    // No webhook is delivered at all. Polling alone must still resolve it.
+    const before = await env.DB.prepare("SELECT status, ended_at FROM actions WHERE id = ?")
+      .bind(made.body.actionId).first();
+    expect(before.status).toBe("in_progress");
+    expect(before.ended_at).toBe(null);
+
+    await call("/actions/status", {
+      headers: { "X-Tadah-Session": PLUS_TOKEN },
+      body: { actionId: made.body.actionId },
+    });
+
+    const after = await env.DB.prepare("SELECT status, ended_at FROM actions WHERE id = ?")
+      .bind(made.body.actionId).first();
+    expect(after.status).toBe("completed");
+    expect(after.ended_at).toBeTruthy();
+  });
+
+  it("throttles how often one action asks the provider", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    await call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { actionId: made.body.actionId } });
+    const firstPoll = (await env.DB.prepare("SELECT polled_at FROM actions WHERE id = ?").bind(made.body.actionId).first()).polled_at;
+    // Immediately again: inside the throttle window, so the stamp must not move.
+    await call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { actionId: made.body.actionId } });
+    const secondPoll = (await env.DB.prepare("SELECT polled_at FROM actions WHERE id = ?").bind(made.body.actionId).first()).polled_at;
+    expect(secondPoll).toBe(firstPoll);
+  });
+
+  it("does NOT return one account's call to another", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    const res = await call("/actions/status", {
+      headers: { "X-Tadah-Session": FREE_TOKEN },
+      body: { actionId: made.body.actionId },
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("actions — the provider's webhook", () => {
+  const HOOK = "/actions/webhook/test-webhook-secret";
+
+  beforeEach(async () => {
+    await seedSession(PLUS_TOKEN, PLUS_USER);
+    await resetActionState();
+  });
+
+  const terminal = (actionID, callID) => ({
+    id: "evt_1", type: "call.completed",
+    data: {
+      id: callID, status: "completed", metadata: { action_id: actionID },
+      summary: "They accept the plan.",
+      structured_result: { outcome: "done", detail: "They accept Fidelis Essential." },
+      task_completed: true, completion_confidence: { score: 0.9, label: "high" },
+      evidence: ["Receptionist confirmed."],
+      recipients: [{ attempts: [{ transcript_turns: [{ speaker: "bot", text: "Do you take Fidelis?" }, { speaker: "user", text: "Yes." }] }] }],
+    },
+  });
+
+  it("rejects a wrong or missing secret", async () => {
+    expect((await call("/actions/webhook/nope", { body: {} })).status).toBe(401);
+    expect((await call("/actions/webhook/", { body: {} })).status).toBe(401);
+  });
+
+  it("is reachable WITHOUT the app's shared token", async () => {
+    // The provider is not the app and has no X-Cuevi-Token. If this route ever
+    // moves below the shared-secret gate, every result silently 401s and calls
+    // stay 'in_progress' forever.
+    const res = await call(HOOK, { body: { id: "evt_x", data: { id: "unknown" } } });
+    expect(res.status).toBe(200);
+  });
+
+  it("writes the result and the transcript onto the action", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    const row = await env.DB.prepare("SELECT provider_call_id FROM actions WHERE id = ?").bind(made.body.actionId).first();
+
+    const res = await call(HOOK, { body: terminal(made.body.actionId, row.provider_call_id) });
+    expect(res.status).toBe(200);
+
+    const after = await env.DB.prepare("SELECT * FROM actions WHERE id = ?").bind(made.body.actionId).first();
+    expect(after.status).toBe("completed");
+    expect(after.ended_at).toBeTruthy();
+    expect(JSON.parse(after.result_json).structured.outcome).toBe("unknown");   // dry-run payload
+  });
+
+  it("ignores a duplicate delivery of the same event", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    const row = await env.DB.prepare("SELECT provider_call_id FROM actions WHERE id = ?").bind(made.body.actionId).first();
+    const payload = terminal(made.body.actionId, row.provider_call_id);
+
+    await call(HOOK, { body: payload, headers: { "CALL-E-Event-Id": "evt_dupe" } });
+    const second = await call(HOOK, { body: payload, headers: { "CALL-E-Event-Id": "evt_dupe" } });
+    expect(second.body.duplicate).toBe(true);
+  });
+
+  it("does not reopen an action that already finished", async () => {
+    const made = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    await env.DB.prepare("UPDATE actions SET status = 'failed' WHERE id = ?").bind(made.body.actionId).run();
+    const res = await call(HOOK, { body: terminal(made.body.actionId, "x"), headers: { "CALL-E-Event-Id": "evt_late" } });
+    expect(res.body.alreadyFinal).toBe(true);
+  });
+
+  it("answers 200 for a call it does not recognise, so the provider stops retrying", async () => {
+    const res = await call(HOOK, {
+      body: { id: "evt_2", data: { id: "call_nothere", metadata: { action_id: "no-such-action" } } },
+      headers: { "CALL-E-Event-Id": "evt_unknown" },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.unknown).toBe(true);
   });
 });

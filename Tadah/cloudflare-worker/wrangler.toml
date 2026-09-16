@@ -7,6 +7,19 @@ compatibility_date = "2026-08-01"
 [observability]
 enabled = true
 
+# Plain config, not secrets. CALLE_WEBHOOK_BASE is this Worker's own public
+# origin; the Worker appends /actions/webhook/<CALLE_WEBHOOK_SECRET> to it when
+# it asks the calling provider where to report a finished call. Without BOTH this
+# and the secret, no webhook is requested — the result then arrives only via the
+# status poll, which still works but is slower.
+[vars]
+CALLE_WEBHOOK_BASE = "https://cuevi-ai.ruiqiwang.workers.dev"
+# "1" = build and demo the whole calling flow with NOTHING dialled and no money
+# spent. Set to "0" (or delete the line) and redeploy to make calls real.
+# ⚠️ LIVE as of 2026-09-11: calls are REAL. Every /actions request now seizes a
+# paid phone line and speaks to whoever answers. Set this back to "1" to demo.
+CALLE_DRY_RUN = "0"
+
 # DAILY RETENTION SWEEP. Drives the `scheduled` handler in worker.js, which
 # deletes expired tombstones, revoked sessions and usage counters. Without this
 # trigger nothing calls sweepRetention() and the retention periods promised in
@@ -44,6 +57,26 @@ crons = ["12 4 * * *"]
 #                        Resend account owner — so a real user was told "check
 #                        your inbox" for a code that could never arrive.
 #                        wrangler secret put EMAIL_FROM
+#
+# Tadah Actions / calling provider (CALL-E). The Worker calls the provider's REST
+# API directly; there is no SDK and no dependency.
+#   CALLE_API_KEY        — the provider API key (dashboard.heycall-e.com →
+#                          account → API keys). Outbound calling only works once
+#                          the provider account has cleared KYC.
+#                          wrangler secret put CALLE_API_KEY
+#   CALLE_WEBHOOK_SECRET — an unguessable path segment. It is the ONLY
+#                          authentication on /actions/webhook/<secret>, because
+#                          the provider is not the app and does not hold
+#                          X-Cuevi-Token. Generate with `openssl rand -hex 24`.
+#                          wrangler secret put CALLE_WEBHOOK_SECRET
+#   CALLE_WEBHOOK_BASE   — this Worker's own public origin, e.g.
+#                          https://cuevi-ai.ruiqiwang.workers.dev. Only used to
+#                          build the webhook_url sent to the provider; without it
+#                          (and the secret) no webhook is requested and the result
+#                          is never written back.
+#   CALLE_DRY_RUN        — set to "1" to build and demo the whole feature with
+#                          NOTHING dialled and no API key. This is a plain var,
+#                          not a secret. Leave it UNSET in production.
 #
 # APPLE_* SECRETS ARE NO LONGER NEEDED. Sign in with Apple was removed on
 # 2026-08-15: the /auth/apple route went then (a route test pins the 404), and the

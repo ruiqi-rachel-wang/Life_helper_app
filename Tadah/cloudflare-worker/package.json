@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:helpers && npm run test:routes",
-    "test:helpers": "node --test worker.test.js",
+    "test:helpers": "node --test worker.test.js actions.test.js",
     "test:routes": "vitest run --config vitest.config.js"
   },
   "engines": {

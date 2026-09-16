@@ -30,6 +30,14 @@
 // gpt-4o stays listed even though the app moved to gpt-5-mini: builds already on
 // testers' phones still ask for it, and dropping it would 400 every scan they make.
 // Remove it only once those builds are gone.
+// Tadah Actions — things Tadah does for the user (the first is a phone call).
+// Its handlers take the shared helpers as an argument (ACTION_DEPS, below)
+// rather than importing them back from here, which would be circular.
+import {
+  handleActionCreate, handleActionStatus, handleActionWebhook,
+  ensureActionTables, transcriptPurgeStatement,
+} from "./actions.js";
+
 const ALLOWED_MODELS = new Set(["gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
 // Reasoning effort for the gpt-5 family, allow-listed like the model itself.
 //
@@ -144,7 +152,13 @@ const MAX_BATCH = 25;                                // events accepted per requ
 // the device's local midnight — the retention signal. It carries no item, no
 // source and no time of day; see Metrics.recordAppOpen for why that is the
 // minimum that still answers D1/D7/D30.
-const VALID_KINDS = new Set(["confirmed", "completed", "opened"]);
+// `action_*` measure the thesis: does anyone let Tadah act for them? An unlisted
+// kind is dropped SILENTLY here, which is exactly how `opened` went uncounted for
+// weeks — add the kind here in the same change that starts sending it.
+const VALID_KINDS = new Set([
+  "confirmed", "completed", "opened",
+  "action_offered", "action_accepted", "action_completed",
+]);
 const MAX_STR = 64;                                  // clamp every stored string
 
 // /sync + /auth guardrails (Part 3 account task sync).
@@ -224,6 +238,10 @@ export default {
     // awaiting is what lets a failure mark the cron run as errored rather than
     // vanish into a detached promise.
     await ensureSyncTables(env.DB);
+    // The sweep now touches `actions` too, and it RETHROWS on error — so on a
+    // deployment where nobody has made a call yet, an unensured table would fail
+    // the cron every night and take the other retention promises down with it.
+    await ensureActionTables(env.DB);
     await sweepRetention(env.DB);
   },
 
@@ -249,6 +267,15 @@ export default {
 
     const path = new URL(request.url).pathname;
 
+    // BEFORE the shared-secret gate, and deliberately so: this one caller is not
+    // the app. The calling provider posts a call's terminal result here and has
+    // no reason to hold X-Cuevi-Token; the unguessable secret in the path is
+    // this route's authentication, and the body it sends is treated as a
+    // doorbell rather than as data. See actions.js.
+    if (path.startsWith("/actions/webhook/")) {
+      return handleActionWebhook(request, env, path, ACTION_DEPS);
+    }
+
     // The shared secret gates EVERY route when configured (set it with
     // `wrangler secret put PROXY_TOKEN`, and put the same value in the app).
     if (env.PROXY_TOKEN && request.headers.get("X-Cuevi-Token") !== env.PROXY_TOKEN) {
@@ -263,10 +290,16 @@ export default {
     if (path === "/auth/logout") return handleLogout(request, env);
     if (path === "/account/delete") return handleAccountDelete(request, env);
     if (path === "/sync") return handleSync(request, env);
+    if (path === "/actions") return handleActionCreate(request, env, ACTION_DEPS);
+    if (path === "/actions/status") return handleActionStatus(request, env, ACTION_DEPS);
     if (path === "/" || path === "/v1/chat/completions") return handleChat(request, env);
     return json({ error: "Not found" }, 404);
   },
 };
+
+// The shared helpers actions.js needs. Injected rather than imported from here,
+// which would be a circular import — see the header of actions.js.
+const ACTION_DEPS = { json, readJSON, resolveSession, checkPlus };
 
 // ── AI proxy ────────────────────────────────────────────────────────────────
 async function handleChat(request, env) {
@@ -869,6 +902,10 @@ async function sweepRetention(db) {
       db.prepare("DELETE FROM sessions WHERE revoked = 1 AND last_seen < ?")
         .bind(cutoff(REVOKED_SESSION_TTL_DAYS)),
       db.prepare("DELETE FROM ai_usage WHERE period < ?").bind(cutoff(USAGE_TTL_DAYS).slice(0, 10)),
+      // Call transcripts age out fastest of anything here: they are a recording
+      // of a stranger's words about someone's private business. The structured
+      // result stays on the to-do; the words do not.
+      transcriptPurgeStatement(db),
     ]);
   } catch (err) {
     // LOUD, AND IT FAILS THE INVOCATION. This swallowed every database error
@@ -1411,6 +1448,30 @@ function byteLength(s) {
   return typeof s === "string" ? new TextEncoder().encode(s).byteLength : 0;
 }
 
+// Is this entitlement live RIGHT NOW — by the SAME rule the app's SDK applies?
+//
+// ⚠️ THE GRACE PERIOD IS PART OF THE SUBSCRIPTION. When a renewal payment
+// fails, Apple keeps the subscriber entitled while it retries the card.
+// RevenueCat reports that as an `expires_date` already in the PAST alongside a
+// `grace_period_expires_date` in the future, and its SDK counts the entitlement
+// as ACTIVE — which is what `PlusStore.isPlus`, and therefore the whole app UI,
+// reads. Testing `expires_date` alone made this server disagree with the phone
+// for every subscriber whose card was being retried: the app says Tadah Plus and
+// /actions says "Tadah Plus is needed". Being told to buy what you already pay
+// for, at the exact moment your payment is having trouble, is the worst possible
+// version of this bug — and it fails CLOSED, so it never self-corrects.
+//
+// `expires_date: null` is a lifetime / non-expiring grant: always active.
+function entitlementIsActive(ent) {
+  if (!ent) return false;
+  if (ent.expires_date == null) return true;
+  const now = Date.now();
+  // `new Date(undefined)` is NaN and every NaN comparison is false, so a missing
+  // grace period simply doesn't extend anything.
+  const live = (date) => date != null && new Date(date).getTime() > now;
+  return live(ent.expires_date) || live(ent.grace_period_expires_date);
+}
+
 // Authoritative tier check via the RevenueCat REST API (server-side, secret key).
 // `known` = whether we could determine the tier at all; callers only ENFORCE the
 // free device limit when the tier is known. Fails closed on `plus` (no false Plus)
@@ -1426,8 +1487,7 @@ async function checkPlus(userID, env) {
     const id = env.PLUS_ENTITLEMENT || PLUS_ENTITLEMENT;
     const ents = data && data.subscriber && data.subscriber.entitlements;
     const ent = ents && ents[id];   // bracket form: the id contains a space
-    const active = !!ent && (!ent.expires_date || new Date(ent.expires_date).getTime() > Date.now());
-    return { known: true, plus: active };
+    return { known: true, plus: entitlementIsActive(ent) };
   } catch {
     return { known: false, plus: false };
   }

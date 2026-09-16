@@ -141,6 +141,13 @@ struct CreateView: View {
                 let language = ExplainLanguage.resolve(stored: explainLanguageRaw)
                 ReviewView(
                     load: {
+                        #if DEBUG
+                        // Where a scan's time actually goes. VisionOCR already
+                        // logs each page; nothing measured the model round trip
+                        // or the whole thing, so "the scan is slow" couldn't be
+                        // pinned on OCR vs the network vs the model.
+                        let scanStart = CFAbsoluteTimeGetCurrent()
+                        #endif
                         var pages: [String] = []
                         for image in route.images {
                             let text = await VisionOCR.recognizeText(in: image)
@@ -151,10 +158,19 @@ struct CreateView: View {
                         let ocr = pages.enumerated()
                             .map { pages.count > 1 ? "--- Page \($0.offset + 1) ---\n\($0.element)" : $0.element }
                             .joined(separator: "\n\n")
+                        #if DEBUG
+                        let ocrDone = CFAbsoluteTimeGetCurrent()
+                        #endif
                         // Charge a scan only AFTER the request succeeds — a network
                         // or server failure shouldn't burn the user's daily quota.
                         let results = try await ExtractionService(extractor: OpenAIClient())
                             .extract(from: ocr, language: language)
+                        #if DEBUG
+                        let end = CFAbsoluteTimeGetCurrent()
+                        print(String(format: "[Scan] ocr %.1fs (%d page(s), %d chars) · ai %.1fs · total %.1fs",
+                                     ocrDone - scanStart, route.images.count, ocr.count,
+                                     end - ocrDone, end - scanStart))
+                        #endif
                         ScanQuota.record()   // one document = one scan, regardless of page count
                         return results
                     },

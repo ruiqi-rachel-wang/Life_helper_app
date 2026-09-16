@@ -194,6 +194,76 @@ final class PlusStore {
         if let restored = try? await Purchases.shared.restorePurchases() { apply(restored) }
     }
 
+    // THE PHONE AND THE SERVER DISAGREE ABOUT WHO IS PAYING — fix the phone's side.
+    //
+    // This device decides Plus from the App Store receipt in front of it. The
+    // Worker decides it by asking RevenueCat about the TADAH ACCOUNT's id
+    // (GET /v1/subscribers/<userID>, fail-closed). Those are the same question
+    // only while a `logIn` has actually landed — and every logIn in this app is
+    // `try?`, so an offline sign-in, an app killed mid-sign-in, or a
+    // subscription bought as a guest can leave the purchase filed under an id
+    // the Worker never asks about. The app then shows Plus while the server
+    // answers "Tadah Plus is needed", which is the most confusing pair of
+    // answers we can hand a paying customer.
+    //
+    // Re-file the purchase under the account id: identify, then post the receipt
+    // again. With the project's restore behaviour (Transfer to new App User ID)
+    // that MOVES the subscription onto the account — exactly the id the Worker
+    // reads. ⚠️ Same dependency as `identify`: "Keep with original App User ID"
+    // makes this step fail instead of fixing anything.
+    //
+    // Returns whether RevenueCat now reports Plus FOR THE ACCOUNT ID, i.e.
+    // whether the thing the server just refused is worth trying again. `false`
+    // is real information rather than a failure: there genuinely is no active
+    // subscription on this account, so the paywall message is TRUE.
+    @discardableResult
+    func reattachToAccount(_ accountUserID: String) async -> Bool {
+        #if DEBUG
+        // Print BOTH ids EVERY time, not only on a mismatch. "They already match"
+        // is the answer that rules out this entire class of bug and points at the
+        // subscription itself instead (a lapsed sandbox purchase, a renewal in its
+        // payment grace period) — which is worth one console line to learn.
+        print("[PlusStore] server refused Plus · RevenueCat id \(Purchases.shared.appUserID) · Tadah account \(accountUserID)")
+        #endif
+        if Purchases.shared.appUserID != accountUserID {
+            guard let result = try? await Purchases.shared.logIn(accountUserID) else { return false }
+            apply(result.customerInfo)
+        }
+        // Never post a receipt into an anonymous id: attaching the purchase to a
+        // throwaway user is what produced this mismatch in the first place.
+        guard Purchases.shared.appUserID == accountUserID else { return false }
+        // Restore even when `isPlus` already looks true — that flag can be this
+        // device's cached answer about a DIFFERENT id, which is precisely the
+        // case where the server is right and the phone is wrong.
+        // ⚠️ A THROWN RESTORE MUST NOT READ AS SUCCESS. `try?` + `return isPlus`
+        // returned the value this object was ALREADY carrying — `true`, since the
+        // phone thinks it's Plus — so a restore that errored (which is exactly
+        // what "Keep with original App User ID" does to this call) reported that
+        // the receipt had been re-filed when nothing had moved, and the retry
+        // walked into the same refusal.
+        let restored = try? await Purchases.shared.restorePurchases()
+        if let restored { apply(restored) }
+        // ⚠️ DON'T LEAVE A CLAIM ON SCREEN THAT THE SERVER HAS JUST REFUSED.
+        //
+        // Reaching here means the Worker said this account is not Plus and the
+        // receipt did not change its mind — yet `isPlus` may still be `true`,
+        // either cached from before the subscription lapsed or left untouched
+        // because the restore threw. Profile then goes on saying "Tadah Plus" to
+        // someone every server check treats as free, which is precisely how a
+        // whole evening gets spent debugging the wrong half of the system.
+        //
+        // `fresh: true` on purpose: the default read answers from RevenueCat's
+        // cache, and the cache is the thing under suspicion. This is the one
+        // moment we have PROOF the phone and the server disagree, so it is worth
+        // the round trip — it costs nothing on the normal path, which never gets
+        // here at all.
+        if restored == nil || !isPlus { await refresh(fresh: true) }
+        #if DEBUG
+        print("[PlusStore] re-filed under \(accountUserID) · restore \(restored == nil ? "FAILED" : "ok") · isPlus = \(isPlus)")
+        #endif
+        return restored != nil && isPlus
+    }
+
     // Live updates: RevenueCat pushes a new CustomerInfo whenever entitlements
     // change (purchase, renewal, expiry), so the UI reacts on its own.
     private func listenForChanges() async {

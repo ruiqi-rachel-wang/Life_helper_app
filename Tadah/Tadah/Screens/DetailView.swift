@@ -58,6 +58,15 @@ struct DetailView: View {
                     if !item.steps.isEmpty || isEditing { checklistCard }
                     if !item.otherIDs.isEmpty || siteURLToShow != nil || isEditing { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
+                    // What Tadah got on the phone about this to-do. Same
+                    // position as on Review (after what-to-do, before the
+                    // user's own notes) and the same view, so the card reads
+                    // identically in both places. Result only: offering a NEW
+                    // call needs the scan's extraction, which a saved to-do
+                    // doesn't carry.
+                    if let call = CallHistory.record(for: item.id) {
+                        card { CallResultCard(record: call) }
+                    }
                     if !item.notes.isEmpty || isEditing { noteCard }
                     if let photo = storedPhoto { photoCard(photo) }
                     footer

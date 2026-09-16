@@ -56,6 +56,14 @@ struct ReviewView: View {
     @State private var assignee: UUID?
     @State private var assigneeSeeded = false
 
+    // Calling. `callOffer` is nil when the document gives no phone number, which
+    // is what hides the card entirely. `callItem` is the to-do once a call has
+    // saved it — confirming a call IS the commitment to keep the document, so
+    // there is no separate "Add to inbox" afterwards.
+    @State private var callController = CallController()
+    @State private var showCallConfirm = false
+    @State private var callItem: ActionItem?
+
     // Focus for rows appended by the "Add a …" buttons — see DetailView.Field.
     private enum Field: Hashable { case step(Int), note(Int), detailLabel(Int) }
     @FocusState private var focused: Field?
@@ -92,6 +100,15 @@ struct ReviewView: View {
                 StepDetailView(step: $draft.detailedSteps[idx], startInEditMode: !tapped.hasDetail)
             }
         }
+        .sheet(isPresented: $showCallConfirm) {
+            if let offer = callOffer {
+                CallConfirmView(offer: offer) { phone, goal, mayAgreeTo, shareAccount in
+                    startCall(phone: phone, goal: goal,
+                              mayAgreeTo: mayAgreeTo, shareAccount: shareAccount)
+                }
+            }
+        }
+        .onDisappear { callController.stopWatching() }
         .task { await run() }
         // Reaching Review IS the tour's next milestone, however the user got
         // here (scan, upload, or a guide from the Guides tab) — catch up so
@@ -135,7 +152,34 @@ struct ReviewView: View {
                 phase = .readyMulti
             }
         } catch {
-            phase = .failed(error.localizedDescription)
+            phase = .failed(Self.scanFailureMessage(for: error))
+        }
+    }
+
+    /// What to SAY when a scan fails.
+    ///
+    /// This was `error.localizedDescription` — Foundation's wording, not ours.
+    /// A scan that timed out surfaced as the raw system string ("请求超时。")
+    /// pasted under a Tadah sentence, which tells the user nothing they can act
+    /// on and reads like the app broke. Only one distinction is worth making:
+    /// whether the network is the likely cause, because that is the one the user
+    /// can actually do something about. The real error still goes to the console
+    /// in DEBUG, where it belongs.
+    ///
+    /// Both sentences are EXISTING catalog keys, deliberately — a new English
+    /// literal here would ship untranslated and land us back at an English
+    /// sentence inside a Chinese app.
+    private static func scanFailureMessage(for error: Error) -> String {
+        #if DEBUG
+        print("[Scan] failed: \(error)")
+        #endif
+        switch (error as? URLError)?.code {
+        case .some(.timedOut), .some(.notConnectedToInternet), .some(.networkConnectionLost),
+             .some(.cannotFindHost), .some(.cannotConnectToHost), .some(.dataNotAllowed),
+             .some(.internationalRoamingOff), .some(.secureConnectionFailed):
+            return String(localized: "Please check your connection and try again.")
+        default:
+            return String(localized: "Something went wrong. Please try again.")
         }
     }
 
@@ -268,6 +312,14 @@ struct ReviewView: View {
             // what the user reaches for when a website/clerk asks.
             if !combinedIDs.isEmpty || siteURLToShow != nil || isEditing { card { detailsSection } }
             if !draft.steps.isEmpty || isEditing { card { stepsSection } }
+            // Between the steps and the notes on purpose: what this is → what to
+            // do → and I can do this one for you. Hidden while editing, so the
+            // offer can't be tapped against half-edited text.
+            if !isEditing, let offer = callOffer {
+                card {
+                    CallCard(offer: offer, controller: callController) { showCallConfirm = true }
+                }
+            }
             if !draft.notes.isEmpty || isEditing { card { notesSection } }
             footer
         }
@@ -629,9 +681,29 @@ struct ReviewView: View {
     }
 
     private func addToInbox() {
+        // ⚠️ A CALL HAS ALREADY SAVED THIS DRAFT. Confirming a call saves the
+        // to-do first, because the answer needs somewhere to live — so saving
+        // again here inserted a SECOND copy of the same document, and left the
+        // call's answer attached to the copy the user never opens. That is what
+        // made a finished call look like it had vanished: the card was on the
+        // orphan, and the to-do in the inbox was a duplicate with nothing on it.
+        guard callItem != nil || saveDraftAsItem() != nil else { return }
+        tourGuide.advance(from: .reviewAdd)
+        router.goToInbox()
+        finish()
+    }
+
+    // The save half of "Add to inbox", without the navigation.
+    //
+    // Split out because confirming a CALL has to save the to-do too — a call
+    // needs somewhere to put its answer — but must leave the user on Review so
+    // the card can turn into "calling…" in place. Returns nil when the task list
+    // is full, having already set `limitMessage`.
+    @discardableResult
+    private func saveDraftAsItem() -> ActionItem? {
         if let reason = TaskLimit.blockedReason(context, plus: plus.paidFeaturesUnlocked,
                                                 profileID: assignee) {
-            limitMessage = reason; return
+            limitMessage = reason; return nil
         }
         if !includeDue { draft.dueDate = nil }
         // Drop blank steps, keeping each step's detail aligned by index so nothing
@@ -662,10 +734,68 @@ struct ReviewView: View {
         Metrics.record(.confirmed, itemID: item.id, source: source.rawValue)
         ReminderScheduler.shared.reschedule(for: item)
         SyncCoordinator.shared.noteLocalChange()
-        tourGuide.advance(from: .reviewAdd)
-        router.goToInbox()
-        finish()
+        return item
     }
+
+    // MARK: calling
+
+    // Nil when the document names no phone number — which is what hides the card
+    // rather than showing a dead one. Built from data the scan already produces:
+    // a step's `script` ("what to say") and the number inside it.
+    private var callOffer: CallOffer? { CallOffer.from(draft) }
+
+    // Confirmed on the confirm page. Saves the to-do first, then dials — see
+    // saveDraftAsItem() for why the save happens here rather than later.
+    private func startCall(phone: String, goal: String, mayAgreeTo: String, shareAccount: Bool) {
+        guard let offer = callOffer else { return }
+        guard let item = callItem ?? saveDraftAsItem() else { return }
+        callItem = item
+
+        // The reference number is appended ONLY when the user ticked the box on
+        // the confirm page. Nothing about the document is sent silently.
+        var goalText = goal
+        if shareAccount, let account = offer.accountNumber, !account.isEmpty {
+            let label = offer.accountLabel ?? String(localized: "account")
+            goalText += "\n\n" + String(localized: "My \(label) number is \(account).")
+        }
+        // Whom the call is to. The agent was never told, so it opened every call
+        // not knowing who had picked up or what business it had reached. Nothing
+        // new leaves the phone: the confirm page already shows this name. Plain
+        // English, not localized — the agent reads it; the user never sees it.
+        if let business = offer.business, !business.isEmpty {
+            goalText = "You are calling \(business).\n\n" + goalText
+        }
+
+        let request = ActionsService.CallRequest(
+            phone: phone,
+            goal: goalText,
+            mayAgreeTo: mayAgreeTo,
+            name: profiles.me?.displayName ?? "",
+            itemID: item.id.uuidString)
+
+        callController.start(request, itemID: item.id, business: offer.business, recoverPlus: {
+            // Only runs if the Worker said "Plus required". It asks RevenueCat
+            // about THIS ACCOUNT's id, so a subscription still filed under a
+            // guest/anonymous id reads as no subscription at all — re-file it
+            // and let the call through, instead of selling Plus to someone who
+            // is already paying for it.
+            guard let userID = SessionStore.userID else { return false }
+            return await plus.reattachToAccount(userID)
+        }) { record in
+            CallHistory.save(record, for: item.id)
+        }
+    }
+
+    // WHERE A FINISHED CALL GOES — beside the to-do, never inside it.
+    //
+    // This used to append the answer to `item.notes`. That quietly rewrote text
+    // the user had written themselves, so a to-do stopped being theirs the
+    // moment Tadah made a call about it. The answer now lives in `CallHistory`,
+    // keyed by the to-do's id, and `CallResultCard` renders it — the same view
+    // here and on Detail, so the call reads identically wherever it's opened.
+    //
+    // Nothing about the ITEM changes, so there is no `touch()` and no sync push:
+    // the record is this device's account of a call it placed, not to-do content.
 
     // MARK: multi-item — "this scan has N things"
 

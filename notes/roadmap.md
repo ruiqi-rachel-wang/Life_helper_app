@@ -28,7 +28,7 @@ office", "fill the renewal form", "check my claim", "pay the bill" fit.
 |---|---|
 | **V2 · 1.0.1** | Worker only: verify login throttle · logging · lower AI circuit breaker · check retention sweep |
 | **V2 · 1.1** | email verification · password blocklist · `pw_iterations` · sync test |
-| **V2 · 1.2** | **Calls** on CALL-E: everything CALL-E can do, Plus + verified email, one confirmed call at a time. **Hackathon build due Sep 14**, gated; public release after 1.1. |
+| **V2 · 1.2** | **Calls** on CALL-E: everything CALL-E can do, offered on the **Review** card, Plus + verified email, one confirmed call at a time, 10 a month then credits. **Hackathon build due Sep 14**, gated; public release after 1.1. |
 | **1.3** | photo sync · bilingual term toggle · usage readout · server-side quota + App Attest · guides on demand |
 | **V3 · 2.0** | browser actions: status checks → prefill public forms → logged-in portals · Tadah finds official numbers |
 | **V4+** | payments prepared, human confirms · email / mail / fax · multi-step · push |
@@ -110,35 +110,94 @@ menu, leave a message. The one limit is money and identity: the agent never
 gives payment details, SSN or date of birth, and never agrees to a charge.
 Anything it may commit the user to is written on the confirm screen first.
 
-**Tadah offers; the user doesn't hunt for a button.** The extraction gets
-an optional per-step action `{kind: "call", phone, goal}`, filled when the
-document gives a number and the step is something a call can finish.
-Detail shows on that step: *"You need to call the benefits office to
-confirm coverage. Want Tadah to do that?"* Guides can carry the same offer.
-In V2 the number must come from the document or a guide; the user can
-correct it. (In 2.0 Tadah finds official numbers itself. Permanent rule:
-the user sees and confirms the exact recipient.)
+**Where it appears: the Review screen, decided 2026-09-09.**
+Not Detail — there is no guarantee anyone opens a to-do again. Review is the
+moment attention is highest: the user has just scanned a letter and Tadah is
+explaining it. The card sits between the steps card and the notes card, so it
+reads in order: what this is → what to do → *and I can do this one for you*.
+Guides route through Review too, so guide steps get the offer for free.
 
-**Confirmation screen.** Short. The backend carries the rules.
+**The MODEL picks the number, decided 2026-09-10.** The scan now returns a
+`phone` field — the one number the document prints to ring. This replaced a
+pattern-matching approach that failed on the first real document tested: a
+water bill's account number `4160250001` was offered as the number to call,
+because any bare ten-digit run looks like a phone number to `NSDataDetector`.
+The model reads the whole page and can see that "Customer Service:
+(516) 466-4416" is a phone line and "Account Number: …" is not. Cost: about
++195 tokens on the scan prompt (2,978 → ~3,170).
+
+The client still refuses to dial the undialable, whoever chose it — NANP
+validity (a US exchange cannot start 0 or 1, which is what makes `416-025-0001`
+impossible) and a check against the document's own identifiers. A text scan of
+the steps survives as a FALLBACK only, for to-dos scanned before the field
+existed. The goal still comes from `StepDetail.script`, which the prompt has
+always produced.
+
+**One card, three states, in place.** It morphs; it is not a screen that comes
+and goes:
+
+1. **Offer** — "Tadah can make this call", the business and number, the
+   suggested goal, `[ Yes, call for me ]`.
+2. **Calling** — "Calling Con Edison…", elapsed time, and "You can close this
+   — the answer lands on this to-do."
+3. **Result** — "Call ended", what was said, what was agreed.
+
+Only the **confirm** step is a separate page, opened by "Yes, call for me".
+
+**Yes = save.** On Review the to-do does not exist yet, so a call would have
+nowhere to put its answer. Confirming saves the to-do on the spot, by the same
+path as Add to inbox. If you are asking Tadah to phone someone about this
+letter, you are keeping the letter — and closing the app mid-call then loses
+nothing. The user never taps Add to inbox separately; the call is the
+commitment.
+
+**The card travels with the task.** Once saved, the card and whatever state it
+holds belong to the to-do, so the result is there later on Detail. This is not
+an offer in Detail — a to-do that never had a call never grows a call card.
+Scope, decided 2026-09-09: **new scans and newly added items only.** Nothing
+retrofits calling onto to-dos added before this shipped.
+
+**The confirm page.** Short; the backend carries the rules.
 
 > **Tadah will call**
-> NYU Langone Billing · (212) 555-0100
+> Con Edison · (800) 752-6633
 >
-> **Goal**
-> Book the earliest new-patient appointment after Sep 20, mornings only.
+> **Ask**
+> [editable] Why did the bill go up, and can the late fee be waived?
 >
 > **May agree to**
-> An appointment date and time. Nothing else.
+> [Nothing ▾]
+>
+> ☐ Share my account number (···5512)
 >
 > Tadah won't give out personal information or agree to any charge.
 > 1 of 10 calls this month.
 >
 > **Call now** · How calls work
 
-The "May agree to" line is the user's authorisation. For a plain question
-it reads "Nothing". "How calls work" holds the long version: AI
-disclosure, four-minute rule, hold, what is stored. Screenshot the confirm
-screen for App Review and the video.
+"May agree to" is the user's authorisation and the only thing the agent may
+commit them to; it defaults to "Nothing", which makes a plain question the safe
+default. The account-number checkbox is **off by default** and appears only
+when the item has one — a billing call genuinely needs it, but it is the user's
+data going to a third party, so it is an explicit, visible choice. Card, bank
+and SSN numbers are refused server-side regardless of any checkbox. "How calls
+work" holds the long version: AI disclosure, the four-minute rule, hold, what
+is stored. Screenshot the confirm page for App Review and the video.
+
+**Language — the point of the whole feature.** The card, the goal and the
+result are in the user's language; the call happens in **English**. The task
+text tells the agent to conduct the call in English, and the result schema asks
+for `detail` back in the user's language — CALL-E passes field descriptions to
+its extraction model, so there is no extra translation call and no prompt
+change. Someone who cannot make an English phone call is exactly who this is
+for.
+
+**Where the answer lands.** A note on the to-do — "Tadah called Con Edison,
+Sep 9" plus the summary, what was agreed, and the next step. `notes: [String]`
+already exists, so there is **no SwiftData migration**, and it syncs to other
+devices for free. `needs_user_action: yes` leaves the to-do active. The
+in-flight action id lives in UserDefaults keyed by item id, so closing the app
+mid-call still finds the result.
 
 **Decisions**
 
@@ -205,8 +264,8 @@ the task as a note or step; an agreed date becomes a reminder.
 `needs_user_action: yes` turns the task amber. Transcript kept 30 days.
 
 **Guardrails**
-- 10 calls per user per month, checked before dialling. Billing is per
-  call, so the cap is a count.
+- 10 calls per user per month included, checked before dialling, then paid
+  credits (above). Billing is per call, so every cap is a count.
 - **No max-duration field, no cancel endpoint.** Length is controlled only
   by the `task` text and CALL-E's dashboard kill switch + rate limit. Set
   both on day one. Check on the first real call that the time rule is
@@ -227,8 +286,32 @@ the task as a note or step; an agreed date becomes a reminder.
 - One call, now, human-confirmed. No queues, scheduling, or batch (CALL-E
   offers both; don't use them).
 
-**Cost.** $0.05 per call, early pricing. 20 free calls per new account,
-more on request. 10 calls/month = $0.50 per Plus subscriber against $6.99.
+**Cost.** $0.05 per call, early pricing. 20 free calls per new account, more
+on request. 10 calls/month = $0.50 per Plus subscriber against $6.99.
+
+**Money model, decided 2026-09-09: an included allowance, then paid credits.**
+Plus includes **10 calls a month**; past that the user buys a credit pack
+rather than being cut off. Calling is the one feature with a real per-use cost,
+so an unlimited tier would be a bet against the heaviest user — and a hard stop
+at 10 switches the best feature off exactly when someone is finding it useful.
+
+- Credits are **consumable in-app purchases**, a product type Tadah has never
+  shipped (Plus is a subscription). New product IDs in App Store Connect, and
+  RevenueCat treats consumables differently from entitlements: it holds no
+  balance, so **the Worker is the ledger**.
+- `action_credits (user_id, balance, updated_at)`. The create route spends the
+  monthly allowance first, then a credit. A purchase is posted to the Worker
+  and validated against RevenueCat before it adds to the balance — never
+  trusted from the client.
+- Credits never expire and never fold into the monthly allowance: the allowance
+  resets on the 1st, credits do not.
+- Pricing undecided. A starting point to react to: **10 calls $2.99 / 25 calls
+  $5.99** — healthy margin at $0.05 a call, and under the line where a one-off
+  top-up needs thinking about.
+- ⚠️ **Not in the hackathon build.** The allowance and the ledger's shape land
+  now; the consumable IAP itself is App Store Connect work plus a purchase
+  flow, and it is not what the last days before Sep 14 are for. Until it ships
+  the cap simply stops at 10.
 
 **The metric.** New event kinds `action_offered`, `action_accepted`,
 `action_completed`. Funnel: offered → accepted → done. If nobody taps "do
@@ -272,8 +355,8 @@ the 13th as the last day. App Review for 1.0 runs in parallel.
 - **Sep 7–8.** Worker: `POST /actions`, `GET /actions/:id`,
   `/actions/webhook/<secret>`, the three tables, quota, `CALLE_DRY_RUN`
   mode returning a canned result. Route tests.
-- **Sep 9–10.** iOS: per-step offer, confirm screen, live status, result on
-  the task. Behind a flag.
+- **Sep 9–10.** iOS: the Review card (offer → calling → result), the confirm
+  page, the result written onto the to-do. Behind a flag.
 - **Sep 11.** Guardrails, metric events. Three real end-to-end calls on a
   phone, one of them a booking.
 - **Sep 12.** The PR: action module as a small standalone app with README,

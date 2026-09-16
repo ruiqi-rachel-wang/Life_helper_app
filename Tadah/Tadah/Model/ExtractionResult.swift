@@ -49,6 +49,7 @@ nonisolated struct ExtractionResult: Equatable {
     // on save.
     var detailedSteps: [ChecklistStep]
     var notes: [String]                // side info / advice that isn't an action
+    var phone: String?                 // the number to RING, chosen by the model
     var siteURL: URL?
     var repeats: Recurrence?           // nil = one-off; AI reads cadence from doc
     var confidence: Double             // 0–1 overall
@@ -75,6 +76,7 @@ nonisolated struct ExtractionResult: Equatable {
          steps: [String] = [],
          detailedSteps: [ChecklistStep] = [],
          notes: [String] = [],
+         phone: String? = nil,
          siteURL: URL? = nil,
          repeats: Recurrence? = nil,
          confidence: Double = 0,
@@ -97,6 +99,7 @@ nonisolated struct ExtractionResult: Equatable {
         self.steps = steps
         self.detailedSteps = detailedSteps
         self.notes = notes
+        self.phone = phone
         self.siteURL = siteURL
         self.repeats = repeats
         self.confidence = confidence

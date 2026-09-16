@@ -60,4 +60,12 @@ nonisolated enum BackendConfig {
     static var logoutEndpoint: URL? { workerURL?.appendingPathComponent("auth/logout") }
     static var accountDeleteEndpoint: URL? { workerURL?.appendingPathComponent("account/delete") }
     static var syncEndpoint: URL? { workerURL?.appendingPathComponent("sync") }
+
+    // Actions (Tadah Calls). /actions asks the Worker to place a call;
+    // /actions/status reports where it got to.
+    //
+    // Both are POST, including the status read — the Worker answers POST only on
+    // every route, so there is no GET /actions/<id> to use.
+    static var actionsEndpoint: URL? { workerURL?.appendingPathComponent("actions") }
+    static var actionStatusEndpoint: URL? { workerURL?.appendingPathComponent("actions/status") }
 }

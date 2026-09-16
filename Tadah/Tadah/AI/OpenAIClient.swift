@@ -293,6 +293,7 @@ nonisolated enum ExtractionJSON {
             steps: steps,
             detailedSteps: detailedSteps,
             notes: notes,
+            phone: str("phone"),
             siteURL: str("siteURL").flatMap { URL(string: $0) },
             repeats: parseRepeats(str("repeats")),
             confidence: confidence(),
