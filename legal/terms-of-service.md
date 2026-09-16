@@ -1,7 +1,7 @@
 # Terms of Service & Disclaimers for Tadah
 
 **Effective date:** June 18, 2026
-**Last updated:** August 17, 2026
+**Last updated:** September 15, 2026
 
 > ⚠️ **Template — not legal advice.** This draft reflects how Tadah actually
 > handles data today, but you should have a lawyer review it before a paid or
@@ -15,7 +15,7 @@ By downloading or using **Tadah** ("the app"), you agree to these Terms. If you 
 
 ## 1. What Tadah is
 
-Tadah helps you read letters, bills, and official documents and turn them into reminders and checklists. It uses text recognition and AI to summarize documents and suggest steps, and it provides general "life-admin" guides. An optional free account backs up your items and syncs them between your devices.
+Tadah helps you read letters, bills, and official documents and turn them into reminders and checklists. It uses text recognition and AI to summarize documents and suggest steps, and it provides general "life-admin" guides. With Tadah Plus, it can also place a phone call to a business for you, after you confirm who is being called and what will be asked. An optional free account backs up your items and syncs them between your devices.
 
 ---
 
@@ -41,6 +41,8 @@ You are solely responsible for verifying information and for any actions you tak
 
 You agree not to: use the app for any unlawful purpose; upload content you have no right to use; attempt to break, overload, reverse-engineer, or abuse the app or its AI proxy; or use it to harm others.
 
+**Calls.** Ask Tadah to call only a business you have a genuine reason to contact, about your own affairs. Do not use calls to harass, threaten or deceive anyone, to contact somebody who has asked not to be contacted, or to reach emergency services — emergency, premium-rate and service numbers are refused. You are responsible for what you ask Tadah to say and for anything you allow it to agree to on your behalf, and you should check anything important with the business yourself.
+
 ## 6. Your content
 
 You keep ownership of the documents and content you put into Tadah. When you scan or upload a document, its full recognized text is sent for AI processing — however sensitive the document is — as described in the Privacy Policy. (This does not apply to the built-in guides classified as sensitive, which are generated entirely on your device.) If you **sign in**, the items you save are also stored in your account on our backend so we can restore them to you and sync them between your devices; your scanned photos are not uploaded. You grant us only the limited permission needed to process that text, store your items for you, and return them to you.
@@ -55,7 +57,7 @@ To the fullest extent permitted by law, **Tadah** will not be liable for any ind
 
 ## 9. Third-party services
 
-Tadah relies on Apple, OpenAI, Cloudflare, and RevenueCat. Your use is also subject to their terms. We are not responsible for third-party services.
+Tadah relies on Apple, OpenAI, Cloudflare, RevenueCat, and — when you ask it to make a call — CALL-E (AIRUDDER Pte Ltd). Your use is also subject to their terms. We are not responsible for third-party services.
 
 ## 10. Apple standard EULA
 

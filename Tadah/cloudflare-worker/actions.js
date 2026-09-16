@@ -31,6 +31,16 @@ export const GLOBAL_SCOPE = "*global*";      // reserved scope key in action_usa
 // the database. The structured result stays; the words go.
 export const TRANSCRIPT_TTL_DAYS = 30;
 
+// The languages the app explains documents in. The CALL itself is always in
+// English; this is the language the ANSWER comes back in, which is the whole
+// point for someone who cannot make the call themselves.
+const CALL_LANGUAGES = { en: "English", es: "Spanish", "zh-Hans": "Simplified Chinese" };
+
+/** Unknown or missing input falls back to English rather than refusing. */
+export function callLanguageName(code) {
+  return CALL_LANGUAGES[String(code || "").trim()] || "English";
+}
+
 export const CALLE_BASE_URL = "https://api.heycall-e.com";
 
 // How often a status read may ask the provider for a fresh answer. The app polls
@@ -169,7 +179,7 @@ export function goalIsUnsafe(text) {
  * Empty means the agent may commit them to nothing at all, which is the default
  * for a plain question.
  */
-export function buildCallTask({ name, goal, mayAgreeTo }) {
+export function buildCallTask({ name, goal, mayAgreeTo, language = "English" }) {
   // ⚠️ AN EMAIL ADDRESS IS NOT A NAME — and this one is read aloud to a stranger.
   // An account with no name set shows its email as its display name, and the
   // app sent that straight here, so calls opened with "calling on behalf of
@@ -190,6 +200,11 @@ export function buildCallTask({ name, goal, mayAgreeTo }) {
     // the user reads the app in says nothing about what the person answering the
     // phone speaks.
     `Speak ENGLISH for the entire call, whatever language the goal below happens to be written in. Understand the goal in its own language, then carry it out in English.`,
+    ...(language === "English"
+      ? []
+      // The person who gets this answer could not have made the call. Handing
+      // them an English summary would put the language barrier back at the end.
+      : [`Afterwards, write your summary and every field of the structured result in ${language}. The call is in English; the write-up is not.`]),
     ``,
     `Open the call by saying: "Hi, I'm an AI assistant calling on behalf of ${who}. Is now a good time to ask a quick question?"`,
     ``,
@@ -243,6 +258,20 @@ export const CALL_RESULT_SCHEMA = {
     },
   },
 };
+
+/**
+ * The same schema, asking for the free-text fields in the user's language.
+ * CALL-E hands these descriptions to its extraction model, so this is what
+ * actually decides the language of the answer — the task text alone does not.
+ */
+export function callResultSchema(language) {
+  if (language === "English") return CALL_RESULT_SCHEMA;
+  const schema = structuredClone(CALL_RESULT_SCHEMA);
+  for (const field of ["detail", "agreed", "next_step"]) {
+    schema.properties[field].description += ` Write this in ${language}.`;
+  }
+  return schema;
+}
 
 // ── Storage ─────────────────────────────────────────────────────────────────
 let actionTablesReady = false;
@@ -329,7 +358,7 @@ export async function callIdempotencyKey({ userID, itemId, phone, task }, now = 
   return "tadah-" + [...digest].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 48);
 }
 
-async function createProviderCall(env, { actionID, task, phone, idempotencyKey }) {
+async function createProviderCall(env, { actionID, task, phone, idempotencyKey, language }) {
   if (env.CALLE_DRY_RUN === "1") {
     return { ok: true, callID: `dry_${actionID}`, dryRun: true };
   }
@@ -349,7 +378,7 @@ async function createProviderCall(env, { actionID, task, phone, idempotencyKey }
       body: JSON.stringify({
         task,
         recipients: [{ phones: [phone], region: "US", locale: "en-US" }],
-        result_schema: CALL_RESULT_SCHEMA,
+        result_schema: callResultSchema(language),
         metadata: { action_id: actionID },
         ...(env.CALLE_WEBHOOK_SECRET && env.CALLE_WEBHOOK_BASE
           ? { webhook_url: `${env.CALLE_WEBHOOK_BASE}/actions/webhook/${env.CALLE_WEBHOOK_SECRET}` }
@@ -547,6 +576,7 @@ export async function handleActionCreate(request, env, deps) {
 
   const mayAgreeTo = typeof body.mayAgreeTo === "string" ? body.mayAgreeTo.trim().slice(0, MAX_AGREE_CHARS) : "";
   const name = typeof body.name === "string" ? body.name.trim().slice(0, MAX_NAME_CHARS) : "";
+  const language = callLanguageName(body.language);
 
   // Server-side safety scan of everything the user wrote. The system prompt says
   // the same thing to the agent, but a rule the model is asked to follow is not
@@ -582,15 +612,15 @@ export async function handleActionCreate(request, env, deps) {
 
   const actionID = crypto.randomUUID();
   const now = new Date().toISOString();
-  const input = { phone, goal, mayAgreeTo, name, itemId: typeof body.itemId === "string" ? body.itemId : null };
+  const input = { phone, goal, mayAgreeTo, name, language, itemId: typeof body.itemId === "string" ? body.itemId : null };
 
   await env.DB.prepare(
     "INSERT INTO actions (id, user_id, item_id, kind, status, input_json, created_at) VALUES (?, ?, ?, 'call', 'queued', ?, ?)"
   ).bind(actionID, userID, input.itemId, JSON.stringify(input), now).run();
 
-  const task = buildCallTask({ name, goal, mayAgreeTo });
+  const task = buildCallTask({ name, goal, mayAgreeTo, language });
   const idempotencyKey = await callIdempotencyKey({ userID, itemId: input.itemId, phone, task });
-  const placed = await createProviderCall(env, { actionID, task, phone, idempotencyKey });
+  const placed = await createProviderCall(env, { actionID, task, phone, idempotencyKey, language });
 
   if (!placed.ok) {
     await env.DB.prepare(

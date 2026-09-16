@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import {
   normalizePhone, phoneIsCallable, looksLikeCardNumber, goalIsUnsafe,
   buildCallTask, summarizeCall, secretsMatch, callIdempotencyKey,
+  callLanguageName, callResultSchema, CALL_RESULT_SCHEMA,
 } from "./actions.js";
 
 // ── normalizePhone ──────────────────────────────────────────────────────────
@@ -204,4 +205,47 @@ test("secretsMatch compares exactly and survives bad input", () => {
   assert.equal(secretsMatch("", ""), true);
   assert.equal(secretsMatch(null, "abc"), false);
   assert.equal(secretsMatch("abc", undefined), false);
+});
+
+// ── The language the ANSWER comes back in ───────────────────────────────────
+//
+// The call is always in English. Someone who cannot make an English phone call
+// is exactly who this feature is for, so handing them an English write-up would
+// put the barrier back at the end.
+
+test("callLanguageName maps what the app sends, and falls back to English", () => {
+  assert.equal(callLanguageName("en"), "English");
+  assert.equal(callLanguageName("es"), "Spanish");
+  assert.equal(callLanguageName("zh-Hans"), "Simplified Chinese");
+  for (const junk of ["", " ", "klingon", null, undefined, 7, {}]) {
+    assert.equal(callLanguageName(junk), "English", `should fall back on ${JSON.stringify(junk)}`);
+  }
+});
+
+test("the task asks for the write-up in the user's language, and never for the call", () => {
+  const task = buildCallTask({
+    name: "Mei", goal: "Ask about the late fee", mayAgreeTo: "", language: "Simplified Chinese",
+  });
+  assert.match(task, /write your summary and every field of the structured result in Simplified Chinese/i);
+  // The call itself stays English no matter what the write-up language is.
+  assert.match(task, /Speak ENGLISH for the entire call/);
+  assert.match(task, /Speak only English on the call/);
+});
+
+test("an English user's task gains no extra language line", () => {
+  const task = buildCallTask({ name: "Mei", goal: "Ask about the late fee", mayAgreeTo: "" });
+  assert.ok(!/write your summary and every field/i.test(task));
+});
+
+test("the result schema carries the language, because that is what CALL-E extracts with", () => {
+  const spanish = callResultSchema("Spanish");
+  assert.match(spanish.properties.detail.description, /Write this in Spanish\.$/);
+  assert.match(spanish.properties.agreed.description, /Write this in Spanish\.$/);
+  assert.match(spanish.properties.next_step.description, /Write this in Spanish\.$/);
+  // Enums are machine values and must NOT be translated, or the app can't read them.
+  assert.deepEqual(spanish.properties.outcome.enum, ["done", "partially", "not_done", "unknown"]);
+  assert.deepEqual(spanish.properties.needs_user_action.enum, ["yes", "no", "unknown"]);
+  // The English schema is untouched, and shared, so no copy can drift.
+  assert.equal(callResultSchema("English"), CALL_RESULT_SCHEMA);
+  assert.ok(!/Write this in/.test(CALL_RESULT_SCHEMA.properties.detail.description));
 });

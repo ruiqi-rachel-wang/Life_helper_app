@@ -250,6 +250,7 @@ struct SignInView: View {
             // Reconciliation decides what happens to the to-dos already on this
             // device. Its RESULT decides what we claim: a session is not a backup,
             // so "backed up" waits for a completed round trip.
+            account.setEmailVerified(session.verified)
             switch await sync.afterSignIn(session: session, context: context, account: account) {
             case .backedUp:
                 phase = .done

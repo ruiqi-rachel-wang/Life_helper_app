@@ -34,6 +34,11 @@ enum ActionsService {
         var name: String = ""
         /// The to-do this belongs to, so the result lands back on it.
         var itemID: String?
+        /// The language the ANSWER comes back in, as the app's explanation
+        /// language ("en", "es", "zh-Hans"). The call itself is always in
+        /// English — that gap is the whole point of the feature — but the
+        /// write-up is for the user to read.
+        var language: String = "en"
     }
 
     struct Placed {
@@ -159,6 +164,7 @@ enum ActionsService {
             "goal": request.goal,
             "mayAgreeTo": request.mayAgreeTo,
             "name": request.name,
+            "language": request.language,
         ]
         if let itemID = request.itemID { body["itemId"] = itemID }
 

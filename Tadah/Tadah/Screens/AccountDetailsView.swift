@@ -26,6 +26,7 @@ struct AccountDetailsView: View {
     @State private var name = ""
     @State private var email = ""
     @State private var confirmDelete = false
+    @State private var showVerifyEmail = false
     @State private var isDeleting = false
     @State private var deleteError: String?
     @State private var askPassword = false
@@ -55,6 +56,7 @@ struct AccountDetailsView: View {
                 }
             }
         }
+        .sheet(isPresented: $showVerifyEmail) { VerifyEmailView() }
         .onAppear {
             name = account.account?.name ?? ""
             email = account.account?.email ?? ""
@@ -195,6 +197,21 @@ struct AccountDetailsView: View {
                     Text(email)
                         .font(.body14).foregroundStyle(Color.ink)
                         .padding(.vertical, 4)
+
+                    // Only Tadah Calls needs a verified address, so this is a quiet
+                    // line rather than a banner: nothing else in the app is blocked.
+                    if account.emailVerified {
+                        Label("Verified", systemImage: "checkmark.seal.fill")
+                            .font(.subline).foregroundStyle(Color.ok)
+                    } else {
+                        Button { showVerifyEmail = true } label: {
+                            HStack(spacing: 6) {
+                                Text("Not verified").font(.subline).foregroundStyle(Color.faded)
+                                Text("Verify").font(.subline.weight(.semibold)).foregroundStyle(Color.accent)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
         }

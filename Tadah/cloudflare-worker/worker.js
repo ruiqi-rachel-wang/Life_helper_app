@@ -287,6 +287,8 @@ export default {
     if (path === "/auth/email/login") return handleEmailLogin(request, env);
     if (path === "/auth/email/reset/request") return handleResetRequest(request, env);
     if (path === "/auth/email/reset/confirm") return handleResetConfirm(request, env);
+    if (path === "/auth/email/verify/request") return handleVerifyRequest(request, env);
+    if (path === "/auth/email/verify/confirm") return handleVerifyConfirm(request, env);
     if (path === "/auth/logout") return handleLogout(request, env);
     if (path === "/account/delete") return handleAccountDelete(request, env);
     if (path === "/sync") return handleSync(request, env);
@@ -696,6 +698,10 @@ async function ensureSyncTables(db) {
   await db.exec("CREATE TABLE IF NOT EXISTS accounts (user_id TEXT PRIMARY KEY, email TEXT NOT NULL, pw_hash TEXT NOT NULL, pw_salt TEXT NOT NULL, pw_iterations INTEGER NOT NULL, pw_version INTEGER NOT NULL DEFAULT 1, verified_at TEXT, created_at TEXT NOT NULL)");
   await db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)");
   await db.exec("CREATE TABLE IF NOT EXISTS password_resets (user_id TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)");
+  // Same shape as password_resets, and deliberately a separate table: a live
+  // reset code and a live verification code are different claims about the same
+  // account, and sharing one row would let either one cancel the other.
+  await db.exec("CREATE TABLE IF NOT EXISTS email_verifications (user_id TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)");
   // Failed sign-in attempts, keyed on the EMAIL BEING ATTACKED.
   //
   // The global limiter keys on session -> install id -> IP, all of which the
@@ -1820,6 +1826,135 @@ async function handleResetConfirm(request, env) {
   return json({ ok: true }, 200);
 }
 
+// ── Email verification ──────────────────────────────────────────────────────
+//
+// Calls is the feature that needs this: an unverified address is an unowned one,
+// and calling hands that person an agent that phones real businesses and speaks
+// as them. Same shape as the reset code above — six digits, hashed, attempt-capped
+// — with one deliberate difference: it is authenticated by the SESSION, not by a
+// typed address. Nobody can use it to find out who has an account, or to post a
+// code into a stranger's inbox.
+const VERIFY_TTL_MINUTES = 30;
+const VERIFY_MAX_ATTEMPTS = 5;
+const VERIFY_RESEND_COOLDOWN_SECONDS = 60;
+
+// A different label than the reset hash, so a code minted for one purpose can
+// never be replayed against the other.
+export async function verifyCodeHash(env, code) {
+  return derivePasswordHash(env, "0".repeat(64), `verify:${code}`);
+}
+
+// Read the session, the account and its state in one place: both handlers below
+// need exactly this, and the 401s must be identical.
+async function verificationContext(env, request) {
+  const session = await resolveSession(env.DB, request.headers.get("X-Tadah-Session") || "");
+  if (!session) return { ok: false, response: json({ error: "Session invalid" }, 401) };
+  const account = await env.DB.prepare(
+    "SELECT email, verified_at FROM accounts WHERE user_id = ?").bind(session.user_id).first();
+  if (!account) return { ok: false, response: json({ error: "Session invalid" }, 401) };
+  return { ok: true, userID: session.user_id, email: account.email, verified: !!account.verified_at };
+}
+
+// STEP 1 — send a code to the address on the account.
+async function handleVerifyRequest(request, env) {
+  if (!env.DB) return json({ error: "Sync not configured" }, 503);
+  if (!env.PASSWORD_PEPPER) {
+    return json({ error: "not_configured",
+                  message: "Accounts are temporarily unavailable. Please try again later." }, 503);
+  }
+  await ensureSyncTables(env.DB);
+
+  const context = await verificationContext(env, request);
+  if (!context.ok) return context.response;
+  if (context.verified) return json({ ok: true, verified: true }, 200);
+
+  // Inbox-flood guard. Answers 200 either way; it just doesn't send again yet.
+  const existing = await env.DB.prepare(
+    "SELECT created_at FROM email_verifications WHERE user_id = ?").bind(context.userID).first();
+  if (existing && Date.now() - new Date(existing.created_at).getTime()
+        < VERIFY_RESEND_COOLDOWN_SECONDS * 1000) {
+    return json({ ok: true, verified: false, sent: false }, 200);
+  }
+
+  const code = newResetCode();
+  const now = new Date();
+  const expires = new Date(now.getTime() + VERIFY_TTL_MINUTES * 60_000);
+  await env.DB.prepare(
+    `INSERT INTO email_verifications (user_id, code_hash, expires_at, attempts, created_at)
+     VALUES (?, ?, ?, 0, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       code_hash = excluded.code_hash, expires_at = excluded.expires_at,
+       attempts = 0, created_at = excluded.created_at`
+  ).bind(context.userID, await verifyCodeHash(env, code), expires.toISOString(), now.toISOString()).run();
+
+  try {
+    await sendEmail(env, {
+      to: context.email,
+      subject: "Your Tadah verification code",
+      text: `Your Tadah verification code is ${code}. It expires in ${VERIFY_TTL_MINUTES} minutes.\n\nIf you didn't ask to verify this address, you can ignore this — nothing has changed.`,
+      html: `<p>Your Tadah verification code is:</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It expires in ${VERIFY_TTL_MINUTES} minutes.</p><p>If you didn't ask to verify this address, you can ignore this — nothing has changed.</p>`,
+    });
+  } catch {
+    // The row is already written, so say plainly that the mail didn't go out
+    // rather than leaving the user waiting for a code that will never arrive.
+    return json({ error: "email_failed",
+                  message: "Couldn't send the code just now. Please try again shortly." }, 502);
+  }
+  return json({ ok: true, verified: false, sent: true }, 200);
+}
+
+// STEP 2 — the code comes back.
+async function handleVerifyConfirm(request, env) {
+  if (!env.DB) return json({ error: "Sync not configured" }, 503);
+  if (!env.PASSWORD_PEPPER) {
+    return json({ error: "not_configured",
+                  message: "Accounts are temporarily unavailable. Please try again later." }, 503);
+  }
+  await ensureSyncTables(env.DB);
+
+  const context = await verificationContext(env, request);
+  if (!context.ok) return context.response;
+  if (context.verified) return json({ ok: true, verified: true }, 200);
+
+  const read = await readJSON(request);
+  if (!read.ok) return read.response;
+  const code = String((read.body || {}).code || "").trim();
+  if (!/^\d{6}$/.test(code)) return json({ error: "invalid_code" }, 400);
+
+  const row = await env.DB.prepare(
+    "SELECT code_hash, expires_at, attempts FROM email_verifications WHERE user_id = ?"
+  ).bind(context.userID).first();
+  if (!row) return json({ error: "invalid_code" }, 400);
+
+  if (new Date(row.expires_at).getTime() < Date.now() || row.attempts >= VERIFY_MAX_ATTEMPTS) {
+    await env.DB.prepare("DELETE FROM email_verifications WHERE user_id = ?").bind(context.userID).run();
+    return json({ error: "invalid_code" }, 400);
+  }
+
+  // Claim an attempt atomically before comparing — same reasoning as the reset
+  // route: read-compare-increment is three steps that concurrent guesses
+  // interleave through, and six digits is a million tries to a script.
+  const claimed = await env.DB.prepare(
+    `UPDATE email_verifications SET attempts = attempts + 1
+     WHERE user_id = ? AND attempts < ? RETURNING attempts`
+  ).bind(context.userID, VERIFY_MAX_ATTEMPTS).first();
+  if (!claimed) {
+    await env.DB.prepare("DELETE FROM email_verifications WHERE user_id = ?").bind(context.userID).run();
+    return json({ error: "invalid_code" }, 400);
+  }
+
+  if (!timingSafeEqual(await verifyCodeHash(env, code), row.code_hash)) {
+    return json({ error: "invalid_code" }, 400);
+  }
+
+  await env.DB.batch([
+    env.DB.prepare("UPDATE accounts SET verified_at = ? WHERE user_id = ? AND verified_at IS NULL")
+      .bind(new Date().toISOString(), context.userID),
+    env.DB.prepare("DELETE FROM email_verifications WHERE user_id = ?").bind(context.userID),
+  ]);
+  return json({ ok: true, verified: true }, 200);
+}
+
 // REGISTER. The password never reaches this Worker: the phone sends a PBKDF2
 // output (see schema.sql for why the heavy lifting is client-side).
 async function handleEmailRegister(request, env) {
@@ -1863,7 +1998,7 @@ async function handleEmailRegister(request, env) {
   const session = await issueSession(userID, deviceId, env);
   if (!session.ok) return session.response;
   // A brand-new account by definition holds nothing.
-  return json({ token: session.token, userID, plus: session.plus, hasServerData: false }, 200);
+  return json({ token: session.token, userID, plus: session.plus, verified: false, hasServerData: false }, 200);
 }
 
 // LOG IN.
@@ -1943,7 +2078,7 @@ async function handleEmailLogin(request, env) {
 
   const row = email
     ? await env.DB.prepare(
-        "SELECT user_id, pw_hash, pw_salt FROM accounts WHERE email = ?").bind(email).first()
+        "SELECT user_id, pw_hash, pw_salt, verified_at FROM accounts WHERE email = ?").bind(email).first()
     : null;
 
   // ONE reply for every failure, and the HMAC runs even when there is no such
@@ -1967,6 +2102,8 @@ async function handleEmailLogin(request, env) {
     token: session.token,
     userID: row.user_id,
     plus: session.plus,
+    // The app needs this to offer verification at all; Calls is refused without it.
+    verified: !!row.verified_at,
     hasServerData: await accountHasData(row.user_id, env),
   }, 200);
 }

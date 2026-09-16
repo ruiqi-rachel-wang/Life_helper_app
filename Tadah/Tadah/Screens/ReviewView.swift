@@ -62,6 +62,7 @@ struct ReviewView: View {
     // there is no separate "Add to inbox" afterwards.
     @State private var callController = CallController()
     @State private var showCallConfirm = false
+    @State private var showVerifyEmail = false
     @State private var callItem: ActionItem?
 
     // Focus for rows appended by the "Add a …" buttons — see DetailView.Field.
@@ -100,6 +101,7 @@ struct ReviewView: View {
                 StepDetailView(step: $draft.detailedSteps[idx], startInEditMode: !tapped.hasDetail)
             }
         }
+        .sheet(isPresented: $showVerifyEmail) { VerifyEmailView() }
         .sheet(isPresented: $showCallConfirm) {
             if let offer = callOffer {
                 CallConfirmView(offer: offer) { phone, goal, mayAgreeTo, shareAccount in
@@ -317,7 +319,9 @@ struct ReviewView: View {
             // offer can't be tapped against half-edited text.
             if !isEditing, let offer = callOffer {
                 card {
-                    CallCard(offer: offer, controller: callController) { showCallConfirm = true }
+                    CallCard(offer: offer, controller: callController,
+                             onSetUp: { showCallConfirm = true },
+                             onVerify: { showVerifyEmail = true })
                 }
             }
             if !draft.notes.isEmpty || isEditing { card { notesSection } }
@@ -771,7 +775,8 @@ struct ReviewView: View {
             goal: goalText,
             mayAgreeTo: mayAgreeTo,
             name: profiles.me?.displayName ?? "",
-            itemID: item.id.uuidString)
+            itemID: item.id.uuidString,
+            language: explainLanguage.bcp47)
 
         callController.start(request, itemID: item.id, business: offer.business, recoverPlus: {
             // Only runs if the Worker said "Plus required". It asks RevenueCat

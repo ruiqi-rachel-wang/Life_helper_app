@@ -9,7 +9,7 @@
 
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
-import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT, hashedIP, ipDayScope, ipMonthScope } from "./worker.js";
+import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT, hashedIP, ipDayScope, ipMonthScope, verifyCodeHash } from "./worker.js";
 
 const USER = "apple-sub-test-user";
 const OTHER = "apple-sub-other-user";
@@ -39,6 +39,7 @@ async function seedSchema() {
   await env.DB.exec("CREATE TABLE IF NOT EXISTS accounts (user_id TEXT PRIMARY KEY, email TEXT NOT NULL, pw_hash TEXT NOT NULL, pw_salt TEXT NOT NULL, pw_iterations INTEGER NOT NULL, pw_version INTEGER NOT NULL DEFAULT 1, verified_at TEXT, created_at TEXT NOT NULL)");
   await env.DB.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)");
   await env.DB.exec("CREATE TABLE IF NOT EXISTS password_resets (user_id TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)");
+  await env.DB.exec("CREATE TABLE IF NOT EXISTS email_verifications (user_id TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL)");
   await env.DB.exec("CREATE TABLE IF NOT EXISTS account_deletions (user_id TEXT PRIMARY KEY, revenuecat_deleted INTEGER NOT NULL DEFAULT 0, started_at TEXT NOT NULL)");
   await env.DB.exec("CREATE TABLE IF NOT EXISTS ai_usage (install_id TEXT NOT NULL, period TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (install_id, period))");
   await env.DB.exec("CREATE TABLE IF NOT EXISTS events (event_id TEXT PRIMARY KEY, install_id TEXT NOT NULL, kind TEXT NOT NULL, source TEXT, on_time INTEGER, item_id TEXT, occurred_at TEXT NOT NULL, app_version TEXT, received_at TEXT)");
@@ -1682,5 +1683,127 @@ describe("actions — the provider's webhook", () => {
     });
     expect(res.status).toBe(200);
     expect(res.body.unknown).toBe(true);
+  });
+});
+
+// ── Email verification ──────────────────────────────────────────────────────
+//
+// Calls refuses an unverified address, and until this shipped there was no way
+// for anyone to become verified: register wrote NULL and nothing ever set it.
+
+describe("email verification", () => {
+  const VUSER = "verify-test-user";
+  const VTOKEN = "session-token-verify-aaaaaaaaaaaa";
+
+  /** A code this test knows, stored the way the route stores it. */
+  async function seedCode(code, { minutes = 30, attempts = 0 } = {}) {
+    const expires = new Date(Date.now() + minutes * 60_000).toISOString();
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO email_verifications (user_id, code_hash, expires_at, attempts, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(VUSER, await verifyCodeHash(env, code), expires, attempts, new Date().toISOString()).run();
+  }
+
+  const verified = async () => (await env.DB.prepare(
+    "SELECT verified_at FROM accounts WHERE user_id = ?").bind(VUSER).first())?.verified_at ?? null;
+
+  beforeEach(async () => {
+    await seedSchema();
+    await seedSession(VTOKEN, VUSER);
+    await unverify(VUSER);
+    await env.DB.prepare("DELETE FROM email_verifications WHERE user_id = ?").bind(VUSER).run();
+  });
+
+  it("refuses both routes without a session, so codes can't be aimed at a stranger", async () => {
+    for (const path of ["/auth/email/verify/request", "/auth/email/verify/confirm"]) {
+      const out = await call(path, { body: { code: "123456" } });
+      expect(out.status).toBe(401);
+    }
+  });
+
+  it("sends a code, and the cooldown stops a second one straight away", async () => {
+    const sent = [];
+    const original = globalThis.fetch;
+    env.RESEND_KEY = "test-resend-key";
+    globalThis.fetch = async (url, init) => {
+      sent.push(JSON.parse(init.body));
+      return new Response(JSON.stringify({ id: "email_1" }), { status: 200 });
+    };
+    try {
+      const first = await call("/auth/email/verify/request", { headers: { "X-Tadah-Session": VTOKEN } });
+      expect(first.status).toBe(200);
+      expect(first.body).toMatchObject({ ok: true, verified: false, sent: true });
+      expect(sent).toHaveLength(1);
+      expect(sent[0].to).toEqual([`${VUSER}@example.test`]);
+      // The code itself is never returned to the caller, only mailed.
+      expect(JSON.stringify(first.body)).not.toMatch(/\d{6}/);
+
+      const again = await call("/auth/email/verify/request", { headers: { "X-Tadah-Session": VTOKEN } });
+      expect(again.body).toMatchObject({ ok: true, sent: false });
+      expect(sent).toHaveLength(1);
+    } finally {
+      globalThis.fetch = original;
+      delete env.RESEND_KEY;
+    }
+  });
+
+  it("accepts the right code once and stamps the account", async () => {
+    await seedCode("123456");
+    const out = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "123456" },
+    });
+    expect(out.status).toBe(200);
+    expect(out.body).toMatchObject({ ok: true, verified: true });
+    expect(await verified()).not.toBeNull();
+    // The code is consumed, so it cannot be replayed.
+    const row = await env.DB.prepare(
+      "SELECT user_id FROM email_verifications WHERE user_id = ?").bind(VUSER).first();
+    expect(row).toBeNull();
+  });
+
+  it("refuses a wrong, malformed, expired or exhausted code", async () => {
+    await seedCode("123456");
+    const wrong = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "999999" } });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.error).toBe("invalid_code");
+    expect(await verified()).toBeNull();
+
+    const malformed = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "12ab" } });
+    expect(malformed.status).toBe(400);
+
+    await seedCode("123456", { minutes: -1 });
+    const expired = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "123456" } });
+    expect(expired.status).toBe(400);
+    expect(await verified()).toBeNull();
+
+    await seedCode("123456", { attempts: 5 });
+    const exhausted = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "123456" } });
+    expect(exhausted.status).toBe(400);
+    expect(await verified()).toBeNull();
+  });
+
+  it("caps guessing at five tries, then burns the code", async () => {
+    await seedCode("123456");
+    for (let i = 0; i < 5; i += 1) {
+      await call("/auth/email/verify/confirm", {
+        headers: { "X-Tadah-Session": VTOKEN }, body: { code: "000000" } });
+    }
+    const right = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "123456" } });
+    expect(right.status).toBe(400);
+    expect(await verified()).toBeNull();
+  });
+
+  it("is a no-op once the address is verified", async () => {
+    await reverify(VUSER);
+    const asked = await call("/auth/email/verify/request", { headers: { "X-Tadah-Session": VTOKEN } });
+    expect(asked.body).toMatchObject({ ok: true, verified: true });
+    const confirmed = await call("/auth/email/verify/confirm", {
+      headers: { "X-Tadah-Session": VTOKEN }, body: { code: "000000" } });
+    expect(confirmed.body).toMatchObject({ ok: true, verified: true });
   });
 });

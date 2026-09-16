@@ -11,7 +11,7 @@ enum LegalContent {
     static let privacyPolicy = #"""
 # Privacy Policy for Tadah
 
-**Effective date:** June 18, 2026 **Last updated:** August 20, 2026
+**Effective date:** June 18, 2026 **Last updated:** September 15, 2026
 
 Tadah ("Tadah", "we", "us") is an iOS app that helps you understand letters, bills, and official documents and turn them into reminders and checklists. This policy explains what data the app handles and what happens to it.
 
@@ -61,6 +61,17 @@ Signing in is optional. It exists so your items survive signing out, a reinstall
   Both are deleted after 60 days. Cloudflare separately records your IP in their own request logs, as any host does, under their retention and their privacy policy — so "we don't keep it" is true of us and not of the internet.
 - OpenAI processes the text and returns the result; Tadah keeps no server-side copy. Per OpenAI's API policy, API data is **not used to train their models**, but OpenAI may **retain it for up to ~30 days** for abuse monitoring.
 
+### When you ask Tadah to make a phone call (Tadah Plus)
+
+Tadah can phone a business for you about one of your to-dos — for example, to ask why a bill went up. It is optional, it never happens on its own, and a call is placed only after you confirm a screen showing who will be called, the number, and the question. It needs Tadah Plus and a verified email address.
+
+- **Who makes the call.** Our backend hands the call to **CALL-E**, operated by **AIRUDDER Pte Ltd (Singapore)**, which dials the number and speaks with the business. **You are not on the line**, and the call is made in English.
+- **What is sent to make it.** The **phone number** (as printed on your document, or as you corrected it), the **question you approved**, what you allowed Tadah to agree to, and the **name on your profile** — which is read aloud to whoever answers. If the document carries a reference or account number, it is sent **only if you switch that on** on the confirm screen.
+- **What is never said.** Card, bank and Social Security numbers, dates of birth, passwords and PINs are refused by our backend before a call is placed, and the agent is instructed never to say them. Tadah never agrees to a charge or a payment for you.
+- **The agent says it is an AI** in the first sentence of every call. There is no setting that turns that off.
+- **What comes back, and what we keep.** A short written result — what was said, what was agreed, and the next step — is stored with that to-do. A **written transcript** of the conversation is kept for **30 days** and then deleted automatically. **Tadah does not receive or store audio of the call.** We also keep the call's status, the number and question we sent, and a count of your calls, so your monthly allowance is accurate.
+- **Where it is processed.** CALL-E is based in Singapore, so a call's instructions and its result are processed **outside the United States**. CALL-E keeps its own records of the call under its own privacy policy.
+
 ### GUIDES are generated on your device
 **Every** built-in guide — including the sensitive ones (money/banking, taxes, immigration (USCIS), medical, and similar) — has its checklist, its wording and its translation built **entirely on your device**, from text shipped inside the app. No guide's content is sent to OpenAI, and guides work with no network at all.
 
@@ -98,6 +109,7 @@ This is **first-party** data, used only to improve Tadah. It is **not** advertis
 | **Apple** | Device storage, on-device OCR, local notifications; App Store purchases | Standard iOS functionality and subscription billing |
 | **Resend** | Sends account emails (password-reset codes) — receives your email address | Delivering the code that lets you back into your account |
 | **RevenueCat** | Your Tadah user identifier and your subscription status | To manage Tadah Plus subscriptions and tell the app (and our backend) whether your account is Plus |
+| **CALL-E** (AIRUDDER Pte Ltd, Singapore) | **Only if you ask Tadah to make a call.** The business's phone number, the question you approved, the name on your profile, and — only if you switch it on — that document's reference number. It returns a written result and transcript, and keeps its own records under its own policy | To place the call and report back what was said |
 
 We use these providers to deliver Tadah, and we require them by contract to protect your information to a standard equivalent to this policy, to use it only to provide their service to us, and not to use it for their own purposes. We choose them, and we remain accountable to you for the data we send them. You can also review their own privacy policies (OpenAI, Cloudflare, Apple, RevenueCat).
 
@@ -109,6 +121,7 @@ We use these providers to deliver Tadah, and we require them by contract to prot
 - **AI requests** are processed in transit and returned; we keep no server copy. OpenAI's retention of API data is governed by their policy.
 - **Backed-up items (signed-in accounts)** are kept for as long as your account exists, so we can restore them to you. Deleting an item in the app removes it from your account on the next sync. To delete the whole account and everything in it, use **Profile → your name → Delete account** in the app (see *Your choices and rights*); you can also email us if you'd rather we did it.
 - **Family profiles** are kept for as long as your account exists, or until you remove the person or delete the account.
+- **Calls** — the written result stays with the to-do, like anything else you save. The **transcript is deleted after 30 days** automatically. The call's status and its place in your monthly count are kept for as long as your account exists.
 - **Session records** are kept while a device is signed in, and for a short period afterwards for security; ended sessions are marked revoked and cleaned up. Sessions also expire on their own, so a device left unused eventually has to sign in again.
 - **Pseudonymous usage statistics** are stored on our backend (Cloudflare). They carry no name, email or account — but they do carry a random identifier that is stable for one installation, so events from one install can be seen as belonging together. Usage counters are deleted after **60 days** by an automatic daily cleanup; turning the setting off stops new data being sent, and you can ask us to delete what has already been sent.
 
@@ -161,7 +174,7 @@ We may update this policy as the app evolves (for example, if we add accounts, s
     static let terms = #"""
 # Terms of Service & Disclaimers for Tadah
 
-**Effective date:** June 18, 2026 **Last updated:** August 17, 2026
+**Effective date:** June 18, 2026 **Last updated:** September 15, 2026
 
 By downloading or using **Tadah** ("the app"), you agree to these Terms. If you do not agree, do not use the app.
 
@@ -169,7 +182,7 @@ By downloading or using **Tadah** ("the app"), you agree to these Terms. If you 
 
 ## 1. What Tadah is
 
-Tadah helps you read letters, bills, and official documents and turn them into reminders and checklists. It uses text recognition and AI to summarize documents and suggest steps, and it provides general "life-admin" guides. An optional free account backs up your items and syncs them between your devices.
+Tadah helps you read letters, bills, and official documents and turn them into reminders and checklists. It uses text recognition and AI to summarize documents and suggest steps, and it provides general "life-admin" guides. With Tadah Plus, it can also place a phone call to a business for you, after you confirm who is being called and what will be asked. An optional free account backs up your items and syncs them between your devices.
 
 ---
 
@@ -195,6 +208,8 @@ You are solely responsible for verifying information and for any actions you tak
 
 You agree not to: use the app for any unlawful purpose; upload content you have no right to use; attempt to break, overload, reverse-engineer, or abuse the app or its AI proxy; or use it to harm others.
 
+**Calls.** Ask Tadah to call only a business you have a genuine reason to contact, about your own affairs. Do not use calls to harass, threaten or deceive anyone, to contact somebody who has asked not to be contacted, or to reach emergency services — emergency, premium-rate and service numbers are refused. You are responsible for what you ask Tadah to say and for anything you allow it to agree to on your behalf, and you should check anything important with the business yourself.
+
 ## 6. Your content
 
 You keep ownership of the documents and content you put into Tadah. When you scan or upload a document, its full recognized text is sent for AI processing — however sensitive the document is — as described in the Privacy Policy. (This does not apply to the built-in guides classified as sensitive, which are generated entirely on your device.) If you **sign in**, the items you save are also stored in your account on our backend so we can restore them to you and sync them between your devices; your scanned photos are not uploaded. You grant us only the limited permission needed to process that text, store your items for you, and return them to you.
@@ -209,7 +224,7 @@ To the fullest extent permitted by law, **Tadah** will not be liable for any ind
 
 ## 9. Third-party services
 
-Tadah relies on Apple, OpenAI, Cloudflare, and RevenueCat. Your use is also subject to their terms. We are not responsible for third-party services.
+Tadah relies on Apple, OpenAI, Cloudflare, RevenueCat, and — when you ask it to make a call — CALL-E (AIRUDDER Pte Ltd). Your use is also subject to their terms. We are not responsible for third-party services.
 
 ## 10. Apple standard EULA
 

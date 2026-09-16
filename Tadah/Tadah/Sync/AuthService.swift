@@ -17,6 +17,9 @@ enum AuthService {
         let token: String
         let userID: String
         let plus: Bool
+        /// Whether the address on the account has been verified. Tadah Calls
+        /// refuses an unverified address, and nothing else depends on it.
+        let verified: Bool
         let hasServerData: Bool   // did the account already have tasks on the server?
     }
 
@@ -69,6 +72,34 @@ enum AuthService {
         // still hold all of it.
         _ = try await send(to: endpoint, session: token,
                            body: body, treat401AsDone: false)
+    }
+
+    // MARK: - email verification
+
+    // An unverified address is an unowned one: anyone can type a stranger's. Tadah
+    // Calls hands that person an agent that phones real businesses and speaks as
+    // them, so it refuses to call until the address is proved. Both routes are
+    // authenticated by the SESSION, never by a typed address, so a code can only
+    // ever go to the address already on the account.
+
+    /// Ask for a six-digit code. Returns true when the address was already
+    /// verified, in which case nothing was sent.
+    @discardableResult
+    static func requestEmailVerification() async throws -> Bool {
+        guard let endpoint = BackendConfig.verifyRequestEndpoint else { throw AuthError.notConfigured }
+        guard let token = SessionStore.token else { throw AuthError.noSession }
+        let data = try await send(to: endpoint, session: token, treat401AsDone: false)
+        return (try? JSONDecoder().decode(VerifyResponse.self, from: data))?.verified ?? false
+    }
+
+    /// Hand the code back. Returns true once the address is verified.
+    static func confirmEmailVerification(code: String) async throws -> Bool {
+        guard let endpoint = BackendConfig.verifyConfirmEndpoint else { throw AuthError.notConfigured }
+        guard let token = SessionStore.token else { throw AuthError.noSession }
+        let data = try await send(to: endpoint, session: token,
+                                  body: ["code": code.trimmingCharacters(in: .whitespacesAndNewlines)],
+                                  treat401AsDone: false)
+        return (try? JSONDecoder().decode(VerifyResponse.self, from: data))?.verified ?? false
     }
 
     // MARK: - email + password
@@ -179,7 +210,8 @@ enum AuthService {
         // with nothing guarding a cross-account upload.
         try SessionStore.adopt(token: decoded.token, userID: decoded.userID)
         return Session(token: decoded.token, userID: decoded.userID,
-                       plus: decoded.plus, hasServerData: decoded.hasServerData)
+                       plus: decoded.plus, verified: decoded.verified ?? false,
+                       hasServerData: decoded.hasServerData)
     }
 
     private static func send(to endpoint: URL,
@@ -202,5 +234,7 @@ enum AuthService {
         return data
     }
 
-    private struct Response: Decodable { let token: String; let userID: String; let plus: Bool; let hasServerData: Bool }
+    // `verified` is optional so a build can talk to a Worker that predates it.
+    private struct Response: Decodable { let token: String; let userID: String; let plus: Bool; let verified: Bool?; let hasServerData: Bool }
+    private struct VerifyResponse: Decodable { let ok: Bool?; let verified: Bool? }
 }

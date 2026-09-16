@@ -57,6 +57,8 @@ nonisolated enum BackendConfig {
     static var loginEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/login") }
     static var resetRequestEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/reset/request") }
     static var resetConfirmEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/reset/confirm") }
+    static var verifyRequestEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/verify/request") }
+    static var verifyConfirmEndpoint: URL? { workerURL?.appendingPathComponent("auth/email/verify/confirm") }
     static var logoutEndpoint: URL? { workerURL?.appendingPathComponent("auth/logout") }
     static var accountDeleteEndpoint: URL? { workerURL?.appendingPathComponent("account/delete") }
     static var syncEndpoint: URL? { workerURL?.appendingPathComponent("sync") }

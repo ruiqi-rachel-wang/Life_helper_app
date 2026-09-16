@@ -29,6 +29,10 @@ final class CallController {
     }
 
     var phase: Phase = .offer
+    /// The machine-readable refusal behind `.failed`. A message alone can't be
+    /// acted on; this is what lets the card offer verification rather than a
+    /// dead "try again".
+    private(set) var lastError: ActionsService.ActionError?
     var actionID: String?
     /// Set when the Worker is in dry-run, so a call that never dialled can't be
     /// mistaken for a real one during testing.
@@ -52,6 +56,7 @@ final class CallController {
                recoverPlus: (@MainActor () async -> Bool)? = nil,
                onFinished: @escaping @MainActor (CallRecord) -> Void) {
         guard !isBusy else { return }
+        lastError = nil
         phase = .calling(since: Date())
         watcher?.cancel()
         watcher = Task { [weak self] in
@@ -74,8 +79,10 @@ final class CallController {
                 // card in .calling; the result lands on the to-do via sync.
             } catch {
                 guard let self, !Task.isCancelled else { return }
-                let message = (error as? ActionsService.ActionError)?.errorDescription
+                let actionError = error as? ActionsService.ActionError
+                let message = actionError?.errorDescription
                     ?? String(localized: "Tadah couldn't place the call. Please try again.")
+                self.lastError = actionError
                 self.phase = .failed(message)
             }
         }
@@ -157,6 +164,9 @@ struct CallCard: View {
     @Bindable var controller: CallController
     /// Tapped "Yes, call for me" — the owner opens the confirm page.
     var onSetUp: () -> Void
+    /// The call was refused because the address isn't verified — the owner
+    /// opens the verification sheet.
+    var onVerify: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -234,10 +244,19 @@ struct CallCard: View {
             Text(message)
                 .font(.body14).foregroundStyle(Color.ink).lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
-            Button(action: { controller.phase = .offer }) {
-                Text("Try again").font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
+            // An unverified address is the one refusal the user can fix right
+            // here, so offer that instead of a "try again" that cannot work.
+            if controller.lastError == .emailUnverified {
+                Button(action: onVerify) {
+                    Text("Verify my email").font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button(action: { controller.phase = .offer }) {
+                    Text("Try again").font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 

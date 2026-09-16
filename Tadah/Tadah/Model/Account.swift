@@ -51,9 +51,16 @@ struct Account: Codable, Equatable {
 @Observable
 final class AccountStore {
     private static let storageKey = "tadah.account.v1"
+    // Kept beside the account blob rather than inside it: adding a field to a
+    // Codable that is already on disk fails to decode on upgrade, which would
+    // sign everyone out.
+    private static let verifiedKey = "tadah.account.emailVerified"
     private let defaults: UserDefaults
 
     private(set) var account: Account?
+    /// Whether the address on this account has been verified. Only Tadah Calls
+    /// depends on it; everything else works unverified.
+    private(set) var emailVerified = false
     var isSignedIn: Bool { account != nil }
 
     // Run after EVERY sign-out, however it happened. There are three routes out —
@@ -69,6 +76,7 @@ final class AccountStore {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         load()
+        emailVerified = defaults.bool(forKey: Self.verifiedKey)
     }
 
     // Sign in (or refresh the stored identity after a re-authorization). Apple
@@ -97,8 +105,16 @@ final class AccountStore {
     // alive until it expires.
     func signOut() {
         account = nil
+        setEmailVerified(false)
         SessionStore.clear()
         save()
+    }
+
+    /// From sign-in, or from the verification sheet. Cleared on sign-out, so
+    /// the next person on this phone doesn't inherit someone else's proof.
+    func setEmailVerified(_ verified: Bool) {
+        emailVerified = verified
+        defaults.set(verified, forKey: Self.verifiedKey)
     }
 
     // Sign out properly: revoke the session on the SERVER first, then clear it

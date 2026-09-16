@@ -148,6 +148,33 @@ by the User Content rows.
 - **Location, Diagnostics, Browsing/Search History, Contacts** — none collected (no
   third-party analytics, no ad IDs).
 
+### 2.6 Calls (Tadah Plus) — added 2026-09-15
+
+When someone asks Tadah to phone a business, these leave the device: the **phone
+number** printed on their document (or the one they corrected it to), the
+**question they approved**, the **name on their profile** (which is read aloud on
+the call), and — only if they switch it on — that document's **reference number**.
+A written **transcript** comes back and is kept 30 days.
+
+What to change in App Store Connect:
+
+- **Contact Info → Phone Number** — declare it now: **Collected · App Functionality
+  · LINKED to identity · NOT used for tracking**. It is usually a business's
+  number, but it is read off the user's document and sent to a third party, so
+  declare it rather than argue about whose number it is.
+  `Tadah/PrivacyInfo.xcprivacy` declares `NSPrivacyCollectedDataTypePhoneNumber`
+  to match.
+- **Other User Content** — already declared; it now also covers the call's
+  question, its written result, and the transcript.
+- **Name** — already declared; the profile name is spoken on the call.
+- Nothing else changes: no new purposes, and still **no tracking**.
+
+The call is placed by **CALL-E (AIRUDDER Pte Ltd, Singapore)**, so this data is
+processed outside the US. Apple's label doesn't ask where; the privacy policy says
+so, under "When you ask Tadah to make a phone call".
+
+---
+
 ## 3. Tracking
 **"Does this app track users?"** → **No.** (No cross-app/cross-site tracking, no
 ad identifiers, no data shared with data brokers.)
