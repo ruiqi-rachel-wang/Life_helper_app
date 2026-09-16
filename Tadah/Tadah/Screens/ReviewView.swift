@@ -41,6 +41,7 @@ struct ReviewView: View {
     @Environment(TourGuide.self) private var tourGuide
     @Environment(PlusStore.self) private var plus
     @Environment(ProfileStore.self) private var profiles
+    @Environment(AccountStore.self) private var account
 
     @State private var phase: Phase = .loading
     @State private var draft = ExtractionResult.empty   // the editable result
@@ -57,15 +58,17 @@ struct ReviewView: View {
     @State private var assigneeSeeded = false
 
     // Calling. `callOffer` is nil when the document gives no phone number, which
-    // is what hides the card entirely. `callItem` is the to-do once a call has
-    // saved it — confirming a call IS the commitment to keep the document, so
-    // there is no separate "Add to inbox" afterwards.
-    @State private var callController = CallController()
+    // is what hides the card entirely. Review only OFFERS the call: "Call now"
+    // saves the to-do and takes the user to it, and the call plays out there.
     @State private var showCallConfirm = false
     @State private var showVerifyEmail = false
+    @State private var showSignIn = false
+    @State private var showPaywall = false
     // Once per Review screen, however often the card re-renders.
     @State private var loggedCallOffer = false
-    @State private var callItem: ActionItem?
+    // The to-do a call was just started on. Set by "Call now"; the move to that
+    // to-do waits until the confirm page has finished closing.
+    @State private var calledItemID: UUID?
 
     // Focus for rows appended by the "Add a …" buttons — see DetailView.Field.
     private enum Field: Hashable { case step(Int), note(Int), detailLabel(Int) }
@@ -103,8 +106,15 @@ struct ReviewView: View {
                 StepDetailView(step: $draft.detailedSteps[idx], startInEditMode: !tapped.hasDetail)
             }
         }
-        .sheet(isPresented: $showVerifyEmail) { VerifyEmailView() }
-        .sheet(isPresented: $showCallConfirm) {
+        .sheet(isPresented: $showSignIn) { SignInView() }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
+        // Verified just now → carry straight on to the call they asked for.
+        .sheet(isPresented: $showVerifyEmail, onDismiss: {
+            if account.emailVerified { showCallConfirm = true }
+        }) { VerifyEmailView() }
+        // Popping Review and switching tabs WHILE this sheet is still closing
+        // is how SwiftUI drops a navigation, so the hand-off waits for onDismiss.
+        .sheet(isPresented: $showCallConfirm, onDismiss: openCalledItem) {
             if let offer = callOffer {
                 CallConfirmView(offer: offer) { phone, goal, mayAgreeTo, shareAccount in
                     startCall(phone: phone, goal: goal,
@@ -112,7 +122,6 @@ struct ReviewView: View {
                 }
             }
         }
-        .onDisappear { callController.stopWatching() }
         .task { await run() }
         // Reaching Review IS the tour's next milestone, however the user got
         // here (scan, upload, or a guide from the Guides tab) — catch up so
@@ -321,9 +330,7 @@ struct ReviewView: View {
             // offer can't be tapped against half-edited text.
             if !isEditing, let offer = callOffer {
                 card {
-                    CallCard(offer: offer, controller: callController,
-                             onSetUp: { showCallConfirm = true },
-                             onVerify: { showVerifyEmail = true })
+                    CallCard(offer: offer, onSetUp: setUpCall)
                     .onAppear {
                         guard !loggedCallOffer else { return }
                         loggedCallOffer = true
@@ -692,13 +699,7 @@ struct ReviewView: View {
     }
 
     private func addToInbox() {
-        // ⚠️ A CALL HAS ALREADY SAVED THIS DRAFT. Confirming a call saves the
-        // to-do first, because the answer needs somewhere to live — so saving
-        // again here inserted a SECOND copy of the same document, and left the
-        // call's answer attached to the copy the user never opens. That is what
-        // made a finished call look like it had vanished: the card was on the
-        // orphan, and the to-do in the inbox was a duplicate with nothing on it.
-        guard callItem != nil || saveDraftAsItem() != nil else { return }
+        guard saveDraftAsItem() != nil else { return }
         tourGuide.advance(from: .reviewAdd)
         router.goToInbox()
         finish()
@@ -706,10 +707,10 @@ struct ReviewView: View {
 
     // The save half of "Add to inbox", without the navigation.
     //
-    // Split out because confirming a CALL has to save the to-do too — a call
-    // needs somewhere to put its answer — but must leave the user on Review so
-    // the card can turn into "calling…" in place. Returns nil when the task list
-    // is full, having already set `limitMessage`.
+    // Split out because confirming a CALL saves the to-do too — the answer needs
+    // somewhere to live — and then navigates on its own terms (see
+    // openCalledItem). Returns nil when the task list is full, having already
+    // set `limitMessage`.
     @discardableResult
     private func saveDraftAsItem() -> ActionItem? {
         if let reason = TaskLimit.blockedReason(context, plus: plus.paidFeaturesUnlocked,
@@ -755,63 +756,46 @@ struct ReviewView: View {
     // a step's `script` ("what to say") and the number inside it.
     private var callOffer: CallOffer? { CallOffer.from(draft) }
 
-    // Confirmed on the confirm page. Saves the to-do first, then dials — see
-    // saveDraftAsItem() for why the save happens here rather than later.
-    private func startCall(phone: String, goal: String, mayAgreeTo: String, shareAccount: Bool) {
-        guard let offer = callOffer else { return }
-        guard let item = callItem ?? saveDraftAsItem() else { return }
-        callItem = item
-
-        // The reference number is appended ONLY when the user ticked the box on
-        // the confirm page. Nothing about the document is sent silently.
-        var goalText = goal
-        if shareAccount, let account = offer.accountNumber, !account.isEmpty {
-            let label = offer.accountLabel ?? String(localized: "account")
-            goalText += "\n\n" + String(localized: "My \(label) number is \(account).")
-        }
-        // Whom the call is to. The agent was never told, so it opened every call
-        // not knowing who had picked up or what business it had reached. Nothing
-        // new leaves the phone: the confirm page already shows this name. Plain
-        // English, not localized — the agent reads it; the user never sees it.
-        if let business = offer.business, !business.isEmpty {
-            goalText = "You are calling \(business).\n\n" + goalText
-        }
-
-        let request = ActionsService.CallRequest(
-            phone: phone,
-            goal: goalText,
-            mayAgreeTo: mayAgreeTo,
-            name: profiles.me?.displayName ?? "",
-            itemID: item.id.uuidString,
-            language: explainLanguage.bcp47)
-
-        // Counted when the person says yes, whether or not the call then goes
-        // through: this is the intent the funnel is measuring.
-        Metrics.record(.actionAccepted, itemID: item.id)
-        callController.start(request, itemID: item.id, business: offer.business, recoverPlus: {
-            // Only runs if the Worker said "Plus required". It asks RevenueCat
-            // about THIS ACCOUNT's id, so a subscription still filed under a
-            // guest/anonymous id reads as no subscription at all — re-file it
-            // and let the call through, instead of selling Plus to someone who
-            // is already paying for it.
-            guard let userID = SessionStore.userID else { return false }
-            return await plus.reattachToAccount(userID)
-        }) { record in
-            CallHistory.save(record, for: item.id)
-            if !record.didFail { Metrics.record(.actionCompleted, itemID: item.id) }
+    // "Yes, call for me". Anything that would make the Worker refuse is checked
+    // HERE, while the user is still reading the letter. After "Call now" they are
+    // on the to-do page, and a refusal there is a dead end in the wrong place.
+    //
+    // Plus uses `paidFeaturesUnlocked`, which counts a tier RevenueCat hasn't
+    // reported yet as Plus — the same rule as every other paid gate. The Worker
+    // still decides, and CallCenter re-checks a refusal the phone disagrees with.
+    private func setUpCall() {
+        if SessionStore.token == nil {
+            showSignIn = true
+        } else if !plus.paidFeaturesUnlocked {
+            showPaywall = true
+        } else if !account.emailVerified {
+            showVerifyEmail = true
+        } else {
+            showCallConfirm = true
         }
     }
 
-    // WHERE A FINISHED CALL GOES — beside the to-do, never inside it.
-    //
-    // This used to append the answer to `item.notes`. That quietly rewrote text
-    // the user had written themselves, so a to-do stopped being theirs the
-    // moment Tadah made a call about it. The answer now lives in `CallHistory`,
-    // keyed by the to-do's id, and `CallResultCard` renders it — the same view
-    // here and on Detail, so the call reads identically wherever it's opened.
-    //
-    // Nothing about the ITEM changes, so there is no `touch()` and no sync push:
-    // the record is this device's account of a call it placed, not to-do content.
+    // "Call now". Saving the to-do IS the commitment: if you are asking Tadah to
+    // phone someone about this letter, you are keeping the letter.
+    private func startCall(phone: String, goal: String, mayAgreeTo: String, shareAccount: Bool) {
+        guard let offer = callOffer, let item = saveDraftAsItem() else { return }
+        CallCenter.shared.place(offer: offer, phone: phone, goal: goal, mayAgreeTo: mayAgreeTo,
+                                shareAccount: shareAccount, name: profiles.myName,
+                                language: explainLanguage.bcp47, itemID: item.id)
+        calledItemID = item.id
+    }
+
+    // Once the confirm page has closed: leave Review for the to-do the call is
+    // about. The call itself belongs to CallCenter, so nothing is lost on the way,
+    // and the to-do page shows it from "Calling…" to the answer.
+    private func openCalledItem() {
+        guard let id = calledItemID else { return }
+        calledItemID = nil
+        tourGuide.advance(from: .reviewAdd)
+        router.selectedTab = .inbox
+        router.pendingItemID = id
+        finish()
+    }
 
     // MARK: multi-item — "this scan has N things"
 

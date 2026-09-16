@@ -1,28 +1,37 @@
 # Release 1.1 (build 8) — what's left
 
-Updated 2026-09-16. **Done:** a real call tested end to end; Worker deployed; the
-demo account `support.tadah@gmail.com` is verified and has Plus. **Build 8** is
-uploaded and replaces build 7 (it adds the Calls usage events the plan asked
-for). Everything below is still to do, in order.
+Updated 2026-09-16, evening. **Done:** a real call tested end to end; Worker
+deployed; the demo account `support.tadah@gmail.com` is verified and has Plus.
 
-## 0. Redeploy the legal pages
+⚠️ **The build 8 in App Store Connect is out of date.** It was uploaded at
+4:12 pm, before the evening fixes: "Call now" opens the to-do, calls survive
+leaving the screen, the confirm page is fully translated, and "How calls work"
+no longer mentions checking a transcript. The project still says build 8, but
+App Store Connect refuses a second upload numbered 8 for version 1.1, so these
+fixes can only reach Apple as **build 9**. Don't submit until that upload is
+done.
 
-The privacy policy now lists the call usage events, so publish it again:
+## 0. Deploy the Worker and the legal pages
+
+Two commands, from the same folder. The Worker gets one fix to the call route:
+a call row left "live" by a request that never finished no longer blocks that
+person's calls for good (it stops counting after 30 minutes). The legal pages
+publish the privacy policy's line about call usage events, which the live site
+still lacks.
 
 ```bash
 cd "/Users/rachelwang/Project!/notie_life_helper_app/Tadah/cloudflare-worker"
 export PATH="/usr/local/opt/node@22/bin:$PATH"
-npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main
+npx wrangler deploy
+npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main --commit-dirty=true
 ```
-
----
 
 ---
 
 ## 1. App Store Connect — submit 1.1
 
 1. **Add the version.** App Store Connect → Tadah → the **+** next to *iOS App* → **1.1**.
-2. **Build.** Select **build 8**, not 7 (it appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
+2. **Build.** Select the newest build: **9** once it is uploaded, never 7 or 8 (a build appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
 3. **What's New in This Version** — paste:
 
    ```
@@ -33,7 +42,7 @@ npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main
    • The call is in English; the answer comes back in your language
    • Tadah says it is an AI on every call
    • It never gives out card, bank or Social Security numbers, and never agrees to a charge
-   • It only calls the number printed on your document, and only after you confirm
+   • It calls the number on your document, or one you enter, and only after you confirm
    • You are never on the line, and you can close the app while it calls
 
    Also in this update: you can now verify your email address from the account screen.
@@ -70,7 +79,7 @@ npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main
    2. Add > Scan, and scan any bill or letter that prints a customer-service number. ("Upload a photo" also works.)
    3. On the Review screen, the card under the action steps reads "Tadah can make this call". Tap "Yes, call for me".
    4. On "Before Tadah calls", tap Change and enter a number you control, so the call reaches you rather than a business. Tap Call now.
-   5. Answer it. The agent states it is an AI assistant calling on the account holder's behalf. The card then shows what was said and what was agreed.
+   5. Tadah saves the to-do and opens it, showing "Calling…". Answer the call. The agent states it is an AI assistant calling on the account holder's behalf. When the call ends, the to-do shows what was said and what was agreed.
 
    Safety: card, bank and Social Security numbers are refused before a call is placed; emergency, premium-rate and service numbers cannot be dialled; one call at a time, five a month per account; nothing retries automatically. What was said is kept as text for 30 days; no audio is recorded.
 

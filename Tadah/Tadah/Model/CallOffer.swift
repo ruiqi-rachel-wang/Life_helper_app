@@ -413,13 +413,17 @@ nonisolated enum PendingCall {
     // no offer to read the name off. Any breadcrumb written by the old build is
     // simply not decodable and is ignored: at worst one in-flight call from
     // before this build is not picked up, which is what happened to every call
-    // anyway before `CallWatcher` existed.
+    // anyway before the app watched calls itself (CallCenter).
     private static let key = "tadah.pendingCallByItem.v2"
 
     struct InFlight: Codable, Equatable {
         var actionID: String
         /// Who is being rung, for the record the watcher will write.
         var business: String?
+        /// When "Call now" was tapped. Keeps the to-do's timer honest across a
+        /// relaunch, and tells the watcher how often to ask. Optional because a
+        /// breadcrumb written by build 7 doesn't have it.
+        var startedAt: Date? = nil
     }
 
     private static var map: [String: Data] {
@@ -443,7 +447,10 @@ nonisolated enum PendingCall {
     }
 
     static func remember(_ actionID: String, business: String?, for itemID: UUID) {
-        let call = InFlight(actionID: actionID, business: business)
+        remember(InFlight(actionID: actionID, business: business, startedAt: .now), for: itemID)
+    }
+
+    static func remember(_ call: InFlight, for itemID: UUID) {
         guard let data = try? JSONEncoder().encode(call) else { return }
         var m = map; m[itemID.uuidString] = data; map = m
     }

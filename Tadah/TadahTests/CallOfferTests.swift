@@ -325,7 +325,7 @@ struct CallOfferTests {
     PendingCall.forget(item)
 }
 
-// What CallWatcher.resumeAll() reads. Nothing enumerated the breadcrumbs
+// What CallCenter.resumeAll() reads. Nothing enumerated the breadcrumbs
 // before, which is exactly why a call outliving its screen was never
 // picked up again.
 @Test func everyUnfinishedCallCanBeEnumerated() {
@@ -342,6 +342,23 @@ struct CallOfferTests {
     #expect(PendingCall.all[a] == nil)
     #expect(PendingCall.all[b]?.actionID == "action-b")
     PendingCall.forget(b)
+}
+
+// The to-do page's timer and the watcher's polling pace both run from this,
+// so it has to survive a relaunch — and a build 7 breadcrumb without it must
+// still load rather than vanish.
+@Test func pendingCallRemembersWhenTheCallStarted() throws {
+    let item = UUID()
+    PendingCall.forget(item)
+    let started = Date(timeIntervalSince1970: 1_789_000_000)
+    PendingCall.remember(PendingCall.InFlight(actionID: "action-t", business: nil, startedAt: started), for: item)
+    #expect(PendingCall.inFlight(for: item)?.startedAt == started)
+    PendingCall.forget(item)
+
+    let old = try JSONDecoder().decode(PendingCall.InFlight.self,
+                                       from: Data(#"{"actionID":"action-old","business":"A"}"#.utf8))
+    #expect(old.actionID == "action-old")
+    #expect(old.startedAt == nil)
 }
 
 // ── The answer, kept beside the to-do ───────────────────────────────────
@@ -376,5 +393,69 @@ struct CallOfferTests {
     #expect(CallHistory.record(for: b)?.didFail == true)
     CallHistory.forget(a); CallHistory.forget(b)
 }
+    }
+}
+
+// ── The call, owned by the app ──────────────────────────────────────────────
+
+@MainActor
+@Suite("Call center")
+struct CallCenterTests {
+
+    private let offer = CallOffer(phone: "(516) 466-4416", business: "Manhasset-Lakeville Water District",
+                                  goal: "Ask why the bill went up.",
+                                  accountNumber: "4160250001", accountLabel: "Account")
+
+    // Asks often while an answer is likely, less often after, and stops before
+    // it can become a phone that polls all day.
+    @Test func pollingSlowsDownAndThenStops() {
+        #expect(CallCenter.pollDelay(sinceStart: 0) == 5)
+        #expect(CallCenter.pollDelay(sinceStart: 9 * 60) == 5)
+        #expect(CallCenter.pollDelay(sinceStart: 11 * 60) == 30)
+        #expect(CallCenter.pollDelay(sinceStart: 119 * 60) == 30)
+        #expect(CallCenter.pollDelay(sinceStart: 121 * 60) == nil)
+    }
+
+    // The account number is the user's data going to a third party: it goes
+    // only when they switched it on.
+    @Test func theAccountNumberIsSentOnlyWhenSwitchedOn() {
+        let item = UUID()
+        let without = CallCenter.request(offer: offer, phone: offer.phone, goal: "Ask why.", mayAgreeTo: "",
+                                         shareAccount: false, name: "Rachel", language: "en", itemID: item)
+        #expect(!without.goal.contains("4160250001"))
+        let with = CallCenter.request(offer: offer, phone: offer.phone, goal: "Ask why.", mayAgreeTo: "",
+                                      shareAccount: true, name: "Rachel", language: "en", itemID: item)
+        #expect(with.goal.contains("4160250001"))
+        #expect(with.itemID == item.uuidString)
+    }
+
+    // What the user edited on the confirm page is what goes, with whom they
+    // are calling put first for the agent.
+    @Test func theRequestCarriesTheEditsAndWhoIsBeingCalled() {
+        let r = CallCenter.request(offer: offer, phone: "212-555-0100", goal: "Ask about the late fee.",
+                                   mayAgreeTo: "A later due date", shareAccount: false,
+                                   name: "Rachel", language: "es", itemID: UUID())
+        #expect(r.phone == "212-555-0100")
+        #expect(r.goal.hasPrefix("You are calling Manhasset-Lakeville Water District."))
+        #expect(r.goal.hasSuffix("Ask about the late fee."))
+        #expect(r.mayAgreeTo == "A later due date")
+        #expect(r.language == "es")
+    }
+
+    // A call picked up the morning after is dated when it ENDED, from the
+    // Worker's millisecond timestamp, not when the phone noticed.
+    @Test func aFinishedCallIsDatedByTheWorker() throws {
+        let json = #"{"actionId":"a1","status":"completed","result":null,"transcript":null,"failureCode":null,"endedAt":"2026-09-16T20:12:39.123Z"}"#
+        let status = try JSONDecoder().decode(ActionsService.ActionStatus.self, from: Data(json.utf8))
+        let record = CallRecord(status, business: "A")
+        #expect(abs(record.endedAt.timeIntervalSince1970 - 1_789_589_559.123) < 0.01)
+        #expect(record.didFail == false)
+    }
+
+    @Test func aCallWithNoEndTimeStillMakesARecord() throws {
+        let json = #"{"actionId":"a2","status":"failed","result":null,"transcript":null,"failureCode":"no_answer","endedAt":null}"#
+        let status = try JSONDecoder().decode(ActionsService.ActionStatus.self, from: Data(json.utf8))
+        #expect(status.endedDate == nil)
+        #expect(CallRecord(status, business: nil).didFail)
     }
 }

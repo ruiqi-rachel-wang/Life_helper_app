@@ -90,14 +90,24 @@ enum ActionsService {
         var result: CallResult?
         var transcript: String?
         var failureCode: String?
+        /// When the Worker saw the call end, as ISO 8601. A call picked up the
+        /// next morning is dated by this, not by when the phone noticed.
+        var endedAt: String? = nil
 
         enum CodingKeys: String, CodingKey {
             case actionID = "actionId"
-            case status, result, transcript, failureCode
+            case status, result, transcript, failureCode, endedAt
         }
 
         /// Nothing more will change. The caller can stop polling.
         var isFinished: Bool { ["completed", "failed", "canceled"].contains(status) }
+
+        /// `endedAt` as a date. The Worker writes `toISOString()`, which carries
+        /// milliseconds, and the default ISO parser rejects those.
+        var endedDate: Date? {
+            guard let endedAt else { return nil }
+            return try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(endedAt)
+        }
     }
 
     // ── Errors ──────────────────────────────────────────────────────────────
@@ -196,51 +206,6 @@ enum ActionsService {
         }
         guard let status = try? JSONDecoder().decode(ActionStatus.self, from: data) else { throw ActionError.decode }
         return status
-    }
-
-    /// Poll until the call finishes, or until `timeout` elapses.
-    ///
-    /// The provider suggests waiting ~60s before the first check and then every
-    /// 5-10s; we start sooner so a call that fails immediately (bad number, no
-    /// answer) surfaces quickly instead of leaving someone watching a spinner for
-    /// a minute. The Worker throttles its own upstream requests, so polling a
-    /// little eagerly here costs nothing.
-    ///
-    /// Giving up on the timeout does NOT cancel the call — there is no cancel in
-    /// the provider's API. It only stops watching; the result still lands on the
-    /// to-do and arrives with the next sync.
-    static func awaitResult(_ actionID: String,
-                            timeout: TimeInterval = 360,
-                            onUpdate: @Sendable (ActionStatus) -> Void = { _ in }) async throws -> ActionStatus {
-        let deadline = Date().addingTimeInterval(timeout)
-        var last: ActionStatus?
-        while Date() < deadline {
-            // ⚠️ A FAILED POLL IS NOT A FAILED CALL. This used to be a bare
-            // `try`, so one dropped request — a timeout walking between rooms,
-            // a lift, a flaky carrier — ended the watch and the card said
-            // "Tadah couldn't place the call" while the call was, in fact,
-            // ringing. By this point the call HAS been placed and paid for;
-            // the only question is whether we can see it yet. So a transient
-            // miss just waits for the next tick. Only errors that no retry can
-            // fix — signed out, not configured — stop watching.
-            do {
-                let current = try await status(of: actionID)
-                if last != current { onUpdate(current) }
-                last = current
-                if current.isFinished { return current }
-            } catch let error as ActionError where error == .noSession || error == .notConfigured {
-                throw error
-            } catch {
-                #if DEBUG
-                print("[Calls] poll missed, retrying: \(error)")
-                #endif
-            }
-            try await Task.sleep(nanoseconds: 5 * 1_000_000_000)
-        }
-        // Timed out watching. Hand back whatever we last saw rather than throwing:
-        // the call is not lost, we simply stopped looking.
-        return last ?? ActionStatus(actionID: actionID, status: "in_progress",
-                                    result: nil, transcript: nil, failureCode: nil)
     }
 
     // ── Plumbing ────────────────────────────────────────────────────────────

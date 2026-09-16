@@ -1,139 +1,18 @@
 //  CallCard.swift
 //
-//  "Tadah can make this call" — the one place the calling feature is offered.
+//  Where a call shows up, in three pieces:
+//    • CallCard — the OFFER, on Review: "Tadah can make this call".
+//    • CallStatusCard — the CALL, on the to-do: calling, then the answer, or
+//      why it didn't go through.
+//    • CallResultCard — the answer alone, which the status card shows.
 //
-//  It lives on REVIEW, between the steps card and the notes card, because that
-//  is the moment attention is highest: the user has just scanned a letter and is
-//  reading what it means. A to-do the user never reopens would never surface it.
-//
-//  ONE CARD, THREE STATES, IN PLACE. It morphs — offer → calling → result —
-//  rather than pushing a screen and coming back, so the answer appears exactly
-//  where the question was asked. Only the confirm step is a separate page.
-//
-//  The card is deliberately dumb: it owns no networking. `CallController` holds
-//  the state machine so the same card can later sit on Detail with the saved
-//  to-do's call on it.
+//  "Call now" takes the user from Review straight to the to-do, so everything
+//  after the offer happens on the to-do page. None of these views own any
+//  networking: CallCenter places and watches every call, so leaving a screen
+//  can never cancel one.
 //
 
 import SwiftUI
-
-// ── State ───────────────────────────────────────────────────────────────────
-
-@MainActor @Observable
-final class CallController {
-    enum Phase: Equatable {
-        case offer
-        case calling(since: Date)
-        case finished(CallRecord)
-        case failed(String)
-    }
-
-    var phase: Phase = .offer
-    /// The machine-readable refusal behind `.failed`. A message alone can't be
-    /// acted on; this is what lets the card offer verification rather than a
-    /// dead "try again".
-    private(set) var lastError: ActionsService.ActionError?
-    var actionID: String?
-    /// Set when the Worker is in dry-run, so a call that never dialled can't be
-    /// mistaken for a real one during testing.
-    var wasDryRun = false
-
-    private var watcher: Task<Void, Never>?
-
-    var isBusy: Bool { if case .calling = phase { return true }; return false }
-
-    /// Start a call and watch it to completion.
-    ///
-    /// `onFinished` fires once with the terminal status, so the caller can write
-    /// the result onto the to-do. It is NOT called when the watch times out —
-    /// the call isn't lost then, we simply stopped looking, and the answer
-    /// arrives with the next sync.
-    ///
-    /// `recoverPlus` is the one second chance this feature gets: see `place`.
-    func start(_ request: ActionsService.CallRequest,
-               itemID: UUID?,
-               business: String? = nil,
-               recoverPlus: (@MainActor () async -> Bool)? = nil,
-               onFinished: @escaping @MainActor (CallRecord) -> Void) {
-        guard !isBusy else { return }
-        lastError = nil
-        phase = .calling(since: Date())
-        watcher?.cancel()
-        watcher = Task { [weak self] in
-            do {
-                let placed = try await Self.place(request, recoverPlus: recoverPlus)
-                guard let self else { return }
-                self.actionID = placed.actionID
-                self.wasDryRun = placed.dryRun
-                if let itemID { PendingCall.remember(placed.actionID, business: business, for: itemID) }
-
-                let final = try await ActionsService.awaitResult(placed.actionID)
-                guard !Task.isCancelled else { return }
-                if final.isFinished {
-                    let record = CallRecord(final, business: business)
-                    self.phase = .finished(record)
-                    if let itemID { PendingCall.forget(itemID) }
-                    onFinished(record)
-                }
-                // Not finished = we stopped watching, not a failure. Leave the
-                // card in .calling; the result lands on the to-do via sync.
-            } catch {
-                guard let self, !Task.isCancelled else { return }
-                let actionError = error as? ActionsService.ActionError
-                let message = actionError?.errorDescription
-                    ?? String(localized: "Tadah couldn't place the call. Please try again.")
-                self.lastError = actionError
-                self.phase = .failed(message)
-            }
-        }
-    }
-
-    /// Place the call — and don't believe a "Plus required" the phone disagrees
-    /// with until it has checked.
-    ///
-    /// The Worker asks RevenueCat about the ACCOUNT's id and fails closed; this
-    /// device reads the receipt in front of it. When a `logIn` never landed
-    /// (offline sign-in, a subscription bought as a guest) the purchase sits
-    /// under an id the Worker never asks about, and a subscriber is told to buy
-    /// what they already own. `recoverPlus` re-files it and we try once more.
-    ///
-    /// ONE retry, never a loop. The recovery is idempotent, so a second pass
-    /// could only reach the same answer more slowly — and this is the code path
-    /// that spends money on a phone line, which is the last place to put
-    /// automatic retries. If the recovery finds no subscription, the ORIGINAL
-    /// error is rethrown: the user then sees the paywall message, and it's true.
-    private static func place(_ request: ActionsService.CallRequest,
-                              recoverPlus: (@MainActor () async -> Bool)?) async throws -> ActionsService.Placed {
-        do {
-            return try await ActionsService.placeCall(request)
-        } catch let error as ActionsService.ActionError where error.needsPlus {
-            guard let recoverPlus, await recoverPlus() else { throw error }
-            return try await ActionsService.placeCall(request)
-        }
-    }
-
-    /// Pick up a call that was already running when the screen opened.
-    func resume(actionID: String, itemID: UUID?,
-                business: String? = nil,
-                onFinished: @escaping @MainActor (CallRecord) -> Void) {
-        guard !isBusy else { return }
-        self.actionID = actionID
-        phase = .calling(since: Date())
-        watcher?.cancel()
-        watcher = Task { [weak self] in
-            let final = try? await ActionsService.awaitResult(actionID)
-            guard let self, !Task.isCancelled, let final else { return }
-            if final.isFinished {
-                let record = CallRecord(final, business: business)
-                self.phase = .finished(record)
-                if let itemID { PendingCall.forget(itemID) }
-                onFinished(record)
-            }
-        }
-    }
-
-    func stopWatching() { watcher?.cancel(); watcher = nil }
-}
 
 // ── The wire answer → what we keep ──────────────────────────────────────────
 
@@ -142,12 +21,11 @@ extension CallRecord {
     ///
     /// Deliberately lossy: the transcript and confidence score stay on the
     /// server. What a person needs off a finished call is what was said, what
-    /// was agreed, and what happens next — keeping more would mean storing a
-    /// recording of someone's phone call on the device.
+    /// was agreed, and what happens next.
     init(_ status: ActionsService.ActionStatus, business: String?) {
         let structured = status.result?.structured
         self.init(business: business,
-                  endedAt: Date.now,
+                  endedAt: status.endedDate ?? Date.now,
                   didFail: status.status != "completed",
                   detail: structured?.detail,
                   summary: status.result?.summary,
@@ -157,32 +35,15 @@ extension CallRecord {
     }
 }
 
-// ── The card ────────────────────────────────────────────────────────────────
+// ── The offer (Review) ──────────────────────────────────────────────────────
 
 struct CallCard: View {
     let offer: CallOffer
-    @Bindable var controller: CallController
-    /// Tapped "Yes, call for me" — the owner opens the confirm page.
+    /// Tapped "Yes, call for me". The owner checks sign-in, Plus and a verified
+    /// email first, then opens the confirm page.
     var onSetUp: () -> Void
-    /// The call was refused because the address isn't verified — the owner
-    /// opens the verification sheet.
-    var onVerify: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            switch controller.phase {
-            case .offer:                 offerBody
-            case .calling(let since):    callingBody(since: since)
-            case .finished(let record):  CallResultCard(record: record)
-            case .failed(let message):   failedBody(message)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(.easeInOut(duration: 0.2), value: controller.phase)
-    }
-
-    // 1 ── Offer
-    private var offerBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             eyebrow("TADAH CAN MAKE THIS CALL", icon: "phone.fill")
 
@@ -209,14 +70,41 @@ struct CallCard: View {
             .buttonStyle(.plain)
             .accessibilityHint(Text("Opens a page to check the number and what Tadah will ask, before anything is dialled."))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// ── The call (to-do page) ───────────────────────────────────────────────────
+
+struct CallStatusCard: View {
+    let phase: CallCenter.Phase
+    /// Decides whether a "verify your email" refusal still needs verifying, or
+    /// has been fixed since and can simply be tried again.
+    let emailVerified: Bool
+    var onTryAgain: (CallCenter.Retry) -> Void
+    var onVerify: () -> Void
+    var onSeePlus: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            switch phase {
+            case .calling(let since, let business, let dryRun):
+                callingBody(since: since, business: business, dryRun: dryRun)
+            case .finished(let record):
+                CallResultCard(record: record)
+            case .refused(let refusal):
+                refusedBody(refusal)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(.easeInOut(duration: 0.2), value: phase)
     }
 
-    // 2 ── Calling
-    private func callingBody(since: Date) -> some View {
+    private func callingBody(since: Date, business: String?, dryRun: Bool) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text(offer.business.map { String(localized: "Calling \($0)…") }
+                Text(business.map { String(localized: "Calling \($0)…") }
                      ?? String(localized: "Calling…"))
                     .font(.cardTitle).foregroundStyle(Color.ink)
                 Spacer(minLength: 8)
@@ -225,51 +113,54 @@ struct CallCard: View {
                     .font(.eyebrow).foregroundStyle(Color.faint)
                     .monospacedDigit()
             }
-            // The single most useful sentence here: the call does not depend on
-            // this screen staying open.
+            // True now that the app, not a screen, owns the call: closing this
+            // page or the app loses nothing, and the answer is written here the
+            // next time Tadah is open.
             Text("You can close this — the answer will be saved to this to-do.")
                 .font(.subline).foregroundStyle(Color.faded).lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
-            if controller.wasDryRun {
+            if dryRun {
                 Text("TEST MODE — no call was actually placed")
                     .font(.eyebrow).foregroundStyle(Color.warn)
             }
         }
     }
 
-    // 4 ── Failed to start
-    private func failedBody(_ message: String) -> some View {
+    private func refusedBody(_ refusal: CallCenter.Refusal) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             eyebrow("CALL DIDN'T GO THROUGH", icon: "exclamationmark.triangle.fill", tint: Color.warn)
-            Text(message)
+            Text(refusal.message)
                 .font(.body14).foregroundStyle(Color.ink).lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
-            // An unverified address is the one refusal the user can fix right
-            // here, so offer that instead of a "try again" that cannot work.
-            if controller.lastError == .emailUnverified {
-                Button(action: onVerify) {
-                    Text("Verify my email").font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button(action: { controller.phase = .offer }) {
-                    Text("Try again").font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
-                }
-                .buttonStyle(.plain)
+            // One button, and only one that can actually work. "Try again" on a
+            // used-up allowance or a signed-out phone would just fail again.
+            switch refusal.error {
+            case .emailUnverified where !emailVerified:
+                action("Verify my email", onVerify)
+            case .plusRequired:
+                action("See Tadah Plus", onSeePlus)
+            case .noSession, .notConfigured, .notInvited, .quotaExceeded:
+                EmptyView()
+            default:
+                action("Try again") { onTryAgain(refusal.retry) }
             }
         }
     }
 
-    // ── bits ────────────────────────────────────────────────────────────────
-
+    private func action(_ title: LocalizedStringKey, _ run: @escaping () -> Void) -> some View {
+        Button(action: run) {
+            Text(title).font(.body14.weight(.semibold)).foregroundStyle(Color.accent)
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 // ── The result, on its own ──────────────────────────────────────────────────
 //
-// Split out of CallCard so the SAME view renders a call that just ended on
-// Review and one read back from `CallHistory` on a saved to-do. Two copies of
-// this layout would drift, and "the card looks different depending on where you
-// opened it" is exactly the kind of drift nobody notices until it ships.
+// Split out so the SAME view renders a call that ends while the to-do is open
+// and one read back from `CallHistory` days later. Two copies of this layout
+// would drift, and "the card looks different depending on when you opened it"
+// is exactly the kind of drift nobody notices until it ships.
 struct CallResultCard: View {
     let record: CallRecord
 

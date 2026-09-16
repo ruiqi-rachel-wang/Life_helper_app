@@ -10,7 +10,7 @@
 import { env, createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { describe, it, expect, beforeEach } from "vitest";
 import worker, { IP_DAY_LIMIT, GLOBAL_DAY_LIMIT, hashedIP, ipDayScope, ipMonthScope, verifyCodeHash } from "./worker.js";
-import { CALL_MONTH_LIMIT } from "./actions.js";
+import { CALL_MONTH_LIMIT, LIVE_CALL_WINDOW_MINUTES } from "./actions.js";
 
 const USER = "apple-sub-test-user";
 const OTHER = "apple-sub-other-user";
@@ -1536,6 +1536,18 @@ describe("actions — placing one", () => {
     const second = await actionsCall(PLUS_TOKEN, GOOD_CALL);
     expect(second.status).toBe(409);
     expect(second.body.error).toBe("call_in_progress");
+  });
+
+  // A request cut off between writing the row and hearing back from CALL-E
+  // leaves the row 'queued' with nothing to ever finish it. That must not block
+  // this person's calls for the rest of time.
+  it("does not let a call that never finished block the next one forever", async () => {
+    const first = await actionsCall(PLUS_TOKEN, GOOD_CALL);
+    expect(first.status).toBe(200);
+    const stale = new Date(Date.now() - (LIVE_CALL_WINDOW_MINUTES + 1) * 60_000).toISOString();
+    await env.DB.prepare("UPDATE actions SET status = 'queued', provider_call_id = NULL, created_at = ? WHERE id = ?")
+      .bind(stale, first.body.actionId).run();
+    expect((await actionsCall(PLUS_TOKEN, GOOD_CALL)).status).toBe(200);
   });
 
   it("stops at the monthly allowance and does not charge past it", async () => {

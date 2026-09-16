@@ -26,6 +26,10 @@
 export const CALL_MONTH_LIMIT = 5;          // per user, per calendar month
 export const CALL_GLOBAL_MONTH_LIMIT = 300;  // circuit breaker across everybody
 export const GLOBAL_SCOPE = "*global*";      // reserved scope key in action_usage
+// How long a call counts as "live" for the one-call-at-a-time rule. A real call
+// is over in well under this: four minutes of talk, a minute on hold, ringing,
+// and CALL-E writing up the result.
+export const LIVE_CALL_WINDOW_MINUTES = 30;
 
 // The transcript is evidence, not the product. It is the most sensitive thing
 // this feature stores — a recording of a stranger's voice, about someone's
@@ -593,9 +597,16 @@ export async function handleActionCreate(request, env, deps) {
 
   // One live call per user. Two calls at once is how a bug becomes a bill, and
   // there is no legitimate reason for it: the user is looking at one to-do.
+  //
+  // ⚠️ ONLY RECENT ROWS COUNT. The row is written as 'queued' BEFORE CALL-E is
+  // asked, and only this request ever moves it on. If the request is cut off in
+  // between (the phone drops the connection, or CALL-E answers slower than the
+  // app waits), the row stays 'queued' forever, and this check used to lock that
+  // person out of calling for good. Nothing older than a real call can run is live.
+  const liveSince = new Date(Date.now() - LIVE_CALL_WINDOW_MINUTES * 60_000).toISOString();
   const live = await env.DB.prepare(
-    "SELECT id FROM actions WHERE user_id = ? AND status IN ('queued','in_progress') LIMIT 1"
-  ).bind(userID).first();
+    "SELECT id FROM actions WHERE user_id = ? AND status IN ('queued','in_progress') AND created_at > ? LIMIT 1"
+  ).bind(userID, liveSince).first();
   if (live) return json({ error: "call_in_progress", message: "Tadah is already on a call for you." }, 409);
 
   // Charge BEFORE dialling. Checking and then charging leaves a window where two

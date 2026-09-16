@@ -27,8 +27,8 @@ office", "fill the renewal form", "check my claim", "pay the bill" fit.
 | | What |
 |---|---|
 | **V2 · 1.0.1** | Worker only: verify login throttle · logging · lower AI circuit breaker · check retention sweep |
-| **V2 · 1.1** | email verification · password blocklist · `pw_iterations` · sync test |
-| **V2 · 1.2** | **Calls** on CALL-E: everything CALL-E can do, offered on the **Review** card, Plus + verified email, one confirmed call at a time, 10 a month then credits. **Hackathon build due Sep 14**, gated; public release after 1.1. |
+| **V2 · 1.1** | **Shipping now (build 8):** Calls + email verification. Still open from the 1.1 list: password blocklist · `pw_iterations` · sync test |
+| **V2 · 1.2** | **Calls** on CALL-E: everything CALL-E can do, offered on the **Review** card, Plus + verified email, one confirmed call at a time, 5 a month then credits. **Built, and pulled forward into 1.1** (hackathon PR #615 merged). Next: paid call packs. |
 | **1.3** | photo sync · bilingual term toggle · usage readout · server-side quota + App Attest · guides on demand |
 | **V3 · 2.0** | browser actions: status checks → prefill public forms → logged-in portals · Tadah finds official numbers |
 | **V4+** | payments prepared, human confirms · email / mail / fax · multi-step · push |
@@ -64,7 +64,13 @@ should.
 Once Tadah spends money and talks to businesses for someone, account
 ownership matters. This comes before Calls goes public.
 
-**Email verification.** `verified_at` is written NULL and never read.
+**Email verification.** **Built 2026-09-15, ships in 1.1.** As built, it
+differs from the plan below: the code lasts 30 minutes, not 15; it is offered
+on the account screen and when a call is refused, not sent at register; only
+Calls requires it (reset and sync do not); existing accounts were not marked
+verified. The plan as first written:
+
+`verified_at` is written NULL and never read.
 Anyone can claim an address they don't own.
 - On register, email a 6-digit code via Resend. Same shape as
   `password_resets`: hashed, 15-min expiry, 5 attempts.
@@ -96,6 +102,10 @@ through it. Stub `URLProtocol`, script responses. ~1 day.
 
 An AI agent phones a business for the user and puts the result on the
 to-do. Plus + verified email. Server-side; the user is never on the line.
+
+**Status 2026-09-16: built, and shipping in 1.1 (build 8).** The design below
+is kept as written where it still holds; the parts that changed while building
+say so. `notes/how_tadah_is_built.md` describes what exists.
 
 **Two tracks, one codebase.**
 - **Hackathon build now.** CALL-E's *Your Code Is Calling* closes
@@ -133,27 +143,33 @@ the steps survives as a FALLBACK only, for to-dos scanned before the field
 existed. The goal still comes from `StepDetail.script`, which the prompt has
 always produced.
 
-**One card, three states, in place.** It morphs; it is not a screen that comes
-and goes:
+**The offer on Review, the call on the to-do. Changed 2026-09-16.** The card
+first morphed in place on Review (offer → calling → result). That tied the
+call to a screen: leaving Review paused the watch, and leaving in the first
+seconds could lose the call entirely. Now:
 
-1. **Offer** — "Tadah can make this call", the business and number, the
-   suggested goal, `[ Yes, call for me ]`.
-2. **Calling** — "Calling Con Edison…", elapsed time, and "You can close this
-   — the answer lands on this to-do."
-3. **Result** — "Call ended", what was said, what was agreed.
+1. **Offer (Review)** — "Tadah can make this call", the business and number,
+   the suggested goal, `[ Yes, call for me ]`. Tapping it checks sign-in,
+   Plus and a verified email first, so a refusal can't happen later on the
+   wrong screen.
+2. **Confirm** — a separate page (below).
+3. **Call now** saves the to-do and takes the user straight to it. The to-do
+   shows "Calling Con Edison…" with a timer, then "Call ended" with what was
+   said and agreed. A refused call shows why, with the one button that can fix
+   it: verify, see Tadah Plus, or try again (reopening the confirm page as it
+   was sent).
 
-Only the **confirm** step is a separate page, opened by "Yes, call for me".
+The call belongs to the app (`CallCenter`), not to any screen, so closing the
+page or the app loses nothing; the answer is written the next time Tadah is
+open.
 
 **Yes = save.** On Review the to-do does not exist yet, so a call would have
 nowhere to put its answer. Confirming saves the to-do on the spot, by the same
 path as Add to inbox. If you are asking Tadah to phone someone about this
-letter, you are keeping the letter — and closing the app mid-call then loses
-nothing. The user never taps Add to inbox separately; the call is the
-commitment.
+letter, you are keeping the letter. The user never taps Add to inbox
+separately; the call is the commitment.
 
-**The card travels with the task.** Once saved, the card and whatever state it
-holds belong to the to-do, so the result is there later on Detail. This is not
-an offer in Detail — a to-do that never had a call never grows a call card.
+**No offer on Detail.** A to-do that never had a call never grows a call card.
 Scope, decided 2026-09-09: **new scans and newly added items only.** Nothing
 retrofits calling onto to-dos added before this shipped.
 
@@ -171,7 +187,7 @@ retrofits calling onto to-dos added before this shipped.
 > ☐ Share my account number (···5512)
 >
 > Tadah won't give out personal information or agree to any charge.
-> 1 of 10 calls this month.
+> Tadah Plus includes 5 calls a month.
 >
 > **Call now** · How calls work
 
@@ -192,12 +208,14 @@ its extraction model, so there is no extra translation call and no prompt
 change. Someone who cannot make an English phone call is exactly who this is
 for.
 
-**Where the answer lands.** A note on the to-do — "Tadah called Con Edison,
-Sep 9" plus the summary, what was agreed, and the next step. `notes: [String]`
-already exists, so there is **no SwiftData migration**, and it syncs to other
-devices for free. `needs_user_action: yes` leaves the to-do active. The
-in-flight action id lives in UserDefaults keyed by item id, so closing the app
-mid-call still finds the result.
+**Where the answer lands. Changed 2026-09-12.** Planned as a note on the
+to-do; built BESIDE it instead, because appending to `notes` rewrote text the
+user had written. `CallHistory` (UserDefaults, keyed by item id) holds "Tadah
+called Con Edison · Sep 9", what was said, what was agreed and the next step,
+and the call card on the to-do renders it. No SwiftData migration. The trade:
+it stays on the phone that placed the call and does not sync. The in-flight
+action id lives in `PendingCall`, so closing the app mid-call still finds the
+result. Users are not shown the transcript.
 
 **Decisions**
 
@@ -206,8 +224,8 @@ mid-call still finds the result.
 | Provider | **CALL-E**, plain `fetch` from the Worker | required by the hackathon. It plans, dials, handles IVR / hold / voicemail, returns a structured result. |
 | Call state | CALL-E holds it | a free Worker has 10 ms CPU per request |
 | Result delivery | CALL-E webhook → Worker re-fetches `GET /v1/calls/{id}` and trusts that | the webhook has a `CALL-E-Event-Id` for de-dupe but **no signature**. Secret in the webhook path; treat it as a doorbell. |
-| Where the result lives | on the task, server-side | the app doesn't need to be open |
-| Live screen | polls `GET /actions/:id` every 5 s | CALL-E suggests first poll at ~60 s, then every 5–10 s |
+| Where the result lives | the Worker's `actions` row, copied to `CallHistory` on the phone | the app doesn't need to be open; the Worker never writes to `tasks` |
+| Live screen | `CallCenter` polls `POST /actions/status` every 5 s for 10 min, then every 30 s | CALL-E suggests first poll at ~60 s, then every 5–10 s; the Worker throttles its own reads to one per 3 s |
 | Who can call | Plus + verified email (hackathon: Rachel only) | each call costs money |
 | Recording | transcript only, 30 days | two-party-consent law. Ask support@heycall-e.com whether audio is kept; turn it off. |
 | Language | English, `region: US`, `locale: en-US` | |
@@ -215,10 +233,12 @@ mid-call still finds the result.
 **Flow.** App `POST /actions` → Worker checks session, verified email,
 Plus, quota (fail closed), inserts `actions` row → `POST
 https://api.heycall-e.com/v1/calls` with `Authorization: Bearer` and
-`Idempotency-Key: <action id>` (a retry returns the same call, never dials
-twice) → CALL-E dials → terminal webhook to `/actions/webhook/<secret>` →
-Worker re-fetches, writes `result_json` → app polls while open, else picks
-it up on the next `/sync`.
+`Idempotency-Key` derived from user, to-do, number, task text and the hour
+(a retry returns the same call, never dials twice) → CALL-E dials → terminal
+webhook to `/actions/webhook/<secret>` → Worker re-fetches, writes
+`result_json` → the app's `CallCenter` polls `/actions/status` and saves the
+answer; an unfinished call is picked up again at launch or on return to the
+app.
 
 Request body (CALL-E OpenAPI v0.7.0). `task` is built from the goal, the
 "may agree to" line, and the fixed rules:
@@ -259,18 +279,22 @@ more generality than the names until a second action exists.
 - `action_usage` with a `*global*` row, same shape as `ai_usage`.
 
 `result_json` = CALL-E's `structured_result` + `summary` + `evidence` +
-`task_completed` + `completion_confidence`. `agreed` and `next_step` go on
-the task as a note or step; an agreed date becomes a reminder.
-`needs_user_action: yes` turns the task amber. Transcript kept 30 days.
+`task_completed` + `completion_confidence`. Transcript kept 30 days, and never
+shown in the app. **Not built yet:** an agreed date becoming a reminder, and
+`needs_user_action: yes` turning the task amber (today the card says "This
+still needs you").
 
 **Guardrails**
-- 10 calls per user per month included, checked before dialling, then paid
-  credits (above). Billing is per call, so every cap is a count.
+- 5 calls per user per month included (10 until 2026-09-16), charged before
+  dialling, then paid credits once they exist. Free accounts get none.
+  Billing is per call, so every cap is a count.
 - **No max-duration field, no cancel endpoint.** Length is controlled only
   by the `task` text and CALL-E's dashboard kill switch + rate limit. Set
   both on day one. Check on the first real call that the time rule is
   obeyed.
-- One live call per user. Global monthly ceiling, fails closed.
+- One live call per user. A row stuck "live" by a request that never finished
+  stops counting after 30 minutes, so it can't lock anyone out for good.
+  Global monthly ceiling (300), fails closed.
 - **No retries, ever.** A failed call surfaces to the user.
 - Businesses only, by provenance not number type. Mobile and VoIP numbers
   are fine (clinics, contractors, landlords use them). The number must
@@ -286,14 +310,17 @@ the task as a note or step; an agreed date becomes a reminder.
 - One call, now, human-confirmed. No queues, scheduling, or batch (CALL-E
   offers both; don't use them).
 
-**Cost.** $0.05 per call, early pricing. 20 free calls per new account, more
-on request. 10 calls/month = $0.50 per Plus subscriber against $6.99.
+**Cost.** Planned at $0.05 a call. **In practice a real call has cost about
+156 credits, $1.56.** At 5 calls a month a heavy Plus user costs up to about
+$7.80 against $6.99 before Apple's cut, which is why the allowance dropped from
+10 to 5 on 2026-09-16 and paid packs come next.
 
 **Money model, decided 2026-09-09: an included allowance, then paid credits.**
-Plus includes **10 calls a month**; past that the user buys a credit pack
-rather than being cut off. Calling is the one feature with a real per-use cost,
-so an unlimited tier would be a bet against the heaviest user — and a hard stop
-at 10 switches the best feature off exactly when someone is finding it useful.
+Plus includes **5 calls a month** (10 when this was decided); past that the
+user buys a credit pack rather than being cut off. Calling is the one feature
+with a real per-use cost, so an unlimited tier would be a bet against the
+heaviest user — and a hard stop switches the best feature off exactly when
+someone is finding it useful.
 
 - Credits are **consumable in-app purchases**, a product type Tadah has never
   shipped (Plus is a subscription). New product IDs in App Store Connect, and
@@ -305,15 +332,16 @@ at 10 switches the best feature off exactly when someone is finding it useful.
   trusted from the client.
 - Credits never expire and never fold into the monthly allowance: the allowance
   resets on the 1st, credits do not.
-- Pricing undecided. A starting point to react to: **10 calls $2.99 / 25 calls
-  $5.99** — healthy margin at $0.05 a call, and under the line where a one-off
-  top-up needs thinking about.
+- Pricing undecided. At $1.56 a call, break-even is about $1.85–$2.25 a call
+  after Apple's cut, so the first idea (10 calls for $2.99) would lose money.
 - ⚠️ **Not in the hackathon build.** The allowance and the ledger's shape land
   now; the consumable IAP itself is App Store Connect work plus a purchase
   flow, and it is not what the last days before Sep 14 are for. Until it ships
-  the cap simply stops at 10.
+  the cap simply stops at 5.
 
-**The metric.** New event kinds `action_offered`, `action_accepted`,
+**The metric. Built in build 8:** `action_offered` when the card appears on
+Review, `action_accepted` on Call now, `action_completed` when a call ends
+successfully (counted once, by `CallCenter`). New event kinds `action_offered`, `action_accepted`,
 `action_completed`. Funnel: offered → accepted → done. If nobody taps "do
 that for me", that is the most important thing to learn. Add the kinds to
 `VALID_KINDS` in `worker.js` or they are dropped silently (as `opened`
@@ -389,7 +417,7 @@ server-side.
 "Confirmation code". Tap a translated label to see the English. Extraction
 carries an `english` variant on each label / `DocID`.
 
-**Usage readout on Profile.** "12 of 50 scans · 8 of 20 to-dos · 4 of 10
+**Usage readout on Profile.** "12 of 50 scans · 8 of 20 to-dos · 4 of 5
 calls this month." Reads `ScanQuota` and `TaskLimit` against the tier caps.
 Also a soft Plus nudge.
 

@@ -17,6 +17,7 @@ struct DetailView: View {
     @Bindable var item: ActionItem
     @Environment(ProfileStore.self) private var profiles
     @Environment(PlusStore.self) private var plus
+    @Environment(AccountStore.self) private var account
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -30,6 +31,10 @@ struct DetailView: View {
     // this compares every synced field without hand-listing them.
     @State private var editSnapshot: TaskDTO?
     @State private var moveBlocked = false           // destination list already full
+    // A call that didn't go through, reopened on the confirm page as it was sent.
+    @State private var callRetry: CallCenter.Retry?
+    @State private var showVerifyEmail = false
+    @State private var showPaywall = false
 
     // Which field the keyboard is in. Tapping "Add a step / detail / note" used to
     // append a row whose only visible sign was an empty placeholder — testers read
@@ -58,14 +63,18 @@ struct DetailView: View {
                     if !item.steps.isEmpty || isEditing { checklistCard }
                     if !item.otherIDs.isEmpty || siteURLToShow != nil || isEditing { detailsCard }
                     if !item.effectiveReminders.isEmpty || isEditing { remindersCard }
-                    // What Tadah got on the phone about this to-do. Same
-                    // position as on Review (after what-to-do, before the
-                    // user's own notes) and the same view, so the card reads
-                    // identically in both places. Result only: offering a NEW
-                    // call needs the scan's extraction, which a saved to-do
-                    // doesn't carry.
-                    if let call = CallHistory.record(for: item.id) {
-                        card { CallResultCard(record: call) }
+                    // Tadah's call about this to-do: live while it runs, then
+                    // the answer. "Call now" on Review lands here. Same place
+                    // the offer sat on Review (after what-to-do, before the
+                    // user's own notes). No OFFER here: a new call needs the
+                    // scan's extraction, which a saved to-do doesn't carry.
+                    if let call = CallCenter.shared.phase(for: item.id) {
+                        card {
+                            CallStatusCard(phase: call, emailVerified: account.emailVerified,
+                                           onTryAgain: { callRetry = $0 },
+                                           onVerify: { showVerifyEmail = true },
+                                           onSeePlus: { showPaywall = true })
+                        }
                     }
                     if !item.notes.isEmpty || isEditing { noteCard }
                     if let photo = storedPhoto { photoCard(photo) }
@@ -90,6 +99,17 @@ struct DetailView: View {
                 }
             }
         }
+        .sheet(item: $callRetry) { retry in
+            CallConfirmView(offer: retry.offer, phone: retry.phone, goal: retry.goal) {
+                phone, goal, mayAgreeTo, shareAccount in
+                CallCenter.shared.place(offer: retry.offer, phone: phone, goal: goal,
+                                        mayAgreeTo: mayAgreeTo, shareAccount: shareAccount,
+                                        name: profiles.myName,
+                                        language: explainLanguage.bcp47, itemID: item.id)
+            }
+        }
+        .sheet(isPresented: $showVerifyEmail) { VerifyEmailView() }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
         // Reusing "List full" — it's the same ceiling the create flow reports.
         .alert("List full", isPresented: $moveBlocked) {
             Button("OK", role: .cancel) {}
@@ -757,11 +777,12 @@ struct DetailView: View {
 }
 
 #Preview {
-    // Both stores are required by @Environment lookups in this view, and a missing
+    // Every store is required by @Environment lookups in this view, and a missing
     // one traps at runtime — the preview was already short of ProfileStore.
     DetailView(item: ActionItem(title: "Preview item", category: .utility,
                                 dueDate: .now, steps: [ChecklistStep(text: "A step")]))
         .modelContainer(for: ActionItem.self, inMemory: true)
         .environment(ProfileStore())
         .environment(PlusStore())
+        .environment(AccountStore())
 }

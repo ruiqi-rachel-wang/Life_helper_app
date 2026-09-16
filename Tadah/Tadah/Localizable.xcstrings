@@ -4301,7 +4301,20 @@
       }
     },
     "Change" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "修改"
+          }
+        }
+      }
     },
     "Changes the whole app — every screen, plus the explanations Tadah writes for your scans and guides." : {
       "extractionState" : "manual",
@@ -14266,7 +14279,20 @@
       }
     },
     "Phone number" : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Número de teléfono"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电话号码"
+          }
+        }
+      }
     },
     "Photo ID (a deposit may be required)" : {
       "extractionState" : "stale",
@@ -19158,7 +19184,20 @@
       }
     },
     "That isn't a US phone number Tadah can dial." : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese no es un número de EE. UU. al que Tadah pueda llamar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这不是 Tadah 能拨打的美国电话号码。"
+          }
+        }
+      }
     },
     "That password doesn't match, or your session has expired. Check the password, or sign out and back in." : {
       "extractionState" : "manual",
@@ -19223,6 +19262,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 服务繁忙或本设备已达使用上限，请稍后再试。"
+          }
+        }
+      }
+    },
+    "The answer stays on your to-do. A written copy of the call is deleted after 30 days, and no audio is ever recorded." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La respuesta se queda en tu tarea. La copia escrita de la llamada se borra a los 30 días, y nunca se graba audio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结果会留在你的待办里。通话的文字记录 30 天后删除，且从不录音。"
           }
         }
       }
@@ -22364,7 +22419,20 @@
       }
     },
     "You changed this number." : {
-
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiaste este número."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你修改了这个号码。"
+          }
+        }
+      }
     },
     "You may need to prove it — a coverage-loss letter, marriage or birth certificate, or a lease." : {
       "extractionState" : "manual",

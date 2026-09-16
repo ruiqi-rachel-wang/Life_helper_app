@@ -135,6 +135,13 @@ struct TadahApp: App {
                     // Whatever ends the session, the previous user's membership
                     // must not outlive it on this screen. See AccountStore.didSignOut.
                     account.didSignOut = { [plus] in plus.forgetSignedOutUser() }
+                    // A call refused with "Plus required" by a phone that shows
+                    // Plus gets one re-check: re-file the subscription under the
+                    // account the Worker asks about. See CallCenter.send.
+                    CallCenter.shared.recoverPlus = { [plus] in
+                        guard let userID = SessionStore.userID else { return false }
+                        return await plus.reattachToAccount(userID)
+                    }
                     // …and SKIP identity work entirely while the gate is up.
                     // Restoring the gate isn't enough on its own: this call can
                     // rename the owner and adopt unassigned to-dos, so running it
@@ -164,9 +171,9 @@ struct TadahApp: App {
                     }
                     // (configure ran above, before any identity mutation.)
                     // Any call still running from a previous session. A call
-                    // outlives the screen that started it, so the app — not
-                    // Review — is what makes sure the answer gets written down.
-                    CallWatcher.resumeAll()
+                    // outlives every screen, so the app is what makes sure the
+                    // answer gets written down.
+                    CallCenter.shared.resumeAll()
                     await sync.syncNow(context: container.mainContext, account: account)
                 }
                 .onChange(of: scenePhase) { _, phase in
@@ -175,7 +182,7 @@ struct TadahApp: App {
                         // Coming back from the background is the common way to
                         // return to a call that was placed and then waited out
                         // with the phone in a pocket.
-                        CallWatcher.resumeAll()
+                        CallCenter.shared.resumeAll()
                         // Coming back from the background on a NEW day is a
                         // return visit and must count — a phone that never fully
                         // relaunches would otherwise look like a phone nobody

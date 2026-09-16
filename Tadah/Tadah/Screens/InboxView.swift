@@ -122,9 +122,14 @@ struct InboxView: View {
     }
 
     // Resolves router.pendingItemID to the actual item; clearing it pops.
+    //
+    // Searches EVERY to-do, not the "Just mine" filtered list. A call placed
+    // about a family member's letter, or a reminder for one, still has to open
+    // its to-do — and with the filtered list the id sat unresolved in the router
+    // and popped Detail open later, the moment the filter changed.
     private var pendingItem: Binding<ActionItem?> {
         Binding(
-            get: { items.first { $0.id == router.pendingItemID } },
+            get: { allItems.first { $0.id == router.pendingItemID } },
             set: { if $0 == nil { router.pendingItemID = nil } }
         )
     }

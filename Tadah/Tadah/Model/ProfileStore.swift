@@ -62,6 +62,15 @@ final class ProfileStore {
     var owner: Profile? { profiles.first { $0.isOwner } ?? profiles.first }
     // Who's using this phone. Falls back to the owner.
     var me: Profile? { profiles.first { $0.id == activeID } ?? owner }
+    /// The name a call is made on behalf of. Empty when there is none; the
+    /// Worker then says "the account holder" rather than reading out an email.
+    ///
+    /// ⚠️ Screens should use this rather than `me?.displayName`. Reading a
+    /// `Profile` member in DetailView broke the Debug build: the compiler then
+    /// reported that `Profile` isn't `Identifiable` at FamilySharingView's
+    /// `sheet(item:)`, which shares DetailView's compile batch. It is — `@Model`
+    /// makes it so — but the order the batch resolves that in is fragile.
+    var myName: String { me?.displayName ?? "" }
     // WHO NEW TO-DOS ARE FILED UNDER, and the person the switcher ticks.
     //
     // Falls back to the OWNER whenever the family is locked. `activeID` outlives a

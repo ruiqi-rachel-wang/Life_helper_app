@@ -40,14 +40,18 @@ struct CallConfirmView: View {
     @FocusState private var goalFocused: Bool
     @FocusState private var phoneFocused: Bool
 
-    init(offer: CallOffer, callsUsed: Int = 0, callsLimit: Int = 5,
+    /// `phone` and `goal` reopen the page as the user last sent it, for "Try
+    /// again" on the to-do. The offer still holds the document's own number, so
+    /// "You changed this number" stays true.
+    init(offer: CallOffer, phone: String? = nil, goal: String? = nil,
+         callsUsed: Int = 0, callsLimit: Int = 5,
          onCall: @escaping (String, String, String, Bool) -> Void) {
         self.offer = offer
         self.callsUsed = callsUsed
         self.callsLimit = callsLimit
         self.onCall = onCall
-        _goal = State(initialValue: offer.goal)
-        _phone = State(initialValue: offer.phone)
+        _goal = State(initialValue: goal ?? offer.goal)
+        _phone = State(initialValue: phone ?? offer.phone)
     }
 
     private var authorisationText: String {
@@ -311,7 +315,7 @@ private struct HowCallsWorkView: View {
                         point("It won't give out your details", "Never a card, bank or Social Security number, or a date of birth — even if asked directly.")
                         point("It won't agree to a charge", "Tadah never accepts a fee or payment for you, and only commits you to what you allowed on the last screen.")
                         point("It keeps calls short", "Tadah ends the call after about four minutes, or sooner if it is put on hold.")
-                        point("What's kept", "What was said is kept for 30 days so you can check it, then deleted. The call is never recorded as audio.")
+                        point("What's kept", "The answer stays on your to-do. A written copy of the call is deleted after 30 days, and no audio is ever recorded.")
                         Spacer(minLength: 24)
                     }
                     .padding(16)
