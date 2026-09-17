@@ -1,4 +1,4 @@
-# Release 1.1 (build 8) — what's left
+# Release 1.1 (build 9) — what's left
 
 Updated 2026-09-17.
 
@@ -15,10 +15,12 @@ Updated 2026-09-17.
   server in under 2 minutes, written in Chinese.
 - Legal pages are live with the call sections and call usage events.
 - Demo account `support.tadah@gmail.com` is verified and has Plus.
-
-⚠️ **Not uploaded.** The build 8 in App Store Connect predates the September 16
-evening fixes. Upload only when Rachel says it's good, and don't submit before
-that.
+  `appletesting@tadah.com` is verified too (set in D1 on Sep 17); either can be
+  the review account, but it needs the Tadah Pro grant in RevenueCat first.
+- **Build 9 UPLOADED** September 17, 3:09 am New York (archive
+  `Tadah/build/Tadah-1.1-b9.xcarchive`, logs `Tadah/build/logs/*-b9.log`). It
+  contains every fix above plus the iPad confirm-page fix (`8e68943`). Build 8 in
+  App Store Connect is the old one: don't select it.
 
 ## 0. Test on your phone (run from Xcode)
 
@@ -33,26 +35,20 @@ that.
 6. **Clarifying question.** If CALL-E asks one, the to-do shows it. Add the
    answer to the question and tap Try again.
 
-Use phones running this code. A phone still on the uploaded build 8 that edits a
-to-do can erase that to-do's saved call offer.
+Use phones running this code. A phone still on build 8 that edits a to-do can
+erase that to-do's saved call offer.
 
 Status September 17: Rachel tested and says it looks good. #3 passed (Chinese).
 #5 (second phone) is skipped by Rachel's decision.
 
-**Before archiving:** delete the temporary App Store screenshot code —
-`Tadah/App/ScreenshotHooks.swift`, the lines marked `SCREENSHOT HOOK` in
-`RootTabView.swift` and `CreateView.swift`, and
-`TadahUITests/IPadScreenshotTests.swift`. None of it is committed; wait until
-the iPad capture is finished.
-
-When it's good, say so, and the upload happens then.
+The temporary App Store screenshot code was removed before build 9 was archived.
 
 ---
 
 ## 1. App Store Connect — submit 1.1
 
 1. **Add the version.** App Store Connect → Tadah → the **+** next to *iOS App* → **1.1**.
-2. **Build.** Select the newest upload, the one with the evening fixes (it appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
+2. **Build.** Select **build 9** (it appears once Apple finishes processing). If it asks about encryption, answer as for 1.0: uses encryption **Yes**, exempt **Yes**.
 3. **What's New in This Version** — paste:
 
    ```
@@ -86,7 +82,7 @@ When it's good, say so, and the upload happens then.
    New: Tadah can make the phone call for you. It calls in English and tells you what was said and agreed, in your language.
    ```
 
-6. **Screenshots.** Replace the raw 1.0 captures with the ten-frame set at `~/Desktop/Tadah App Store screenshots/` (6.9-inch and 6.5-inch folders), updated September 17. Frame 2 is the new calls screen, so calls show in the first three that search results display. Upload in file-name order; the README there lists it. Ignore the `_old set` folder.
+6. **Screenshots.** Replace the raw 1.0 captures with the ten-frame set at `~/Desktop/Tadah App Store screenshots/` (6.9-inch and 6.5-inch folders), updated September 17. The app runs on iPad, so also upload the iPad set from `iPad 13-inch (2064x2752)`. Frame 2 is the new calls screen, so calls show in the first three that search results display. Upload in file-name order; the README there lists it. Ignore the `_old set` folder.
 7. **App Privacy** (app level, not the version page) → Edit → add **Contact Info → Phone Number**: Collected · App Functionality · **Linked** to identity · **not** used for tracking → **Publish**. Why: `legal/app-store-privacy-label.md` §2.6.
 8. **App Review Information.**
    - Sign-in required: **Yes** — `support.tadah@gmail.com` and its password.
