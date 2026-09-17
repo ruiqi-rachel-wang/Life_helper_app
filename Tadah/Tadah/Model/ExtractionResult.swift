@@ -166,3 +166,55 @@ nonisolated struct ExtractionResult: Equatable {
         return r
     }
 }
+
+// ── The fields to double-check, in words ────────────────────────────────────
+//
+// `lowConfidenceFields` holds the scan's JSON keys. Review printed them as-is,
+// so people read "Double-check: accountLabel, accountNumber". These are the
+// words for each key, in the app's language, deduplicated (an account's label
+// and number are one thing to check) and in a steady order.
+extension ExtractionResult {
+
+    private static let fieldOrder = [
+        "title", "documentType", "sender", "senderShort", "category", "amount", "currency",
+        "dueDate", "accountLabel", "accountNumber", "otherIDs", "phone", "siteURL",
+        "repeats", "summary", "steps", "stepDetails", "notes",
+    ]
+
+    static func fieldName(_ key: String) -> String? {
+        switch key {
+        case "title":                        return String(localized: "title")
+        case "documentType":                 return String(localized: "document type")
+        case "sender", "senderShort":        return String(localized: "sender")
+        case "category":                     return String(localized: "category")
+        case "amount":                       return String(localized: "amount")
+        case "currency":                     return String(localized: "currency")
+        case "dueDate":                      return String(localized: "due date")
+        case "accountLabel", "accountNumber": return String(localized: "account number")
+        case "otherIDs":                     return String(localized: "reference numbers")
+        case "phone":                        return String(localized: "phone number")
+        case "siteURL":                      return String(localized: "website")
+        case "repeats":                      return String(localized: "repeat schedule")
+        case "summary":                      return String(localized: "summary")
+        case "steps", "stepDetails":         return String(localized: "steps")
+        case "notes":                        return String(localized: "notes")
+        case "confidence", "lowConfidenceFields": return nil
+        default:
+            // A key the prompt doesn't list yet: split camelCase rather than
+            // show it raw ("someNewField" → "some new field").
+            let words = key.replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2",
+                                                 options: .regularExpression).lowercased()
+            return words.isEmpty ? nil : words
+        }
+    }
+
+    /// "account number, sender" — ready to drop into "Double-check: %@".
+    static func fieldNames(_ keys: Set<String>) -> String {
+        let ordered = keys.sorted { a, b in
+            (fieldOrder.firstIndex(of: a) ?? .max, a) < (fieldOrder.firstIndex(of: b) ?? .max, b)
+        }
+        var seen = Set<String>()
+        return ordered.compactMap(fieldName).filter { seen.insert($0).inserted }
+            .joined(separator: String(localized: ", "))
+    }
+}

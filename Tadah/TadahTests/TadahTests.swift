@@ -725,3 +725,16 @@ struct ScanQuotaTests {
         #expect(ScanQuota.blockedReason(plus: true, now: today, d) == nil)
     }
 }
+
+// Review's "Double-check:" line. It printed the scan's JSON keys to users
+// ("accountLabel, accountNumber") until 2026-09-17.
+struct DoubleCheckFieldNameTests {
+    @Test func keysBecomeWordsOnceEachInAFixedOrder() {
+        #expect(ExtractionResult.fieldNames(["accountNumber", "accountLabel", "sender"]) == "sender, account number")
+    }
+
+    @Test func anUnknownKeyIsSplitNotShownRaw() {
+        #expect(ExtractionResult.fieldNames(["someNewField"]) == "some new field")
+        #expect(ExtractionResult.fieldNames(["confidence"]) == "")
+    }
+}

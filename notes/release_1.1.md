@@ -71,7 +71,7 @@ When it's good, say so, and the upload happens then.
    New: Tadah can make the phone call for you. It calls in English and tells you what was said and agreed, in your language.
    ```
 
-6. **Screenshots.** Replace the raw 1.0 captures with the polished set at `~/Desktop/Tadah App Store screenshots/` (6.9-inch and 6.5-inch folders; the README there gives the order).
+6. **Screenshots.** Replace the raw 1.0 captures with the ten-frame set at `~/Desktop/Tadah App Store screenshots/` (6.9-inch and 6.5-inch folders), updated September 17. Frame 2 is the new calls screen, so calls show in the first three that search results display. Upload in file-name order; the README there lists it. Ignore the `_old set` folder.
 7. **App Privacy** (app level, not the version page) → Edit → add **Contact Info → Phone Number**: Collected · App Functionality · **Linked** to identity · **not** used for tracking → **Publish**. Why: `legal/app-store-privacy-label.md` §2.6.
 8. **App Review Information.**
    - Sign-in required: **Yes** — `support.tadah@gmail.com` and its password.

@@ -399,7 +399,7 @@ struct ReviewView: View {
             // the chip underline) — e.g. sender, title, account #, category.
             let otherFlags = draft.lowConfidenceFields.subtracting(["amount", "dueDate"])
             if !otherFlags.isEmpty {
-                Text("Double-check: \(otherFlags.sorted().joined(separator: ", "))")
+                Text("Double-check: \(ExtractionResult.fieldNames(otherFlags))")
                     .font(.subline).foregroundStyle(Color.accent)
                     .padding(.top, 2)
             }
@@ -850,7 +850,7 @@ struct ReviewView: View {
                         Text("Nothing to do — off by default")
                             .font(.subline).foregroundStyle(Color.faded)
                     } else if !it.lowConfidenceFields.isEmpty {
-                        Text("Double-check: \(it.lowConfidenceFields.sorted().joined(separator: ", "))")
+                        Text("Double-check: \(ExtractionResult.fieldNames(it.lowConfidenceFields))")
                             .font(.subline).foregroundStyle(Color.accent)
                     }
                 }

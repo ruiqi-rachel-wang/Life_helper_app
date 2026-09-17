@@ -1,74 +1,24 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "For your call" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "For your call"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para tu llamada"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "打电话时参考"
-          }
-        }
-      }
-    },
-    "Checking whether the call went through…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Checking whether the call went through…"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comprobando si la llamada se realizó…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在确认电话是否已拨出…"
-          }
-        }
-      }
-    },
-    "The connection was interrupted. Tadah will check for the answer without placing another call." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The connection was interrupted. Tadah will check for the answer without placing another call."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La conexión se interrumpió. Tadah buscará la respuesta sin volver a llamar."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "连接中断了。Tadah 会继续查询结果，不会再次拨打电话。"
-          }
-        }
-      }
-    },
     "" : {
 
+    },
+    ", " : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", "
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "、"
+          }
+        }
+      }
     },
     "… PLUS List C (work): Social Security card or birth certificate." : {
       "extractionState" : "stale",
@@ -1219,6 +1169,22 @@
         }
       }
     },
+    "account number" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "número de cuenta"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账号"
+          }
+        }
+      }
+    },
     "Accounts aren't available in this build." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1981,6 +1947,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已经订阅了？把你的 Plus 权益带到这台手机。"
+          }
+        }
+      }
+    },
+    "amount" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "monto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金额"
           }
         }
       }
@@ -4230,6 +4212,22 @@
         }
       }
     },
+    "category" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "categoría"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "类别"
+          }
+        }
+      }
+    },
     "Category" : {
       "localizations" : {
         "es" : {
@@ -4919,6 +4917,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请查看你的收件箱。验证码 30 分钟后失效。"
+          }
+        }
+      }
+    },
+    "Checking whether the call went through…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking whether the call went through…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando si la llamada se realizó…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在确认电话是否已拨出…"
           }
         }
       }
@@ -6068,6 +6088,22 @@
         }
       }
     },
+    "currency" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "moneda"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "币种"
+          }
+        }
+      }
+    },
     "Currently viewing" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6585,6 +6621,22 @@
         }
       }
     },
+    "document type" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tipo de documento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件类型"
+          }
+        }
+      }
+    },
     "Documents, residency, language help" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6832,6 +6884,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "截止"
+          }
+        }
+      }
+    },
+    "due date" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fecha límite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "截止日期"
           }
         }
       }
@@ -8187,6 +8255,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "路考当天要开一辆能通过车辆安全检查的车，带上行驶证和保险证明、你的实习驾照，还要有一位有正式驾照的成年人陪同。"
+          }
+        }
+      }
+    },
+    "For your call" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For your call"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para tu llamada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打电话时参考"
           }
         }
       }
@@ -13157,6 +13247,22 @@
         }
       }
     },
+    "notes" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备注"
+          }
+        }
+      }
+    },
     "NOTES" : {
       "localizations" : {
         "es" : {
@@ -14376,6 +14482,22 @@
         }
       }
     },
+    "phone number" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "número de teléfono"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "电话号码"
+          }
+        }
+      }
+    },
     "Phone number" : {
       "localizations" : {
         "es" : {
@@ -15204,6 +15326,22 @@
         }
       }
     },
+    "reference numbers" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "números de referencia"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "参考编号"
+          }
+        }
+      }
+    },
     "Refund amount" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -15770,6 +15908,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "租房指南"
+          }
+        }
+      }
+    },
+    "repeat schedule" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "repetición"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重复周期"
           }
         }
       }
@@ -16980,6 +17134,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "贷款机构要什么材料就尽快给，同时不要办新的信用卡或贷款，也不要换工作。过户前贷款会再审一次。"
+          }
+        }
+      }
+    },
+    "sender" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "remitente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发件方"
           }
         }
       }
@@ -18208,6 +18378,22 @@
         }
       }
     },
+    "steps" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pasos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步骤"
+          }
+        }
+      }
+    },
     "STEPS" : {
       "localizations" : {
         "es" : {
@@ -18355,6 +18541,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只通过官方 HR 门户提交你的 SSN、银行和身份信息，绝不要用电邮或短信。"
+          }
+        }
+      }
+    },
+    "summary" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "resumen"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摘要"
           }
         }
       }
@@ -19347,22 +19549,6 @@
         }
       }
     },
-    "That's too long for one call. Shorten what Tadah should ask, then try again." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Es demasiado largo para una llamada. Acorta lo que Tadah debe preguntar y vuelve a intentarlo."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内容太长，一通电话放不下。请缩短要问的内容，然后再试一次。"
-          }
-        }
-      }
-    },
     "That's too long for one call. Shorten it by %lld characters." : {
       "localizations" : {
         "es" : {
@@ -19375,6 +19561,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "内容太长，一通电话放不下。请删减 %lld 个字符。"
+          }
+        }
+      }
+    },
+    "That's too long for one call. Shorten what Tadah should ask, then try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es demasiado largo para una llamada. Acorta lo que Tadah debe preguntar y vuelve a intentarlo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容太长，一通电话放不下。请缩短要问的内容，然后再试一次。"
           }
         }
       }
@@ -19424,6 +19626,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "结果会留在你的待办里。通话的文字记录 30 天后删除，且从不录音。"
+          }
+        }
+      }
+    },
+    "The connection was interrupted. Tadah will check for the answer without placing another call." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The connection was interrupted. Tadah will check for the answer without placing another call."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La conexión se interrumpió. Tadah buscará la respuesta sin volver a llamar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接中断了。Tadah 会继续查询结果，不会再次拨打电话。"
           }
         }
       }
@@ -20047,6 +20271,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通过工作单位"
+          }
+        }
+      }
+    },
+    "title" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "título"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标题"
           }
         }
       }
@@ -21546,6 +21786,22 @@
         }
       }
     },
+    "website" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sitio web"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网址"
+          }
+        }
+      }
+    },
     "Website: %@" : {
       "localizations" : {
         "es" : {
@@ -21779,6 +22035,7 @@
       }
     },
     "WHAT TO SAY" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
