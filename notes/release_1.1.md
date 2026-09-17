@@ -5,8 +5,14 @@ Updated 2026-09-17.
 **Done:**
 - Calls code complete and committed (`afb1326`). Worker and app tests pass,
   including the 1.0 → 1.1 data migration.
-- Worker deployed September 16 (`0d2b1746`). Everything after it is app-only,
-  so no redeploy is needed.
+- Worker redeployed September 17, 2:23 am New York (`2463724e`), with the
+  redirect fix. From the September 16 6:42 pm deploy until then, no call could
+  reach CALL-E: the Workers runtime refuses `redirect: "error"`, so every call
+  went "uncertain" (连接中断了) and status reads and webhooks failed too. Now
+  `redirect: "manual"`, and creating a call may take 45 s (CALL-E plans first).
+  Stuck test rows were cleaned up in D1.
+- Live call verified after the fix (Sep 17, 2:24 am): placed, answer back on the
+  server in under 2 minutes, written in Chinese.
 - Legal pages are live with the call sections and call usage events.
 - Demo account `support.tadah@gmail.com` is verified and has Plus.
 
@@ -29,6 +35,15 @@ that.
 
 Use phones running this code. A phone still on the uploaded build 8 that edits a
 to-do can erase that to-do's saved call offer.
+
+Status September 17: Rachel tested and says it looks good. #3 passed (Chinese).
+#5 (second phone) is skipped by Rachel's decision.
+
+**Before archiving:** delete the temporary App Store screenshot code —
+`Tadah/App/ScreenshotHooks.swift`, the lines marked `SCREENSHOT HOOK` in
+`RootTabView.swift` and `CreateView.swift`, and
+`TadahUITests/IPadScreenshotTests.swift`. None of it is committed; wait until
+the iPad capture is finished.
 
 When it's good, say so, and the upload happens then.
 

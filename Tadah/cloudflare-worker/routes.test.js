@@ -1579,13 +1579,17 @@ describe("actions — placing one", () => {
     expect(await env.DB.prepare("SELECT id FROM actions WHERE user_id = ?").bind(PLUS_USER).first()).toBeNull();
   });
 
-  it("rejects redirects on both authenticated provider requests", async () => {
+  it("never follows redirects on either authenticated provider request", async () => {
     const original = globalThis.fetch;
     const requests = [];
     env.CALLE_DRY_RUN = "0";
     env.CALLE_API_KEY = "test-key";
     globalThis.fetch = async (url, init) => {
       if (!String(url).startsWith("https://api.heycall-e.com/")) return original(url, init);
+      // Build the request the way the real fetch would. A stub that only reads
+      // `init` accepted redirect: "error", which the Workers runtime refuses, and
+      // every real call failed on 2026-09-17 while this test passed.
+      new Request(url, init);
       requests.push(init);
       return Response.json(init.method === "POST"
         ? { id: "provider-review" }
@@ -1596,7 +1600,7 @@ describe("actions — placing one", () => {
       expect(made.status).toBe(200);
       await call("/actions/status", { headers: { "X-Tadah-Session": PLUS_TOKEN }, body: { actionId: made.body.actionId } });
       expect(requests).toHaveLength(2);
-      for (const request of requests) expect(request.redirect).toBe("error");
+      for (const request of requests) expect(request.redirect).toBe("manual");
     } finally {
       globalThis.fetch = original;
       env.CALLE_DRY_RUN = "1";

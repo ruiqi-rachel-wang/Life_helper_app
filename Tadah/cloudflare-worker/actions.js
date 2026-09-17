@@ -49,6 +49,9 @@ export function callLanguageName(code) {
 
 export const CALLE_BASE_URL = "https://api.heycall-e.com";
 
+// How long to wait for CALL-E to accept a new call. See createProviderCall.
+export const CALLE_CREATE_TIMEOUT_MS = 45_000;
+
 // How often a status read may ask the provider for a fresh answer. The app polls
 // every ~5s while its screen is open; this bounds the provider traffic no matter
 // how many devices are watching the same call at once.
@@ -410,8 +413,15 @@ export async function createProviderCall(env, { actionID, task, phone, idempoten
   try {
     res = await fetch(`${env.CALLE_BASE_URL || CALLE_BASE_URL}/v1/calls`, {
       method: "POST",
-      redirect: "error",
-      signal: AbortSignal.timeout(15000),
+      // ⚠️ "manual", NEVER "error". The Workers runtime refuses redirect: "error"
+      // and fetch throws before sending anything, so from 2026-09-16 evening every
+      // call was left 'uncertain' without reaching CALL-E. "manual" still never
+      // carries the key to another host: a 3xx is simply a failed response.
+      redirect: "manual",
+      // CREATING A CALL IS SLOW. CALL-E plans the call before it answers: a
+      // clarifying question took 20 s on 2026-09-16. 45 s leaves room for that
+      // and stays under the app's 60 s request timeout, so the phone hears back.
+      signal: AbortSignal.timeout(CALLE_CREATE_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${env.CALLE_API_KEY}`,
         "Content-Type": "application/json",
@@ -429,7 +439,10 @@ export async function createProviderCall(env, { actionID, task, phone, idempoten
           : {}),
       }),
     });
-  } catch {
+  } catch (err) {
+    // The error's NAME only: TimeoutError means CALL-E was still planning,
+    // TypeError a network failure. The message can carry the URL.
+    console.error("calle_create_unreachable", JSON.stringify({ name: err?.name || "unknown" }));
     // We do not know whether the request reached the provider, so we do NOT
     // refund and we do NOT retry. Keep it uncertain so a webhook can recover
     // the accepted call without a second dial.
@@ -498,7 +511,7 @@ async function fetchProviderCall(env, callID) {
   if (!env.CALLE_API_KEY) return { ok: false };
   try {
     const res = await fetch(`${env.CALLE_BASE_URL || CALLE_BASE_URL}/v1/calls/${encodeURIComponent(callID)}`, {
-      redirect: "error",
+      redirect: "manual",   // not "error": see createProviderCall
       signal: AbortSignal.timeout(15000),
       headers: { Authorization: `Bearer ${env.CALLE_API_KEY}` },
     });
