@@ -1,35 +1,36 @@
 # Release 1.1 (build 8) — what's left
 
-Updated 2026-09-16, evening. **Done:** a real call tested end to end; Worker
-deployed; the demo account `support.tadah@gmail.com` is verified and has Plus.
+Updated 2026-09-17.
 
-⚠️ **Not uploaded yet.** The build 8 in App Store Connect was uploaded at 4:12 pm,
-before the evening fixes ("Call now" opens the to-do, calls survive leaving the
-screen, confirm page translated, no transcript wording). Upload when Rachel says
-it's good; don't submit before that.
+**Done:**
+- Calls code complete and committed (`afb1326`). Worker and app tests pass,
+  including the 1.0 → 1.1 data migration.
+- Worker deployed September 16 (`0d2b1746`). Everything after it is app-only,
+  so no redeploy is needed.
+- Legal pages are live with the call sections and call usage events.
+- Demo account `support.tadah@gmail.com` is verified and has Plus.
 
-**Source review, September 16:** see [review_1.1.md](review_1.1.md) for the changes
-since 1.0 build 6 and each follow-up's status. The original fixes are committed as
-`7f6d966`; subsequent working-tree changes add durable call IDs, saved call offers,
-server reconciliation and multilingual checks. **Worker deployed:**
-`0d2b1746-6e3a-4e05-8d2c-7a76cc6788fe` (daily retention + minute recovery).
-Validation: **354 iOS, 68 helper and 116 route tests pass**, including V3→V4 store
-migration. The continuation is not yet committed or included in the uploaded app.
-A fresh end-to-end call test remains; provider recovery and recipient-matching
-limits are recorded in the review.
+⚠️ **Not uploaded.** The build 8 in App Store Connect predates the September 16
+evening fixes. Upload only when Rachel says it's good, and don't submit before
+that.
 
-## 0. Deploy the Worker and the legal pages
+## 0. Test on your phone (run from Xcode)
 
-**Worker: deployed September 16 with the review fixes.** The command below is
-retained for future Worker changes; it does not need repeating for this version.
-The legal-page deployment remains separate and was not performed in this step.
+1. **New scan.** Call now, close the app during the call, reopen: the answer is
+   on the to-do.
+2. **Saved to-do.** Save a letter without calling, open it later, and start the
+   call from there.
+3. **Language.** Switch the app to Spanish or Chinese and place one call.
+4. **Account switch.** Start a call, sign out, sign in as another account, then
+   sign back in: the first account's call is still there.
+5. **Second phone.** Same account, open the same to-do: the answer appears.
+6. **Clarifying question.** If CALL-E asks one, the to-do shows it. Add the
+   answer to the question and tap Try again.
 
-```bash
-cd "/Users/rachelwang/Project!/notie_life_helper_app/Tadah/cloudflare-worker"
-export PATH="/usr/local/opt/node@22/bin:$PATH"
-npx wrangler deploy
-npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main --commit-dirty=true
-```
+Use phones running this code. A phone still on the uploaded build 8 that edits a
+to-do can erase that to-do's saved call offer.
+
+When it's good, say so, and the upload happens then.
 
 ---
 
@@ -120,5 +121,7 @@ npx wrangler pages deploy ../../docs --project-name tadah-legal --branch main --
 ## Later — not needed for 1.1
 
 - **Paid call packs** for Plus users past 5 a month. Needs consumable products in App Store Connect and RevenueCat, a credit ledger in the Worker, and a purchase screen. Break-even is about $1.85–$2.25 a call after Apple's cut.
-- **CALL-E redirect hardening is fixed locally** by the September 16 review:
-  both provider requests now use `redirect: "error"`. Deployed with `7f6d966`.
+- **Known limits** (details in [review_1.1.md](review_1.1.md)):
+  - If both CALL-E's reply and every webhook are lost, the to-do stays on "Checking whether the call went through…". It never places another call.
+  - To-dos saved before this version get a call offer only if a step contains the number.
+  - When a letter names several offices, pairing a number with a question is a best guess; if unclear, Tadah fills in a neutral question to edit.
