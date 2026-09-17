@@ -2,6 +2,16 @@
 
 Reviewed 2026-09-16. The original findings are preserved below; the status table records the subsequent fixes. The first fixes are committed as `7f6d966` and were deployed as `ddcc4a7e-3f88-4443-84ed-f8328d6fa36d`. The continuation below is a subsequent working-tree change; the updated app has not been uploaded.
 
+## Focused recheck of `13913dd` (September 17)
+
+Three deterministic app regressions reproduced in new tests before the fixes:
+
+- Opening a to-do while call creation is returning can consume its rejected status, delete the pending pointer, and discard the original clarifying question. Status refresh and foreground resumption now leave creation to finish its own reply.
+- A status read begun before a new call can return afterward and overwrite the newer refusal. Refresh now checks that the local phase and pending call are unchanged across the await.
+- Rejection clears the phase but previously left an older cached answer, which immediately reappeared instead of the call offer. Both rejection paths now clear that cached answer.
+
+Tests use injected call/session readers, so the race order is controlled and no real calls or account changes are needed. The three regression tests failed before the fixes. Worker recheck: 68 helper and 116 route tests passed; Worker source is unchanged and needs no redeploy. Final iOS validation: **357 tests in 32 suites passed**, including all three new race tests. `git diff --check` passed. Logs: `/tmp/tadah-rereview-before.log` (reproduced failures), `/tmp/tadah-rereview-final.log` (passing app suite), `/tmp/tadah-rereview-worker.log` (passing Worker suites). “For your call” and the safety-filter policy are unchanged. These follow-up edits are not yet committed or uploaded.
+
 ## Status after fixes (2026-09-16, evening)
 
 Continuation validated: **354 iOS tests** (31 suites), **68 Worker helper tests**, and **116 route tests** pass. `git diff --check` passes. Worker deployed on September 16 as **`0d2b1746-6e3a-4e05-8d2c-7a76cc6788fe`**, including both the daily retention and minute call-recovery triggers. Unauthenticated item-status lookup returns 401. These follow-up source changes are not yet committed or uploaded as an app build. A new live call still needs testing.

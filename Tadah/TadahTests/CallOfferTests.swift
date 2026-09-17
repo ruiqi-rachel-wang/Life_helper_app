@@ -614,3 +614,88 @@ struct ReferenceConsentTests {
     // Written before owners were recorded: any signed-in account may pick it up.
     #expect(PendingCall.InFlight(actionID: "b", business: nil).belongs(to: "user-b"))
 }
+
+@MainActor
+@Suite("Call refresh races", .serialized)
+struct CallRefreshRaceTests {
+    private let owner = "call-refresh-test-owner"
+    private let offer = CallOffer(phone: "(212) 555-0100", business: "Clinic", goal: "Ask about hours")
+
+    private func status(_ state: String, action: String = "older-call") -> ActionsService.ActionStatus {
+        ActionsService.ActionStatus(actionID: action, status: state, result: nil,
+                                    transcript: nil, failureCode: state == "rejected" ? "call_not_ready" : nil)
+    }
+
+    @Test func openingTodoWhileCreateIsReturningKeepsItsClarifyingQuestion() async throws {
+        let id = UUID()
+        defer { PendingCall.forget(id); CallHistory.forget(id) }
+        var resumeCreate: CheckedContinuation<ActionsService.Placed, any Error>?
+        let center = CallCenter(userID: { owner }, placeCall: { _ in
+            try await withCheckedThrowingContinuation { resumeCreate = $0 }
+        }, latestStatus: { _ in
+            status("rejected", action: PendingCall.inFlight(for: id)!.actionID)
+        })
+        center.place(offer: offer, phone: offer.phone, goal: offer.goal, mayAgreeTo: "",
+                     shareAccount: false, name: "", language: "en", itemID: id)
+        while resumeCreate == nil { await Task.yield() }
+        await center.refresh(itemID: id)
+        #expect(PendingCall.inFlight(for: id) != nil)
+        resumeCreate?.resume(throwing: ActionsService.ActionError.needsDetail("Which office?"))
+        for _ in 0..<100 {
+            if case .refused = center.phase(for: id) { break }
+            await Task.yield()
+        }
+        guard case .refused(let refusal) = center.phase(for: id) else {
+            Issue.record("The clarifying question was lost"); return
+        }
+        #expect(refusal.message.contains("Which office?"))
+    }
+
+    @Test func olderStatusReplyCannotReplaceANewerRefusal() async {
+        let id = UUID()
+        defer { PendingCall.forget(id); CallHistory.forget(id) }
+        var resumeRead: CheckedContinuation<ActionsService.ActionStatus, Never>?
+        let center = CallCenter(userID: { owner }, placeCall: { _ in
+            throw ActionsService.ActionError.needsDetail("Which office?")
+        }, latestStatus: { _ in
+            await withCheckedContinuation { resumeRead = $0 }
+        })
+        let read = Task { await center.refresh(itemID: id) }
+        while resumeRead == nil { await Task.yield() }
+        center.place(offer: offer, phone: offer.phone, goal: offer.goal, mayAgreeTo: "",
+                     shareAccount: false, name: "", language: "en", itemID: id)
+        for _ in 0..<100 {
+            if case .refused = center.phase(for: id) { break }
+            await Task.yield()
+        }
+        resumeRead?.resume(returning: status("completed"))
+        await read.value
+        guard case .refused = center.phase(for: id) else {
+            Issue.record("An older call replaced the new refusal"); return
+        }
+    }
+
+    @Test func rejectedLatestCallDoesNotFallBackToAnOlderCachedAnswer() async {
+        let id = UUID()
+        defer { PendingCall.forget(id); CallHistory.forget(id) }
+        CallHistory.save(CallRecord(status("failed"), business: "Clinic"), for: id)
+        let center = CallCenter(userID: { owner }, latestStatus: { _ in status("rejected") })
+        await center.refresh(itemID: id)
+        #expect(center.phase(for: id) == nil)
+        #expect(CallHistory.record(for: id) == nil)
+    }
+
+    // A refusal places nothing, so it must not delete what an earlier call
+    // actually learned. The Worker only reports the latest call per to-do, so a
+    // deleted answer could not be fetched back.
+    @Test func aLaterRefusalKeepsARealAnswer() async {
+        let id = UUID()
+        defer { PendingCall.forget(id); CallHistory.forget(id) }
+        CallHistory.save(CallRecord(business: "Clinic", endedAt: .now, didFail: false,
+                                    detail: "Open until 6 on weekdays.", summary: nil, agreed: nil,
+                                    nextStep: nil, needsUserAction: false), for: id)
+        let center = CallCenter(userID: { owner }, latestStatus: { _ in status("rejected") })
+        await center.refresh(itemID: id)
+        #expect(CallHistory.record(for: id)?.detail == "Open until 6 on weekdays.")
+    }
+}
