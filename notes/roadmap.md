@@ -216,8 +216,8 @@ for.
 to-do; built BESIDE it instead, because appending to `notes` rewrote text the
 user had written. `CallHistory` (UserDefaults, keyed by item id) holds "Tadah
 called Con Edison · Sep 9", what was said, what was agreed and the next step,
-and the call card on the to-do renders it. No SwiftData migration. The trade:
-it stays on the phone that placed the call and does not sync. The in-flight
+and the call card on the to-do renders it. Other devices on the same account
+fetch the latest call for a to-do from the Worker (added 2026-09-16). The in-flight
 action id lives in `PendingCall`, so closing the app mid-call still finds the
 result. Users are not shown the transcript.
 

@@ -24,7 +24,7 @@ iOS 17+, iPhone. Swift + SwiftUI only.
 | Extraction | `gpt-5-mini`, `reasoning_effort: low`, via the Worker | needs real reasoning (root cause, conditional steps); ~16–19 s a scan |
 | Guide polish | `gpt-4o-mini` | only rewords, keep it cheap |
 | Backend | one Cloudflare Worker `cuevi-ai` + one D1 database `cuevi-metrics` | free tier; holds the OpenAI key so it never ships in the app |
-| Local data | SwiftData (`TadahSchema` V1, migratable) | the on-device store; sync is a copy, not the source |
+| Local data | SwiftData (`TadahSchema` V4, migratable; V3 is frozen at the 1.0 shape — never edit it) | the on-device store; sync is a copy, not the source |
 | Reminders | `UNUserNotificationCenter`, local | no server needed; overdue = one repeating daily nudge |
 | Payments | RevenueCat over StoreKit, entitlement **`Tadah Pro`** | entitlements, restore, paywall editor; free under $2.5k/mo |
 | Email | Resend, from `mytadah.com` | password-reset and email-verification codes |
@@ -82,7 +82,8 @@ password), `RESEND_KEY`, `EMAIL_FROM`, `CALLE_API_KEY`,
 calls, live since 2026-09-11; `"1"` dials nothing).
 
 Cron `12 4 * * *`: tombstones out at 180 days, revoked sessions at 30, usage
-rows at 60, call transcripts at 30. Rate limit 60 req/min, keyed session →
+rows at 60, call transcripts at 30. Cron `* * * * *`: re-reads up to 25 live or
+uncertain calls from CALL-E (read-only; never places a call). Rate limit 60 req/min, keyed session →
 install id → IP.
 
 ## How the important parts work
@@ -125,19 +126,26 @@ to new App User ID*. The Worker's `checkPlus` asks RevenueCat about the
 account id; a guest never hits a tier-gated route (scans are anonymous and
 sized for Plus).
 
-**Calls.** Review offers a call when the scan found a number to ring: the
+**Calls.** Review, and a saved to-do, offer a call when the scan found a number to ring: the
 model returns `phone`, and `CallOffer` still refuses anything undialable or
 equal to one of the document's own reference numbers. "Yes, call for me"
 checks sign-in, Plus and a verified email first, then opens the confirm page
 (who, the number, what to ask, what Tadah may agree to, whether to share the
-account number). "Call now" saves the to-do, hands the call to `CallCenter`,
-and opens that to-do, which shows the call live and then the answer.
+account number). "Call now" saves the to-do (with its reviewed offer, which
+syncs), hands the call to `CallCenter`, and opens that to-do, which shows the
+call live and then the answer. Each request carries a UUID saved on the phone
+before sending, so a retry replays the same row and never dials or charges
+twice; an unclear outcome is `uncertain` ("Checking whether the call went
+through…") until CALL-E, the webhook or the minute cron settles it. A definite
+CALL-E refusal is `rejected` and was never dialled.
 `CallCenter` belongs to the app, not a screen: it places the call with extra
 background time, keeps a `PendingCall` breadcrumb, polls every 5 s for ten
 minutes then every 30 s, and picks unfinished calls up again at launch and on
 return to the app. A failed poll is never a failed call, and nothing redials.
 The answer is kept on the phone in `CallHistory`, beside the to-do rather than
-inside it, and does not sync. The call is in English; the result comes back in
+inside it. Opening a to-do asks the Worker for its latest call, which is how
+the answer reaches the account's other devices. Pending calls belong to the
+account that placed them. The call is in English; the result comes back in
 the user's language through CALL-E's result schema. The Worker is the
 authority on everything that costs money; see `actions.js`.
 
