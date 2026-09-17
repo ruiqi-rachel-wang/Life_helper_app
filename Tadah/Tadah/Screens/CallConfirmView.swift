@@ -130,6 +130,9 @@ struct CallConfirmView: View {
             }
             .sheet(isPresented: $showHowItWorks) { HowCallsWorkView() }
         }
+        // iPad shows a sheet as a small centred form by default, and "Call now"
+        // sat below its fold. The page size fits the whole confirm page.
+        .pageSizedOnIPad()
     }
 
     // WHO — correctable, because the number is read off a photographed document
@@ -360,6 +363,18 @@ private struct HowCallsWorkView: View {
             Text(title).font(.cardTitle).foregroundStyle(Color.ink)
             Text(body).font(.body14).foregroundStyle(Color.faded).lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+extension View {
+    /// A taller sheet on iPad (iOS 18+). iPhone sheets are unaffected.
+    @ViewBuilder
+    func pageSizedOnIPad() -> some View {
+        if #available(iOS 18.0, *) {
+            presentationSizing(.page)
+        } else {
+            self
         }
     }
 }
