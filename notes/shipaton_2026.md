@@ -141,23 +141,43 @@ on **YouTube or Vimeo**, no third-party trademarks.
 Front-load scenes 1–6: if a judge stops at 60 seconds they must already have
 seen a real call happen.
 
-### How to build it
+### A first draft already exists
 
-The pipeline already exists in `../../misc/calle_video/`:
+Built 2026-09-18, in **`../../misc/shipaton_video/`** (the old CALL-E pipeline
+stays in `misc/calle_video/` for reference; it is not the one to edit).
 
-- `make_video.py` — all narration and on-screen text is at the top of the file.
-- `frames/01…10_*.png` — 1920×1080 stills, reusable for scenes 1, 2, 8.
-- `voice/*.m4a` — per-scene narration; **record in your own voice**, judges
-  respond to the builder. File must start with the scene name.
-- `tadah_calle_roughcut.srt` — regenerate, don't reuse; the narration changes.
-
-The venv it referenced lived in a temp folder that's now gone. Recreate:
+| File | What |
+|---|---|
+| `tadah_shipaton.mp4` | **Full cut, 1:03**, 1920×1080. The Shipaton submission. |
+| `tadah_ad.mp4` | **Short ad cut** for social and the App Store preview. |
+| `*.srt` | Subtitles, regenerated with the narration so they can't drift. |
+| `SCRIPT.md` | Narration to read aloud, voice options, and the shot list. |
+| `make_video.py` | Everything. Narration lives in `SCENES` at the top. |
 
 ```
-cd "/Users/rachelwang/Project!/misc/calle_video"
-python3 -m venv vid && vid/bin/pip install imageio-ffmpeg
-vid/bin/python make_video.py
+cd "/Users/rachelwang/Project!/misc/shipaton_video"
+vid/bin/python make_video.py                 # both cuts
+vid/bin/python make_video.py --only ad       # just the short one
+vid/bin/python make_video.py --voice Ava     # after installing a better voice
 ```
+
+What makes it better than the CALL-E cut: real App Store captures instead of
+mockups, phone screens that **pan** inside a device window while the background
+pushes in (a phone screen is 2.5:1 and cannot fit a 16:9 frame legibly any other
+way), one coherent story end to end, the exact brand palette and Apple's New
+York serif, and a monetization beat that HAMM needs.
+
+**The voice is a placeholder.** This Mac has only Apple's compact voices, which
+is why the CALL-E video sounded robotic. Fix, best first: record your own into
+`voice/<scene id>.m4a` and re-run; or install **Ava (Premium)** free via System
+Settings → Accessibility → Spoken Content → System Voice → Manage Voices, then
+`--voice Ava`; or an AI voice service. Full detail in `SCRIPT.md`.
+
+⚠️ **Three screens are rebuilt, not captured** — the offer card, the calling
+state, the result — because no real capture of them exists. They use the app's
+real strings and design, but real footage is stronger and 1.1 is live, so
+capture it. Shot list is in `SCRIPT.md`; the timing already matches for a
+straight swap in CapCut.
 
 **Shoot the real footage first** (it's the long pole), then cut narration to fit.
 Screen-record on the iPhone with Control Center → Screen Recording, microphone
