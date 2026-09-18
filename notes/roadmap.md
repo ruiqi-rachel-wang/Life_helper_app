@@ -1,24 +1,26 @@
 # Tadah — what's next
 
-> Updated 2026-09-06. How the app is built → `how_tadah_is_built.md`.
-> Getting build 5 through App Review → `release_1.0_checklist.md`.
+> Updated 2026-09-18. How the app is built → `how_tadah_is_built.md`.
+
+> **1.0 is live on the App Store (Sept 10) and 1.1 with Calls is live (Sept 17).**
+> Current focus is the Shipaton entry → [`shipaton_2026.md`](shipaton_2026.md),
+> due Sept 30. No new features until it's submitted.
 
 > September 16 review: [Call-E fixes and prioritized issues](review_1.1.md).
-> Address C1–C5 before broad release; use [the 1.1 checklist](release_1.1.md)
-> for current shipping steps.
+> C1–C5 shipped in 1.1; **C6–C10 are still open** — read them before touching Calls.
 
 ## The idea
 
-Tadah's promise: **"let me do that for you."** V1 (1.0, in App Review)
-understands the letter and says what to do. V2 starts now: Tadah does the
-next step.
+Tadah's promise: **"let me do that for you."** V1 (1.0, live) understands the
+letter and says what to do. V2 has started: Tadah does the next step, and 1.1
+makes the phone call.
 
 **Understand → decide the next step → offer to do it → report back.**
 
 | | | Ships as |
 |---|---|---|
-| **V1 Understand** | scan → explain → to-do | 1.0 (in review) |
-| **V2 Act by phone** | production fixes + Calls | 1.0.1 – 1.2 |
+| **V1 Understand** | scan → explain → to-do | 1.0 ✅ live Sept 10 |
+| **V2 Act by phone** | production fixes + Calls | 1.1 ✅ live Sept 17 |
 | **V3 Act online** | fill forms, upload documents, check status, prepare renewals | 2.0 |
 | **V4+ Complete life admin** | email / mail / fax, payment confirmation, multi-step | later |
 
@@ -31,7 +33,7 @@ office", "fill the renewal form", "check my claim", "pay the bill" fit.
 | | What |
 |---|---|
 | **V2 · 1.0.1** | Worker only: verify login throttle · logging · lower AI circuit breaker · check retention sweep |
-| **V2 · 1.1** | **Shipping now (build 8):** Calls + email verification. Still open from the 1.1 list: password blocklist · `pw_iterations` · sync test |
+| **V2 · 1.1** | **✅ Shipped (build 9, live Sept 17):** Calls + email verification. Still open from the 1.1 list: password blocklist · `pw_iterations` · sync test |
 | **V2 · 1.2** | **Calls** on CALL-E: everything CALL-E can do, offered on the **Review** card, Plus + verified email, one confirmed call at a time, 5 a month then credits. **Built, and pulled forward into 1.1** (hackathon PR #615 merged). Next: paid call packs. |
 | **1.3** | photo sync · bilingual term toggle · usage readout · server-side quota + App Attest · guides on demand |
 | **V3 · 2.0** | browser actions: status checks → prefill public forms → logged-in portals · Tadah finds official numbers |
