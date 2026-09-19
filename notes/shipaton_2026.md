@@ -107,88 +107,54 @@ also useful for the job search. If you do: post daily, tag `#Shipaton` and
 
 ---
 
-## 3. The new video — the one thing that must be made
+## 3. The video — built, one story, 1:33
 
-**Hard limit: under 2:00.** The CALL-E cut is **2:22**, so it cannot be reused
-as-is. Judges aren't required to watch past two minutes.
+**Hard limit: under 2:00.** Judges aren't required to watch past two minutes.
+Must show the app on a device, be public on YouTube or Vimeo, and use no
+third-party trademarks.
 
-Requirements: must show the app **running on a real device**, hosted publicly
-on **YouTube or Vimeo**, no third-party trademarks.
+Lives in **`../../misc/shipaton_video/`** (outside this repo). `SCRIPT.md` there
+has every line, what's on screen during it, and how to record your own voice.
 
-### What changes from the CALL-E video
+**One video, not two** (Rachel, 2026-09-18: "why two videos? I thought we only
+need one"). It is the submission and the ad.
 
-| CALL-E cut | Shipaton cut | Why |
-|---|---|---|
-| "approved by App Review" | **"live on the App Store"** | It is now. This is your credibility beat — say it early. |
-| Mockup screens in scenes 3–7 | **Real screen recordings** | 1.1 is live and `CALLE_DRY_RUN = "0"`. The excuse for mockups is gone, and "footage on the device" is required. |
-| Scene 9: Worker/CALL-E architecture (21s) | **Cut to ~5s or drop** | Shipaton judges are scoring product and monetization, not your webhook design. This is where you buy back the 25 seconds. |
-| No monetization beat | **New scene: free → Plus → Calls** | HAMM needs it, and it's the business story. |
-| "CALL-E hackathon" framing | RevenueCat / Shipaton framing | Don't hand judges another sponsor's name. |
+**It tells Rachel's story, told in the third person until the last line:**
+Mom texts a photo of a letter ("这是什么意思？ 要紧吗？ 你帮我处理一下吧") → *Now
+there's Tadah* → **1 Mom scans** it herself → **2 Mom understands** it in Chinese
+→ **3 Daughter sees it** on her own phone → **4 Knows what to do** → **5 Does it**:
+Tadah makes the call → **6 Done**, with confetti and "Ta-dah." → Mom texts
+thanks → *"I was that kid. I built Tadah because I hope…"* A six-chip rail
+across the top tracks the steps, so the features read as a workflow and not a
+list.
 
-### Target running order (~1:50)
+**Screens are rebuilt from the SwiftUI source, not guessed.** The first draft's
+call screens were rejected ("the layout doesn't seem like mine"), because they
+were invented. Now every screen follows `Color+Tadah.swift`,
+`Font+Tadah.swift`, the 16pt / 14pt-radius / hairline card, the real section
+order in `ReviewView` / `DetailView` / `InboxView` / `CallCard.swift`, and the
+app's own Chinese from `Localizable.xcstrings`. The "Before Tadah calls" page is
+the real 1.1 capture.
 
-| # | Time | Scene | Beat |
-|---|---|---|---|
-| 1 | 0:00 | Title | "Tadah. Paperwork, handled. **Live on the App Store.** And it makes the phone call for you." |
-| 2 | 0:10 | Problem | Mail you can't fully read ends in a call you can't make. |
-| 3 | 0:22 | Scan → understand | **Real footage.** Bill → Review screen explains it. |
-| 4 | 0:36 | The offer | "Tadah can make this call." Number comes from the document; never invented. |
-| 5 | 0:48 | You confirm | Who, what it asks, what it may agree to (nothing by default), account number off by default. |
-| 6 | 1:02 | The call | **Real call, real answer landing on the to-do**, in her language. |
-| 7 | 1:22 | **Why it's a business** | Free tier is generous. Calls costs real money per call, so it's Plus — 5/month. RevenueCat gates it server-side before a line is ever seized. |
-| 8 | 1:38 | Close | Live on the App Store, in three languages. "Let me do that for you." |
+**Honest about how the app behaves**, all checked in code:
+- The family feature is **profiles on one account**. A to-do filed under
+  "Mom" syncs to every phone on that account (`TaskDTO.profileID`), and so do
+  the profiles.
+- The explanation language is **per phone** (`ExplainLanguage`, `@AppStorage`).
+  So Mom's to-do still reads in Chinese on her daughter's English phone. The
+  video shows it that way on purpose.
+- The call answer comes back in the **caller's** language, so it's English on
+  the daughter's phone.
+- `markDone()` completes in place, so the finale is the real `✓ COMPLETED`.
 
-Front-load scenes 1–6: if a judge stops at 60 seconds they must already have
-seen a real call happen.
-
-### A first draft already exists
-
-Built 2026-09-18, in **`../../misc/shipaton_video/`** (the old CALL-E pipeline
-stays in `misc/calle_video/` for reference; it is not the one to edit).
-
-| File | What |
-|---|---|
-| `tadah_shipaton.mp4` | **Full cut, 1:03**, 1920×1080. The Shipaton submission. |
-| `tadah_ad.mp4` | **Short ad cut** for social and the App Store preview. |
-| `*.srt` | Subtitles, regenerated with the narration so they can't drift. |
-| `SCRIPT.md` | Narration to read aloud, voice options, and the shot list. |
-| `make_video.py` | Everything. Narration lives in `SCENES` at the top. |
-
-```
-cd "/Users/rachelwang/Project!/misc/shipaton_video"
-vid/bin/python make_video.py                 # both cuts
-vid/bin/python make_video.py --only ad       # just the short one
-vid/bin/python make_video.py --voice Ava     # after installing a better voice
-```
-
-What makes it better than the CALL-E cut: real App Store captures instead of
-mockups, phone screens that **pan** inside a device window while the background
-pushes in (a phone screen is 2.5:1 and cannot fit a 16:9 frame legibly any other
-way), one coherent story end to end, the exact brand palette and Apple's New
-York serif, and a monetization beat that HAMM needs.
-
-**The voice is a placeholder.** This Mac has only Apple's compact voices, which
-is why the CALL-E video sounded robotic. Fix, best first: record your own into
-`voice/<scene id>.m4a` and re-run; or install **Ava (Premium)** free via System
-Settings → Accessibility → Spoken Content → System Voice → Manage Voices, then
-`--voice Ava`; or an AI voice service. Full detail in `SCRIPT.md`.
-
-⚠️ **Three screens are rebuilt, not captured** — the offer card, the calling
-state, the result — because no real capture of them exists. They use the app's
-real strings and design, but real footage is stronger and 1.1 is live, so
-capture it. Shot list is in `SCRIPT.md`; the timing already matches for a
-straight swap in CapCut.
-
-**Shoot the real footage first** (it's the long pole), then cut narration to fit.
-Screen-record on the iPhone with Control Center → Screen Recording, microphone
-**on**. Call your second phone and play the rep — say so in the voiceover
-("for this demo it's calling my other phone"). Honest, and judges prefer it to
-a staged claim. Budget 3–4 takes.
-
-⚠️ Calls are **live and cost ~$1.56 each**. Check the CALL-E balance before a
-recording session — it has been negative before.
-
----
+**Still to do:**
+- **Voice.** The draft uses the Mac's robot voice, as a timing placeholder
+  only. The "I was that kid" ending in particular has to be Rachel. Record
+  `voice/<line id>.m4a` and re-run. Or install Ava (Premium) and pass
+  `--voice Ava`.
+- **Optional real footage.** A few seconds of screen recording over the matching
+  scene makes "functioning on the device" unarguable.
+- Upload to YouTube with `tadah_shipaton.srt` as captions.
 
 ## 4. Judges must be able to use Plus for free
 
