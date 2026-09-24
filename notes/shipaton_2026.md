@@ -108,7 +108,7 @@ also useful for the job search. If you do: post daily, tag `#Shipaton` and
 
 ---
 
-## 3. The video — built, one story, 1:43
+## 3. The video — built, one story, 1:42
 
 **Hard limit: under 2:00.** Must show the app on a device, be public on YouTube
 or Vimeo, and use no third-party trademarks.
@@ -118,32 +118,43 @@ has every line, what's on screen during it, and how to record your own voice.
 
 **One video** — it is the submission and the ad.
 
+### The language rule
+
+**Every screen speaks one language. The film speaks English.** Rachel's note,
+2026-09-24: *"the language is a mess… i want different language but not all
+mixed up together"*, plus *"this is for everyone so everyone needs to
+understand, especially english audience"*.
+
+- **Opening and closing:** three phones side by side — a Chinese mom, a
+  Spanish-speaking mamá, an English-speaking mom — each entirely in its own
+  language.
+- **The whole middle happens on one phone: Mom's, in Chinese**, from the scan to
+  done. Nothing on it is half-English.
+- **Every Chinese moment carries an English subtitle** in a fixed lane under the
+  headline, so an English-speaking judge never has to read a character.
+- **The recap is entirely English.**
+
+Why it was a mess before: a shared to-do has only *one* language — whichever
+phone scanned it — so the old two-phone story necessarily put English chrome,
+Chinese content and an English answer on the daughter's screen at once. True to
+the app, unreadable as film. Keeping the middle on one phone removes it.
+
+**The payoff:** because Mom makes the call herself, the answer comes back **in
+Chinese**, so the film now shows the thing that makes Calls worth paying for —
+*called in English, answered in your language* — which the earlier cut lost.
+
 ### What it shows
 
-It opens on **three phones at once**: a Chinese mom, a Spanish-speaking mamá and
-an English-speaking mom, each texting their daughter the same thing, with one
-English subtitle under all three. That makes the point early that this is not
-only an immigrant-family app — anyone can be handed a letter they can't parse.
+Three moms text their daughters the same question. Mom scans the letter
+herself, reads it in Chinese, reads the letter itself translated, files it under
+her own name, sees the steps, lets Tadah make the call, gets the answer in
+Chinese, is reminded before the bill is due, and ticks it off. Ta-dah. All three
+moms text back. Then first person — *"This happened in my family, too. So I
+built Tadah, to help."* — and a recap for anyone.
 
-Then it follows one family: **1 Mom scans** it herself → **2 Mom understands**
-it in her language (the letter fans out into Español · 中文 · English) →
-**3 Daughter sees it** on her own phone → **4 Knows what to do** → **5 Does it**,
-Tadah makes the call → **6 Done**, confetti and "Ta-dah." → all three moms text
-back. A six-step rail across the top tracks it, so the features read as a
-workflow rather than a list.
-
-**It isn't only about Calls.** After the call answer there is a reminder beat:
-the bill is still due, so Tadah posts a reminder on *Mom's* phone, in Chinese
-(`医院账单：$284.50 · 明天到期`), while the daughter's phone shows the REMINDERS
-card. And the closing recap runs one phone through the whole app — scan ·
-understand · steps · **a reminder arriving** · **the real Life Guides library** ·
-calling — so the video covers reminders and guides, not just the phone call.
-
-It ends in first person — *"This happened in my family, too. So I built Tadah,
-to help."* — then a summary for everyone: *"for anyone who's ever opened a
-letter and thought:"* with the question cycling through all three languages,
-and a six-line recap (scan it · understand it · know what to do · get reminded ·
-follow a guide · or let Tadah call).
+The six-step rail is now **Scans it · Understands it · Knows what to do · Tadah
+calls · Answer back · Done**. The daughter's phone no longer appears in the
+middle; the family feature is shown as 给谁 · 妈妈 on Mom's own phone.
 
 ### How it's made
 
