@@ -108,7 +108,7 @@ also useful for the job search. If you do: post daily, tag `#Shipaton` and
 
 ---
 
-## 3. The video — built, one story, 1:36
+## 3. The video — built, one story, 1:42
 
 **Hard limit: under 2:00.** Must show the app on a device, be public on YouTube
 or Vimeo, and use no third-party trademarks.
@@ -131,6 +131,13 @@ it in her language (the letter fans out into Español · 中文 · English) →
 Tadah makes the call → **6 Done**, confetti and "Ta-dah." → all three moms text
 back. A six-step rail across the top tracks it, so the features read as a
 workflow rather than a list.
+
+**It isn't only about Calls.** After the call answer there is a reminder beat:
+the bill is still due, so Tadah posts a reminder on *Mom's* phone, in Chinese
+(`医院账单：$284.50 · 明天到期`), while the daughter's phone shows the REMINDERS
+card. And the closing recap runs one phone through the whole app — scan ·
+understand · steps · **a reminder arriving** · **the real Life Guides library** ·
+calling — so the video covers reminders and guides, not just the phone call.
 
 It ends in first person — *"This happened in my family, too. So I built Tadah,
 to help."* — then a summary for everyone: *"for anyone who's ever opened a
@@ -162,6 +169,19 @@ page is the real 1.1 capture.
 - The call answer comes back in the **caller's** language, so it's English on
   the daughter's phone.
 - `markDone()` completes in place, so the finale is the real `✓ COMPLETED`.
+
+### Features in, and left out
+
+**In:** scan (with a line noting you can upload or type instead) · the AI
+explanation in three languages · action steps · **reminders, and the
+notification they post** · family profiles and "who it's for" · sync · the
+to-do list · Calls end to end · mark done · **the Guides library** · free vs Plus.
+
+**Out, to stay under two minutes** (all real, all addable if something else is
+dropped): document translation laid over the photo; tailored checklists (a guide
+asking questions first); privacy controls beyond one subtitle; repeats, notes,
+the stored original, reference numbers. `SCRIPT.md` lists these with the cost of
+adding each.
 
 ### Still to do
 
