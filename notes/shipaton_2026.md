@@ -4,8 +4,9 @@
 > (2:45 am New York, Oct 1). Winners announced October 21.
 > Rules: https://revenuecat-shipaton-2026.devpost.com/rules
 
-**Twelve days.** The app is already built and shipped. Everything below is
-submission work, not product work. Resist adding features.
+**Six days left as of Sept 24.** The app is already built and shipped, and the
+video is built. Everything below is submission work, not product work. Resist
+adding features.
 
 ---
 
@@ -107,53 +108,70 @@ also useful for the job search. If you do: post daily, tag `#Shipaton` and
 
 ---
 
-## 3. The video — built, one story, 1:33
+## 3. The video — built, one story, 1:36
 
-**Hard limit: under 2:00.** Judges aren't required to watch past two minutes.
-Must show the app on a device, be public on YouTube or Vimeo, and use no
-third-party trademarks.
+**Hard limit: under 2:00.** Must show the app on a device, be public on YouTube
+or Vimeo, and use no third-party trademarks.
 
 Lives in **`../../misc/shipaton_video/`** (outside this repo). `SCRIPT.md` there
 has every line, what's on screen during it, and how to record your own voice.
 
-**One video, not two** (Rachel, 2026-09-18: "why two videos? I thought we only
-need one"). It is the submission and the ad.
+**One video** — it is the submission and the ad.
 
-**It tells Rachel's story, told in the third person until the last line:**
-Mom texts a photo of a letter ("这是什么意思？ 要紧吗？ 你帮我处理一下吧") → *Now
-there's Tadah* → **1 Mom scans** it herself → **2 Mom understands** it in Chinese
-→ **3 Daughter sees it** on her own phone → **4 Knows what to do** → **5 Does it**:
-Tadah makes the call → **6 Done**, with confetti and "Ta-dah." → Mom texts
-thanks → *"I was that kid. I built Tadah because I hope…"* A six-chip rail
-across the top tracks the steps, so the features read as a workflow and not a
-list.
+### What it shows
 
-**Screens are rebuilt from the SwiftUI source, not guessed.** The first draft's
-call screens were rejected ("the layout doesn't seem like mine"), because they
-were invented. Now every screen follows `Color+Tadah.swift`,
-`Font+Tadah.swift`, the 16pt / 14pt-radius / hairline card, the real section
-order in `ReviewView` / `DetailView` / `InboxView` / `CallCard.swift`, and the
-app's own Chinese from `Localizable.xcstrings`. The "Before Tadah calls" page is
-the real 1.1 capture.
+It opens on **three phones at once**: a Chinese mom, a Spanish-speaking mamá and
+an English-speaking mom, each texting their daughter the same thing, with one
+English subtitle under all three. That makes the point early that this is not
+only an immigrant-family app — anyone can be handed a letter they can't parse.
+
+Then it follows one family: **1 Mom scans** it herself → **2 Mom understands**
+it in her language (the letter fans out into Español · 中文 · English) →
+**3 Daughter sees it** on her own phone → **4 Knows what to do** → **5 Does it**,
+Tadah makes the call → **6 Done**, confetti and "Ta-dah." → all three moms text
+back. A six-step rail across the top tracks it, so the features read as a
+workflow rather than a list.
+
+It ends in first person — *"This happened in my family, too. So I built Tadah,
+to help."* — then a summary for everyone: *"for anyone who's ever opened a
+letter and thought:"* with the question cycling through all three languages,
+and a four-line recap (scan it · understand it · know what to do · let Tadah
+call).
+
+### How it's made
+
+**Not slides.** The phones sit at fixed places on one big canvas and a camera
+glides and zooms between them, over a background that drifts more slowly for
+depth. Text animates in word by word next to the action; translations appear as
+film-style subtitles. (The first version was rejected as "like powerpoint":
+fixed layouts, crossfades, and a heading/subheading block on every scene.)
+
+**Screens are rebuilt from the SwiftUI source, not guessed.** Every screen
+follows `Color+Tadah.swift`, `Font+Tadah.swift`, the 16pt / 14pt-radius /
+hairline card, and the real section order in `ReviewView` / `DetailView` /
+`InboxView` / `CallCard.swift`. Chinese and Spanish labels come from
+`Localizable.xcstrings`, never translated by hand. The "Before Tadah calls"
+page is the real 1.1 capture.
 
 **Honest about how the app behaves**, all checked in code:
-- The family feature is **profiles on one account**. A to-do filed under
-  "Mom" syncs to every phone on that account (`TaskDTO.profileID`), and so do
-  the profiles.
-- The explanation language is **per phone** (`ExplainLanguage`, `@AppStorage`).
-  So Mom's to-do still reads in Chinese on her daughter's English phone. The
+- Family = **profiles on one account**. A to-do filed under "Mom" syncs to every
+  phone on that account (`TaskDTO.profileID`), and so do the profiles.
+- The explanation language is **per phone** (`ExplainLanguage`, `@AppStorage`),
+  so Mom's to-do still reads in Chinese on her daughter's English phone. The
   video shows it that way on purpose.
 - The call answer comes back in the **caller's** language, so it's English on
   the daughter's phone.
 - `markDone()` completes in place, so the finale is the real `✓ COMPLETED`.
 
-**Still to do:**
-- **Voice.** The draft uses the Mac's robot voice, as a timing placeholder
-  only. The "I was that kid" ending in particular has to be Rachel. Record
-  `voice/<line id>.m4a` and re-run. Or install Ava (Premium) and pass
-  `--voice Ava`.
-- **Optional real footage.** A few seconds of screen recording over the matching
-  scene makes "functioning on the device" unarguable.
+### Still to do
+
+- **Voice.** The draft uses the Mac's robot voice as a timing placeholder only.
+  The two first-person lines especially have to be Rachel. Record
+  `voice/<line id>.m4a` and re-run; each scene re-times around the take. Or
+  install Ava (Premium) free and pass `--voice Ava`. At 1:36 there is ~20s of
+  slack under the 2:00 limit for a slower human read.
+- **Optional real footage.** A few seconds of screen recording dropped over the
+  matching scene makes "functioning on the device" unarguable.
 - Upload to YouTube with `tadah_shipaton.srt` as captions.
 
 ## 4. Judges must be able to use Plus for free
@@ -199,17 +217,19 @@ Everything the Devpost form will want.
 
 ---
 
-## 6. Suggested order for the twelve days
+## 6. What's left, and when
+
+Updated 2026-09-24. Done so far: eligibility confirmed, categories chosen, and
+the video built (1:36, `misc/shipaton_video/`).
 
 | When | What |
 |---|---|
-| **Day 1 (Sept 18)** | Register on Devpost, open the submission, save a draft. Check the CALL-E balance and the demo accounts' Plus grant. |
-| **Days 2–3** | Shoot real footage: scan, offer, confirm, live call, answer landing. Several takes. |
-| **Days 4–5** | Rewrite narration in `make_video.py` to the running order above. Record your voice. |
-| **Days 6–7** | Cut, caption, export. **Verify it's under 2:00.** Upload to YouTube. |
-| **Days 8–9** | Screenshots at the required size, icon, write the Devpost description (adapt the CALL-E draft — strip CALL-E framing, add RevenueCat and the live-on-App-Store fact). |
-| **Day 10 (Sept 27–28)** | Fill in and **submit**. |
-| **Days 11–12** | Buffer. Fix anything that breaks. Don't add features. |
+| **Now — before anything else** | **Register on Devpost and open the submission.** Nothing else counts without it, and it takes minutes. Save a draft so the form exists. |
+| **Sept 24–25** | Record the narration in your own voice (18 lines, `voice/<id>.m4a`, re-run `make_video.py`). This is the single biggest improvement left. |
+| **Sept 25–26** | Optional but strong: a few seconds of real screen recording over the matching scenes. Check the CALL-E balance and the demo accounts' Plus grant first. |
+| **Sept 26–27** | Upload to YouTube (public/unlisted) with `tadah_shipaton.srt` as captions. Screenshots at 1179×2556 without frames, 1024×1024 icon. |
+| **Sept 27–28** | Write the Devpost description, tick **Peace Prize** and **HAMM**, add judge access (demo account or offer codes). **Submit.** |
+| **Sept 29–30** | Buffer only. Don't add features; don't ship a build. |
 
 ---
 
