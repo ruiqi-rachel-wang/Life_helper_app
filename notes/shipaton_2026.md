@@ -108,7 +108,7 @@ also useful for the job search. If you do: post daily, tag `#Shipaton` and
 
 ---
 
-## 3. The video — built, one story, 1:42
+## 3. The video — built, one story, 1:43
 
 **Hard limit: under 2:00.** Must show the app on a device, be public on YouTube
 or Vimeo, and use no third-party trademarks.
@@ -170,18 +170,26 @@ page is the real 1.1 capture.
   the daughter's phone.
 - `markDone()` completes in place, so the finale is the real `✓ COMPLETED`.
 
-### Features in, and left out
+### Feature coverage
 
-**In:** scan (with a line noting you can upload or type instead) · the AI
-explanation in three languages · action steps · **reminders, and the
-notification they post** · family profiles and "who it's for" · sync · the
-to-do list · Calls end to end · mark done · **the Guides library** · free vs Plus.
+Rachel's note, 2026-09-24: cover most features, but don't overemphasise any.
+So the **call sequence was cut from four spoken lines to two**, and the time
+went to everything else.
 
-**Out, to stay under two minutes** (all real, all addable if something else is
-dropped): document translation laid over the photo; tailored checklists (a guide
-asking questions first); privacy controls beyond one subtitle; repeats, notes,
-the stored original, reference numbers. `SCRIPT.md` lists these with the cost of
-adding each.
+**Given a moment of their own:** scan · the explanation in three languages ·
+**translating the document itself** (she taps the letter, 翻译 turns the page
+Chinese) · action steps · **reminders and the notification they post** · family
+profiles and "who it's for" · sync · Calls end to end · mark done · **the Guides
+library and its tailoring questions**.
+
+**Seen in passing, with no narration spent:** the three ways to add · DETAILS
+and REFERENCE on the Review · NOTES on the to-do · the reminder list · due
+dates and the urgency sections · free vs Plus · privacy (one subtitle:
+reminders follow the person they belong to, and you choose whether they show
+detail).
+
+**Still out:** repeats for monthly bills, the stored-original card, the overdue
+nudge. Each needs its own beat and the limit is 2:00.
 
 ### Still to do
 
