@@ -142,8 +142,8 @@ calling — so the video covers reminders and guides, not just the phone call.
 It ends in first person — *"This happened in my family, too. So I built Tadah,
 to help."* — then a summary for everyone: *"for anyone who's ever opened a
 letter and thought:"* with the question cycling through all three languages,
-and a four-line recap (scan it · understand it · know what to do · let Tadah
-call).
+and a six-line recap (scan it · understand it · know what to do · get reminded ·
+follow a guide · or let Tadah call).
 
 ### How it's made
 
